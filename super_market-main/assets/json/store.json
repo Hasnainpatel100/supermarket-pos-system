@@ -1,0 +1,82 @@
+{
+  "_id": "656abc9012ff99887766aaaa",
+  "code": "STORE_001",
+  "name": "SuperMart – Main Branch",
+  "status": "ACTIVE",
+  "address": {
+    "line1": "Shop No 12, Market Road",
+    "line2": "Near Bus Stand",
+    "city": "Pune",
+    "state": "MH",
+    "country": "IN",
+    "pincode": "411001"
+  },
+  "contact": {
+    "phone": "+91-9876543210",
+    "email": "store@supermart.com"
+  },
+  "business": {
+    "gstin": "27ABCDE1234F1Z5",
+    "fssai": "12345678901234",
+    "currency": "INR",
+    "timezone": "Asia/Kolkata"
+  },
+  "pos": {
+    "allowHoldBill": true,
+    "allowBillVoid": true,
+    "allowSameDayReturn": true,
+    "roundOffEnabled": true,
+    "negativeStockAllowed": false,
+    "priceEditableAtPOS": false
+  },
+  "tax": {
+    "taxMode": "GST",
+    "pricesIncludeTax": true,
+    "defaultTaxRate": 5,
+    "hsnEnabled": true,
+    "taxSlabs": [
+      {
+        "hsn": "1001",
+        "rate": 0
+      },
+      {
+        "hsn": "2106",
+        "rate": 5
+      },
+      {
+        "hsn": "3304",
+        "rate": 18
+      }
+    ]
+  },
+  "pricing": {
+    "maxDiscountPercent": 10,
+    "managerApprovalAbove": 5
+  },
+  "inventory": {
+    "expiryTrackingEnabled": true,
+    "batchTrackingEnabled": true,
+    "lowStockAlertEnabled": true
+  },
+  "paymentMethods": [
+    {
+      "code": "CASH",
+      "enabled": true
+    },
+    {
+      "code": "UPI",
+      "enabled": true
+    },
+    {
+      "code": "CARD",
+      "enabled": true
+    }
+  ],
+  "sync": {
+    "mode": "HYBRID",
+    "syncIntervalMinutes": 10,
+    "lastSyncedAt": "2025-12-25T08:45:00Z"
+  },
+  "version": 7,
+  "updatedAt": "2025-12-24T18:30:00Z"
+}

@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:objectbox/objectbox.dart';
 
 @Entity()
@@ -27,7 +25,6 @@ class EntityUser {
   String? idProofType;
   String? idProofNumber;
   String? address;
-
 
   // e.g. SUPER_ADMIN, CASHIER
   String? role;
@@ -98,11 +95,11 @@ class EntityUser {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'mobileNumber':mobileNumber,
-      'alternateMobile':alternateMobile,
-      'idProofNumber':idProofNumber,
-      'idProofType':idProofType,
-      'address':address,
+      'mobileNumber': mobileNumber,
+      'alternateMobile': alternateMobile,
+      'idProofNumber': idProofNumber,
+      'idProofType': idProofType,
+      'address': address,
       'mongoId': mongoId,
       'first': first,
       'last': last,

@@ -3,7 +3,6 @@ import 'package:super_market/service/service_locale.dart';
 
 import '../repository/repo_storage.dart';
 import '../service/service_currency.dart';
-import '../service/service_item.dart';
 import '../service/service_object_box.dart';
 import '../service/service_storage.dart';
 import '../service/service_theme.dart';
@@ -39,7 +38,6 @@ class StaticMethods {
       ServiceLocale().onInit(storage: storage),
       permanent: true,
     );
-
 
     Get.put<ServiceCurrency>(
       ServiceCurrency().onInit(storage: storage),

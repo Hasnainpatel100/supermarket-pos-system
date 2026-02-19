@@ -19,6 +19,7 @@ dependencies:
   # object box--
   mongo_dart: ^0.10.5
   device_info_plus: ^12.3.0 #device info
+  barcode_widget: ^2.0.4    # 1D barcode + 2D QR rendering
 
 dev_dependencies:
   flutter_test:

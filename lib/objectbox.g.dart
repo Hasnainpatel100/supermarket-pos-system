@@ -14,6 +14,8 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
+import 'model/entity_bill.dart';
+import 'model/entity_bill_item.dart';
 import 'model/entity_customer.dart';
 import 'model/entity_item.dart';
 import 'model/entity_item_batch.dart';
@@ -194,7 +196,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(7, 6957403195654332351),
     name: 'EntityCustomer',
-    lastPropertyId: const obx_int.IdUid(6, 1240644198477219067),
+    lastPropertyId: const obx_int.IdUid(12, 227732410171256254),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -231,6 +233,42 @@ final _entities = <obx_int.ModelEntity>[
       obx_int.ModelProperty(
         id: const obx_int.IdUid(6, 1240644198477219067),
         name: 'createdAtUtcMs',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 4537990594524439814),
+        name: 'city',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 1010826944093493209),
+        name: 'state',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 744982795197065170),
+        name: 'zipCode',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 2903729224586468378),
+        name: 'notes',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 7638899337305408224),
+        name: 'isActive',
+        type: 1,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 227732410171256254),
+        name: 'updatedAtUtcMs',
         type: 6,
         flags: 0,
       ),
@@ -610,6 +648,177 @@ final _entities = <obx_int.ModelEntity>[
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
   ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(14, 5072473716951944501),
+    name: 'EntityBill',
+    lastPropertyId: const obx_int.IdUid(12, 5931572769748908165),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 8794663054882015395),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 7009207134032877517),
+        name: 'billNo',
+        type: 9,
+        flags: 2080,
+        indexId: const obx_int.IdUid(10, 4447828812248963486),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 4889363566276016465),
+        name: 'customerName',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 8712912414189095513),
+        name: 'customerPhone',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 6413254449775989380),
+        name: 'totalAmount',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 2682579180649177317),
+        name: 'discount',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 8263890204918224435),
+        name: 'tax',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 4385459928389271056),
+        name: 'grandTotal',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 7058531334902864373),
+        name: 'status',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 1696407232100335250),
+        name: 'paymentMode',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 5912601309257829919),
+        name: 'createdAtUtcMs',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 5931572769748908165),
+        name: 'updatedAtUtcMs',
+        type: 6,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[
+      obx_int.ModelBacklink(
+        name: 'items',
+        srcEntity: 'EntityBillItem',
+        srcField: 'bill',
+      ),
+    ],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(15, 6240376876973177221),
+    name: 'EntityBillItem',
+    lastPropertyId: const obx_int.IdUid(11, 2328700593331447522),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 5195672584165577280),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 3058214093872395752),
+        name: 'itemName',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 213456516061683211),
+        name: 'itemBarcode',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 8144542251383078784),
+        name: 'unit',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 333959957751241786),
+        name: 'price',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 4376994012193444372),
+        name: 'qty',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 2233838776067179060),
+        name: 'tax',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 9153987922491138134),
+        name: 'discount',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 2289206754922468161),
+        name: 'total',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 8011483227828044248),
+        name: 'billId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(11, 7306598124643082789),
+        relationField: 'bill',
+        relationTarget: 'EntityBill',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 2328700593331447522),
+        name: 'itemId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(12, 7345913932769877499),
+        relationField: 'item',
+        relationTarget: 'EntityItem',
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
 ];
 
 /// Shortcut for [obx.Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -655,8 +864,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
     // Typically, this is done with `dart run build_runner build`.
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(13, 5039108625147766016),
-    lastIndexId: const obx_int.IdUid(9, 6800825721964715456),
+    lastEntityId: const obx_int.IdUid(15, 6240376876973177221),
+    lastIndexId: const obx_int.IdUid(12, 7345913932769877499),
     lastRelationId: const obx_int.IdUid(1, 6501938934487787319),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [
@@ -966,13 +1175,31 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final addressOffset = object.address == null
             ? null
             : fbb.writeString(object.address!);
-        fbb.startTable(7);
+        final cityOffset = object.city == null
+            ? null
+            : fbb.writeString(object.city!);
+        final stateOffset = object.state == null
+            ? null
+            : fbb.writeString(object.state!);
+        final zipCodeOffset = object.zipCode == null
+            ? null
+            : fbb.writeString(object.zipCode!);
+        final notesOffset = object.notes == null
+            ? null
+            : fbb.writeString(object.notes!);
+        fbb.startTable(13);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addOffset(1, nameOffset);
         fbb.addOffset(2, phoneOffset);
         fbb.addOffset(3, emailOffset);
         fbb.addOffset(4, addressOffset);
         fbb.addInt64(5, object.createdAtUtcMs);
+        fbb.addOffset(6, cityOffset);
+        fbb.addOffset(7, stateOffset);
+        fbb.addOffset(8, zipCodeOffset);
+        fbb.addOffset(9, notesOffset);
+        fbb.addBool(10, object.isActive);
+        fbb.addInt64(11, object.updatedAtUtcMs);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -996,10 +1223,32 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final addressParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 12);
+        final cityParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 16);
+        final stateParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 18);
+        final zipCodeParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 20);
+        final notesParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 22);
+        final isActiveParam = const fb.BoolReader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          24,
+        );
         final createdAtUtcMsParam = const fb.Int64Reader().vTableGetNullable(
           buffer,
           rootOffset,
           14,
+        );
+        final updatedAtUtcMsParam = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          26,
         );
         final object = EntityCustomer(
           id: idParam,
@@ -1007,7 +1256,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
           phone: phoneParam,
           email: emailParam,
           address: addressParam,
+          city: cityParam,
+          state: stateParam,
+          zipCode: zipCodeParam,
+          notes: notesParam,
+          isActive: isActiveParam,
           createdAtUtcMs: createdAtUtcMsParam,
+          updatedAtUtcMs: updatedAtUtcMsParam,
         );
 
         return object;
@@ -1512,6 +1767,236 @@ obx_int.ModelDefinition getObjectBoxModel() {
         return object;
       },
     ),
+    EntityBill: obx_int.EntityDefinition<EntityBill>(
+      model: _entities[9],
+      toOneRelations: (EntityBill object) => [],
+      toManyRelations: (EntityBill object) => {
+        obx_int.RelInfo<EntityBillItem>.toOneBacklink(
+          10,
+          object.id,
+          (EntityBillItem srcObject) => srcObject.bill,
+        ): object.items,
+      },
+      getId: (EntityBill object) => object.id,
+      setId: (EntityBill object, int id) {
+        object.id = id;
+      },
+      objectToFB: (EntityBill object, fb.Builder fbb) {
+        final billNoOffset = object.billNo == null
+            ? null
+            : fbb.writeString(object.billNo!);
+        final customerNameOffset = object.customerName == null
+            ? null
+            : fbb.writeString(object.customerName!);
+        final customerPhoneOffset = object.customerPhone == null
+            ? null
+            : fbb.writeString(object.customerPhone!);
+        final statusOffset = object.status == null
+            ? null
+            : fbb.writeString(object.status!);
+        final paymentModeOffset = object.paymentMode == null
+            ? null
+            : fbb.writeString(object.paymentMode!);
+        fbb.startTable(13);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(1, billNoOffset);
+        fbb.addOffset(2, customerNameOffset);
+        fbb.addOffset(3, customerPhoneOffset);
+        fbb.addFloat64(4, object.totalAmount);
+        fbb.addFloat64(5, object.discount);
+        fbb.addFloat64(6, object.tax);
+        fbb.addFloat64(7, object.grandTotal);
+        fbb.addOffset(8, statusOffset);
+        fbb.addOffset(9, paymentModeOffset);
+        fbb.addInt64(10, object.createdAtUtcMs);
+        fbb.addInt64(11, object.updatedAtUtcMs);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final billNoParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 6);
+        final customerNameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 8);
+        final customerPhoneParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 10);
+        final totalAmountParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          12,
+        );
+        final discountParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          14,
+        );
+        final taxParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          16,
+        );
+        final grandTotalParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          18,
+        );
+        final statusParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 20);
+        final paymentModeParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 22);
+        final createdAtUtcMsParam = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          24,
+        );
+        final updatedAtUtcMsParam = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          26,
+        );
+        final object = EntityBill(
+          id: idParam,
+          billNo: billNoParam,
+          customerName: customerNameParam,
+          customerPhone: customerPhoneParam,
+          totalAmount: totalAmountParam,
+          discount: discountParam,
+          tax: taxParam,
+          grandTotal: grandTotalParam,
+          status: statusParam,
+          paymentMode: paymentModeParam,
+          createdAtUtcMs: createdAtUtcMsParam,
+          updatedAtUtcMs: updatedAtUtcMsParam,
+        );
+        obx_int.InternalToManyAccess.setRelInfo<EntityBill>(
+          object.items,
+          store,
+          obx_int.RelInfo<EntityBillItem>.toOneBacklink(
+            10,
+            object.id,
+            (EntityBillItem srcObject) => srcObject.bill,
+          ),
+        );
+        return object;
+      },
+    ),
+    EntityBillItem: obx_int.EntityDefinition<EntityBillItem>(
+      model: _entities[10],
+      toOneRelations: (EntityBillItem object) => [object.bill, object.item],
+      toManyRelations: (EntityBillItem object) => {},
+      getId: (EntityBillItem object) => object.id,
+      setId: (EntityBillItem object, int id) {
+        object.id = id;
+      },
+      objectToFB: (EntityBillItem object, fb.Builder fbb) {
+        final itemNameOffset = object.itemName == null
+            ? null
+            : fbb.writeString(object.itemName!);
+        final itemBarcodeOffset = object.itemBarcode == null
+            ? null
+            : fbb.writeString(object.itemBarcode!);
+        final unitOffset = object.unit == null
+            ? null
+            : fbb.writeString(object.unit!);
+        fbb.startTable(12);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(1, itemNameOffset);
+        fbb.addOffset(2, itemBarcodeOffset);
+        fbb.addOffset(3, unitOffset);
+        fbb.addFloat64(4, object.price);
+        fbb.addInt64(5, object.qty);
+        fbb.addFloat64(6, object.tax);
+        fbb.addFloat64(7, object.discount);
+        fbb.addFloat64(8, object.total);
+        fbb.addInt64(9, object.bill.targetId);
+        fbb.addInt64(10, object.item.targetId);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final itemNameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 6);
+        final itemBarcodeParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 8);
+        final unitParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 10);
+        final priceParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          12,
+        );
+        final qtyParam = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          14,
+        );
+        final taxParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          16,
+        );
+        final discountParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          18,
+        );
+        final totalParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          20,
+        );
+        final object = EntityBillItem(
+          id: idParam,
+          itemName: itemNameParam,
+          itemBarcode: itemBarcodeParam,
+          unit: unitParam,
+          price: priceParam,
+          qty: qtyParam,
+          tax: taxParam,
+          discount: discountParam,
+          total: totalParam,
+        );
+        object.bill.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          22,
+          0,
+        );
+        object.bill.attach(store);
+        object.item.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          24,
+          0,
+        );
+        object.item.attach(store);
+        return object;
+      },
+    ),
   };
 
   return obx_int.ModelDefinition(model, bindings);
@@ -1673,6 +2158,36 @@ class EntityCustomer_ {
   /// See [EntityCustomer.createdAtUtcMs].
   static final createdAtUtcMs = obx.QueryIntegerProperty<EntityCustomer>(
     _entities[2].properties[5],
+  );
+
+  /// See [EntityCustomer.city].
+  static final city = obx.QueryStringProperty<EntityCustomer>(
+    _entities[2].properties[6],
+  );
+
+  /// See [EntityCustomer.state].
+  static final state = obx.QueryStringProperty<EntityCustomer>(
+    _entities[2].properties[7],
+  );
+
+  /// See [EntityCustomer.zipCode].
+  static final zipCode = obx.QueryStringProperty<EntityCustomer>(
+    _entities[2].properties[8],
+  );
+
+  /// See [EntityCustomer.notes].
+  static final notes = obx.QueryStringProperty<EntityCustomer>(
+    _entities[2].properties[9],
+  );
+
+  /// See [EntityCustomer.isActive].
+  static final isActive = obx.QueryBooleanProperty<EntityCustomer>(
+    _entities[2].properties[10],
+  );
+
+  /// See [EntityCustomer.updatedAtUtcMs].
+  static final updatedAtUtcMs = obx.QueryIntegerProperty<EntityCustomer>(
+    _entities[2].properties[11],
   );
 }
 
@@ -1949,4 +2464,130 @@ class EntityStockTransaction_ {
       obx.QueryIntegerProperty<EntityStockTransaction>(
         _entities[8].properties[8],
       );
+}
+
+/// [EntityBill] entity fields to define ObjectBox queries.
+class EntityBill_ {
+  /// See [EntityBill.id].
+  static final id = obx.QueryIntegerProperty<EntityBill>(
+    _entities[9].properties[0],
+  );
+
+  /// See [EntityBill.billNo].
+  static final billNo = obx.QueryStringProperty<EntityBill>(
+    _entities[9].properties[1],
+  );
+
+  /// See [EntityBill.customerName].
+  static final customerName = obx.QueryStringProperty<EntityBill>(
+    _entities[9].properties[2],
+  );
+
+  /// See [EntityBill.customerPhone].
+  static final customerPhone = obx.QueryStringProperty<EntityBill>(
+    _entities[9].properties[3],
+  );
+
+  /// See [EntityBill.totalAmount].
+  static final totalAmount = obx.QueryDoubleProperty<EntityBill>(
+    _entities[9].properties[4],
+  );
+
+  /// See [EntityBill.discount].
+  static final discount = obx.QueryDoubleProperty<EntityBill>(
+    _entities[9].properties[5],
+  );
+
+  /// See [EntityBill.tax].
+  static final tax = obx.QueryDoubleProperty<EntityBill>(
+    _entities[9].properties[6],
+  );
+
+  /// See [EntityBill.grandTotal].
+  static final grandTotal = obx.QueryDoubleProperty<EntityBill>(
+    _entities[9].properties[7],
+  );
+
+  /// See [EntityBill.status].
+  static final status = obx.QueryStringProperty<EntityBill>(
+    _entities[9].properties[8],
+  );
+
+  /// See [EntityBill.paymentMode].
+  static final paymentMode = obx.QueryStringProperty<EntityBill>(
+    _entities[9].properties[9],
+  );
+
+  /// See [EntityBill.createdAtUtcMs].
+  static final createdAtUtcMs = obx.QueryIntegerProperty<EntityBill>(
+    _entities[9].properties[10],
+  );
+
+  /// See [EntityBill.updatedAtUtcMs].
+  static final updatedAtUtcMs = obx.QueryIntegerProperty<EntityBill>(
+    _entities[9].properties[11],
+  );
+
+  /// see [EntityBill.items]
+  static final items = obx.QueryBacklinkToMany<EntityBillItem, EntityBill>(
+    EntityBillItem_.bill,
+  );
+}
+
+/// [EntityBillItem] entity fields to define ObjectBox queries.
+class EntityBillItem_ {
+  /// See [EntityBillItem.id].
+  static final id = obx.QueryIntegerProperty<EntityBillItem>(
+    _entities[10].properties[0],
+  );
+
+  /// See [EntityBillItem.itemName].
+  static final itemName = obx.QueryStringProperty<EntityBillItem>(
+    _entities[10].properties[1],
+  );
+
+  /// See [EntityBillItem.itemBarcode].
+  static final itemBarcode = obx.QueryStringProperty<EntityBillItem>(
+    _entities[10].properties[2],
+  );
+
+  /// See [EntityBillItem.unit].
+  static final unit = obx.QueryStringProperty<EntityBillItem>(
+    _entities[10].properties[3],
+  );
+
+  /// See [EntityBillItem.price].
+  static final price = obx.QueryDoubleProperty<EntityBillItem>(
+    _entities[10].properties[4],
+  );
+
+  /// See [EntityBillItem.qty].
+  static final qty = obx.QueryIntegerProperty<EntityBillItem>(
+    _entities[10].properties[5],
+  );
+
+  /// See [EntityBillItem.tax].
+  static final tax = obx.QueryDoubleProperty<EntityBillItem>(
+    _entities[10].properties[6],
+  );
+
+  /// See [EntityBillItem.discount].
+  static final discount = obx.QueryDoubleProperty<EntityBillItem>(
+    _entities[10].properties[7],
+  );
+
+  /// See [EntityBillItem.total].
+  static final total = obx.QueryDoubleProperty<EntityBillItem>(
+    _entities[10].properties[8],
+  );
+
+  /// See [EntityBillItem.bill].
+  static final bill = obx.QueryRelationToOne<EntityBillItem, EntityBill>(
+    _entities[10].properties[9],
+  );
+
+  /// See [EntityBillItem.item].
+  static final item = obx.QueryRelationToOne<EntityBillItem, EntityItem>(
+    _entities[10].properties[10],
+  );
 }

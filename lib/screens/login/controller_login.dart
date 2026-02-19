@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../enums/enum_permission.dart';
 import '../../commons/loader.dart';
 import '../../model/entity_user.dart';
 import '../../objectbox.g.dart';
@@ -58,6 +59,18 @@ class ControllerLogin extends GetxController {
       return;
     }
     // reassign theme, local, currency after logout
+
+    // ✅ PATCH: Ensure superAdmin has all permissions (including new ones)
+    if (user.role == 'superAdmin') {
+      final allPermissions = EnumPermission.values.map((e) => e.name).toList();
+      user.permissions ??= [];
+      for (var p in allPermissions) {
+        if (!user.permissions!.contains(p)) {
+          user.permissions!.add(p);
+        }
+      }
+      debugPrint("superAdmin permissions updated: ${user.permissions?.length}");
+    }
 
     // update login details in Entity User
     user.lastLoginAt = MyDateTime.getCurrentDateTimeUtc();

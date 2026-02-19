@@ -12,8 +12,15 @@ class EntityCustomer {
 
   String? email;
   String? address;
+  String? city;
+  String? state;
+  String? zipCode;
+  String? notes;
+
+  bool? isActive;
 
   int? createdAtUtcMs;
+  int? updatedAtUtcMs;
 
   EntityCustomer({
     this.id,
@@ -21,6 +28,12 @@ class EntityCustomer {
     this.phone,
     this.email,
     this.address,
+    this.city,
+    this.state,
+    this.zipCode,
+    this.notes,
+    this.isActive = true,
     this.createdAtUtcMs,
+    this.updatedAtUtcMs,
   });
 }

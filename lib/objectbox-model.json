@@ -143,7 +143,7 @@
     },
     {
       "id": "7:6957403195654332351",
-      "lastPropertyId": "6:1240644198477219067",
+      "lastPropertyId": "12:227732410171256254",
       "name": "EntityCustomer",
       "properties": [
         {
@@ -177,6 +177,36 @@
         {
           "id": "6:1240644198477219067",
           "name": "createdAtUtcMs",
+          "type": 6
+        },
+        {
+          "id": "7:4537990594524439814",
+          "name": "city",
+          "type": 9
+        },
+        {
+          "id": "8:1010826944093493209",
+          "name": "state",
+          "type": 9
+        },
+        {
+          "id": "9:744982795197065170",
+          "name": "zipCode",
+          "type": 9
+        },
+        {
+          "id": "10:2903729224586468378",
+          "name": "notes",
+          "type": 9
+        },
+        {
+          "id": "11:7638899337305408224",
+          "name": "isActive",
+          "type": 1
+        },
+        {
+          "id": "12:227732410171256254",
+          "name": "updatedAtUtcMs",
           "type": 6
         }
       ],
@@ -502,10 +532,151 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "14:5072473716951944501",
+      "lastPropertyId": "12:5931572769748908165",
+      "name": "EntityBill",
+      "properties": [
+        {
+          "id": "1:8794663054882015395",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7009207134032877517",
+          "name": "billNo",
+          "indexId": "10:4447828812248963486",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:4889363566276016465",
+          "name": "customerName",
+          "type": 9
+        },
+        {
+          "id": "4:8712912414189095513",
+          "name": "customerPhone",
+          "type": 9
+        },
+        {
+          "id": "5:6413254449775989380",
+          "name": "totalAmount",
+          "type": 8
+        },
+        {
+          "id": "6:2682579180649177317",
+          "name": "discount",
+          "type": 8
+        },
+        {
+          "id": "7:8263890204918224435",
+          "name": "tax",
+          "type": 8
+        },
+        {
+          "id": "8:4385459928389271056",
+          "name": "grandTotal",
+          "type": 8
+        },
+        {
+          "id": "9:7058531334902864373",
+          "name": "status",
+          "type": 9
+        },
+        {
+          "id": "10:1696407232100335250",
+          "name": "paymentMode",
+          "type": 9
+        },
+        {
+          "id": "11:5912601309257829919",
+          "name": "createdAtUtcMs",
+          "type": 6
+        },
+        {
+          "id": "12:5931572769748908165",
+          "name": "updatedAtUtcMs",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "15:6240376876973177221",
+      "lastPropertyId": "11:2328700593331447522",
+      "name": "EntityBillItem",
+      "properties": [
+        {
+          "id": "1:5195672584165577280",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3058214093872395752",
+          "name": "itemName",
+          "type": 9
+        },
+        {
+          "id": "3:213456516061683211",
+          "name": "itemBarcode",
+          "type": 9
+        },
+        {
+          "id": "4:8144542251383078784",
+          "name": "unit",
+          "type": 9
+        },
+        {
+          "id": "5:333959957751241786",
+          "name": "price",
+          "type": 8
+        },
+        {
+          "id": "6:4376994012193444372",
+          "name": "qty",
+          "type": 6
+        },
+        {
+          "id": "7:2233838776067179060",
+          "name": "tax",
+          "type": 8
+        },
+        {
+          "id": "8:9153987922491138134",
+          "name": "discount",
+          "type": 8
+        },
+        {
+          "id": "9:2289206754922468161",
+          "name": "total",
+          "type": 8
+        },
+        {
+          "id": "10:8011483227828044248",
+          "name": "billId",
+          "indexId": "11:7306598124643082789",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "EntityBill"
+        },
+        {
+          "id": "11:2328700593331447522",
+          "name": "itemId",
+          "indexId": "12:7345913932769877499",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "EntityItem"
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "13:5039108625147766016",
-  "lastIndexId": "9:6800825721964715456",
+  "lastEntityId": "15:6240376876973177221",
+  "lastIndexId": "12:7345913932769877499",
   "lastRelationId": "1:6501938934487787319",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

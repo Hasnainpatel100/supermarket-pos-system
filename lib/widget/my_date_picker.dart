@@ -29,7 +29,7 @@ class MyDatePicker extends StatelessWidget {
       context: context,
       initialDate: _getInitialDate(),
       firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
+      lastDate: DateTime(2101),
     );
 
     if (picked != null) {

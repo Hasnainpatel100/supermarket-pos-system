@@ -9,6 +9,8 @@ enum EnumMainMenu {
   purchaseSupplier,
   reports,
 
+  customer,
+
   system,
   systemUsers, // 1. system
   systemSettings, // 2. system

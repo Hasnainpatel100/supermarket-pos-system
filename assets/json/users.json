@@ -44,7 +44,10 @@
       "roleAssign",
       "systemSettingsUpdate",
       "dataSyncManual",
-      "auditLogView"
+      "auditLogView",
+      "customerCreate",
+      "customerDelete",
+      "customerEdit"
     ],
     "storeId": "656abc9012ff99887766aaaa",
     "isActive": true
@@ -94,7 +97,10 @@
       "roleAssign",
       "systemSettingsUpdate",
       "dataSyncManual",
-      "auditLogView"
+      "auditLogView",
+      "customerCreate",
+      "customerEdit",
+      "customerDelete"
     ],
     "storeId": "656abc9012ff99887766aaaa",
     "isActive": true
@@ -196,7 +202,10 @@
       "reportStockView",
       "reportTaxView",
       "auditLogView",
-      "reportExport"
+      "reportExport",
+      "customerCreate",
+      "customerEdit",
+      "customerDelete"
     ],
     "storeId": "656abc9012ff99887766aaaa",
     "isActive": true

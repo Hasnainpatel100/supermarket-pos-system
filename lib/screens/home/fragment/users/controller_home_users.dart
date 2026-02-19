@@ -13,28 +13,63 @@ class ControllerHomeUsers extends GetxController {
   late Box<EntityUser> _boxUser;
   final RxList<EntityUser> rxListUser = <EntityUser>[].obs;
 
+  final searchController = TextEditingController();
+  final rxSearchQuery = ''.obs;
+
   @override
   void onInit() {
     final ob = Get.find<ServiceObjectBox>();
     _boxUser = ob.box<EntityUser>();
+
+    // Debounce search
+    debounce(
+      rxSearchQuery,
+      (_) => loadUsers(),
+      time: const Duration(milliseconds: 300),
+    );
+
     loadUsers();
     super.onInit();
   }
 
   void loadUsers() async {
-    var list = _boxUser.getAll();
-    debugPrint("loadUsers size: ${list.length}");
-    rxListUser.value = list;
-  }
-  void saveUser(EntityUser user) {
-    _boxUser.put(user);       // Save into ObjectBox
-    loadUsers();             // Refresh the UI list
+    final query = _boxUser
+        .query(
+          EntityUser_.username
+              .contains(rxSearchQuery.value, caseSensitive: false)
+              .or(
+                EntityUser_.first.contains(
+                  rxSearchQuery.value,
+                  caseSensitive: false,
+                ),
+              )
+              .or(
+                EntityUser_.last.contains(
+                  rxSearchQuery.value,
+                  caseSensitive: false,
+                ),
+              ),
+        )
+        .order(EntityUser_.username)
+        .build();
+
+    rxListUser.assignAll(query.find());
   }
 
+  void saveUser(EntityUser user) {
+    _boxUser.put(user); // Save into ObjectBox
+    loadUsers(); // Refresh the UI list
+  }
 
   void toggleActive(EntityUser user) {
     user.isActive = !(user.isActive ?? true);
     _boxUser.put(user);
     loadUsers();
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
   }
 }

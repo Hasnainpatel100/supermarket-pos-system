@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:super_market/screens/home/fragment/customer/fragment_home_customer.dart';
 import 'package:super_market/screens/home/fragment/item/fragment_home_item.dart';
+import 'package:super_market/screens/home/fragment/pos/fragment_home_pos.dart';
 import 'package:super_market/screens/home/fragment/stocks/fragment_home_stock.dart';
 
 import '../../commons/frag_coming_soon.dart';
@@ -9,9 +11,8 @@ import '../../model/entity_user.dart';
 import '../../repository/repo_drawer.dart';
 import 'controller_home.dart';
 import 'fragment/frag_home_dashboard.dart';
-import 'fragment/frag_home_inventory.dart';
 import 'fragment/frag_home_logout.dart';
-import 'fragment/frag_home_pos.dart';
+// import 'fragment/frag_home_pos.dart'; // Removed to avoid conflict
 import 'fragment/frag_home_price_discount.dart';
 import 'fragment/frag_home_purchase_supplier.dart';
 import 'fragment/frag_home_report.dart';
@@ -47,20 +48,20 @@ class ActivityHome extends StatelessWidget {
                 return FragHomeDashboard();
               }
               if (controller.selectedMainMenu.value == EnumMainMenu.pos) {
-                return FragHomePos();
+                return FragmentHomePos();
               }
               if (controller.selectedMainMenu.value == EnumMainMenu.item) {
                 return FragmentHomeItem();
               }
-              if(controller.selectedMainMenu.value == EnumMainMenu.stocks){
+              if (controller.selectedMainMenu.value == EnumMainMenu.stocks) {
                 return FragmentHomeStock();
               }
-              if (controller.selectedMainMenu.value == EnumMainMenu.pricingDiscount) {
-                return FragHomePriceDiscount();
+              if (controller.selectedMainMenu.value == EnumMainMenu.customer) {
+                return FragmentHomeCustomer();
               }
               if (controller.selectedMainMenu.value ==
-                  EnumMainMenu.purchaseSupplier) {
-                return FragHomePurchaseSupplier();
+                  EnumMainMenu.pricingDiscount) {
+                return FragHomePriceDiscount();
               }
               if (controller.selectedMainMenu.value == EnumMainMenu.reports) {
                 return FragHomeReport();

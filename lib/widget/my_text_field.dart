@@ -7,6 +7,8 @@ class MyTextField extends StatelessWidget {
   final bool required;
   final bool obscure;
   final bool isNumber;
+  final IconData? prefixIcon;
+  final int maxLines;
 
   const MyTextField({
     super.key,
@@ -15,6 +17,8 @@ class MyTextField extends StatelessWidget {
     this.required = false,
     this.obscure = false,
     this.isNumber = false,
+    this.prefixIcon,
+    this.maxLines = 1,
   });
 
   @override
@@ -22,14 +26,12 @@ class MyTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
+      maxLines: maxLines,
 
-      keyboardType:
-      isNumber ? TextInputType.number : TextInputType.text,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
 
       inputFormatters: isNumber
-          ? <TextInputFormatter>[
-        FilteringTextInputFormatter.digitsOnly,
-      ]
+          ? <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly]
           : null,
 
       // ✅ Validator without layout jump
@@ -42,6 +44,7 @@ class MyTextField extends StatelessWidget {
 
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
 
         // ⭐ Label with required *
         label: RichText(
@@ -50,22 +53,22 @@ class MyTextField extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
             children: required
                 ? [
-              TextSpan(
-                text: ' *',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ]
+                    TextSpan(
+                      text: ' *',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ]
                 : [],
           ),
         ),
 
         // 🔒 Reserve error space permanently
         errorStyle: const TextStyle(
-          height: 0,     // no text height
-          fontSize: 0,   // invisible
+          height: 0, // no text height
+          fontSize: 0, // invisible
         ),
       ),
     );

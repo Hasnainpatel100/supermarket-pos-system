@@ -31,6 +31,12 @@ enum EnumPermission {
   purchaseReceive,
   supplierManage,
 
+  //customer
+  customerCreate,
+  customerEdit,
+  customerDelete,
+
+
   // Reports
   reportSalesView,
   reportStockView,

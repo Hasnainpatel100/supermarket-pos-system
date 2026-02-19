@@ -74,6 +74,22 @@ class RepoDrawer {
 
   static List<ModelDrawerMenu> mainMenus = [
     ModelDrawerMenu(
+      menu: EnumMainMenu.item,
+      titleKey: 'item',
+      icon: Icons.widgets_rounded,
+      permissions: [
+        EnumPermission.itemCreate,
+        EnumPermission.itemUpdate,
+        EnumPermission.itemView,
+        EnumPermission.stockIn,
+        EnumPermission.stockOut,
+        EnumPermission.stockAdjust,
+        EnumPermission.stockCount,
+        EnumPermission.stockView,
+        EnumPermission.expiryManage,
+      ],
+    ),
+    ModelDrawerMenu(
       menu: EnumMainMenu.pos,
       titleKey: 'pos',
       icon: Icons.edit_note_rounded,
@@ -130,60 +146,35 @@ class RepoDrawer {
     //     ),
     //   ],
     // ),
-
     ModelDrawerMenu(
-      menu: EnumMainMenu.inventory,
-      titleKey: 'inventory',
-      icon: Icons.inventory_2_outlined,
+      menu: EnumMainMenu.stocks,
+      titleKey: 'stocks history',
+      icon: Icons.inventory,
       permissions: [
-        EnumPermission.itemCreate,
-        EnumPermission.itemUpdate,
-        EnumPermission.itemView,
-        EnumPermission.stockIn,
-        EnumPermission.stockOut,
         EnumPermission.stockAdjust,
         EnumPermission.stockCount,
+        EnumPermission.stockAdjust,
+        EnumPermission.stockIn,
+        EnumPermission.stockOut,
         EnumPermission.stockView,
-        EnumPermission.expiryManage,
-      ],
-      children: [
-        ModelDrawerMenu(
-          menu: EnumMainMenu.item,
-          titleKey: 'item',
-          icon: Icons.widgets_rounded,
-          permissions: [
-            EnumPermission.itemCreate,
-            EnumPermission.itemUpdate,
-            EnumPermission.itemView,
-          ],
-        ),
-        ModelDrawerMenu(
-          menu: EnumMainMenu.stocks,
-          titleKey: 'stocks',
-          icon: Icons.inventory,
-          permissions: [
-            EnumPermission.stockAdjust,
-            EnumPermission.stockCount,
-            EnumPermission.stockAdjust,
-            EnumPermission.stockIn,
-            EnumPermission.stockOut,
-            EnumPermission.stockView,
-          ],
-        ),
       ],
     ),
+
     ModelDrawerMenu(
-      menu: EnumMainMenu.pricingDiscount,
-      titleKey: 'pricing_discount',
+      menu: EnumMainMenu.customer,
+      titleKey: 'customer',
       icon: Icons.local_offer_outlined,
       permissions: [
-        EnumPermission.priceView,
+       EnumPermission.priceView,
         EnumPermission.priceUpdate,
         EnumPermission.discountApply,
         EnumPermission.discountOverride,
+        EnumPermission.customerEdit,
+        EnumPermission.customerEdit,
+        EnumPermission.customerDelete
       ],
     ),
-    ModelDrawerMenu(
+    /*ModelDrawerMenu(
       menu: EnumMainMenu.purchaseSupplier,
       titleKey: 'purchase_supplier',
       icon: Icons.shopping_cart_outlined,
@@ -192,7 +183,7 @@ class RepoDrawer {
         EnumPermission.purchaseReceive,
         EnumPermission.supplierManage,
       ],
-    ),
+    ),*/
     ModelDrawerMenu(
       menu: EnumMainMenu.reports,
       titleKey: 'reports',

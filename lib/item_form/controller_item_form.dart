@@ -3,13 +3,16 @@ import 'package:get/get.dart';
 
 import '../model/entity_item.dart';
 import '../service/service_item.dart';
+import 'activity_item_batch_form.dart';
 
 class ControllerItemForm extends GetxController {
   final ItemService itemService;
 
   ControllerItemForm(this.itemService);
 
-  final formKey = GlobalKey<FormState>();   /// ⭐ IMPORTANT
+  final formKey = GlobalKey<FormState>();
+
+  /// ⭐ IMPORTANT
 
   EntityItem? editingItem;
 
@@ -45,7 +48,6 @@ class ControllerItemForm extends GetxController {
   }
 
   void saveItem() {
-
     if (!formKey.currentState!.validate()) {
       Get.snackbar("Error", "Please fill required fields");
       return;
@@ -54,8 +56,9 @@ class ControllerItemForm extends GetxController {
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
 
     try {
+      EntityItem savedItem;
       if (editingItem == null) {
-        final item = EntityItem(
+        savedItem = EntityItem(
           name: nameController.text,
           barcode: barcodeController.text,
           sku: skuController.text,
@@ -69,23 +72,27 @@ class ControllerItemForm extends GetxController {
           updatedAtUtcMs: now,
         );
 
-        itemService.createItem(item);
+        itemService.createItem(savedItem);
       } else {
         editingItem?.name = nameController.text;
         editingItem?.barcode = barcodeController.text;
         editingItem?.sku = skuController.text;
-        editingItem?.sellingPrice =
-            double.tryParse(priceController.text);
-        editingItem?.costPrice =
-            double.tryParse(costController.text);
+        editingItem?.sellingPrice = double.tryParse(priceController.text);
+        editingItem?.costPrice = double.tryParse(costController.text);
         editingItem?.unit = unitController.text;
         editingItem?.hasExpiry = hasExpiry.value;
         editingItem?.updatedAtUtcMs = now;
 
         itemService.updateItem(editingItem!);
+        savedItem = editingItem!;
       }
 
-      Get.back();
+      if (hasExpiry.value) {
+        // If item has expiry, go to batch creation
+        Get.off(() => const ActivityItemBatchForm(), arguments: savedItem);
+      } else {
+        Get.back();
+      }
     } catch (e) {
       Get.snackbar("Error", "Duplicate SKU / Barcode");
     }

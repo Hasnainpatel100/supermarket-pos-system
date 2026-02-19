@@ -1,6 +1,1 @@
-enum EnumUserAction {
-  edit,
-  assignRole,
-  toggle,
-  details
-}
+enum EnumUserAction { edit, assignRole, details, toggle }

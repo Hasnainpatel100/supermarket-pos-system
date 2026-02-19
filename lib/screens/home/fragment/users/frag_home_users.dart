@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:super_market/screens/home/fragment/users/controller_home_users.dart';
 import 'package:super_market/widget/my_card.dart';
-import 'package:super_market/widget/my_card_with_header.dart';
 
 import '../../../../enums/enum_permission.dart';
 import '../../../../enums/enum_user_action.dart';
 import '../../../../model/entity_user.dart';
 import '../../../../util/app_route.dart';
-import '../../../../widget/button_permission.dart';
+import '../../../../util/snackbar_util.dart';
 import '../../controller_home.dart';
 
 class FragHomeUsers extends StatelessWidget {
@@ -22,88 +21,369 @@ class FragHomeUsers extends StatelessWidget {
       ControllerHomeUsers(entityUser: entityUser),
     );
     ControllerHome controllerHome = Get.find();
+    final colorScheme = Theme.of(context).colorScheme;
 
     final canUpdate = controllerHome.can(EnumPermission.userUpdate);
     final canDisable = controllerHome.can(EnumPermission.userDisable);
     final canAssign = controllerHome.can(EnumPermission.roleAssign);
+    final canCreate = controllerHome.can(EnumPermission.userCreate);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('users'.tr),
+        title: Row(
+          children: [
+            Icon(Icons.group_outlined, color: colorScheme.primary, size: 24),
+            const SizedBox(width: 10),
+            Text('users'.tr, style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
         actions: [
-          ButtonPermission(
-            permission: EnumPermission.userCreate.name,
-            permissions: entityUser!.permissions ?? [],
-            icon: Icons.person_add,
-            label: 'Create User',
-            onPressed: () async {
-              await Get.to(AppRoute.user);
-              controller.loadUsers();
-            },
-          ),
+          /// ── Create User Button ──
+          if (canCreate)
+            FilledButton.icon(
+              onPressed: () async {
+                await Get.toNamed(AppRoute.user);
+                controller.loadUsers();
+              },
+              icon: const Icon(Icons.person_add_rounded, size: 18),
+              label: Text('Create User'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          const SizedBox(width: 16),
         ],
-      ),
-      body: Obx(
-        () => MyCard(
-          margin: const EdgeInsets.all(16),
-          child: DataTable(
-            columns: const [
-              DataColumn(label: Text('Username')),
-              DataColumn(label: Text('Name')),
-              DataColumn(label: Text('Role')),
-              DataColumn(label: Text('Status')),
-              DataColumn(label: Text('Last Login')),
-              DataColumn(label: Text('Action')),
-            ],
-            rows: controller.rxListUser.map((u) {
-              return DataRow(
-                cells: [
-                  DataCell(Text(u.username ?? '-')),
-                  DataCell(Text("${u.first ?? ''} ${u.last ?? ''}".trim())),
-                  DataCell(Text(u.role ?? '-')),
-                  DataCell(
-                    Text(
-                      (u.isActive ?? true) ? "Active" : "Disabled",
-                      style: TextStyle(
-                        color: (u.isActive ?? true) ? Colors.green : Colors.red,
-                      ),
-                    ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              controller: controller.searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by name or username...',
+                hintStyle: TextStyle(color: Colors.grey.shade400),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: colorScheme.primary,
+                ),
+                suffixIcon: Obx(
+                  () => controller.rxSearchQuery.value.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: Colors.grey.shade500,
+                          ),
+                          onPressed: () {
+                            controller.searchController.clear();
+                            controller.rxSearchQuery.value = '';
+                          },
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
                   ),
-                  DataCell(Text(u.lastLoginAt ?? "-")),
-                  DataCell(
-                    PopupMenuButton<EnumUserAction>(
-                      onSelected: (action) =>
-                          _handleUserAction(action, u, controller),
-                      itemBuilder: (_) => [
-                        if (canUpdate)
-                          const PopupMenuItem(
-                            value: EnumUserAction.edit,
-                            child: Text("Edit"),
-                          ),
-                        if (canAssign)
-                          const PopupMenuItem(
-                            value: EnumUserAction.assignRole,
-                            child: Text("Assign Role"),
-                          ),
-                        const PopupMenuItem(
-                          value: EnumUserAction.details,
-                          child: Text("User Details"),
-                        ),
-                        if (canDisable)
-                          PopupMenuItem(
-                            value: EnumUserAction.toggle,
-                            child: Text(
-                              (u.isActive ?? true) ? "Disable" : "Enable",
-                            ),
-                          ),
-                      ],
-                    ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: colorScheme.outline.withValues(alpha: 0.2),
                   ),
-                ],
-              );
-            }).toList(),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: colorScheme.primary,
+                    width: 1.5,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                filled: true,
+                fillColor: colorScheme.surface,
+              ),
+              onChanged: (val) => controller.rxSearchQuery.value = val,
+            ),
           ),
         ),
+      ),
+      body: Obx(
+        () => controller.rxListUser.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.person_search_rounded,
+                        size: 56,
+                        color: colorScheme.primary.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No users found',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : MyCard(
+                margin: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SingleChildScrollView(
+                    child: DataTable(
+                      columnSpacing: 16,
+                      horizontalMargin: 16,
+                      headingRowColor: WidgetStateProperty.all(
+                        colorScheme.primary.withValues(alpha: 0.04),
+                      ),
+                      headingTextStyle: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: colorScheme.onSurface,
+                      ),
+                      dividerThickness: 0.5,
+                      columns: const [
+                        DataColumn(label: Text('Username')),
+                        DataColumn(label: Text('Name')),
+                        DataColumn(label: Text('Role')),
+                        DataColumn(label: Text('Status')),
+                        DataColumn(label: Text('Last Login')),
+                        DataColumn(label: Text('Actions')),
+                      ],
+                      rows: controller.rxListUser.map((u) {
+                        final isActive = u.isActive ?? true;
+
+                        return DataRow(
+                          color: WidgetStateProperty.resolveWith<Color?>((
+                            states,
+                          ) {
+                            if (!isActive) {
+                              return Colors.grey.withValues(alpha: 0.05);
+                            }
+                            return null;
+                          }),
+                          cells: [
+                            /// Username
+                            DataCell(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor: colorScheme.primary
+                                        .withValues(alpha: 0.1),
+                                    child: Text(
+                                      (u.username != null &&
+                                              u.username!.isNotEmpty)
+                                          ? u.username![0].toUpperCase()
+                                          : '?',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    u.username ?? '-',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            /// Name
+                            DataCell(
+                              Text("${u.first ?? ''} ${u.last ?? ''}".trim()),
+                            ),
+
+                            /// Role
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  u.role ?? '-',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            /// Status Badge
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? Colors.green.withValues(alpha: 0.1)
+                                      : Colors.red.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: isActive
+                                            ? Colors.green.shade600
+                                            : Colors.red.shade500,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      isActive ? 'Active' : 'Disabled',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: isActive
+                                            ? Colors.green.shade700
+                                            : Colors.red.shade700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            /// Last Login
+                            DataCell(
+                              Text(
+                                u.lastLoginAt != null
+                                    ? u.lastLoginAt.toString().split(' ').first
+                                    : "-",
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+
+                            /// Actions
+                            DataCell(
+                              PopupMenuButton<EnumUserAction>(
+                                icon: Icon(
+                                  Icons.more_vert_rounded,
+                                  color: Colors.grey.shade500,
+                                ),
+                                tooltip: 'Actions',
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                onSelected: (action) =>
+                                    _handleUserAction(action, u, controller),
+                                itemBuilder: (_) => [
+                                  if (canUpdate)
+                                    const PopupMenuItem(
+                                      value: EnumUserAction.edit,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.edit_outlined,
+                                            size: 20,
+                                            color: Colors.blue,
+                                          ),
+                                          SizedBox(width: 12),
+                                          Text("Edit"),
+                                        ],
+                                      ),
+                                    ),
+                                  if (canAssign)
+                                    const PopupMenuItem(
+                                      value: EnumUserAction.assignRole,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.admin_panel_settings_outlined,
+                                            size: 20,
+                                            color: Colors.orange,
+                                          ),
+                                          SizedBox(width: 12),
+                                          Text("Assign Role"),
+                                        ],
+                                      ),
+                                    ),
+                                  const PopupMenuItem(
+                                    value: EnumUserAction.details,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.visibility_outlined,
+                                          size: 20,
+                                          color: Colors.deepPurple,
+                                        ),
+                                        SizedBox(width: 12),
+                                        Text("Details"),
+                                      ],
+                                    ),
+                                  ),
+                                  if (canDisable)
+                                    PopupMenuItem(
+                                      value: EnumUserAction.toggle,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            isActive
+                                                ? Icons.block_outlined
+                                                : Icons.check_circle_outline,
+                                            size: 20,
+                                            color: isActive
+                                                ? Colors.red
+                                                : Colors.green,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(isActive ? "Disable" : "Enable"),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                      dataRowMaxHeight: 52,
+                    ),
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -115,8 +395,10 @@ class FragHomeUsers extends StatelessWidget {
   ) {
     switch (action) {
       case EnumUserAction.edit:
-        Get.toNamed(AppRoute.user, arguments: user);
-        controller.loadUsers();
+        Get.toNamed(
+          AppRoute.user,
+          arguments: user,
+        )?.then((_) => controller.loadUsers());
         break;
 
       case EnumUserAction.assignRole:
@@ -129,22 +411,38 @@ class FragHomeUsers extends StatelessWidget {
 
       case EnumUserAction.toggle:
         Get.defaultDialog(
-          title: "Confirm",
+          title: (user.isActive ?? true) ? "Disable User?" : "Enable User?",
+          titleStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
           middleText:
-              "Are you sure you want to ${(user.isActive ?? true) ? "disable" : "enable"} this user?",
-          onConfirm: () {
-            controller.toggleActive(user);
-            Get.back();
-          },
-          textConfirm: "Yes",
-          textCancel: "Cancel",
+              "Are you sure you want to ${(user.isActive ?? true) ? "disable" : "enable"} ${user.username}?",
+          confirm: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: (user.isActive ?? true)
+                  ? Colors.red
+                  : Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              controller.toggleActive(user);
+              Get.back();
+              SnackbarUtil.showSuccess("User updated successfully");
+            },
+            child: Text((user.isActive ?? true) ? "Disable" : "Enable"),
+          ),
+          cancel: OutlinedButton(
+            onPressed: () => Get.back(),
+            child: const Text("Cancel"),
+          ),
         );
         break;
     }
   }
 }
 
-// ==================== PERMISSION ASSIGN =====================
+// ==================== PERMISSION ASSIGN & DETAILS (Kept Same) =====================
 
 List<String> _sortPermissions(Iterable<String> list) {
   final l = list.toList();
@@ -159,34 +457,69 @@ Widget _permissionList(
   RxString selected,
 ) {
   return Expanded(
-    child: MyCardWithHeader(
-      title: title,
-      child: Obx(
-        () => ListView.separated(
-          itemCount: list.length,
-          itemBuilder: (_, i) {
-            final item = list[i];
-            final isSelected = selected.value == item;
-
-            return Container(
-              color: isSelected ? Colors.blue.withValues(alpha: 0.25) : null,
-              child: ListTile(
-                title: Text(item),
-                trailing: isSelected
-                    ? const Icon(Icons.check, color: Colors.blue)
-                    : null,
-                onTap: () => selected.value = item,
-                onLongPress: () {
-                  list.remove(item);
-                  other.add(item);
-                  list.value = _sortPermissions(list);
-                  other.value = _sortPermissions(other);
-                },
+    child: Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
               ),
-            );
-          },
-          separatorBuilder: (_, __) => const Divider(height: 1),
-        ),
+            ),
+            child: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: Obx(
+              () => ListView.separated(
+                itemCount: list.length,
+                itemBuilder: (_, i) {
+                  final item = list[i];
+                  final isSelected = selected.value == item;
+
+                  return InkWell(
+                    onTap: () => selected.value = item,
+                    onLongPress: () {
+                      list.remove(item);
+                      other.add(item);
+                      list.value = _sortPermissions(list);
+                      other.value = _sortPermissions(other);
+                    },
+                    child: Container(
+                      color: isSelected
+                          ? Colors.blue.withValues(alpha: 0.1)
+                          : null,
+                      child: ListTile(
+                        title: Text(item, style: const TextStyle(fontSize: 13)),
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        trailing: isSelected
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.blue,
+                                size: 16,
+                              )
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                separatorBuilder: (_, __) =>
+                    Divider(height: 1, color: Colors.grey.shade100),
+              ),
+            ),
+          ),
+        ],
       ),
     ),
   );
@@ -202,7 +535,8 @@ Widget _buttons(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       IconButton(
-        icon: const Icon(Icons.arrow_forward),
+        icon: const Icon(Icons.arrow_forward_rounded),
+        color: Colors.blue,
         onPressed: () {
           if (selA.value.isNotEmpty) {
             available.remove(selA.value);
@@ -214,7 +548,8 @@ Widget _buttons(
         },
       ),
       IconButton(
-        icon: const Icon(Icons.arrow_back),
+        icon: const Icon(Icons.arrow_back_rounded),
+        color: Colors.blue,
         onPressed: () {
           if (selB.value.isNotEmpty) {
             assigned.remove(selB.value);
@@ -243,49 +578,75 @@ void _showRoleAssignDialog(EntityUser user) {
 
   Get.dialog(
     Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         width: 800,
-        height: 500,
-        padding: const EdgeInsets.all(16),
+        height: 600,
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Text(
-              "Assign Permissions to ${user.username}",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                const Icon(
+                  Icons.admin_panel_settings_rounded,
+                  size: 28,
+                  color: Colors.orange,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  "Assign Permissions",
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Text(
+              "User: ${user.username} (${user.role})",
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 24),
             Expanded(
               child: Row(
                 children: [
-                  _permissionList("Available", available, assigned, selA),
+                  _permissionList(
+                    "Available Permissions",
+                    available,
+                    assigned,
+                    selA,
+                  ),
                   _buttons(available, assigned, selA, selB),
-                  _permissionList("Assigned", assigned, available, selB),
+                  _permissionList(
+                    "Assigned Permissions",
+                    assigned,
+                    available,
+                    selB,
+                  ),
                 ],
               ),
             ),
-            SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                    },
-                    child: const Text("cancel"),
-                  ),
-                  SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      user.permissions = assigned.toList();
-                      Get.find<ControllerHomeUsers>().saveUser(user);
-                      Get.back();
-                    },
-                    child: const Text("Save"),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton(
+                  onPressed: () => Get.back(),
+                  child: const Text("Cancel"),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: () {
+                    user.permissions = assigned.toList();
+                    Get.find<ControllerHomeUsers>().saveUser(user);
+                    Get.back();
+                    SnackbarUtil.showSuccess("Permissions updated");
+                  },
+                  icon: const Icon(Icons.save_rounded, size: 18),
+                  label: const Text("Save Changes"),
+                ),
+              ],
             ),
           ],
         ),
@@ -293,49 +654,87 @@ void _showRoleAssignDialog(EntityUser user) {
     ),
   );
 }
-
-// ================= USER DETAILS =================
-
-Widget _info(String l, String? v) => Padding(
-  padding: const EdgeInsets.symmetric(vertical: 4),
-  child: Row(
-    children: [
-      SizedBox(
-        width: 120,
-        child: Text(l, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ),
-      Expanded(child: Text(v ?? "-")),
-    ],
-  ),
-);
 
 void _showUserDetails(EntityUser u) {
   Get.dialog(
     Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         width: 500,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "User Details",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.blue.shade50,
+                  child: Text(
+                    u.username?[0].toUpperCase() ?? "?",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      u.username ?? "-",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      u.role ?? "-",
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (u.isActive ?? true)
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    (u.isActive ?? true) ? "Active" : "Disabled",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: (u.isActive ?? true) ? Colors.green : Colors.red,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const Divider(),
-            _info("Username", u.username),
+            const Divider(height: 32),
             _info("Name", "${u.first} ${u.last}"),
-            _info("Role", u.role),
-            _info("Status", (u.isActive ?? true) ? "Active" : "Disabled"),
             _info("Mobile", u.mobileNumber),
             _info("Alt Mobile", u.alternateMobile),
             _info("ID Proof", "${u.idProofType} : ${u.idProofNumber}"),
             _info("Address", u.address),
-            _info("Last Login", u.lastLoginAt),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => Get.back(),
-              child: const Text("Close"),
+            _info("Last Login", u.lastLoginAt?.toString()),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Get.back(),
+                child: const Text("Close"),
+              ),
             ),
           ],
         ),
@@ -343,3 +742,28 @@ void _showUserDetails(EntityUser u) {
     ),
   );
 }
+
+Widget _info(String l, String? v) => Padding(
+  padding: const EdgeInsets.symmetric(vertical: 6),
+  child: Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(
+        width: 120,
+        child: Text(
+          l,
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      Expanded(
+        child: Text(
+          v ?? "-",
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+      ),
+    ],
+  ),
+);

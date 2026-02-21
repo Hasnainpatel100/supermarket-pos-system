@@ -196,7 +196,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(7, 6957403195654332351),
     name: 'EntityCustomer',
-    lastPropertyId: const obx_int.IdUid(12, 227732410171256254),
+    lastPropertyId: const obx_int.IdUid(13, 9202211278672421381),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -270,6 +270,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(12, 227732410171256254),
         name: 'updatedAtUtcMs',
         type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 9202211278672421381),
+        name: 'isVip',
+        type: 1,
         flags: 0,
       ),
     ],
@@ -1187,7 +1193,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final notesOffset = object.notes == null
             ? null
             : fbb.writeString(object.notes!);
-        fbb.startTable(13);
+        fbb.startTable(14);
         fbb.addInt64(0, object.id ?? 0);
         fbb.addOffset(1, nameOffset);
         fbb.addOffset(2, phoneOffset);
@@ -1200,6 +1206,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(9, notesOffset);
         fbb.addBool(10, object.isActive);
         fbb.addInt64(11, object.updatedAtUtcMs);
+        fbb.addBool(12, object.isVip);
         fbb.finish(fbb.endTable());
         return object.id ?? 0;
       },
@@ -1240,6 +1247,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
           rootOffset,
           24,
         );
+        final isVipParam = const fb.BoolReader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          28,
+        );
         final createdAtUtcMsParam = const fb.Int64Reader().vTableGetNullable(
           buffer,
           rootOffset,
@@ -1261,6 +1273,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           zipCode: zipCodeParam,
           notes: notesParam,
           isActive: isActiveParam,
+          isVip: isVipParam,
           createdAtUtcMs: createdAtUtcMsParam,
           updatedAtUtcMs: updatedAtUtcMsParam,
         );
@@ -2188,6 +2201,11 @@ class EntityCustomer_ {
   /// See [EntityCustomer.updatedAtUtcMs].
   static final updatedAtUtcMs = obx.QueryIntegerProperty<EntityCustomer>(
     _entities[2].properties[11],
+  );
+
+  /// See [EntityCustomer.isVip].
+  static final isVip = obx.QueryBooleanProperty<EntityCustomer>(
+    _entities[2].properties[12],
   );
 }
 

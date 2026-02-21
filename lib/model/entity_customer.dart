@@ -18,6 +18,7 @@ class EntityCustomer {
   String? notes;
 
   bool? isActive;
+  bool? isVip;
 
   int? createdAtUtcMs;
   int? updatedAtUtcMs;
@@ -33,6 +34,7 @@ class EntityCustomer {
     this.zipCode,
     this.notes,
     this.isActive = true,
+    this.isVip = false,
     this.createdAtUtcMs,
     this.updatedAtUtcMs,
   });

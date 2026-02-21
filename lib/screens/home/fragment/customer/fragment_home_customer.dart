@@ -217,16 +217,31 @@ class FragmentHomeCustomer extends StatelessWidget {
                             return null;
                           }),
                           cells: [
-                            /// Name
+                            /// Name — show ★ prefix for VIP customers
                             DataCell(
-                              Text(
-                                customer.name ?? '-',
-                                style: TextStyle(
-                                  fontWeight: isActive
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                  color: isActive ? null : Colors.grey,
-                                ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (customer.isVip == true) ...[
+                                    Text(
+                                      '★ ',
+                                      style: TextStyle(
+                                        color: Colors.amber.shade600,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                  Text(
+                                    customer.name ?? '-',
+                                    style: TextStyle(
+                                      fontWeight: isActive
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                      color: isActive ? null : Colors.grey,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
 
@@ -324,13 +339,6 @@ class FragmentHomeCustomer extends StatelessWidget {
                                         controller,
                                       );
                                       break;
-                                    case 'delete':
-                                      _confirmDelete(
-                                        context,
-                                        customer,
-                                        controller,
-                                      );
-                                      break;
                                   }
                                 },
                                 itemBuilder: (_) => [
@@ -382,26 +390,6 @@ class FragmentHomeCustomer extends StatelessWidget {
                                             color: isActive
                                                 ? Colors.orange.shade500
                                                 : Colors.green.shade600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const PopupMenuDivider(),
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.delete_outline_rounded,
-                                          size: 20,
-                                          color: Colors.red.shade600,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          'Delete',
-                                          style: TextStyle(
-                                            color: Colors.red.shade600,
                                           ),
                                         ),
                                       ],
@@ -467,46 +455,6 @@ class FragmentHomeCustomer extends StatelessWidget {
           );
         },
         label: Text(isCurrentlyActive ? 'Deactivate' : 'Activate'),
-      ),
-      cancel: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        ),
-        onPressed: () => Get.back(),
-        child: const Text('Cancel'),
-      ),
-    );
-  }
-
-  void _confirmDelete(
-    BuildContext context,
-    EntityCustomer customer,
-    ControllerHomeCustomer controller,
-  ) {
-    Get.defaultDialog(
-      title: 'Delete Customer?',
-      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      middleText:
-          'Are you sure you want to permanently delete "${customer.name}"? This action cannot be undone.',
-      confirm: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red.shade600,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        ),
-        icon: const Icon(Icons.delete_forever_rounded, size: 20),
-        onPressed: () {
-          controller.deleteCustomer(customer);
-          Get.back();
-          SnackbarUtil.showSuccess('Customer deleted successfully');
-        },
-        label: const Text('Delete'),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(

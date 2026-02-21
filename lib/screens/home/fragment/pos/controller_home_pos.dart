@@ -5,15 +5,21 @@ import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_customer.dart';
 import '../../../../model/entity_item.dart';
+import '../../../../model/entity_item_batch.dart';
+import '../../../../model/entity_stock_transaction.dart';
+import '../../../../model/stock_txn_type.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../util/snackbar_util.dart';
+import '../item/controller_home_item.dart';
 
 class ControllerHomePos extends GetxController {
   late Box<EntityItem> _boxItem;
+  late Box<EntityItemBatch> _boxBatch;
   late Box<EntityBill> _boxBill;
   late Box<EntityBillItem> _boxBillItem;
   late Box<EntityCustomer> _boxCustomer;
+  late Box<EntityStockTransaction> _boxStockTxn;
 
   final ServiceCurrency serviceCurrency = Get.find();
 
@@ -43,9 +49,11 @@ class ControllerHomePos extends GetxController {
     super.onInit();
     final ob = Get.find<ServiceObjectBox>();
     _boxItem = ob.box<EntityItem>();
+    _boxBatch = ob.box<EntityItemBatch>();
     _boxBill = ob.box<EntityBill>();
     _boxBillItem = ob.box<EntityBillItem>();
     _boxCustomer = ob.box<EntityCustomer>();
+    _boxStockTxn = ob.box<EntityStockTransaction>();
 
     loadItems();
     loadCustomers();
@@ -222,6 +230,12 @@ class ControllerHomePos extends GetxController {
 
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
 
+    final today = DateTime.now();
+    final onlyDate = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    );
     final customer = rxSelectedCustomer.value;
     final customerName = customer != null ? "${customer.name}" : "Walk-in";
     final customerPhone = customer?.phone ?? "";
@@ -262,16 +276,34 @@ class ControllerHomePos extends GetxController {
 
       _boxBillItem.put(billItem);
 
-      // Deduct stock from item
+      // Deduct stock from item (hasExpiry-aware)
       final stockItem = cartItem.item.target;
       if (stockItem != null) {
         final soldQty = cartItem.qty ?? 0;
+
+        if (stockItem.hasExpiry == true) {
+          // ── Batch-tracked: FIFO deduction from oldest batches ──
+          _deductFromBatches(stockItem.id ?? 0, soldQty);
+        }
+
+        // Always update totalQty on the item
         stockItem.totalQty = (stockItem.totalQty ?? 0) - soldQty;
         if (stockItem.totalQty! < 0) stockItem.totalQty = 0;
-        stockItem.updatedAtUtcMs = DateTime.now()
-            .toUtc()
-            .millisecondsSinceEpoch;
+        stockItem.updatedAtUtcMs = now;
         _boxItem.put(stockItem);
+
+        // Log SELL transaction
+        _boxStockTxn.put(
+          EntityStockTransaction(
+            itemId: stockItem.id ?? 0,
+            type: StockTxnType.sell.index,
+            quantity: -soldQty,
+            referenceType: 'sell',
+            referenceId: stockItem.name ?? '',
+            remarks: 'Sold via POS',
+            createdAtUtcMs: now,
+          ),
+        );
       }
     }
 
@@ -279,7 +311,40 @@ class ControllerHomePos extends GetxController {
       "Bill Settled! \nAmount: ${serviceCurrency.rxCurrency.value}${rxGrandTotal.value.toStringAsFixed(2)}",
     );
     clearCart();
-    loadItems(); // Refresh grid with updated stock
+    loadItems(); // Refresh POS grid with updated stock
+
+    // Also refresh the Items tab controller if it exists
+    if (Get.isRegistered<ControllerHomeItem>()) {
+      Get.find<ControllerHomeItem>().loadItems();
+    }
+  }
+
+  /// FIFO batch deduction — walks oldest batches first
+  void _deductFromBatches(int itemId, int qty) {
+    final query = _boxBatch
+        .query(EntityItemBatch_.itemId.equals(itemId))
+        .order(EntityItemBatch_.receivedAtUtcMs)
+        .build();
+    final batches = query.find();
+    query.close();
+
+    int remaining = qty;
+
+    for (final batch in batches) {
+      if (remaining <= 0) break;
+
+      final batchQty = batch.quantity ?? 0;
+      if (batchQty <= remaining) {
+        // Fully consumed → remove batch
+        remaining -= batchQty;
+        _boxBatch.remove(batch.id!);
+      } else {
+        // Partially deduct
+        batch.quantity = batchQty - remaining;
+        _boxBatch.put(batch);
+        remaining = 0;
+      }
+    }
   }
 
   @override

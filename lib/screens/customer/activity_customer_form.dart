@@ -154,6 +154,78 @@ class ActivityCustomerForm extends StatelessWidget {
                         prefixIcon: Icons.comment_rounded,
                       ),
 
+                      const SizedBox(height: 24),
+
+                      /// ── VIP Section ──
+                      _FormSectionHeader(
+                        icon: Icons.star_rounded,
+                        color: Colors.amber.shade700,
+                        title: 'VIP Status',
+                      ),
+                      const SizedBox(height: 12),
+                      Obx(
+                        () => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: controller.rxIsVip.value
+                                ? Colors.amber.withValues(alpha: 0.08)
+                                : Colors.grey.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: controller.rxIsVip.value
+                                  ? Colors.amber.shade300
+                                  : Colors.grey.shade200,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
+                                color: controller.rxIsVip.value
+                                    ? Colors.amber.shade600
+                                    : Colors.grey.shade400,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'VIP Customer',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: controller.rxIsVip.value
+                                            ? Colors.amber.shade800
+                                            : Colors.grey.shade700,
+                                      ),
+                                    ),
+                                    Text(
+                                      controller.rxIsVip.value
+                                          ? 'This customer has VIP privileges'
+                                          : 'Mark as VIP for special treatment',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: controller.rxIsVip.value,
+                                onChanged: (val) =>
+                                    controller.rxIsVip.value = val,
+                                activeTrackColor: Colors.amber.shade600,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                       const SizedBox(height: 32),
 
                       /// ── Action Buttons ──

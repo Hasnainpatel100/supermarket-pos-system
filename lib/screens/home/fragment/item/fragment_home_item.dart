@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:super_market/item_form/activity_item_form.dart';
-import '../../../../item_form/activity_item_batch_form.dart';
 import 'package:super_market/widget/my_card.dart';
 
 import '../../../../model/entity_item.dart';
@@ -448,9 +447,6 @@ class FragmentHomeItem extends StatelessWidget {
                                     case 'adjust_stock':
                                       _onAdjustStock(item);
                                       break;
-                                    case 'add_batch':
-                                      _onAddBatch(item, controller);
-                                      break;
                                     case 'view_batches':
                                       _onViewBatches(item);
                                       break;
@@ -496,20 +492,6 @@ class FragmentHomeItem extends StatelessWidget {
                                     ),
                                   ),
                                   if (item.hasExpiry == true) ...[
-                                    PopupMenuItem(
-                                      value: 'add_batch',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.post_add_rounded,
-                                            size: 20,
-                                            color: Colors.orange.shade600,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          const Text('Add Batch'),
-                                        ],
-                                      ),
-                                    ),
                                     PopupMenuItem(
                                       value: 'view_batches',
                                       child: Row(
@@ -589,12 +571,6 @@ class FragmentHomeItem extends StatelessWidget {
   /// ── Adjust Stock ──
   void _onAdjustStock(EntityItem item) {
     Get.dialog(DialogAdjustStock(entityItem: item));
-  }
-
-  /// ── Add Batch ──
-  void _onAddBatch(EntityItem item, ControllerHomeItem controller) async {
-    await Get.to(() => const ActivityItemBatchForm(), arguments: item);
-    controller.loadItems();
   }
 
   /// ── View Batches ──

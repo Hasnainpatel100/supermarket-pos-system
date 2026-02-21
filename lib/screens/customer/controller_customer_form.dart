@@ -20,6 +20,9 @@ class ControllerCustomerForm extends GetxController {
   final EntityCustomer? editingCustomer;
   late Box<EntityCustomer> _boxCustomer;
 
+  // VIP toggle
+  final RxBool rxIsVip = false.obs;
+
   ControllerCustomerForm({this.editingCustomer});
 
   @override
@@ -38,6 +41,7 @@ class ControllerCustomerForm extends GetxController {
     stateController = TextEditingController(text: editingCustomer?.state ?? '');
     zipController = TextEditingController(text: editingCustomer?.zipCode ?? '');
     notesController = TextEditingController(text: editingCustomer?.notes ?? '');
+    rxIsVip.value = editingCustomer?.isVip ?? false;
   }
 
   @override
@@ -59,7 +63,7 @@ class ControllerCustomerForm extends GetxController {
         "Required",
         "Please fill the required fields",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
         colorText: Colors.red,
       );
       return;
@@ -71,7 +75,7 @@ class ControllerCustomerForm extends GetxController {
         "Invalid Phone",
         "Phone number must be exactly 10 digits",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
         colorText: Colors.red,
       );
       return;
@@ -83,7 +87,7 @@ class ControllerCustomerForm extends GetxController {
         "Invalid Email",
         "Email must end with @gmail.com",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
         colorText: Colors.red,
       );
       return;
@@ -103,6 +107,7 @@ class ControllerCustomerForm extends GetxController {
     customer.state = stateController.text.trim();
     customer.zipCode = zipController.text.trim();
     customer.notes = notesController.text.trim();
+    customer.isVip = rxIsVip.value;
     customer.updatedAtUtcMs = now;
 
     try {
@@ -112,7 +117,7 @@ class ControllerCustomerForm extends GetxController {
         "Success",
         "Customer ${editingCustomer != null ? 'updated' : 'added'} successfully",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.withOpacity(0.1),
+        backgroundColor: Colors.green.withValues(alpha: 0.1),
         colorText: Colors.green,
       );
     } catch (e) {
@@ -120,7 +125,7 @@ class ControllerCustomerForm extends GetxController {
         "Error",
         "Failed to save customer: $e",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withOpacity(0.1),
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
         colorText: Colors.red,
       );
     }

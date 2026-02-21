@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../../../model/entity_item.dart';
 import '../../../../model/entity_item_batch.dart';
+import '../../../../model/entity_stock_transaction.dart';
+import '../../../../model/stock_txn_type.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_currency.dart';
 import '../../../../service/service_item.dart';
@@ -13,6 +15,7 @@ class ControllerHomeItem extends GetxController {
   late final ItemService _itemService;
   late final Box<EntityItem> _boxItem;
   late final Box<EntityItemBatch> _boxBatch;
+  late final Box<EntityStockTransaction> _boxStockTxn;
 
   final RxList<EntityItem> rxListItem = <EntityItem>[].obs;
   final RxString searchQuery = ''.obs;
@@ -23,6 +26,7 @@ class ControllerHomeItem extends GetxController {
     final ob = Get.find<ServiceObjectBox>();
     _boxItem = ob.box<EntityItem>();
     _boxBatch = ob.box<EntityItemBatch>();
+    _boxStockTxn = ob.box<EntityStockTransaction>();
     _itemService = ItemService(_boxItem);
     loadItems();
     super.onInit();
@@ -67,7 +71,17 @@ class ControllerHomeItem extends GetxController {
 
   /// Direct stock adjust (hasExpiry == false)
   bool adjustStockDirect(EntityItem item, int delta) {
-    return adjustStock(item, delta);
+    final success = adjustStock(item, delta);
+    if (success) {
+      _logTxn(
+        itemId: item.id ?? 0,
+        itemName: item.name ?? '',
+        type: StockTxnType.adjust,
+        qty: delta,
+        remarks: delta >= 0 ? 'Manual increment' : 'Manual decrement',
+      );
+    }
+    return success;
   }
 
   /// Increment with a new batch (hasExpiry == true)
@@ -95,6 +109,15 @@ class ControllerHomeItem extends GetxController {
     item.totalQty = (item.totalQty ?? 0) + qty;
     item.updatedAtUtcMs = now;
     _boxItem.put(item);
+
+    // Log transaction
+    _logTxn(
+      itemId: item.id ?? 0,
+      itemName: item.name ?? '',
+      type: StockTxnType.add,
+      qty: qty,
+      remarks: 'Batch added: $batchNo',
+    );
 
     loadItems();
     return true;
@@ -138,6 +161,15 @@ class ControllerHomeItem extends GetxController {
     item.updatedAtUtcMs = now;
     _boxItem.put(item);
 
+    // Log transaction
+    _logTxn(
+      itemId: item.id ?? 0,
+      itemName: item.name ?? '',
+      type: StockTxnType.deduct,
+      qty: -qty,
+      remarks: 'FIFO batch deduction',
+    );
+
     loadItems();
     return true;
   }
@@ -150,6 +182,27 @@ class ControllerHomeItem extends GetxController {
     final count = query.count();
     query.close();
     return count + 1;
+  }
+
+  // ── Internal: log a stock transaction ──
+  void _logTxn({
+    required int itemId,
+    required String itemName,
+    required StockTxnType type,
+    required int qty,
+    String? remarks,
+  }) {
+    _boxStockTxn.put(
+      EntityStockTransaction(
+        itemId: itemId,
+        type: type.index,
+        quantity: qty,
+        referenceType: type.name,
+        referenceId: itemName,
+        remarks: remarks,
+        createdAtUtcMs: DateTime.now().toUtc().millisecondsSinceEpoch,
+      ),
+    );
   }
 
   /// Auto-generate barcode for an item

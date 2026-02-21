@@ -33,30 +33,6 @@ class FragmentHomeItem extends StatelessWidget {
           ],
         ),
         actions: [
-          /// ── Button: Adjust Stock ──
-          OutlinedButton.icon(
-            onPressed: () => _showSelectItemForAdjust(context, controller),
-            icon: Icon(
-              Icons.tune_rounded,
-              size: 18,
-              color: colorScheme.primary,
-            ),
-            label: Text(
-              'Adjust Stock',
-              style: TextStyle(color: colorScheme.primary),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(
-                color: colorScheme.primary.withValues(alpha: 0.4),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-
           /// ── Button: New Item ──
           FilledButton.icon(
             onPressed: () async {
@@ -366,7 +342,6 @@ class FragmentHomeItem extends StatelessWidget {
                             /// Selling Price
                             DataCell(
                               Text(
-
                                 item.sellingPrice != null
                                     ? '${controller.serviceCurrency.rxCurrency.value}${item.sellingPrice!.toStringAsFixed(2)}'
                                     : '-',
@@ -470,9 +445,10 @@ class FragmentHomeItem extends StatelessWidget {
                                     case 'edit':
                                       _onEdit(item, controller);
                                       break;
+                                    case 'adjust_stock':
+                                      _onAdjustStock(item);
+                                      break;
                                     case 'add_batch':
-                                      // Using full path or ensuring import is available
-                                      // I need to make sure ActivityItemBatchForm is imported
                                       _onAddBatch(item, controller);
                                       break;
                                     case 'view_batches':
@@ -502,6 +478,20 @@ class FragmentHomeItem extends StatelessWidget {
                                         ),
                                         const SizedBox(width: 12),
                                         const Text('Edit'),
+                                      ],
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'adjust_stock',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.tune_rounded,
+                                          size: 20,
+                                          color: Colors.teal.shade600,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text('Adjust Stock'),
                                       ],
                                     ),
                                   ),
@@ -596,6 +586,11 @@ class FragmentHomeItem extends StatelessWidget {
     controller.loadItems();
   }
 
+  /// ── Adjust Stock ──
+  void _onAdjustStock(EntityItem item) {
+    Get.dialog(DialogAdjustStock(entityItem: item));
+  }
+
   /// ── Add Batch ──
   void _onAddBatch(EntityItem item, ControllerHomeItem controller) async {
     await Get.to(() => const ActivityItemBatchForm(), arguments: item);
@@ -660,113 +655,6 @@ class FragmentHomeItem extends StatelessWidget {
         ),
         onPressed: () => Get.back(),
         child: const Text('Cancel'),
-      ),
-    );
-  }
-
-  /// Show a quick select dialog for the AppBar "Adjust Stock" button
-  void _showSelectItemForAdjust(
-    BuildContext context,
-    ControllerHomeItem controller,
-  ) {
-    if (controller.rxListItem.isEmpty) {
-      SnackbarUtil.showError('No items available');
-      return;
-    }
-
-    final colorScheme = Theme.of(context).colorScheme;
-
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          width: 420,
-          height: 500,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.tune_rounded, color: colorScheme.primary),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Select Item to Adjust',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Divider(color: Colors.grey.shade200),
-              const SizedBox(height: 4),
-              Expanded(
-                child: Obx(
-                  () => ListView.separated(
-                    itemCount: controller.rxListItem.length,
-                    separatorBuilder: (_, _) =>
-                        Divider(height: 1, color: Colors.grey.shade100),
-                    itemBuilder: (_, index) {
-                      final item = controller.rxListItem[index];
-                      return ListTile(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        leading: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: colorScheme.primary.withValues(
-                            alpha: 0.1,
-                          ),
-                          child: Icon(
-                            Icons.inventory_2_outlined,
-                            size: 18,
-                            color: colorScheme.primary,
-                          ),
-                        ),
-                        title: Text(
-                          item.name ?? 'Unnamed',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        subtitle: Text(
-                          'Stock: ${item.totalQty ?? 0}',
-                          style: TextStyle(
-                            color: (item.totalQty ?? 0) <= 0
-                                ? Colors.red.shade400
-                                : Colors.grey.shade500,
-                            fontSize: 12,
-                          ),
-                        ),
-                        trailing: Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 14,
-                          color: Colors.grey.shade400,
-                        ),
-                        onTap: () {
-                          Get.back();
-                          Get.dialog(DialogAdjustStock(entityItem: item));
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onPressed: () => Get.back(),
-                  child: const Text('Cancel'),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../model/entity_item.dart';
+import '../../../../model/entity_item_batch.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_currency.dart';
 import '../../../../service/service_item.dart';
@@ -11,6 +12,7 @@ class ControllerHomeItem extends GetxController {
   final ServiceCurrency serviceCurrency = Get.find();
   late final ItemService _itemService;
   late final Box<EntityItem> _boxItem;
+  late final Box<EntityItemBatch> _boxBatch;
 
   final RxList<EntityItem> rxListItem = <EntityItem>[].obs;
   final RxString searchQuery = ''.obs;
@@ -20,6 +22,7 @@ class ControllerHomeItem extends GetxController {
   void onInit() {
     final ob = Get.find<ServiceObjectBox>();
     _boxItem = ob.box<EntityItem>();
+    _boxBatch = ob.box<EntityItemBatch>();
     _itemService = ItemService(_boxItem);
     loadItems();
     super.onInit();
@@ -49,12 +52,104 @@ class ControllerHomeItem extends GetxController {
   }
 
   /// Adjust stock quantity (positive = increment, negative = decrement)
+  /// Kept for backward compatibility (POS uses this)
   bool adjustStock(EntityItem item, int delta) {
     final success = _itemService.adjustStock(item, delta);
     if (success) {
       loadItems();
     }
     return success;
+  }
+
+  // ──────────────────────────────────────────────────────────
+  //  BATCH-AWARE STOCK ADJUSTMENT METHODS
+  // ──────────────────────────────────────────────────────────
+
+  /// Direct stock adjust (hasExpiry == false)
+  bool adjustStockDirect(EntityItem item, int delta) {
+    return adjustStock(item, delta);
+  }
+
+  /// Increment with a new batch (hasExpiry == true)
+  bool adjustStockWithNewBatch(
+    EntityItem item,
+    int qty,
+    String batchNo,
+    int? expiryMs,
+  ) {
+    if (qty <= 0) return false;
+
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+
+    // Create new batch
+    final batch = EntityItemBatch(
+      itemId: item.id,
+      batchNo: batchNo,
+      quantity: qty,
+      expiryDateUtcMs: expiryMs,
+      receivedAtUtcMs: now,
+    );
+    _boxBatch.put(batch);
+
+    // Update item totalQty
+    item.totalQty = (item.totalQty ?? 0) + qty;
+    item.updatedAtUtcMs = now;
+    _boxItem.put(item);
+
+    loadItems();
+    return true;
+  }
+
+  /// Decrement from oldest batch (hasExpiry == true, FIFO)
+  bool adjustStockFromOldestBatch(EntityItem item, int qty) {
+    if (qty <= 0) return false;
+    final currentQty = item.totalQty ?? 0;
+    if (qty > currentQty) return false; // Not enough stock
+
+    // Query batches ordered by receivedAtUtcMs ASC (oldest first)
+    final query = _boxBatch
+        .query(EntityItemBatch_.itemId.equals(item.id ?? 0))
+        .order(EntityItemBatch_.receivedAtUtcMs)
+        .build();
+    final batches = query.find();
+    query.close();
+
+    int remaining = qty;
+
+    for (final batch in batches) {
+      if (remaining <= 0) break;
+
+      final batchQty = batch.quantity ?? 0;
+      if (batchQty <= remaining) {
+        // This batch is fully consumed → remove it
+        remaining -= batchQty;
+        _boxBatch.remove(batch.id!);
+      } else {
+        // Partially deduct from this batch
+        batch.quantity = batchQty - remaining;
+        _boxBatch.put(batch);
+        remaining = 0;
+      }
+    }
+
+    // Update item totalQty
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    item.totalQty = currentQty - qty;
+    item.updatedAtUtcMs = now;
+    _boxItem.put(item);
+
+    loadItems();
+    return true;
+  }
+
+  /// Get next batch number for an item
+  int getNextBatchNumber(EntityItem item) {
+    final query = _boxBatch
+        .query(EntityItemBatch_.itemId.equals(item.id ?? 0))
+        .build();
+    final count = query.count();
+    query.close();
+    return count + 1;
   }
 
   /// Auto-generate barcode for an item

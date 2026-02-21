@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../../model/entity_item.dart';
+import 'package:super_market/screens/home/fragment/pos/pos_item_card.dart';
 import '../../../../item_form/activity_item_form.dart';
 import '../../../customer/activity_customer_form.dart';
 import 'controller_home_pos.dart';
@@ -12,6 +12,9 @@ class FragmentHomePos extends StatelessWidget {
   Widget build(BuildContext context) {
     // Ensure controller is found or put
     final controller = Get.put(ControllerHomePos());
+    // Refresh data every time POS tab is shown
+    controller.loadItems();
+    controller.loadCustomers();
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -34,8 +37,8 @@ class FragmentHomePos extends StatelessWidget {
                           decoration: InputDecoration(
                             hintText: 'Search Item (Name, SKU, Barcode)...',
                             hintStyle: TextStyle(
-                              color: colorScheme.onSurfaceVariant.withValues(alpha:
-                                0.5,
+                              color: colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.5,
                               ),
                             ),
                             prefixIcon: Icon(
@@ -108,7 +111,9 @@ class FragmentHomePos extends StatelessWidget {
                               Icon(
                                 Icons.search_off_rounded,
                                 size: 64,
-                                color: colorScheme.outline.withValues(alpha: 0.3),
+                                color: colorScheme.outline.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                               const SizedBox(height: 16),
                               Text(
@@ -134,7 +139,7 @@ class FragmentHomePos extends StatelessWidget {
                         itemCount: controller.rxListItems.length,
                         itemBuilder: (context, index) {
                           final item = controller.rxListItems[index];
-                          return _ItemCard(
+                          return PosItemCard(
                             item: item,
                             onTap: () => controller.addToCart(item),
                           );
@@ -178,7 +183,9 @@ class FragmentHomePos extends StatelessWidget {
                               final selected =
                                   controller.rxSelectedCustomer.value;
                               return Card(
-                                color: colorScheme.onPrimary.withValues(alpha: 0.2),
+                                color: colorScheme.onPrimary.withValues(
+                                  alpha: 0.2,
+                                ),
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -259,7 +266,9 @@ class FragmentHomePos extends StatelessWidget {
                               Icon(
                                 Icons.shopping_cart_outlined,
                                 size: 64,
-                                color: colorScheme.outline.withValues(alpha: 0.3),
+                                color: colorScheme.outline.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                               const SizedBox(height: 16),
                               Text(
@@ -324,7 +333,7 @@ class FragmentHomePos extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  "₹${(cartItem.total ?? 0).toStringAsFixed(2)}",
+                                  "${controller.serviceCurrency.rxCurrency.value}${(cartItem.total ?? 0).toStringAsFixed(2)}",
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: colorScheme.primary,
@@ -384,7 +393,7 @@ class FragmentHomePos extends StatelessWidget {
                                 Expanded(
                                   child: TextField(
                                     decoration: InputDecoration(
-                                      labelText: "Discount (₹)",
+                                      labelText: "Discount (${controller.serviceCurrency.rxCurrency.value})",
                                       isDense: true,
                                       border: const OutlineInputBorder(),
                                       contentPadding:
@@ -583,6 +592,7 @@ class FragmentHomePos extends StatelessWidget {
     );
   }
 }
+/*
 
 class _ItemCard extends StatelessWidget {
   final EntityItem item;
@@ -593,99 +603,134 @@ class _ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final stock = item.totalQty ?? 0;
+    final isOutOfStock = stock <= 0;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colorScheme.primaryContainer.withValues(alpha: 0.3),
-                      colorScheme.surface,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.inventory_2_outlined,
-                    size: 36,
-                    color: colorScheme.primary.withValues(alpha: 0.7),
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.name ?? 'Unknown',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      "Code: ${item.sku ?? '-'}",
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "₹${(item.sellingPrice ?? 0).toStringAsFixed(2)}",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.primary,
-                          fontSize: 16,
+    return Opacity(
+      opacity: isOutOfStock ? 0.5 : 1.0,
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            colorScheme.primaryContainer.withValues(alpha: 0.3),
+                            colorScheme.surface,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
                       ),
-                      Text(
-                        "/${item.unit ?? 'pc'}",
+                      child: Center(
+                        child: Icon(
+                          Icons.inventory_2_outlined,
+                          size: 36,
+                          color: colorScheme.primary.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                    // Stock Badge
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isOutOfStock
+                              ? Colors.red.shade600
+                              : Colors.green.shade600,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          isOutOfStock ? "Out of Stock" : "Qty: $stock",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name ?? 'Unknown',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        "Code: ${item.sku ?? '-'}",
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(///todo
+                          "${(item.sellingPrice ?? 0).toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          "/${item.unit ?? 'pc'}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+*/
 
 class _SummaryRow extends StatelessWidget {
   final String label;
@@ -706,6 +751,7 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(ControllerHomePos());
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
@@ -722,7 +768,7 @@ class _SummaryRow extends StatelessWidget {
             ),
           ),
           Text(
-            "${isNegative ? '-' : ''}₹${value.toStringAsFixed(2)}",
+            "${isNegative ? '-' : ''}${controller.serviceCurrency.rxCurrency.value}${value.toStringAsFixed(2)}",
             style: TextStyle(
               fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
               fontSize: fontSize,

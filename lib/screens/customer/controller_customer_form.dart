@@ -65,6 +65,30 @@ class ControllerCustomerForm extends GetxController {
       return;
     }
 
+    final phone = phoneController.text.trim();
+    if (phone.isNotEmpty && phone.length != 10) {
+      Get.snackbar(
+        "Invalid Phone",
+        "Phone number must be exactly 10 digits",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.1),
+        colorText: Colors.red,
+      );
+      return;
+    }
+
+    final email = emailController.text.trim();
+    if (email.isNotEmpty && !email.endsWith("@gmail.com")) {
+      Get.snackbar(
+        "Invalid Email",
+        "Email must end with @gmail.com",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.1),
+        colorText: Colors.red,
+      );
+      return;
+    }
+
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
 
     final customer =

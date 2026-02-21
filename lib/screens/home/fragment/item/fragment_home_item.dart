@@ -9,6 +9,7 @@ import '../../../../util/snackbar_util.dart';
 import 'controller_home_item.dart';
 import 'dialog_adjust_stock.dart';
 import 'dialog_item_detail.dart';
+import 'dialog_item_batches.dart';
 
 class FragmentHomeItem extends StatelessWidget {
   const FragmentHomeItem({super.key});
@@ -351,7 +352,7 @@ class FragmentHomeItem extends StatelessWidget {
                             DataCell(
                               Text(
                                 item.costPrice != null
-                                    ? '₹${item.costPrice!.toStringAsFixed(2)}'
+                                    ? '${controller.serviceCurrency.rxCurrency.value}${item.costPrice!.toStringAsFixed(2)}'
                                     : '-',
                                 style: TextStyle(
                                   fontSize: 13,
@@ -365,8 +366,9 @@ class FragmentHomeItem extends StatelessWidget {
                             /// Selling Price
                             DataCell(
                               Text(
+
                                 item.sellingPrice != null
-                                    ? '₹${item.sellingPrice!.toStringAsFixed(2)}'
+                                    ? '${controller.serviceCurrency.rxCurrency.value}${item.sellingPrice!.toStringAsFixed(2)}'
                                     : '-',
                                 style: TextStyle(
                                   fontSize: 13,
@@ -471,7 +473,10 @@ class FragmentHomeItem extends StatelessWidget {
                                     case 'add_batch':
                                       // Using full path or ensuring import is available
                                       // I need to make sure ActivityItemBatchForm is imported
-                                      _onAddBatch(item);
+                                      _onAddBatch(item, controller);
+                                      break;
+                                    case 'view_batches':
+                                      _onViewBatches(item);
                                       break;
                                     case 'details':
                                       _onDetails(item);
@@ -500,7 +505,7 @@ class FragmentHomeItem extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  if (item.hasExpiry == true)
+                                  if (item.hasExpiry == true) ...[
                                     PopupMenuItem(
                                       value: 'add_batch',
                                       child: Row(
@@ -515,6 +520,21 @@ class FragmentHomeItem extends StatelessWidget {
                                         ],
                                       ),
                                     ),
+                                    PopupMenuItem(
+                                      value: 'view_batches',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.history_edu_rounded,
+                                            size: 20,
+                                            color: Colors.blue.shade600,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Text('View Batches'),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                   PopupMenuItem(
                                     value: 'details',
                                     child: Row(
@@ -577,8 +597,14 @@ class FragmentHomeItem extends StatelessWidget {
   }
 
   /// ── Add Batch ──
-  void _onAddBatch(EntityItem item) {
-    Get.to(() => const ActivityItemBatchForm(), arguments: item);
+  void _onAddBatch(EntityItem item, ControllerHomeItem controller) async {
+    await Get.to(() => const ActivityItemBatchForm(), arguments: item);
+    controller.loadItems();
+  }
+
+  /// ── View Batches ──
+  void _onViewBatches(EntityItem item) {
+    Get.dialog(DialogItemBatches(entityItem: item));
   }
 
   /// ── View Item Details ──
@@ -593,7 +619,6 @@ class FragmentHomeItem extends StatelessWidget {
     ControllerHomeItem controller,
   ) {
     final isCurrentlyActive = item.isActive ?? true;
-    final colorScheme = Theme.of(context).colorScheme;
 
     Get.defaultDialog(
       title: isCurrentlyActive ? 'Deactivate Item?' : 'Activate Item?',

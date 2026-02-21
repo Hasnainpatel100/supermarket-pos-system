@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:super_market/service/service_currency.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_customer.dart';
@@ -13,6 +14,8 @@ class ControllerHomePos extends GetxController {
   late Box<EntityBill> _boxBill;
   late Box<EntityBillItem> _boxBillItem;
   late Box<EntityCustomer> _boxCustomer;
+
+  final ServiceCurrency serviceCurrency = Get.find();
 
   // Search Items
   final searchController = TextEditingController();
@@ -99,19 +102,33 @@ class ControllerHomePos extends GetxController {
   }
 
   void addToCart(EntityItem item) {
+    final availableStock = item.totalQty ?? 0;
+
     // Check if item already in cart
     final index = rxCartItems.indexWhere(
       (element) => element.item.target?.id == item.id,
     );
 
     if (index >= 0) {
-      // Update quantity
       final existing = rxCartItems[index];
-      existing.qty = (existing.qty ?? 0) + 1;
+      final currentCartQty = existing.qty ?? 0;
+
+      if (currentCartQty + 1 > availableStock) {
+        SnackbarUtil.showError(
+          "Insufficient stock! Available: $availableStock",
+        );
+        return;
+      }
+
+      existing.qty = currentCartQty + 1;
       existing.total = (existing.qty! * (existing.price ?? 0));
-      rxCartItems[index] = existing; // Refresh list item
+      rxCartItems[index] = existing;
     } else {
-      // Add new
+      if (availableStock < 1) {
+        SnackbarUtil.showError("${item.name} is out of stock!");
+        return;
+      }
+
       final billItem = EntityBillItem(
         itemName: item.name,
         itemBarcode: item.barcode,
@@ -129,15 +146,26 @@ class ControllerHomePos extends GetxController {
   }
 
   void updateQty(int index, int delta) {
-    final item = rxCartItems[index];
-    final newQty = (item.qty ?? 0) + delta;
+    final cartItem = rxCartItems[index];
+    final newQty = (cartItem.qty ?? 0) + delta;
 
     if (newQty <= 0) {
       rxCartItems.removeAt(index);
     } else {
-      item.qty = newQty;
-      item.total = newQty * (item.price ?? 0);
-      rxCartItems[index] = item;
+      // Check stock when incrementing
+      if (delta > 0) {
+        final stockItem = cartItem.item.target;
+        final availableStock = stockItem?.totalQty ?? 0;
+        if (newQty > availableStock) {
+          SnackbarUtil.showError(
+            "Insufficient stock! Available: $availableStock",
+          );
+          return;
+        }
+      }
+      cartItem.qty = newQty;
+      cartItem.total = newQty * (cartItem.price ?? 0);
+      rxCartItems[index] = cartItem;
     }
     calculateTotals();
   }
@@ -216,9 +244,8 @@ class ControllerHomePos extends GetxController {
     final billId = _boxBill.put(bill);
     final savedBill = _boxBill.get(billId)!;
 
-    // Save Bill Items
+    // Save Bill Items & Deduct Stock
     for (var cartItem in rxCartItems) {
-      // Create a new EntityBillItem to ensure clean state and persistence
       final billItem = EntityBillItem(
         itemName: cartItem.itemName,
         itemBarcode: cartItem.itemBarcode,
@@ -234,12 +261,25 @@ class ControllerHomePos extends GetxController {
       billItem.item.target = cartItem.item.target;
 
       _boxBillItem.put(billItem);
+
+      // Deduct stock from item
+      final stockItem = cartItem.item.target;
+      if (stockItem != null) {
+        final soldQty = cartItem.qty ?? 0;
+        stockItem.totalQty = (stockItem.totalQty ?? 0) - soldQty;
+        if (stockItem.totalQty! < 0) stockItem.totalQty = 0;
+        stockItem.updatedAtUtcMs = DateTime.now()
+            .toUtc()
+            .millisecondsSinceEpoch;
+        _boxItem.put(stockItem);
+      }
     }
 
     SnackbarUtil.showSuccess(
-      "Bill Settled! \nAmount: ₹${rxGrandTotal.value.toStringAsFixed(2)}",
+      "Bill Settled! \nAmount: ${serviceCurrency.rxCurrency.value}${rxGrandTotal.value.toStringAsFixed(2)}",
     );
     clearCart();
+    loadItems(); // Refresh grid with updated stock
   }
 
   @override

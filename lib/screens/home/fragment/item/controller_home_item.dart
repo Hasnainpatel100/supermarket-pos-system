@@ -3,10 +3,12 @@ import 'package:get/get.dart';
 
 import '../../../../model/entity_item.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_currency.dart';
 import '../../../../service/service_item.dart';
 import '../../../../service/service_object_box.dart';
 
 class ControllerHomeItem extends GetxController {
+  final ServiceCurrency serviceCurrency = Get.find();
   late final ItemService _itemService;
   late final Box<EntityItem> _boxItem;
 

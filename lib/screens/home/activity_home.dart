@@ -15,7 +15,7 @@ import 'fragment/frag_home_logout.dart';
 // import 'fragment/frag_home_pos.dart'; // Removed to avoid conflict
 import 'fragment/frag_home_price_discount.dart';
 import 'fragment/frag_home_purchase_supplier.dart';
-import 'fragment/frag_home_report.dart';
+import 'fragment/report/frag_home_report.dart';
 import 'fragment/frag_home_settings.dart';
 import 'fragment/users/frag_home_users.dart';
 

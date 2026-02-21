@@ -47,7 +47,7 @@ class ControllerItemForm extends GetxController {
     hasExpiry.value = editingItem?.hasExpiry ?? false;
   }
 
-  void saveItem() {
+  void saveItem() async {
     if (!formKey.currentState!.validate()) {
       Get.snackbar("Error", "Please fill required fields");
       return;
@@ -89,7 +89,8 @@ class ControllerItemForm extends GetxController {
 
       if (hasExpiry.value) {
         // If item has expiry, go to batch creation
-        Get.off(() => const ActivityItemBatchForm(), arguments: savedItem);
+        await Get.to(() => const ActivityItemBatchForm(), arguments: savedItem);
+        Get.back();
       } else {
         Get.back();
       }

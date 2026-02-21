@@ -311,6 +311,9 @@ class FragmentHomeCustomer extends StatelessWidget {
                                 ),
                                 onSelected: (value) {
                                   switch (value) {
+                                    case 'view':
+                                      _showCustomerDetails(context, customer);
+                                      break;
                                     case 'edit':
                                       _onEdit(customer, controller);
                                       break;
@@ -321,9 +324,30 @@ class FragmentHomeCustomer extends StatelessWidget {
                                         controller,
                                       );
                                       break;
+                                    case 'delete':
+                                      _confirmDelete(
+                                        context,
+                                        customer,
+                                        controller,
+                                      );
+                                      break;
                                   }
                                 },
                                 itemBuilder: (_) => [
+                                  PopupMenuItem(
+                                    value: 'view',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.visibility_outlined,
+                                          size: 20,
+                                          color: Colors.blue.shade600,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text('View Details'),
+                                      ],
+                                    ),
+                                  ),
                                   PopupMenuItem(
                                     value: 'edit',
                                     child: Row(
@@ -338,7 +362,6 @@ class FragmentHomeCustomer extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  const PopupMenuDivider(),
                                   PopupMenuItem(
                                     value: 'toggle',
                                     child: Row(
@@ -349,7 +372,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                                               : Icons.toggle_on_rounded,
                                           size: 22,
                                           color: isActive
-                                              ? Colors.red.shade400
+                                              ? Colors.orange.shade400
                                               : Colors.green.shade500,
                                         ),
                                         const SizedBox(width: 12),
@@ -357,8 +380,28 @@ class FragmentHomeCustomer extends StatelessWidget {
                                           isActive ? 'Deactivate' : 'Activate',
                                           style: TextStyle(
                                             color: isActive
-                                                ? Colors.red.shade400
+                                                ? Colors.orange.shade500
                                                 : Colors.green.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuDivider(),
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.delete_outline_rounded,
+                                          size: 20,
+                                          color: Colors.red.shade600,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Delete',
+                                          style: TextStyle(
+                                            color: Colors.red.shade600,
                                           ),
                                         ),
                                       ],
@@ -402,7 +445,7 @@ class FragmentHomeCustomer extends StatelessWidget {
       confirm: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
           backgroundColor: isCurrentlyActive
-              ? Colors.red.shade400
+              ? Colors.orange.shade400
               : Colors.green.shade500,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
@@ -434,6 +477,152 @@ class FragmentHomeCustomer extends StatelessWidget {
         ),
         onPressed: () => Get.back(),
         child: const Text('Cancel'),
+      ),
+    );
+  }
+
+  void _confirmDelete(
+    BuildContext context,
+    EntityCustomer customer,
+    ControllerHomeCustomer controller,
+  ) {
+    Get.defaultDialog(
+      title: 'Delete Customer?',
+      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      middleText:
+          'Are you sure you want to permanently delete "${customer.name}"? This action cannot be undone.',
+      confirm: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red.shade600,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+        icon: const Icon(Icons.delete_forever_rounded, size: 20),
+        onPressed: () {
+          controller.deleteCustomer(customer);
+          Get.back();
+          SnackbarUtil.showSuccess('Customer deleted successfully');
+        },
+        label: const Text('Delete'),
+      ),
+      cancel: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+        onPressed: () => Get.back(),
+        child: const Text('Cancel'),
+      ),
+    );
+  }
+
+  void _showCustomerDetails(BuildContext context, EntityCustomer customer) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: 500,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.person, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Customer Details',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Get.back(),
+                  ),
+                ],
+              ),
+              const Divider(),
+              const SizedBox(height: 16),
+              _buildDetailRow(context, "Name", customer.name),
+              _buildDetailRow(context, "Phone", customer.phone),
+              _buildDetailRow(context, "Email", customer.email),
+              const SizedBox(height: 16),
+              const Text(
+                "Address",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "${customer.address ?? ''}\n${customer.city ?? ''} ${customer.state ?? ''} ${customer.zipCode ?? ''}",
+                style: const TextStyle(fontSize: 15),
+              ),
+              if (customer.notes != null && customer.notes!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  "Notes",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  customer.notes!,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton(
+                  onPressed: () => Get.back(),
+                  child: const Text("Close"),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(BuildContext context, String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value ?? '-',
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
+            ),
+          ),
+        ],
       ),
     );
   }

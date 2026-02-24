@@ -10,7 +10,10 @@ class FragHomeReport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ControllerHomeReport controller = Get.put(ControllerHomeReport());
+    final ControllerHomeReport controller =
+        Get.isRegistered<ControllerHomeReport>()
+        ? Get.find<ControllerHomeReport>()
+        : Get.put(ControllerHomeReport());
     final colorScheme = Theme.of(context).colorScheme;
     final currencyFormat = NumberFormat.simpleCurrency(locale: 'en_IN');
 
@@ -256,7 +259,9 @@ class FragHomeReport extends StatelessWidget {
                 ),
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: controller.rxListBill.length,
+                  itemCount:
+                      controller.rxListBill.length +
+                      (controller.rxHasMore.value ? 1 : 0),
                   separatorBuilder: (_, __) => Divider(
                     height: 1,
                     indent: 72,
@@ -264,13 +269,32 @@ class FragHomeReport extends StatelessWidget {
                     color: Colors.grey.shade100,
                   ),
                   itemBuilder: (context, index) {
+                    // "Load More" button at the end
+                    if (index >= controller.rxListBill.length) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: Obx(
+                            () => controller.rxIsLoadingMore.value
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : TextButton.icon(
+                                    onPressed: controller.loadMore,
+                                    icon: const Icon(Icons.expand_more_rounded),
+                                    label: const Text('Load More'),
+                                  ),
+                          ),
+                        ),
+                      );
+                    }
+
                     final bill = controller.rxListBill[index];
-                    final date = bill.createdAtUtcMs != null
-                        ? DateTime.fromMillisecondsSinceEpoch(
-                            bill.createdAtUtcMs!,
-                            isUtc: true,
-                          ).toLocal()
-                        : DateTime.now();
+                    final displayDate = bill.billDate ?? '-';
                     final isCancelled = bill.status == "CANCELLED";
 
                     return ListTile(
@@ -317,13 +341,13 @@ class FragHomeReport extends StatelessWidget {
                       subtitle: Row(
                         children: [
                           Icon(
-                            Icons.access_time_rounded,
+                            Icons.calendar_today_rounded,
                             size: 12,
                             color: Colors.grey.shade500,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            DateFormat('dd MMM, hh:mm a').format(date),
+                            displayDate,
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade500,

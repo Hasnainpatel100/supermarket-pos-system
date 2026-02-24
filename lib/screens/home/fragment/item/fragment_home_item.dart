@@ -146,8 +146,8 @@ class FragmentHomeItem extends StatelessWidget {
                   width: double.infinity,
                   child: SingleChildScrollView(
                     child: DataTable(
-                      columnSpacing: 16,
-                      horizontalMargin: 16,
+                      columnSpacing: 18,
+                      horizontalMargin: 18,
                       headingRowColor: WidgetStateProperty.all(
                         colorScheme.primary.withValues(alpha: 0.04),
                       ),

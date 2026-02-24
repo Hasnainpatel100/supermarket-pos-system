@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
+import '../../../../service/service_bill_pdf.dart';
+import '../controller_home_settings.dart';
 
 class DialogBillDetail extends StatelessWidget {
   final EntityBill bill;
@@ -10,10 +13,10 @@ class DialogBillDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = Get.find<ControllerHomeSettings>();
     final colorScheme = Theme.of(context).colorScheme;
     final currencyFormat = NumberFormat.simpleCurrency(locale: 'en_IN');
-    final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
-
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
     final date = bill.createdAtUtcMs != null
         ? DateTime.fromMillisecondsSinceEpoch(
             bill.createdAtUtcMs!,
@@ -22,118 +25,362 @@ class DialogBillDetail extends StatelessWidget {
         : null;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: Colors.transparent,
       child: Container(
-        width: 500,
-        height: 600,
-        padding: const EdgeInsets.all(24),
+        width: 460,
+        constraints: const BoxConstraints(maxHeight: 740),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 32,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
         child: Column(
           children: [
-            /// Header
-            Row(
-              children: [
-                Icon(Icons.receipt_long_rounded, color: colorScheme.primary),
-                const SizedBox(width: 10),
-                Text(
-                  'Bill #${bill.billNo ?? "N/A"}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            // ── Gradient Header ──
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    colorScheme.primary,
+                    colorScheme.primary.withValues(alpha: 0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Get.back(),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
                 ),
-              ],
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 20, 12, 20),
+              child: Obx(
+                () => Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.receipt_long_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            settings.rxStoreName.value,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'Bill #${bill.billNo ?? "N/A"}',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Get.back(),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const Divider(),
 
-            /// Customer Info
-            _buildInfoRow("Customer", bill.customerName ?? "Walk-in"),
-            _buildInfoRow("Date", date != null ? dateFormat.format(date) : "-"),
-            _buildInfoRow("Status", bill.status ?? "-"),
-            _buildInfoRow("Payment", bill.paymentMode ?? "-"),
-
-            const SizedBox(height: 16),
-            const Divider(),
-
-            /// Items List
+            // ── Scrollable body ──
             Expanded(
-              child: ListView.separated(
-                itemCount: bill.items.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final item = bill.items[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // Store sub-info
+                    _StoreInfoRow(settings: settings),
+                    const SizedBox(height: 16),
+
+                    // Dotted separator
+                    _DottedDivider(),
+                    const SizedBox(height: 14),
+
+                    // Bill meta
+                    _MetaRow(
+                      icon: Icons.calendar_today_rounded,
+                      label: 'Date',
+                      value: date != null ? dateFormat.format(date) : '-',
+                    ),
+                    _MetaRow(
+                      icon: Icons.person_rounded,
+                      label: 'Customer',
+                      value: bill.customerName ?? 'Walk-in',
+                    ),
+                    _MetaRow(
+                      icon: Icons.payment_rounded,
+                      label: 'Payment',
+                      value: bill.paymentMode ?? '-',
+                    ),
+                    _MetaRow(
+                      icon: Icons.info_outline_rounded,
+                      label: 'Status',
+                      value: bill.status ?? '-',
+                    ),
+
+                    const SizedBox(height: 14),
+                    _DottedDivider(),
+                    const SizedBox(height: 12),
+
+                    // Items header
+                    Row(
                       children: [
                         Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.itemName ?? "Unknown Item",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                "Qty: ${item.qty} x ${currencyFormat.format(item.price ?? 0)}",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
+                          flex: 4,
+                          child: Text(
+                            'ITEM',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
                           ),
                         ),
                         Expanded(
                           flex: 1,
                           child: Text(
-                            currencyFormat.format(item.total ?? 0),
-                            textAlign: TextAlign.end,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            'QTY',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            'RATE',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            'AMT',
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  );
-                },
+                    const SizedBox(height: 6),
+                    const Divider(thickness: 1),
+                    const SizedBox(height: 4),
+
+                    // Items list
+                    ...bill.items.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final item = entry.value;
+                      return Container(
+                        color: i.isEven
+                            ? colorScheme.surfaceContainerLowest
+                            : Colors.transparent,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 7,
+                          horizontal: 2,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 4,
+                              child: Text(
+                                item.itemName ?? '-',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Text(
+                                '${item.qty ?? 0}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                currencyFormat.format(item.price ?? 0),
+                                textAlign: TextAlign.right,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                currencyFormat.format(item.total ?? 0),
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+
+                    const SizedBox(height: 10),
+                    _DottedDivider(),
+                    const SizedBox(height: 10),
+
+                    // Totals
+                    _TotalRow(
+                      label: 'Subtotal',
+                      value: currencyFormat.format(bill.totalAmount ?? 0),
+                    ),
+                    if ((bill.tax ?? 0) > 0)
+                      _TotalRow(
+                        label: 'Tax',
+                        value: currencyFormat.format(bill.tax ?? 0),
+                      ),
+                    if ((bill.discount ?? 0) > 0)
+                      _TotalRow(
+                        label: 'Discount',
+                        value: '- ${currencyFormat.format(bill.discount ?? 0)}',
+                        isRed: true,
+                      ),
+
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withValues(
+                          alpha: 0.4,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'GRAND TOTAL',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                          Text(
+                            currencyFormat.format(bill.grandTotal ?? 0),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+                    Text(
+                      '★  Thank you for shopping with us!  ★',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurface.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
-            const Divider(),
-
-            /// Totals
-            _buildTotalRow("Subtotal", bill.totalAmount ?? 0, currencyFormat),
-            _buildTotalRow("Tax", bill.tax ?? 0, currencyFormat),
-            _buildTotalRow(
-              "Discount",
-              bill.discount ?? 0,
-              currencyFormat,
-              isNegative: true,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Grand Total",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            // ── Action Buttons ──
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(20),
                 ),
-                Text(
-                  currencyFormat.format(bill.grandTotal ?? 0),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: colorScheme.primary,
+                border: Border(
+                  top: BorderSide(color: colorScheme.outlineVariant),
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Preview PDF
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _previewPdf(context, settings),
+                      icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                      label: const Text('Preview PDF'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  // WhatsApp
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton.icon(
+                      onPressed: () => _shareWhatsApp(context, settings),
+                      icon: const Icon(Icons.send_rounded, size: 18),
+                      label: const Text('Send on WhatsApp'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -141,35 +388,386 @@ class DialogBillDetail extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey.shade600)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+  // ── PDF Preview ──────────────────────────────────────────────
+  Future<void> _previewPdf(
+    BuildContext context,
+    ControllerHomeSettings settings,
+  ) async {
+    try {
+      final pdfFile = await ServiceBillPdf.generate(bill, settings);
+      // Open PDF with the system default viewer
+      await Process.run('cmd', ['/c', 'start', '', pdfFile.path]);
+      Get.snackbar(
+        'PDF Saved',
+        'Bill PDF saved at:\n${pdfFile.path}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Could not generate PDF: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  // ── WhatsApp Share ──────────────────────────────────────────
+  Future<void> _shareWhatsApp(
+    BuildContext context,
+    ControllerHomeSettings settings,
+  ) async {
+    final customerPhone = bill.customerPhone;
+
+    if (customerPhone != null && customerPhone.length == 10) {
+      // Already have a valid phone number
+      _confirmAndSendWhatsApp(
+        context,
+        settings,
+        customerPhone,
+        isFromBill: true,
+      );
+    } else {
+      // Ask for number
+      _promptPhoneAndSend(context, settings);
+    }
+  }
+
+  void _confirmAndSendWhatsApp(
+    BuildContext context,
+    ControllerHomeSettings settings,
+    String phone, {
+    bool isFromBill = false,
+  }) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Send Bill on WhatsApp'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF25D366),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.chat_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isFromBill
+                  ? 'Send bill to customer\'s number?'
+                  : 'Send bill to this number?',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '+91 $phone',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+            ),
+            onPressed: () {
+              Get.back();
+              _launchWhatsApp(context, settings, phone);
+            },
+            child: const Text('Send'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTotalRow(
-    String label,
-    double value,
-    NumberFormat format, {
-    bool isNegative = false,
-  }) {
-    if (value == 0) return const SizedBox.shrink();
+  void _promptPhoneAndSend(
+    BuildContext context,
+    ControllerHomeSettings settings,
+  ) {
+    final phoneController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Enter Customer Number'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF25D366),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.chat_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'No phone number on file.\nEnter a 10-digit mobile number to send the bill.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: phoneController,
+                keyboardType: TextInputType.number,
+                maxLength: 10,
+                decoration: InputDecoration(
+                  labelText: 'Mobile Number',
+                  prefixText: '+91 ',
+                  prefixIcon: const Icon(Icons.phone_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                ),
+                validator: (val) {
+                  if (val == null || val.trim().length != 10) {
+                    return 'Please enter a valid 10-digit number';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+            ),
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Get.back();
+                _confirmAndSendWhatsApp(
+                  context,
+                  settings,
+                  phoneController.text.trim(),
+                );
+              }
+            },
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchWhatsApp(
+    BuildContext context,
+    ControllerHomeSettings settings,
+    String phone,
+  ) async {
+    try {
+      // Generate and save PDF
+      final pdfFile = await ServiceBillPdf.generate(bill, settings);
+
+      // Open the PDF with system viewer so user can see it
+      await Process.run('cmd', ['/c', 'start', '', pdfFile.path]);
+
+      // Build WhatsApp message with bill summary
+      final storeName = settings.rxStoreName.value;
+      final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+      final date = bill.createdAtUtcMs != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              bill.createdAtUtcMs!,
+              isUtc: true,
+            ).toLocal()
+          : DateTime.now();
+
+      final message = Uri.encodeComponent(
+        '🛒 *$storeName*\n'
+        '📄 Bill #${bill.billNo ?? "N/A"}\n'
+        '📅 ${dateFormat.format(date)}\n'
+        '💰 Grand Total: ₹${(bill.grandTotal ?? 0).toStringAsFixed(2)}\n\n'
+        'Thank you for shopping with us! 🙏',
+      );
+
+      final url = 'https://wa.me/91$phone?text=$message';
+
+      // Open WhatsApp via system browser (bypass url_launcher issues on Windows)
+      await Process.run('cmd', ['/c', 'start', '', url]);
+
+      Get.snackbar(
+        'Sent!',
+        'PDF saved at: ${pdfFile.path}\nWhatsApp opened in browser.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to send: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+}
+
+// ── Helper Widgets ────────────────────────────────────────────
+
+class _StoreInfoRow extends StatelessWidget {
+  final ControllerHomeSettings settings;
+  const _StoreInfoRow({required this.settings});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => Column(
+        children: [
+          Text(
+            settings.rxStoreAddress.value,
+            style: Theme.of(context).textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+          if (settings.rxStorePhone.value.isNotEmpty)
+            Text(
+              '📞 ${settings.rxStorePhone.value}'
+              '${settings.rxStoreGstin.value.isNotEmpty ? "   |   GSTIN: ${settings.rxStoreGstin.value}" : ""}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontSize: 10),
+              textAlign: TextAlign.center,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DottedDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 1,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: _DotPainter(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+        ),
+      ),
+    );
+  }
+}
+
+class _DotPainter extends CustomPainter {
+  final Color color;
+  _DotPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    const dashWidth = 6.0;
+    const gapWidth = 5.0;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + dashWidth, 0), paint);
+      x += dashWidth + gapWidth;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+class _MetaRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _MetaRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: cs.primary.withValues(alpha: 0.7)),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: 72,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TotalRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isRed;
+  const _TotalRow({
+    required this.label,
+    required this.value,
+    this.isRed = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
           Text(
-            "${isNegative ? '-' : ''}${format.format(value)}",
-            style: TextStyle(color: isNegative ? Colors.red : null),
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: isRed ? Colors.red : null,
+            ),
           ),
         ],
       ),

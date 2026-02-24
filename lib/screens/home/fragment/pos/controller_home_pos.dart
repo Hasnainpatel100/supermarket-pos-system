@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:super_market/service/service_currency.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
@@ -12,6 +13,8 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../util/snackbar_util.dart';
 import '../item/controller_home_item.dart';
+import '../report/controller_home_report.dart';
+import '../report/dialog_bill_detail.dart';
 
 class ControllerHomePos extends GetxController {
   late Box<EntityItem> _boxItem;
@@ -229,13 +232,8 @@ class ControllerHomePos extends GetxController {
     }
 
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final todayDate = DateFormat('d/MM/yyyy').format(DateTime.now());
 
-    final today = DateTime.now();
-    final onlyDate = DateTime(
-      today.year,
-      today.month,
-      today.day,
-    );
     final customer = rxSelectedCustomer.value;
     final customerName = customer != null ? "${customer.name}" : "Walk-in";
     final customerPhone = customer?.phone ?? "";
@@ -250,6 +248,7 @@ class ControllerHomePos extends GetxController {
       grandTotal: rxGrandTotal.value,
       status: "PAID",
       paymentMode: "CASH",
+      billDate: todayDate,
       createdAtUtcMs: now,
       updatedAtUtcMs: now,
     );
@@ -307,9 +306,6 @@ class ControllerHomePos extends GetxController {
       }
     }
 
-    SnackbarUtil.showSuccess(
-      "Bill Settled! \nAmount: ${serviceCurrency.rxCurrency.value}${rxGrandTotal.value.toStringAsFixed(2)}",
-    );
     clearCart();
     loadItems(); // Refresh POS grid with updated stock
 
@@ -317,6 +313,14 @@ class ControllerHomePos extends GetxController {
     if (Get.isRegistered<ControllerHomeItem>()) {
       Get.find<ControllerHomeItem>().loadItems();
     }
+
+    // Refresh Report controller if it exists
+    if (Get.isRegistered<ControllerHomeReport>()) {
+      Get.find<ControllerHomeReport>().loadData();
+    }
+
+    // Show beautiful bill preview to user
+    Get.dialog(DialogBillDetail(bill: savedBill), barrierDismissible: false);
   }
 
   /// FIFO batch deduction — walks oldest batches first

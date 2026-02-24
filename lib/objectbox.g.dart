@@ -657,7 +657,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(14, 5072473716951944501),
     name: 'EntityBill',
-    lastPropertyId: const obx_int.IdUid(12, 5931572769748908165),
+    lastPropertyId: const obx_int.IdUid(13, 1370894367929224612),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -731,6 +731,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(12, 5931572769748908165),
         name: 'updatedAtUtcMs',
         type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 1370894367929224612),
+        name: 'billDate',
+        type: 9,
         flags: 0,
       ),
     ],
@@ -1810,7 +1816,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final paymentModeOffset = object.paymentMode == null
             ? null
             : fbb.writeString(object.paymentMode!);
-        fbb.startTable(13);
+        final billDateOffset = object.billDate == null
+            ? null
+            : fbb.writeString(object.billDate!);
+        fbb.startTable(14);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, billNoOffset);
         fbb.addOffset(2, customerNameOffset);
@@ -1823,6 +1832,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(9, paymentModeOffset);
         fbb.addInt64(10, object.createdAtUtcMs);
         fbb.addInt64(11, object.updatedAtUtcMs);
+        fbb.addOffset(12, billDateOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -1870,6 +1880,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final paymentModeParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 22);
+        final billDateParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 28);
         final createdAtUtcMsParam = const fb.Int64Reader().vTableGetNullable(
           buffer,
           rootOffset,
@@ -1891,6 +1904,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           grandTotal: grandTotalParam,
           status: statusParam,
           paymentMode: paymentModeParam,
+          billDate: billDateParam,
           createdAtUtcMs: createdAtUtcMsParam,
           updatedAtUtcMs: updatedAtUtcMsParam,
         );
@@ -2544,6 +2558,11 @@ class EntityBill_ {
   /// See [EntityBill.updatedAtUtcMs].
   static final updatedAtUtcMs = obx.QueryIntegerProperty<EntityBill>(
     _entities[9].properties[11],
+  );
+
+  /// See [EntityBill.billDate].
+  static final billDate = obx.QueryStringProperty<EntityBill>(
+    _entities[9].properties[12],
   );
 
   /// see [EntityBill.items]

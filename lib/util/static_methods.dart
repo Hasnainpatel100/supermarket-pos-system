@@ -17,6 +17,7 @@ class StaticMethods {
 
     // storage
     var storage = await ServiceStorage().init();
+    Get.put<ServiceStorage>(storage, permanent: true);
     RepoStorage().onInit(storage: storage);
     await Get.putAsync<RepoStorage>(
       () async => RepoStorage().onInit(storage: storage),

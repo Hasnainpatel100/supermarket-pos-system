@@ -8,6 +8,7 @@ import '../../../service/service_theme.dart';
 import '../../../widget/list_tile_dropdown.dart';
 import '../../../widget/list_tile_toggle.dart';
 import '../../../widget/my_card.dart';
+import 'controller_home_settings.dart';
 
 class FragHomeSettings extends StatelessWidget {
   FragHomeSettings({super.key});
@@ -15,6 +16,7 @@ class FragHomeSettings extends StatelessWidget {
   final themeService = Get.find<ServiceTheme>();
   final localeService = Get.find<ServiceLocale>();
   final currencyService = Get.find<ServiceCurrency>();
+  final controllerSettings = Get.find<ControllerHomeSettings>();
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +29,7 @@ class FragHomeSettings extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                _buildSectionHeader("Appearance & Locale"),
                 MyCard(
                   child: Obx(() {
                     return ListTileToggle(
@@ -110,22 +113,88 @@ class FragHomeSettings extends StatelessWidget {
                           child: Text('Bahraini Dinar'),
                         ),
                         DropdownMenuItem(
-                          value:
-                              'ر.ق'
-                              'ر.ق',
+                          value: 'ر.ق',
                           child: Text('Qatari Riyal'),
                         ),
                       ],
                     );
                   }),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
+                _buildSectionHeader("Store Information"),
+                MyCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      _buildTextField(
+                        controller: controllerSettings.storeNameController,
+                        label: "Company Name",
+                        icon: Icons.business_outlined,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: controllerSettings.storeAddressController,
+                        label: "Address",
+                        icon: Icons.location_on_outlined,
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller:
+                                  controllerSettings.storePhoneController,
+                              label: "Phone",
+                              icon: Icons.phone_outlined,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildTextField(
+                              controller:
+                                  controllerSettings.storeGstinController,
+                              label: "GSTIN",
+                              icon: Icons.receipt_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: controllerSettings.storeEmailController,
+                        label: "Email",
+                        icon: Icons.email_outlined,
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: controllerSettings.saveStoreDetails,
+                          icon: const Icon(Icons.save_outlined),
+                          label: const Text("Save Store Details"),
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                _buildSectionHeader("Support"),
                 MyCard(
                   child: ListTile(
-                    leading: IconBox(icon: Icons.help_outline),
+                    leading: const IconBox(icon: Icons.help_outline),
                     title: Text('Help & Support'.tr),
-                    subtitle: Text("Click here to raise ticket"),
-                    trailing: Icon(Icons.arrow_forward_ios_sharp, size: 16),
+                    subtitle: const Text("Click here to raise ticket"),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios_sharp,
+                      size: 16,
+                    ),
                   ),
                 ),
               ]),
@@ -141,6 +210,39 @@ class FragHomeSettings extends StatelessWidget {
             style: Theme.of(Get.context!).textTheme.bodySmall,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 4),
+      child: Text(
+        title.toUpperCase(),
+        style: Theme.of(Get.context!).textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(Get.context!).colorScheme.primary,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: Theme.of(Get.context!).colorScheme.surface,
       ),
     );
   }

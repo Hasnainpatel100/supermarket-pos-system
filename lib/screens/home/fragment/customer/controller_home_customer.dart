@@ -15,6 +15,13 @@ class ControllerHomeCustomer extends GetxController {
     super.onInit();
     _boxCustomer = Get.find<ServiceObjectBox>().box<EntityCustomer>();
     loadCustomers();
+
+    // Debounce search — waits 300ms after last keystroke before querying
+    debounce(
+      searchQuery,
+      (_) => loadCustomers(),
+      time: const Duration(milliseconds: 300),
+    );
   }
 
   void loadCustomers() {
@@ -27,14 +34,16 @@ class ControllerHomeCustomer extends GetxController {
     rxListCustomer.assignAll(query.build().find());
   }
 
+  /// Called from TextField onChanged — only updates the observable,
+  /// debounce handles calling loadCustomers after 300ms
   void updateSearch(String val) {
     searchQuery.value = val;
-    loadCustomers();
   }
 
   void clearSearch() {
     searchController.clear();
-    updateSearch('');
+    searchQuery.value = '';
+    loadCustomers(); // immediate clear
   }
 
   void toggleActive(EntityCustomer customer) {

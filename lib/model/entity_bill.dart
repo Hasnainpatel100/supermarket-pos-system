@@ -20,6 +20,9 @@ class EntityBill {
   String? status; // PAID, HOLD, CANCELLED
   String? paymentMode; // CASH, CARD, UPI, etc.
 
+  /// Date-only field stored as "d/MM/yyyy" e.g. "22/02/2025"
+  String? billDate;
+
   int? createdAtUtcMs;
   int? updatedAtUtcMs;
 
@@ -37,6 +40,7 @@ class EntityBill {
     this.grandTotal,
     this.status,
     this.paymentMode,
+    this.billDate,
     this.createdAtUtcMs,
     this.updatedAtUtcMs,
   });

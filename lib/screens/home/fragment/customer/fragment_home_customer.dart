@@ -11,7 +11,10 @@ class FragmentHomeCustomer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ControllerHomeCustomer controller = Get.put(ControllerHomeCustomer());
+    final ControllerHomeCustomer controller =
+        Get.isRegistered<ControllerHomeCustomer>()
+        ? Get.find<ControllerHomeCustomer>()
+        : Get.put(ControllerHomeCustomer());
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(

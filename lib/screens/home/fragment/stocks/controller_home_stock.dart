@@ -27,6 +27,13 @@ class ControllerHomeStock extends GetxController {
     _boxTxn = ob.box<EntityStockTransaction>();
     _boxItem = ob.box<EntityItem>();
     loadTransactions();
+
+    // Debounce search — waits 300ms after last keystroke before querying
+    debounce(
+      searchQuery,
+      (_) => loadTransactions(),
+      time: const Duration(milliseconds: 300),
+    );
   }
 
   void loadTransactions() {
@@ -56,15 +63,16 @@ class ControllerHomeStock extends GetxController {
     rxListTxn.assignAll(all);
   }
 
+  /// Called from TextField onChanged — only updates the observable,
+  /// debounce handles calling loadTransactions after 300ms
   void updateSearch(String q) {
     searchQuery.value = q;
-    loadTransactions();
   }
 
   void clearSearch() {
     searchQuery.value = '';
     searchController.clear();
-    loadTransactions();
+    loadTransactions(); // immediate clear
   }
 
   void setTypeFilter(StockTxnType? type) {

@@ -14,9 +14,9 @@ import 'fragment/frag_home_dashboard.dart';
 import 'fragment/frag_home_logout.dart';
 // import 'fragment/frag_home_pos.dart'; // Removed to avoid conflict
 import 'fragment/frag_home_price_discount.dart';
-import 'fragment/frag_home_purchase_supplier.dart';
 import 'fragment/report/frag_home_report.dart';
 import 'fragment/frag_home_settings.dart';
+import 'fragment/controller_home_settings.dart';
 import 'fragment/users/frag_home_users.dart';
 
 class ActivityHome extends StatelessWidget {
@@ -25,6 +25,10 @@ class ActivityHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ControllerHome controller = Get.put(ControllerHome(), permanent: true);
+    // Register Settings controller globally so bill details can always display store info
+    if (!Get.isRegistered<ControllerHomeSettings>()) {
+      Get.put(ControllerHomeSettings(), permanent: true);
+    }
     return Scaffold(
       body: Row(
         children: [

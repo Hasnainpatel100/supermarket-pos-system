@@ -540,7 +540,7 @@
     },
     {
       "id": "14:5072473716951944501",
-      "lastPropertyId": "12:5931572769748908165",
+      "lastPropertyId": "13:1370894367929224612",
       "name": "EntityBill",
       "properties": [
         {
@@ -605,6 +605,11 @@
           "id": "12:5931572769748908165",
           "name": "updatedAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "13:1370894367929224612",
+          "name": "billDate",
+          "type": 9
         }
       ],
       "relations": []

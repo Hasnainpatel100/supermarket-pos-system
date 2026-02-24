@@ -1,4 +1,4 @@
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../objectbox.g.dart';
@@ -21,6 +21,15 @@ class ControllerHomeReport extends GetxController {
   final Rx<DateTime> rxStartDate = DateTime.now().obs;
   final Rx<DateTime> rxEndDate = DateTime.now().obs;
 
+  // Pagination
+  static const int _pageSize = 20;
+  final RxInt _currentOffset = 0.obs;
+  final RxBool rxHasMore = true.obs;
+  final RxBool rxIsLoadingMore = false.obs;
+
+  /// All matching date strings for the current filter
+  List<String> _matchingDateStrings = [];
+
   @override
   void onInit() {
     super.onInit();
@@ -40,15 +49,7 @@ class ControllerHomeReport extends GetxController {
     switch (type) {
       case DateFilterType.today:
         rxStartDate.value = DateTime(now.year, now.month, now.day);
-        rxEndDate.value = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          23,
-          59,
-          59,
-          999,
-        );
+        rxEndDate.value = DateTime(now.year, now.month, now.day);
         break;
       case DateFilterType.yesterday:
         final yesterday = now.subtract(const Duration(days: 1));
@@ -61,10 +62,6 @@ class ControllerHomeReport extends GetxController {
           yesterday.year,
           yesterday.month,
           yesterday.day,
-          23,
-          59,
-          59,
-          999,
         );
         break;
       case DateFilterType.thisWeek:
@@ -74,27 +71,11 @@ class ControllerHomeReport extends GetxController {
           weekStart.month,
           weekStart.day,
         );
-        rxEndDate.value = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          23,
-          59,
-          59,
-          999,
-        );
+        rxEndDate.value = DateTime(now.year, now.month, now.day);
         break;
       case DateFilterType.thisMonth:
         rxStartDate.value = DateTime(now.year, now.month, 1);
-        rxEndDate.value = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          23,
-          59,
-          59,
-          999,
-        );
+        rxEndDate.value = DateTime(now.year, now.month, now.day);
         break;
       case DateFilterType.custom:
         // Keep existing dates for custom
@@ -106,33 +87,84 @@ class ControllerHomeReport extends GetxController {
   void setCustomRange(DateTime start, DateTime end) {
     rxDateFilter.value = DateFilterType.custom;
     rxStartDate.value = DateTime(start.year, start.month, start.day);
-    rxEndDate.value = DateTime(end.year, end.month, end.day, 23, 59, 59, 999);
+    rxEndDate.value = DateTime(end.year, end.month, end.day);
     loadData();
   }
 
+  /// Build a list of all date strings (d/MM/yyyy) from start to end inclusive
+  List<String> _buildDateStrings(DateTime start, DateTime end) {
+    final fmt = DateFormat('d/MM/yyyy');
+    final dates = <String>[];
+    var current = DateTime(start.year, start.month, start.day);
+    final endDay = DateTime(end.year, end.month, end.day);
+    while (!current.isAfter(endDay)) {
+      dates.add(fmt.format(current));
+      current = current.add(const Duration(days: 1));
+    }
+    return dates;
+  }
+
+  /// Reset pagination and load first page
   void loadData() {
-    final startMs = rxStartDate.value.toUtc().millisecondsSinceEpoch;
-    final endMs = rxEndDate.value.toUtc().millisecondsSinceEpoch;
+    _currentOffset.value = 0;
+    rxHasMore.value = true;
+    rxListBill.clear();
 
-    // Query bills in date range, ordered by newest first
-    final query = _boxBill
-        .query(EntityBill_.createdAtUtcMs.between(startMs, endMs))
-        .order(EntityBill_.createdAtUtcMs, flags: Order.descending)
-        .build();
-    final bills = query.find();
-    query.close();
+    _matchingDateStrings = _buildDateStrings(
+      rxStartDate.value,
+      rxEndDate.value,
+    );
 
-    rxListBill.assignAll(bills);
+    _loadPage();
+  }
 
-    // Calculate stats
-    double totalSales = 0;
-    for (var bill in bills) {
-      totalSales += (bill.grandTotal ?? 0);
+  /// Load the next page of bills
+  void loadMore() {
+    if (!rxHasMore.value || rxIsLoadingMore.value) return;
+    _loadPage();
+  }
+
+  void _loadPage() {
+    rxIsLoadingMore.value = true;
+
+    // Query bills that match any of the date strings, newest first
+    Condition<EntityBill>? dateCondition;
+    if (_matchingDateStrings.length == 1) {
+      dateCondition = EntityBill_.billDate.equals(_matchingDateStrings.first);
+    } else if (_matchingDateStrings.length > 1) {
+      dateCondition = EntityBill_.billDate.oneOf(_matchingDateStrings);
     }
 
-    filteredSales.value = totalSales;
-    filteredOrders.value = bills.length;
-    averageBillValue.value = bills.isNotEmpty ? totalSales / bills.length : 0;
+    final queryBuilder = dateCondition != null
+        ? _boxBill.query(dateCondition)
+        : _boxBill.query();
+    queryBuilder.order(EntityBill_.id, flags: Order.descending);
+    final query = queryBuilder.build();
+
+    // Count total for stats (only on first page)
+    if (_currentOffset.value == 0) {
+      final allBills = query.find();
+      double totalSales = 0;
+      for (var bill in allBills) {
+        totalSales += (bill.grandTotal ?? 0);
+      }
+      filteredSales.value = totalSales;
+      filteredOrders.value = allBills.length;
+      averageBillValue.value = allBills.isNotEmpty
+          ? totalSales / allBills.length
+          : 0;
+    }
+
+    // Paginate
+    query.offset = _currentOffset.value;
+    query.limit = _pageSize;
+    final page = query.find();
+    query.close();
+
+    rxListBill.addAll(page);
+    _currentOffset.value += page.length;
+    rxHasMore.value = page.length >= _pageSize;
+    rxIsLoadingMore.value = false;
   }
 
   String formatDateRange() {

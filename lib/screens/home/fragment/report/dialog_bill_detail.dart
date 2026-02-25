@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -581,55 +582,79 @@ class DialogBillDetail extends StatelessWidget {
     String phone,
   ) async {
     try {
-      // Generate and save PDF
-      final pdfFile = await ServiceBillPdf.generate(bill, settings);
-
-      // Open the PDF with system viewer so user can see it
-      await Process.run('cmd', ['/c', 'start', '', pdfFile.path]);
-
-      // Build WhatsApp message with bill summary
+      // ── 1. Build formatted text receipt ──────────────────────
       final storeName = settings.rxStoreName.value;
-      final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+      final storePhone = settings.rxStorePhone.value;
       final date = bill.createdAtUtcMs != null
           ? DateTime.fromMillisecondsSinceEpoch(
               bill.createdAtUtcMs!,
               isUtc: true,
             ).toLocal()
           : DateTime.now();
+      final dateStr =
+          '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}  '
+          '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 
-      final message = Uri.encodeComponent(
-        '🛒 *$storeName*\n'
-        '📄 Bill #${bill.billNo ?? "N/A"}\n'
-        '📅 ${dateFormat.format(date)}\n'
-        '💰 Grand Total: ₹${(bill.grandTotal ?? 0).toStringAsFixed(2)}\n\n'
-        'Thank you for shopping with us! 🙏',
+      final buffer = StringBuffer();
+      buffer.writeln('🏪 *$storeName*');
+      if (storePhone.isNotEmpty) buffer.writeln('📞 $storePhone');
+      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
+      buffer.writeln('🧾 *Bill #${bill.billNo ?? "N/A"}*');
+      buffer.writeln('📅 $dateStr');
+      buffer.writeln('👤 ${bill.customerName ?? "Walk-in"}');
+      buffer.writeln(
+        '💳 ${bill.paymentMode ?? "CASH"} | ${bill.status ?? "PAID"}',
       );
+      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
 
-      final url = 'https://wa.me/91$phone?text=$message';
+      // Items
+      for (final item in bill.items) {
+        final name = item.itemName ?? '-';
+        final qty = item.qty ?? 0;
+        final price = (item.price ?? 0).toStringAsFixed(2);
+        final total = (item.total ?? 0).toStringAsFixed(2);
+        buffer.writeln('• $name');
+        buffer.writeln('  $qty × ₹$price = ₹$total');
+      }
 
-      // Open WhatsApp via system browser (bypass url_launcher issues on Windows)
-      await Process.run('cmd', ['/c', 'start', '', url]);
-
-      Get.snackbar(
-        'Sent!',
-        'PDF saved at: ${pdfFile.path}\nWhatsApp opened in browser.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
+      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
+      buffer.writeln(
+        '  Subtotal  : ₹${(bill.totalAmount ?? 0).toStringAsFixed(2)}',
       );
+      if ((bill.tax ?? 0) > 0) {
+        buffer.writeln('  Tax       : ₹${(bill.tax ?? 0).toStringAsFixed(2)}');
+      }
+      if ((bill.discount ?? 0) > 0) {
+        buffer.writeln(
+          '  Discount  : -₹${(bill.discount ?? 0).toStringAsFixed(2)}',
+        );
+      }
+      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
+      buffer.writeln(
+        '*GRAND TOTAL : ₹${(bill.grandTotal ?? 0).toStringAsFixed(2)}*',
+      );
+      buffer.writeln();
+      buffer.writeln('⭐ Thank you for shopping with us!');
+
+      // ── 2. Launch WhatsApp with pre-filled text ───────────────
+      final encoded = Uri.encodeComponent(buffer.toString());
+      final whatsappUrl = Uri.parse('https://wa.me/91$phone?text=$encoded');
+
+      if (!await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication)) {
+        throw Exception('Could not open WhatsApp. Is it installed?');
+      }
     } catch (e) {
       Get.snackbar(
-        'Error',
-        'Failed to send: $e',
+        '❌ Failed',
+        e.toString().replaceAll('Exception: ', ''),
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.red.shade700,
         colorText: Colors.white,
+        duration: const Duration(seconds: 5),
       );
     }
   }
-}
-
+} // end of DialogBillDetail
 // ── Helper Widgets ────────────────────────────────────────────
 
 class _StoreInfoRow extends StatelessWidget {

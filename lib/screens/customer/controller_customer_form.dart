@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../../model/entity_customer.dart';
 import '../../objectbox.g.dart';
 import '../../service/service_object_box.dart';
+import '../home/fragment/customer/controller_home_customer.dart';
+import '../home/fragment/pos/controller_home_pos.dart';
 
 class ControllerCustomerForm extends GetxController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -112,6 +114,15 @@ class ControllerCustomerForm extends GetxController {
 
     try {
       _boxCustomer.put(customer);
+
+      // Refresh other controllers if they are active
+      if (Get.isRegistered<ControllerHomeCustomer>()) {
+        Get.find<ControllerHomeCustomer>().loadCustomers();
+      }
+      if (Get.isRegistered<ControllerHomePos>()) {
+        Get.find<ControllerHomePos>().loadCustomers();
+      }
+
       Get.back();
       Get.snackbar(
         "Success",

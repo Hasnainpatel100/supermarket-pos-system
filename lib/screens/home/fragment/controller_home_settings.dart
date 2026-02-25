@@ -11,11 +11,18 @@ class ControllerHomeSettings extends GetxController {
   final rxStoreEmail = ''.obs;
   final rxStoreGstin = ''.obs;
 
+  // WhatsApp Cloud API credentials
+  final rxWhatsAppToken = ''.obs;
+  final rxWhatsAppPhoneId = ''.obs;
+
   final storeNameController = TextEditingController();
   final storeAddressController = TextEditingController();
   final storePhoneController = TextEditingController();
   final storeEmailController = TextEditingController();
   final storeGstinController = TextEditingController();
+
+  final whatsAppTokenController = TextEditingController();
+  final whatsAppPhoneIdController = TextEditingController();
 
   @override
   void onInit() {
@@ -31,12 +38,16 @@ class ControllerHomeSettings extends GetxController {
     rxStoreEmail.value =
         _storage.readString('store_email') ?? 'contact@supermarket.com';
     rxStoreGstin.value = _storage.readString('store_gstin') ?? '';
+    rxWhatsAppToken.value = _storage.readString('wa_token') ?? '';
+    rxWhatsAppPhoneId.value = _storage.readString('wa_phone_id') ?? '';
 
     storeNameController.text = rxStoreName.value;
     storeAddressController.text = rxStoreAddress.value;
     storePhoneController.text = rxStorePhone.value;
     storeEmailController.text = rxStoreEmail.value;
     storeGstinController.text = rxStoreGstin.value;
+    whatsAppTokenController.text = rxWhatsAppToken.value;
+    whatsAppPhoneIdController.text = rxWhatsAppPhoneId.value;
   }
 
   Future<void> saveStoreDetails() async {
@@ -61,6 +72,25 @@ class ControllerHomeSettings extends GetxController {
     );
   }
 
+  Future<void> saveWhatsAppCredentials() async {
+    rxWhatsAppToken.value = whatsAppTokenController.text.trim();
+    rxWhatsAppPhoneId.value = whatsAppPhoneIdController.text.trim();
+
+    await _storage.writeString('wa_token', rxWhatsAppToken.value);
+    await _storage.writeString('wa_phone_id', rxWhatsAppPhoneId.value);
+
+    Get.snackbar(
+      'Saved',
+      'WhatsApp API credentials saved',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
+  }
+
+  bool get hasWhatsAppCredentials =>
+      rxWhatsAppToken.value.isNotEmpty && rxWhatsAppPhoneId.value.isNotEmpty;
+
   @override
   void onClose() {
     storeNameController.dispose();
@@ -68,6 +98,8 @@ class ControllerHomeSettings extends GetxController {
     storePhoneController.dispose();
     storeEmailController.dispose();
     storeGstinController.dispose();
+    whatsAppTokenController.dispose();
+    whatsAppPhoneIdController.dispose();
     super.onClose();
   }
 }

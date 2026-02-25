@@ -29,7 +29,7 @@ class FragHomeSettings extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                _buildSectionHeader("Appearance & Locale"),
+                _buildSectionHeader(context, "Appearance & Locale"),
                 MyCard(
                   child: Obx(() {
                     return ListTileToggle(
@@ -121,18 +121,20 @@ class FragHomeSettings extends StatelessWidget {
                   }),
                 ),
                 const SizedBox(height: 32),
-                _buildSectionHeader("Store Information"),
+                _buildSectionHeader(context, "Store Information"),
                 MyCard(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       _buildTextField(
+                        context: context,
                         controller: controllerSettings.storeNameController,
                         label: "Company Name",
                         icon: Icons.business_outlined,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
+                        context: context,
                         controller: controllerSettings.storeAddressController,
                         label: "Address",
                         icon: Icons.location_on_outlined,
@@ -143,6 +145,7 @@ class FragHomeSettings extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _buildTextField(
+                              context: context,
                               controller:
                                   controllerSettings.storePhoneController,
                               label: "Phone",
@@ -152,6 +155,7 @@ class FragHomeSettings extends StatelessWidget {
                           const SizedBox(width: 16),
                           Expanded(
                             child: _buildTextField(
+                              context: context,
                               controller:
                                   controllerSettings.storeGstinController,
                               label: "GSTIN",
@@ -162,6 +166,7 @@ class FragHomeSettings extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
+                        context: context,
                         controller: controllerSettings.storeEmailController,
                         label: "Email",
                         icon: Icons.email_outlined,
@@ -185,7 +190,10 @@ class FragHomeSettings extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 32),
-                _buildSectionHeader("WhatsApp API (Send Bills Directly)"),
+                _buildSectionHeader(
+                  context,
+                  "WhatsApp API (Send Bills Directly)",
+                ),
                 MyCard(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -220,12 +228,14 @@ class FragHomeSettings extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
+                        context: context,
                         controller: controllerSettings.whatsAppTokenController,
                         label: "Access Token",
                         icon: Icons.key_outlined,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
+                        context: context,
                         controller:
                             controllerSettings.whatsAppPhoneIdController,
                         label: "Phone Number ID",
@@ -252,7 +262,7 @@ class FragHomeSettings extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 32),
-                _buildSectionHeader("Support"),
+                _buildSectionHeader(context, "Support"),
                 MyCard(
                   child: ListTile(
                     leading: const IconBox(icon: Icons.help_outline),
@@ -281,14 +291,14 @@ class FragHomeSettings extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title.toUpperCase(),
-        style: Theme.of(Get.context!).textTheme.labelMedium?.copyWith(
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
           fontWeight: FontWeight.bold,
-          color: Theme.of(Get.context!).colorScheme.primary,
+          color: Theme.of(context).colorScheme.primary,
           letterSpacing: 1.2,
         ),
       ),
@@ -296,6 +306,7 @@ class FragHomeSettings extends StatelessWidget {
   }
 
   Widget _buildTextField({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     required IconData icon,
@@ -309,7 +320,7 @@ class FragHomeSettings extends StatelessWidget {
         prefixIcon: Icon(icon, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
-        fillColor: Theme.of(Get.context!).colorScheme.surface,
+        fillColor: Theme.of(context).colorScheme.surface,
       ),
     );
   }

@@ -89,9 +89,59 @@ class ActivityItemForm extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: MyTextField(
-                            controller: controller.unitController,
-                            label: "Unit (pcs/kg)",
+                          child: Obx(
+                            () => DropdownButtonFormField<String>(
+                              value: controller.rxUnit.value,
+                              decoration: InputDecoration(
+                                labelText: 'Unit',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'pcs',
+                                  child: Text('Piece (pcs)'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Box',
+                                  child: Text('Box'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'KG',
+                                  child: Text('Kilogram (KG)'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'g',
+                                  child: Text('Gram (g)'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'L',
+                                  child: Text('Liter (L)'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'ML',
+                                  child: Text('Milliliter (ML)'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Dozen',
+                                  child: Text('Dozen'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Tray',
+                                  child: Text('Tray'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Bottle',
+                                  child: Text('Bottle'),
+                                ),
+                              ],
+                              onChanged: (val) => controller.rxUnit.value = val,
+                            ),
                           ),
                         ),
                       ],
@@ -192,21 +242,47 @@ class ActivityItemForm extends StatelessWidget {
                                                   ),
                                                 ),
                                                 const SizedBox(height: 24),
-                                                // 1D Barcode
-                                                BarcodeWidget(
-                                                  barcode: Barcode.code128(),
-                                                  data: digits,
-                                                  width: 200,
-                                                  height: 80,
-                                                  drawText: true,
+                                                // 1D Barcode – white bg for dark mode
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    12,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                  child: BarcodeWidget(
+                                                    barcode: Barcode.code128(),
+                                                    data: digits,
+                                                    width: 200,
+                                                    height: 80,
+                                                    drawText: true,
+                                                    color: Colors.black,
+                                                  ),
                                                 ),
                                                 const SizedBox(height: 24),
-                                                // 2D QR Code
-                                                BarcodeWidget(
-                                                  barcode: Barcode.qrCode(),
-                                                  data: digits,
-                                                  width: 150,
-                                                  height: 150,
+                                                // 2D QR Code – white bg for dark mode
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    12,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                  child: BarcodeWidget(
+                                                    barcode: Barcode.qrCode(),
+                                                    data: digits,
+                                                    width: 150,
+                                                    height: 150,
+                                                    color: Colors.black,
+                                                  ),
                                                 ),
                                                 const SizedBox(height: 24),
                                                 FilledButton(

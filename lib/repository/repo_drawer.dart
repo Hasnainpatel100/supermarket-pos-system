@@ -30,6 +30,12 @@ class RepoDrawer {
                 const Divider(),
 
                 ...buildSideMenus(permissions),
+                const Divider(),
+                const SideMenuItem.simple(
+                  icon: Icons.payment_outlined,
+                  titleKey: 'Expenses',
+                  menu: EnumMainMenu.expenses,
+                ),
               ],
             ),
           ),
@@ -186,7 +192,7 @@ class RepoDrawer {
     ),*/
     ModelDrawerMenu(
       menu: EnumMainMenu.reports,
-      titleKey: 'reports',
+      titleKey: 'Bills',
       icon: Icons.assessment_outlined,
       permissions: [
         EnumPermission.reportSalesView,
@@ -196,7 +202,7 @@ class RepoDrawer {
         EnumPermission.reportExport,
       ],
     ),
-    ModelDrawerMenu(
+   /* ModelDrawerMenu(
       menu: EnumMainMenu.system,
       titleKey: 'system',
       icon: Icons.admin_panel_settings_outlined,
@@ -235,7 +241,7 @@ class RepoDrawer {
           permissions: [EnumPermission.auditLogView],
         ),
       ],
-    ),
+    ),*/
   ];
 
   /*

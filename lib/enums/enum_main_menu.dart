@@ -16,6 +16,8 @@ enum EnumMainMenu {
   systemSettings, // 2. system
   auditLogs, // 3. system
 
+  expenses,
+
   settings,
   logout,
 }

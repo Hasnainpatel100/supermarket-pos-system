@@ -234,7 +234,7 @@ class FragmentHomeItem extends StatelessWidget {
                           ),
                         ),
                         const DataColumn(label: Text('Status')),
-                        const DataColumn(label: Text('')),
+                        const DataColumn(label: Text('Actions')),
                       ],
                       rows: controller.rxListItem.map((EntityItem item) {
                         final isActive = item.isActive ?? true;

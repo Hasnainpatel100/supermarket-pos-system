@@ -22,6 +22,7 @@ class ControllerItemForm extends GetxController {
   final priceController = TextEditingController();
   final costController = TextEditingController();
   final unitController = TextEditingController();
+  final rxUnit = RxnString(); // selected unit for dropdown
 
   var hasExpiry = false.obs;
 
@@ -44,6 +45,7 @@ class ControllerItemForm extends GetxController {
     costController.text = editingItem?.costPrice?.toString() ?? '';
 
     unitController.text = editingItem?.unit ?? '';
+    rxUnit.value = editingItem?.unit;
     hasExpiry.value = editingItem?.hasExpiry ?? false;
   }
 
@@ -64,7 +66,7 @@ class ControllerItemForm extends GetxController {
           sku: skuController.text,
           sellingPrice: double.tryParse(priceController.text),
           costPrice: double.tryParse(costController.text),
-          unit: unitController.text,
+          unit: rxUnit.value ?? unitController.text,
           hasExpiry: hasExpiry.value,
           isActive: true,
           totalQty: 0,
@@ -79,7 +81,7 @@ class ControllerItemForm extends GetxController {
         editingItem?.sku = skuController.text;
         editingItem?.sellingPrice = double.tryParse(priceController.text);
         editingItem?.costPrice = double.tryParse(costController.text);
-        editingItem?.unit = unitController.text;
+        editingItem?.unit = rxUnit.value ?? unitController.text;
         editingItem?.hasExpiry = hasExpiry.value;
         editingItem?.updatedAtUtcMs = now;
 

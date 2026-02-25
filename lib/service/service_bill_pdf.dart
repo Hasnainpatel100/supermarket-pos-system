@@ -177,7 +177,11 @@ class ServiceBillPdf {
                       color: i.isEven ? PdfColors.white : PdfColors.grey100,
                     ),
                     children: [
-                      _tableCell(item.itemName ?? '-'),
+                      _tableDescCell(
+                        itemName: item.itemName ?? '-',
+                        sku: item.item.target?.sku,
+                        unit: item.unit,
+                      ),
                       _tableCell(
                         '${item.qty ?? 0}',
                         align: pw.TextAlign.center,
@@ -319,6 +323,36 @@ class ServiceBillPdf {
       ],
     ),
   );
+
+  static pw.Widget _tableDescCell({
+    required String itemName,
+    String? sku,
+    String? unit,
+  }) {
+    final subParts = <String>[];
+    if (sku != null && sku.isNotEmpty) subParts.add('SKU: $sku');
+    if (unit != null && unit.isNotEmpty) subParts.add(unit);
+    final subLine = subParts.join('  |  ');
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            itemName,
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
+          ),
+          if (subLine.isNotEmpty) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              subLine,
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   static pw.Widget _tableHeader(
     String text, {

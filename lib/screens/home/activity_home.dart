@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:super_market/screens/home/fragment/customer/fragment_home_customer.dart';
+import 'package:super_market/screens/home/fragment/expenses/fragment_home_expenses.dart';
 import 'package:super_market/screens/home/fragment/item/fragment_home_item.dart';
 import 'package:super_market/screens/home/fragment/pos/fragment_home_pos.dart';
 import 'package:super_market/screens/home/fragment/stocks/fragment_home_stock.dart';
@@ -79,6 +80,9 @@ class ActivityHome extends StatelessWidget {
               }
               if (controller.selectedMainMenu.value == EnumMainMenu.logout) {
                 return FragHomeLogout();
+              }
+              if(controller.selectedMainMenu.value == EnumMainMenu.expenses){
+                return FragmentHomeExpenses();
               }
               return FragComingSoon();
             }),

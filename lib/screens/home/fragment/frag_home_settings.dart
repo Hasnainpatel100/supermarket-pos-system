@@ -190,78 +190,7 @@ class FragHomeSettings extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 32),
-                _buildSectionHeader(
-                  context,
-                  "WhatsApp API (Send Bills Directly)",
-                ),
-                MyCard(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Info banner
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF25D366).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: const Color(0xFF25D366).withOpacity(0.4),
-                          ),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Color(0xFF25D366),
-                              size: 18,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Get your free credentials at:\ndevelopers.facebook.com → WhatsApp → API Setup',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        context: context,
-                        controller: controllerSettings.whatsAppTokenController,
-                        label: "Access Token",
-                        icon: Icons.key_outlined,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        context: context,
-                        controller:
-                            controllerSettings.whatsAppPhoneIdController,
-                        label: "Phone Number ID",
-                        icon: Icons.phone_android_outlined,
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton.icon(
-                          onPressed: controllerSettings.saveWhatsAppCredentials,
-                          icon: const Icon(Icons.save_outlined),
-                          label: const Text("Save WhatsApp Credentials"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF25D366),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
+
                 _buildSectionHeader(context, "Support"),
                 MyCard(
                   child: ListTile(

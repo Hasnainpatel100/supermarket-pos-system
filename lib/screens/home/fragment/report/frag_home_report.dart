@@ -75,37 +75,6 @@ class FragHomeReport extends StatelessWidget {
               child: Row(
                 children: [
                   _DateChip(
-                    label: 'Today',
-                    icon: Icons.today_rounded,
-                    isSelected: selected == DateFilterType.today,
-                    onTap: () => controller.setDateFilter(DateFilterType.today),
-                  ),
-                  const SizedBox(width: 8),
-                  _DateChip(
-                    label: 'Yesterday',
-                    icon: Icons.history_rounded,
-                    isSelected: selected == DateFilterType.yesterday,
-                    onTap: () =>
-                        controller.setDateFilter(DateFilterType.yesterday),
-                  ),
-                  const SizedBox(width: 8),
-                  _DateChip(
-                    label: 'This Week',
-                    icon: Icons.date_range_rounded,
-                    isSelected: selected == DateFilterType.thisWeek,
-                    onTap: () =>
-                        controller.setDateFilter(DateFilterType.thisWeek),
-                  ),
-                  const SizedBox(width: 8),
-                  _DateChip(
-                    label: 'This Month',
-                    icon: Icons.calendar_month_rounded,
-                    isSelected: selected == DateFilterType.thisMonth,
-                    onTap: () =>
-                        controller.setDateFilter(DateFilterType.thisMonth),
-                  ),
-                  const SizedBox(width: 8),
-                  _DateChip(
                     label: 'Custom Range',
                     icon: Icons.tune_rounded,
                     isSelected: selected == DateFilterType.custom,
@@ -117,56 +86,6 @@ class FragHomeReport extends StatelessWidget {
           }),
 
           const SizedBox(height: 16),
-
-          // ── Summary Cards ──
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Obx(
-                    () => _SummaryCard(
-                      title: "Total Sales",
-                      value: currencyFormat.format(
-                        controller.filteredSales.value,
-                      ),
-                      icon: Icons.attach_money_rounded,
-                      color: Colors.green.shade600,
-                      backgroundColor: Colors.green.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Obx(
-                    () => _SummaryCard(
-                      title: "Orders",
-                      value: "${controller.filteredOrders.value}",
-                      icon: Icons.shopping_bag_rounded,
-                      color: Colors.blue.shade600,
-                      backgroundColor: Colors.blue.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Obx(
-                    () => _SummaryCard(
-                      title: "Avg. Bill",
-                      value: currencyFormat.format(
-                        controller.averageBillValue.value,
-                      ),
-                      icon: Icons.trending_up_rounded,
-                      color: Colors.orange.shade600,
-                      backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
 
           // ── Transactions Header ──
           Padding(
@@ -519,76 +438,6 @@ class _DateChip extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ── Summary Card ──
-class _SummaryCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final Color backgroundColor;
-
-  const _SummaryCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-    required this.backgroundColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.08)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }

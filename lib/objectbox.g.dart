@@ -17,6 +17,7 @@ import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 import 'model/entity_bill.dart';
 import 'model/entity_bill_item.dart';
 import 'model/entity_customer.dart';
+import 'model/entity_finance_transaction.dart';
 import 'model/entity_item.dart';
 import 'model/entity_item_batch.dart';
 import 'model/entity_sale.dart';
@@ -831,6 +832,64 @@ final _entities = <obx_int.ModelEntity>[
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
   ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(16, 7857116451053666081),
+    name: 'EntityFinanceTransaction',
+    lastPropertyId: const obx_int.IdUid(8, 3887866240978185793),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 2944181284023842204),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 2007118884712605755),
+        name: 'type',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 431355302735588941),
+        name: 'category',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 507838122659730975),
+        name: 'personName',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 2174581181162649380),
+        name: 'amount',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 9030367777368277971),
+        name: 'isDebit',
+        type: 1,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 4414211508066702274),
+        name: 'note',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 3887866240978185793),
+        name: 'dateUtcMs',
+        type: 6,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
 ];
 
 /// Shortcut for [obx.Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -876,7 +935,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
     // Typically, this is done with `dart run build_runner build`.
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(15, 6240376876973177221),
+    lastEntityId: const obx_int.IdUid(16, 7857116451053666081),
     lastIndexId: const obx_int.IdUid(12, 7345913932769877499),
     lastRelationId: const obx_int.IdUid(1, 6501938934487787319),
     lastSequenceId: const obx_int.IdUid(0, 0),
@@ -2024,6 +2083,77 @@ obx_int.ModelDefinition getObjectBoxModel() {
         return object;
       },
     ),
+    EntityFinanceTransaction:
+        obx_int.EntityDefinition<EntityFinanceTransaction>(
+          model: _entities[11],
+          toOneRelations: (EntityFinanceTransaction object) => [],
+          toManyRelations: (EntityFinanceTransaction object) => {},
+          getId: (EntityFinanceTransaction object) => object.id,
+          setId: (EntityFinanceTransaction object, int id) {
+            object.id = id;
+          },
+          objectToFB: (EntityFinanceTransaction object, fb.Builder fbb) {
+            final typeOffset = object.type == null
+                ? null
+                : fbb.writeString(object.type!);
+            final categoryOffset = object.category == null
+                ? null
+                : fbb.writeString(object.category!);
+            final personNameOffset = object.personName == null
+                ? null
+                : fbb.writeString(object.personName!);
+            final noteOffset = object.note == null
+                ? null
+                : fbb.writeString(object.note!);
+            fbb.startTable(9);
+            fbb.addInt64(0, object.id);
+            fbb.addOffset(1, typeOffset);
+            fbb.addOffset(2, categoryOffset);
+            fbb.addOffset(3, personNameOffset);
+            fbb.addFloat64(4, object.amount);
+            fbb.addBool(5, object.isDebit);
+            fbb.addOffset(6, noteOffset);
+            fbb.addInt64(7, object.dateUtcMs);
+            fbb.finish(fbb.endTable());
+            return object.id;
+          },
+          objectFromFB: (obx.Store store, ByteData fbData) {
+            final buffer = fb.BufferContext(fbData);
+            final rootOffset = buffer.derefObject(0);
+
+            final object = EntityFinanceTransaction()
+              ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
+              ..type = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGetNullable(buffer, rootOffset, 6)
+              ..category = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGetNullable(buffer, rootOffset, 8)
+              ..personName = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGetNullable(buffer, rootOffset, 10)
+              ..amount = const fb.Float64Reader().vTableGetNullable(
+                buffer,
+                rootOffset,
+                12,
+              )
+              ..isDebit = const fb.BoolReader().vTableGetNullable(
+                buffer,
+                rootOffset,
+                14,
+              )
+              ..note = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGetNullable(buffer, rootOffset, 16)
+              ..dateUtcMs = const fb.Int64Reader().vTableGetNullable(
+                buffer,
+                rootOffset,
+                18,
+              );
+
+            return object;
+          },
+        ),
   };
 
   return obx_int.ModelDefinition(model, bindings);
@@ -2626,5 +2756,48 @@ class EntityBillItem_ {
   /// See [EntityBillItem.item].
   static final item = obx.QueryRelationToOne<EntityBillItem, EntityItem>(
     _entities[10].properties[10],
+  );
+}
+
+/// [EntityFinanceTransaction] entity fields to define ObjectBox queries.
+class EntityFinanceTransaction_ {
+  /// See [EntityFinanceTransaction.id].
+  static final id = obx.QueryIntegerProperty<EntityFinanceTransaction>(
+    _entities[11].properties[0],
+  );
+
+  /// See [EntityFinanceTransaction.type].
+  static final type = obx.QueryStringProperty<EntityFinanceTransaction>(
+    _entities[11].properties[1],
+  );
+
+  /// See [EntityFinanceTransaction.category].
+  static final category = obx.QueryStringProperty<EntityFinanceTransaction>(
+    _entities[11].properties[2],
+  );
+
+  /// See [EntityFinanceTransaction.personName].
+  static final personName = obx.QueryStringProperty<EntityFinanceTransaction>(
+    _entities[11].properties[3],
+  );
+
+  /// See [EntityFinanceTransaction.amount].
+  static final amount = obx.QueryDoubleProperty<EntityFinanceTransaction>(
+    _entities[11].properties[4],
+  );
+
+  /// See [EntityFinanceTransaction.isDebit].
+  static final isDebit = obx.QueryBooleanProperty<EntityFinanceTransaction>(
+    _entities[11].properties[5],
+  );
+
+  /// See [EntityFinanceTransaction.note].
+  static final note = obx.QueryStringProperty<EntityFinanceTransaction>(
+    _entities[11].properties[6],
+  );
+
+  /// See [EntityFinanceTransaction.dateUtcMs].
+  static final dateUtcMs = obx.QueryIntegerProperty<EntityFinanceTransaction>(
+    _entities[11].properties[7],
   );
 }

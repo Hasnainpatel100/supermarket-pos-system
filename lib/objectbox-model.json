@@ -683,9 +683,58 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "16:7857116451053666081",
+      "lastPropertyId": "8:3887866240978185793",
+      "name": "EntityFinanceTransaction",
+      "properties": [
+        {
+          "id": "1:2944181284023842204",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2007118884712605755",
+          "name": "type",
+          "type": 9
+        },
+        {
+          "id": "3:431355302735588941",
+          "name": "category",
+          "type": 9
+        },
+        {
+          "id": "4:507838122659730975",
+          "name": "personName",
+          "type": 9
+        },
+        {
+          "id": "5:2174581181162649380",
+          "name": "amount",
+          "type": 8
+        },
+        {
+          "id": "6:9030367777368277971",
+          "name": "isDebit",
+          "type": 1
+        },
+        {
+          "id": "7:4414211508066702274",
+          "name": "note",
+          "type": 9
+        },
+        {
+          "id": "8:3887866240978185793",
+          "name": "dateUtcMs",
+          "type": 6
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "15:6240376876973177221",
+  "lastEntityId": "16:7857116451053666081",
   "lastIndexId": "12:7345913932769877499",
   "lastRelationId": "1:6501938934487787319",
   "lastSequenceId": "0:0",

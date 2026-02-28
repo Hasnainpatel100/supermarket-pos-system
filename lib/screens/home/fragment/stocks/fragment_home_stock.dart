@@ -14,63 +14,100 @@ class FragmentHomeStock extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: Row(
           children: [
-            Icon(Icons.inventory_rounded, color: colorScheme.primary, size: 24),
-            const SizedBox(width: 10),
-            const Text(
-              'Stock Ledger',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.orange.shade400, Colors.deepOrange.shade600],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.inventory_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Stock Ledger',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                Text(
+                  'Track inventory movements',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: TextField(
               controller: controller.searchController,
               decoration: InputDecoration(
                 hintText: 'Search by item name or remarks...',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 prefixIcon: Icon(
                   Icons.search_rounded,
-                  color: colorScheme.primary,
+                  color: Colors.orange.shade600,
+                  size: 22,
                 ),
                 suffixIcon: Obx(
                   () => controller.searchQuery.value.isNotEmpty
                       ? IconButton(
                           icon: Icon(
                             Icons.close_rounded,
-                            color: Colors.grey.shade500,
+                            color: Colors.red.shade400,
+                            size: 20,
                           ),
                           onPressed: controller.clearSearch,
                         )
                       : const SizedBox.shrink(),
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 20,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 filled: true,
-                fillColor: colorScheme.surface,
+                fillColor: Colors.white,
               ),
               onChanged: controller.updateSearch,
             ),
@@ -120,15 +157,29 @@ class FragmentHomeStock extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withValues(alpha: 0.08),
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.orange.shade100,
+                              Colors.deepOrange.shade100,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orange.withOpacity(0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
                         child: Icon(
                           Icons.history_rounded,
-                          size: 56,
-                          color: colorScheme.primary.withValues(alpha: 0.5),
+                          size: 64,
+                          color: Colors.orange.shade400,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -355,20 +406,35 @@ class _FilterChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color : color.withValues(alpha: 0.08),
+          color: isSelected ? color : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? color : color.withValues(alpha: 0.3),
+            color: isSelected ? Colors.transparent : Colors.grey.shade300,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: isSelected ? Colors.white : color,
+            color: isSelected ? Colors.white : Colors.grey.shade700,
           ),
         ),
       ),

@@ -23,4 +23,7 @@ class EntityFinanceTransaction {
   String? note;
 
   int? dateUtcMs;
+
+  /// Date stored as yyyy-MM-dd (no time component)
+  String? createdDate;
 }

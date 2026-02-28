@@ -25,6 +25,7 @@ class ActivityItemForm extends StatelessWidget {
     final isEditing = editingItem != null;
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -32,12 +33,33 @@ class ActivityItemForm extends StatelessWidget {
         ),
         title: Row(
           children: [
-            Icon(
-              isEditing ? Icons.edit_note_rounded : Icons.post_add_rounded,
-              color: colorScheme.primary,
-              size: 24,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isEditing
+                      ? [Colors.orange.shade400, Colors.deepOrange.shade600]
+                      : [Colors.teal.shade400, Colors.teal.shade700],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isEditing ? Colors.orange : Colors.teal)
+                        .withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                isEditing ? Icons.edit_note_rounded : Icons.post_add_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Text(
               isEditing ? 'Edit Item' : 'New Item',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -45,6 +67,8 @@ class ActivityItemForm extends StatelessWidget {
           ],
         ),
         elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
       ),
       body: Center(
         child: SizedBox(
@@ -52,14 +76,12 @@ class ActivityItemForm extends StatelessWidget {
           child: Card(
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: colorScheme.outline.withValues(alpha: 0.15),
-              ),
+              borderRadius: BorderRadius.circular(24),
             ),
             margin: const EdgeInsets.all(16),
+            color: Colors.white,
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(32),
               child: Form(
                 key: controller.formKey,
                 child: Column(
@@ -316,49 +338,47 @@ class ActivityItemForm extends StatelessWidget {
                     /// ── Settings Section ──
                     Container(
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest.withValues(
-                          alpha: 0.3,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: colorScheme.outline.withValues(alpha: 0.1),
-                        ),
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.orange.shade100),
                       ),
                       child: Obx(
                         () => SwitchListTile(
                           title: const Text(
                             "Has Expiry Date",
                             style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Colors.orange,
                             ),
                           ),
                           secondary: Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.orange.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.event_busy_rounded,
-                              size: 18,
+                              size: 20,
                               color: Colors.orange.shade700,
                             ),
                           ),
                           value: controller.hasExpiry.value,
+                          activeColor: Colors.orange.shade700,
                           onChanged: (val) => controller.hasExpiry.value = val,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
+                            vertical: 8,
                           ),
-                          visualDensity: VisualDensity.compact,
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     /// ── Action Buttons ──
                     Row(
@@ -369,34 +389,68 @@ class ActivityItemForm extends StatelessWidget {
                           label: const Text('Back'),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
+                              horizontal: 24,
+                              vertical: 16,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            side: BorderSide(
-                              color: colorScheme.outline.withValues(alpha: 0.3),
-                            ),
+                            side: BorderSide(color: Colors.grey.shade300),
+                            foregroundColor: Colors.grey.shade700,
                           ),
                         ),
                         const Spacer(),
-                        FilledButton.icon(
-                          onPressed: controller.saveItem,
-                          icon: Icon(
-                            isEditing
-                                ? Icons.check_rounded
-                                : Icons.save_rounded,
-                            size: 18,
-                          ),
-                          label: Text(isEditing ? "Update Item" : "Save Item"),
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isEditing
+                                  ? [
+                                      Colors.orange.shade400,
+                                      Colors.deepOrange.shade600,
+                                    ]
+                                  : [
+                                      Colors.teal.shade400,
+                                      Colors.teal.shade700,
+                                    ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isEditing ? Colors.orange : Colors.teal)
+                                    .withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: controller.saveItem,
+                            icon: Icon(
+                              isEditing
+                                  ? Icons.check_rounded
+                                  : Icons.save_rounded,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                            label: Text(
+                              isEditing ? "Update Item" : "Save Item",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ),

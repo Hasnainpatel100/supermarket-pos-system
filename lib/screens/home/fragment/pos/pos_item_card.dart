@@ -20,123 +20,182 @@ class PosItemCard extends StatelessWidget {
     final isOutOfStock = stock <= 0;
 
     return Opacity(
-      opacity: isOutOfStock ? 0.5 : 1.0,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      opacity: isOutOfStock ? 0.6 : 1.0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            colorScheme.primaryContainer.withValues(alpha: 0.3),
-                            colorScheme.surface,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.blue.shade50,
+                              Colors.white,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blue.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.inventory_2_rounded,
+                              size: 32,
+                              color: Colors.blue.shade300,
+                            ),
+                          ),
                         ),
                       ),
-                      child: Center(
-                        child: Icon(
-                          Icons.inventory_2_outlined,
-                          size: 36,
-                          color: colorScheme.primary.withValues(alpha: 0.7),
+                      // Stock Badge
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: isOutOfStock
+                                ? LinearGradient(
+                                    colors: [
+                                      Colors.red.shade400,
+                                      Colors.red.shade600
+                                    ],
+                                  )
+                                : LinearGradient(
+                                    colors: [
+                                      Colors.green.shade400,
+                                      Colors.green.shade600
+                                    ],
+                                  ),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isOutOfStock
+                                        ? Colors.red
+                                        : Colors.green)
+                                    .withOpacity(0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            isOutOfStock ? "No Stock" : "$stock",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    // Stock Badge
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name ?? 'Unknown',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Colors.grey.shade800,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 6,
+                          vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: isOutOfStock
-                              ? Colors.red.shade600
-                              : Colors.green.shade600,
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          isOutOfStock ? "Out of Stock" : "Qty: $stock",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name ?? 'Unknown',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        "Code: ${item.sku ?? '-'}",
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "${controller.serviceCurrency.rxCurrency.value}${(item.sellingPrice ?? 0).toStringAsFixed(2)}",
+                          "${item.sku ?? '-'}",
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
-                            fontSize: 16,
+                            fontSize: 9,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        Text(
-                          "/${item.unit ?? 'pc'}",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "${controller.serviceCurrency.rxCurrency.value}",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          Text(
+                            (item.sellingPrice ?? 0).toStringAsFixed(2),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade800,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            "/${item.unit ?? 'pc'}",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

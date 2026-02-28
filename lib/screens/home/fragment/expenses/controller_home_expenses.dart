@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../model/entity_finance_transaction.dart';
 import '../../../../service/service_finance.dart';
@@ -16,6 +18,11 @@ class ControllerHomeExpenses extends GetxController {
   final totalExpense = 0.0.obs;
   final totalBorrow = 0.0.obs;
   final totalLend = 0.0.obs;
+
+  // Date range filter
+  final Rx<DateTime?> rxFromDate = Rx<DateTime?>(null);
+  final Rx<DateTime?> rxToDate = Rx<DateTime?>(null);
+  final rxDateRangeActive = false.obs;
 
   @override
   void onInit() {
@@ -47,15 +54,63 @@ class ControllerHomeExpenses extends GetxController {
   }
 
   void _applyFilter() {
-    final filter = rxFilter.value;
-    if (filter == 'all') {
-      rxList.assignAll(_service.getAll());
+    List<EntityFinanceTransaction> list;
+
+    if (rxDateRangeActive.value &&
+        rxFromDate.value != null &&
+        rxToDate.value != null) {
+      final from = DateFormat('yyyy-MM-dd').format(rxFromDate.value!);
+      final to = DateFormat('yyyy-MM-dd').format(rxToDate.value!);
+      if (rxFilter.value == 'all') {
+        list = _service.getByDateRange(from, to);
+      } else {
+        list = _service.getByTypeAndDateRange(rxFilter.value, from, to);
+      }
     } else {
-      rxList.assignAll(_service.getByType(filter));
+      if (rxFilter.value == 'all') {
+        list = _service.getAll();
+      } else {
+        list = _service.getByType(rxFilter.value);
+      }
+    }
+
+    rxList.assignAll(list);
+  }
+
+  /// Pick a date range and re-apply filter
+  Future<void> pickDateRange(context) async {
+    final now = DateTime.now();
+    final result = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: now.add(const Duration(days: 365)),
+      initialDateRange:
+          rxDateRangeActive.value &&
+              rxFromDate.value != null &&
+              rxToDate.value != null
+          ? DateTimeRange(start: rxFromDate.value!, end: rxToDate.value!)
+          : DateTimeRange(
+              start: now.subtract(const Duration(days: 30)),
+              end: now,
+            ),
+    );
+    if (result != null) {
+      rxFromDate.value = result.start;
+      rxToDate.value = result.end;
+      rxDateRangeActive.value = true;
+      _applyFilter();
     }
   }
 
-  void delete(int id) {
+  /// Clear the date range filter
+  void clearDateRange() {
+    rxFromDate.value = null;
+    rxToDate.value = null;
+    rxDateRangeActive.value = false;
+    _applyFilter();
+  }
+
+  Future<void> delete(int id) async {
     if (id == 0) return;
     _service.delete(id);
     loadData();

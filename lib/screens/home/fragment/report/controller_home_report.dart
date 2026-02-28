@@ -30,12 +30,33 @@ class ControllerHomeReport extends GetxController {
   /// All matching date strings for the current filter
   List<String> _matchingDateStrings = [];
 
+  // Search
+  final RxString rxSearchQuery = ''.obs;
+  Worker? _searchWorker;
+
   @override
   void onInit() {
     super.onInit();
     final ob = Get.find<ServiceObjectBox>();
     _boxBill = ob.box<EntityBill>();
     _setDateFilter(DateFilterType.today);
+
+    // Debounce search
+    _searchWorker = debounce(
+      rxSearchQuery,
+      (_) => loadData(),
+      time: const Duration(milliseconds: 500),
+    );
+  }
+
+  @override
+  void onClose() {
+    _searchWorker?.dispose();
+    super.onClose();
+  }
+
+  void setSearchQuery(String query) {
+    rxSearchQuery.value = query;
   }
 
   void setDateFilter(DateFilterType type) {
@@ -135,8 +156,26 @@ class ControllerHomeReport extends GetxController {
       dateCondition = EntityBill_.billDate.oneOf(_matchingDateStrings);
     }
 
-    final queryBuilder = dateCondition != null
-        ? _boxBill.query(dateCondition)
+    Condition<EntityBill>? searchCondition;
+    final queryText = rxSearchQuery.value.trim().toLowerCase();
+    if (queryText.isNotEmpty) {
+      searchCondition = EntityBill_.customerName
+          .contains(queryText, caseSensitive: false)
+          .or(EntityBill_.customerPhone.contains(queryText, caseSensitive: false))
+          .or(EntityBill_.billNo.contains(queryText, caseSensitive: false));
+    }
+
+    Condition<EntityBill>? finalCondition;
+    if (dateCondition != null && searchCondition != null) {
+      finalCondition = dateCondition.and(searchCondition);
+    } else if (dateCondition != null) {
+      finalCondition = dateCondition;
+    } else if (searchCondition != null) {
+      finalCondition = searchCondition;
+    }
+
+    final queryBuilder = finalCondition != null
+        ? _boxBill.query(finalCondition)
         : _boxBill.query();
     queryBuilder.order(EntityBill_.id, flags: Order.descending);
     final query = queryBuilder.build();

@@ -18,85 +18,154 @@ class FragmentHomeCustomer extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: Row(
           children: [
-            Icon(
-              Icons.people_alt_rounded,
-              color: colorScheme.primary,
-              size: 24,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade400, Colors.blue.shade700],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.people_alt_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 10),
-            const Text(
-              'Customers',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Customers',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                Text(
+                  'Manage your client base',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
         actions: [
           /// ── Button: New Customer ──
-          FilledButton.icon(
-            onPressed: () async {
-              await Get.to(() => const ActivityCustomerForm());
-              controller.loadCustomers();
-            },
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('New Customer'),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.teal.shade400, Colors.teal.shade700],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.teal.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () async {
+                  await Get.to(() => const ActivityCustomerForm());
+                  controller.loadCustomers();
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(
+                        Icons.person_add_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'New Customer',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 16),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: TextField(
               controller: controller.searchController,
               decoration: InputDecoration(
                 hintText: 'Search by name or phone...',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 prefixIcon: Icon(
                   Icons.search_rounded,
-                  color: colorScheme.primary,
+                  color: Colors.blue.shade600,
+                  size: 22,
                 ),
                 suffixIcon: Obx(
                   () => controller.searchQuery.value.isNotEmpty
                       ? IconButton(
                           icon: Icon(
                             Icons.close_rounded,
-                            color: Colors.grey.shade500,
+                            color: Colors.red.shade400,
+                            size: 20,
                           ),
                           onPressed: controller.clearSearch,
                         )
                       : const SizedBox.shrink(),
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 20,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 filled: true,
-                fillColor: colorScheme.surface,
+                fillColor: Colors.white,
               ),
               onChanged: controller.updateSearch,
             ),
@@ -111,15 +180,29 @@ class FragmentHomeCustomer extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.08),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.blue.shade100,
+                            Colors.purple.shade100,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
                       child: Icon(
                         Icons.person_off_rounded,
-                        size: 56,
-                        color: colorScheme.primary.withValues(alpha: 0.5),
+                        size: 64,
+                        color: Colors.blue.shade400,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -164,13 +247,26 @@ class FragmentHomeCustomer extends StatelessWidget {
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.person_outline_rounded,
-                                size: 15,
-                                color: colorScheme.primary,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.person_outline_rounded,
+                                  size: 16,
+                                  color: Colors.blue.shade600,
+                                ),
                               ),
-                              const SizedBox(width: 4),
-                              const Text('Name'),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Name',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -178,13 +274,26 @@ class FragmentHomeCustomer extends StatelessWidget {
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.phone_rounded,
-                                size: 15,
-                                color: Colors.green.shade600,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.phone_rounded,
+                                  size: 16,
+                                  color: Colors.green.shade600,
+                                ),
                               ),
-                              const SizedBox(width: 4),
-                              const Text('Phone'),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Phone',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -192,18 +301,83 @@ class FragmentHomeCustomer extends StatelessWidget {
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.location_city_rounded,
-                                size: 15,
-                                color: Colors.orange.shade600,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.location_city_rounded,
+                                  size: 16,
+                                  color: Colors.orange.shade600,
+                                ),
                               ),
-                              const SizedBox(width: 4),
-                              const Text('City'),
+                              const SizedBox(width: 8),
+                              Text(
+                                'City',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        const DataColumn(label: Text('Status')),
-                        const DataColumn(label: Text('')),
+                        DataColumn(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.toggle_on_rounded,
+                                  size: 16,
+                                  color: Colors.purple.shade600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Status',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        DataColumn(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.settings_rounded,
+                                  size: 16,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Actions',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                       rows: controller.rxListCustomer.map((
                         EntityCustomer customer,

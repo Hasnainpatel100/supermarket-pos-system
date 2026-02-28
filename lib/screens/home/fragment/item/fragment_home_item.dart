@@ -19,82 +19,155 @@ class FragmentHomeItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: Row(
           children: [
-            Icon(
-              Icons.inventory_2_rounded,
-              color: colorScheme.primary,
-              size: 24,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade400, Colors.blue.shade700],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.inventory_2_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 10),
-            const Text('Items', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Items',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                Text(
+                  'Manage your inventory',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         actions: [
           /// ── Button: New Item ──
-          FilledButton.icon(
-            onPressed: () async {
-              await Get.to(() => const ActivityItemForm());
-              controller.loadItems();
-            },
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('New Item'),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.teal.shade400, Colors.teal.shade700],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.teal.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () async {
+                  await Get.to(() => const ActivityItemForm());
+                  controller.loadItems();
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(
+                        Icons.add_circle_outline_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'New Item',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 16),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: TextField(
               controller: controller.searchController,
               decoration: InputDecoration(
                 hintText: 'Search by name, SKU, or barcode...',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 prefixIcon: Icon(
                   Icons.search_rounded,
-                  color: colorScheme.primary,
+                  color: Colors.blue.shade600,
+                  size: 22,
                 ),
                 suffixIcon: Obx(
                   () => controller.searchQuery.value.isNotEmpty
                       ? IconButton(
                           icon: Icon(
                             Icons.close_rounded,
-                            color: Colors.grey.shade500,
+                            color: Colors.red.shade400,
+                            size: 20,
                           ),
                           onPressed: controller.clearSearch,
                         )
                       : const SizedBox.shrink(),
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 20,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: colorScheme.primary,
-                    width: 1.5,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 filled: true,
-                fillColor: colorScheme.surface,
+                fillColor: Colors.white,
               ),
               onChanged: controller.updateSearch,
             ),
@@ -109,15 +182,26 @@ class FragmentHomeItem extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.08),
+                        gradient: LinearGradient(
+                          colors: [Colors.blue.shade100, Colors.cyan.shade100],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
                       child: Icon(
                         Icons.inventory_2_outlined,
-                        size: 56,
-                        color: colorScheme.primary.withValues(alpha: 0.5),
+                        size: 64,
+                        color: Colors.blue.shade400,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -162,44 +246,99 @@ class FragmentHomeItem extends StatelessWidget {
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.label_outlined,
-                                size: 15,
-                                color: colorScheme.primary,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.label_outlined,
+                                  size: 16,
+                                  color: Colors.blue.shade600,
+                                ),
                               ),
-                              const SizedBox(width: 4),
-                              const Text('Name'),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Name',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        const DataColumn(label: Text('SKU')),
+                        DataColumn(
+                          label: Text(
+                            'SKU',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                         DataColumn(
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.qr_code_2_rounded,
-                                size: 15,
-                                color: Colors.deepPurple.shade400,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.qr_code_2_rounded,
+                                  size: 16,
+                                  color: Colors.deepPurple.shade400,
+                                ),
                               ),
-                              const SizedBox(width: 4),
-                              const Text('Barcode'),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Barcode',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        const DataColumn(label: Text('Unit')),
+                        DataColumn(
+                          label: Text(
+                            'Unit',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                         DataColumn(
                           numeric: true,
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.arrow_downward_rounded,
-                                size: 14,
-                                color: Colors.orange.shade600,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.arrow_downward_rounded,
+                                  size: 16,
+                                  color: Colors.orange.shade600,
+                                ),
                               ),
-                              const SizedBox(width: 3),
-                              const Text('Cost'),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Cost',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -208,13 +347,26 @@ class FragmentHomeItem extends StatelessWidget {
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.arrow_upward_rounded,
-                                size: 14,
-                                color: Colors.teal.shade600,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.teal.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.arrow_upward_rounded,
+                                  size: 16,
+                                  color: Colors.teal.shade600,
+                                ),
                               ),
-                              const SizedBox(width: 3),
-                              const Text('Price'),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Price',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -223,18 +375,83 @@ class FragmentHomeItem extends StatelessWidget {
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.warehouse_outlined,
-                                size: 14,
-                                color: Colors.blue.shade600,
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.warehouse_outlined,
+                                  size: 16,
+                                  color: Colors.blue.shade600,
+                                ),
                               ),
-                              const SizedBox(width: 4),
-                              const Text('Stock'),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Stock',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        const DataColumn(label: Text('Status')),
-                        const DataColumn(label: Text('Actions')),
+                        DataColumn(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.toggle_on_rounded,
+                                  size: 16,
+                                  color: Colors.purple.shade600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Status',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        DataColumn(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  Icons.settings_rounded,
+                                  size: 16,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Actions',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                       rows: controller.rxListItem.map((EntityItem item) {
                         final isActive = item.isActive ?? true;

@@ -86,7 +86,11 @@ class ControllerExpensesFrom extends GetxController {
     }
   }
 
+  /// Displayed in the form field as dd MMM yyyy
   String get formattedDate => DateFormat('dd MMM yyyy').format(rxDate.value);
+
+  /// Stored in entity as yyyy-MM-dd (date only, no time)
+  String get _storedDate => DateFormat('yyyy-MM-dd').format(rxDate.value);
 
   Future<void> pickDate(BuildContext context) async {
     final picked = await showDatePicker(
@@ -101,6 +105,13 @@ class ControllerExpensesFrom extends GetxController {
   void saveTransaction() {
     if (!formKey.currentState!.validate()) return;
 
+    // dateUtcMs: midnight of the selected date (date only, no time)
+    final dateOnly = DateTime(
+      rxDate.value.year,
+      rxDate.value.month,
+      rxDate.value.day,
+    );
+
     final tx = EntityFinanceTransaction()
       ..type = typeName
       ..category = rxCategory.value
@@ -112,7 +123,8 @@ class ControllerExpensesFrom extends GetxController {
       ..note = noteController.text.trim().isEmpty
           ? null
           : noteController.text.trim()
-      ..dateUtcMs = rxDate.value.toUtc().millisecondsSinceEpoch;
+      ..dateUtcMs = dateOnly.millisecondsSinceEpoch
+      ..createdDate = _storedDate;
 
     _service.save(tx);
 

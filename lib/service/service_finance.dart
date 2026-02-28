@@ -21,5 +21,29 @@ class ServiceFinance {
     return getAll().where((t) => t.type == type).toList();
   }
 
+  /// Filter by date range using createdDate string (yyyy-MM-dd)
+  List<EntityFinanceTransaction> getByDateRange(
+    String fromDate,
+    String toDate,
+  ) {
+    return getAll().where((t) {
+      final d = t.createdDate;
+      if (d == null) return false;
+      return d.compareTo(fromDate) >= 0 && d.compareTo(toDate) <= 0;
+    }).toList();
+  }
+
+  /// Filter by type AND date range
+  List<EntityFinanceTransaction> getByTypeAndDateRange(
+    String type,
+    String fromDate,
+    String toDate,
+  ) {
+    return getByDateRange(
+      fromDate,
+      toDate,
+    ).where((t) => t.type == type).toList();
+  }
+
   bool delete(int id) => _box.remove(id);
 }

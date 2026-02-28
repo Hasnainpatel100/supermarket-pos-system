@@ -18,48 +18,205 @@ class FragHomeReport extends StatelessWidget {
     final currencyFormat = NumberFormat.simpleCurrency(locale: 'en_IN');
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.grey.shade50,
       body: Column(
         children: [
-          // ── Top Bar with Title + Date Range ──
+          // ── Top Bar with Title + Date Range + Search ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Row(
               children: [
-                Icon(
-                  Icons.analytics_rounded,
-                  color: colorScheme.primary,
-                  size: 28,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.indigo.shade400, Colors.indigo.shade700],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.indigo.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Sales Report",
+                      "Bills Report",
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
+                            fontSize: 20,
+                            color: Colors.grey.shade800,
                           ),
                     ),
                     Obx(
-                      () => Text(
-                        controller.formatDateRange(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
+                      () => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.indigo.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.indigo.shade100),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 10,
+                              color: Colors.indigo.shade400,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              controller.formatDateRange(),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.indigo.shade700,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
                 const Spacer(),
-                IconButton(
-                  onPressed: controller.loadData,
-                  tooltip: "Refresh",
-                  icon: Icon(Icons.refresh_rounded, color: colorScheme.primary),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    onPressed: controller.loadData,
+                    tooltip: "Refresh",
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      color: Colors.indigo.shade600,
+                    ),
+                  ),
                 ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── Search & Filter ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      onChanged: controller.setSearchQuery,
+                      decoration: InputDecoration(
+                        hintText: "Search by customer name or phone...",
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 13,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          size: 20,
+                          color: Colors.indigo.shade400,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Obx(() {
+                  final selected = controller.rxDateFilter.value;
+                  final isCustom = selected == DateFilterType.custom;
+                  return Tooltip(
+                    message: "Filter by Date Range",
+                    child: InkWell(
+                      onTap: () => _pickDateRange(context, controller),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: isCustom
+                              ? LinearGradient(
+                                  colors: [
+                                    Colors.indigo.shade400,
+                                    Colors.purple.shade400,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                              : null,
+                          color: isCustom ? null : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: isCustom
+                              ? null
+                              : Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isCustom
+                                  ? Colors.indigo.withOpacity(0.3)
+                                  : Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.date_range_rounded,
+                          size: 24,
+                          color: isCustom
+                              ? Colors.white
+                              : Colors.indigo.shade400,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -96,6 +253,7 @@ class FragHomeReport extends StatelessWidget {
                   "Transactions",
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade800,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -106,15 +264,22 @@ class FragHomeReport extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.1),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.indigo.shade400,
+                          Colors.purple.shade400,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '${controller.rxListBill.length}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -136,20 +301,34 @@ class FragHomeReport extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withValues(alpha: 0.06),
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.indigo.shade100,
+                              Colors.purple.shade100,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.indigo.withOpacity(0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
                         child: Icon(
                           Icons.receipt_long_outlined,
-                          size: 56,
-                          color: colorScheme.primary.withValues(alpha: 0.4),
+                          size: 64,
+                          color: Colors.indigo.shade400,
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         "No transactions found",
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color: Colors.grey.shade600,
                         ),
@@ -158,7 +337,7 @@ class FragHomeReport extends StatelessWidget {
                       Text(
                         "Try adjusting the date filter",
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           color: Colors.grey.shade400,
                         ),
                       ),
@@ -216,121 +395,156 @@ class FragHomeReport extends StatelessWidget {
                     final displayDate = bill.billDate ?? '-';
                     final isCancelled = bill.status == "CANCELLED";
 
-                    return ListTile(
-                      onTap: () => Get.dialog(DialogBillDetail(bill: bill)),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 8,
                         vertical: 4,
                       ),
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: isCancelled
-                                ? [Colors.red.shade100, Colors.red.shade50]
-                                : [
-                                    colorScheme.primary.withValues(alpha: 0.15),
-                                    colorScheme.primary.withValues(alpha: 0.05),
-                                  ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          isCancelled
-                              ? Icons.cancel_outlined
-                              : Icons.receipt_rounded,
-                          color: isCancelled
-                              ? Colors.red.shade400
-                              : colorScheme.primary,
-                          size: 20,
-                        ),
-                      ),
-                      title: Text(
-                        bill.customerName ?? "Walk-in Customer",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          decoration: isCancelled
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
-                      ),
-                      subtitle: Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today_rounded,
-                            size: 12,
-                            color: Colors.grey.shade500,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            displayDate,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '#${bill.billNo ?? "-"}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            currencyFormat.format(bill.grandTotal ?? 0),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: isCancelled
-                                  ? Colors.grey
-                                  : colorScheme.onSurface,
+                      child: ListTile(
+                        onTap: () => Get.dialog(DialogBillDetail(bill: bill)),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        leading: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isCancelled
+                                  ? [Colors.red.shade400, Colors.red.shade700]
+                                  : [
+                                      Colors.indigo.shade400,
+                                      Colors.purple.shade400,
+                                    ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    (isCancelled ? Colors.red : Colors.indigo)
+                                        .withOpacity(0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 2),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
+                          child: Icon(
+                            isCancelled
+                                ? Icons.cancel_outlined
+                                : Icons.receipt_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                        title: Text(
+                          bill.customerName ?? "Walk-in Customer",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: isCancelled
+                                ? Colors.grey
+                                : Colors.grey.shade800,
+                            decoration: isCancelled
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                        ),
+                        subtitle: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 12,
+                              color: Colors.indigo.shade400,
                             ),
-                            decoration: BoxDecoration(
-                              color: isCancelled
-                                  ? Colors.red.withValues(alpha: 0.1)
-                                  : Colors.green.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              bill.status ?? "PAID",
+                            const SizedBox(width: 4),
+                            Text(
+                              displayDate,
                               style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                color: Colors.indigo.shade600,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: Text(
+                                '#${bill.billNo ?? "-"}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              currencyFormat.format(bill.grandTotal ?? 0),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
                                 color: isCancelled
-                                    ? Colors.red.shade600
-                                    : Colors.green.shade600,
+                                    ? Colors.grey
+                                    : Colors.grey.shade800,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isCancelled
+                                    ? Colors.red.withOpacity(0.1)
+                                    : Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isCancelled
+                                      ? Colors.red.withOpacity(0.3)
+                                      : Colors.green.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Text(
+                                bill.status ?? "PAID",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: isCancelled
+                                      ? Colors.red.shade700
+                                      : Colors.green.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -393,26 +607,28 @@ class _DateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primary
-              : colorScheme.primary.withValues(alpha: 0.06),
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [Colors.indigo.shade400, Colors.purple.shade400],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.outline.withValues(alpha: 0.15),
+            color: isSelected ? Colors.transparent : Colors.grey.shade300,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: colorScheme.primary.withValues(alpha: 0.25),
+                    color: Colors.indigo.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -424,8 +640,8 @@ class _DateChip extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 15,
-              color: isSelected ? Colors.white : colorScheme.primary,
+              size: 16,
+              color: isSelected ? Colors.white : Colors.grey.shade600,
             ),
             const SizedBox(width: 6),
             Text(
@@ -433,7 +649,7 @@ class _DateChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : colorScheme.onSurface,
+                color: isSelected ? Colors.white : Colors.grey.shade700,
               ),
             ),
           ],

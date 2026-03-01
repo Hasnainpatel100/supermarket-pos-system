@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -23,11 +22,11 @@ class PosItemCard extends StatelessWidget {
       opacity: isOutOfStock ? 0.6 : 1.0,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: colorScheme.shadow.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -48,8 +47,8 @@ class PosItemCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              Colors.blue.shade50,
-                              Colors.white,
+                              colorScheme.primaryContainer,
+                              colorScheme.surface,
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -59,11 +58,15 @@ class PosItemCard extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: colorScheme.surfaceTint.withValues(
+                                alpha: 0.1,
+                              ),
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.blue.withOpacity(0.1),
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -72,7 +75,7 @@ class PosItemCard extends StatelessWidget {
                             child: Icon(
                               Icons.inventory_2_rounded,
                               size: 32,
-                              color: Colors.blue.shade300,
+                              color: colorScheme.primary,
                             ),
                           ),
                         ),
@@ -91,22 +94,21 @@ class PosItemCard extends StatelessWidget {
                                 ? LinearGradient(
                                     colors: [
                                       Colors.red.shade400,
-                                      Colors.red.shade600
+                                      Colors.red.shade600,
                                     ],
                                   )
                                 : LinearGradient(
                                     colors: [
                                       Colors.green.shade400,
-                                      Colors.green.shade600
+                                      Colors.green.shade600,
                                     ],
                                   ),
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
-                                color: (isOutOfStock
-                                        ? Colors.red
-                                        : Colors.green)
-                                    .withOpacity(0.3),
+                                color:
+                                    (isOutOfStock ? Colors.red : Colors.green)
+                                        .withOpacity(0.3),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -137,7 +139,7 @@ class PosItemCard extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
-                          color: Colors.grey.shade800,
+                          color: colorScheme.onSurface,
                           height: 1.2,
                         ),
                       ),
@@ -148,14 +150,14 @@ class PosItemCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
+                          color: colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           "${item.sku ?? '-'}",
                           style: TextStyle(
                             fontSize: 9,
-                            color: Colors.grey.shade600,
+                            color: colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -168,7 +170,7 @@ class PosItemCard extends StatelessWidget {
                             "${controller.serviceCurrency.rxCurrency.value}",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade700,
+                              color: colorScheme.primary,
                               fontSize: 12,
                             ),
                           ),
@@ -176,7 +178,7 @@ class PosItemCard extends StatelessWidget {
                             (item.sellingPrice ?? 0).toStringAsFixed(2),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade800,
+                              color: colorScheme.primary,
                               fontSize: 16,
                             ),
                           ),
@@ -185,7 +187,7 @@ class PosItemCard extends StatelessWidget {
                             "/${item.unit ?? 'pc'}",
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey.shade500,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500,
                             ),
                           ),

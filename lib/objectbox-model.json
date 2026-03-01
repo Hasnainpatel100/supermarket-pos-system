@@ -540,7 +540,7 @@
     },
     {
       "id": "14:5072473716951944501",
-      "lastPropertyId": "13:1370894367929224612",
+      "lastPropertyId": "18:4142338304114387496",
       "name": "EntityBill",
       "properties": [
         {
@@ -610,6 +610,31 @@
           "id": "13:1370894367929224612",
           "name": "billDate",
           "type": 9
+        },
+        {
+          "id": "14:8632998619453123876",
+          "name": "amountReceived",
+          "type": 8
+        },
+        {
+          "id": "15:17422465027024086",
+          "name": "changeReturned",
+          "type": 8
+        },
+        {
+          "id": "16:928604356021507286",
+          "name": "utrNumber",
+          "type": 9
+        },
+        {
+          "id": "17:7225037625557498514",
+          "name": "splitCash",
+          "type": 8
+        },
+        {
+          "id": "18:4142338304114387496",
+          "name": "splitOnline",
+          "type": 8
         }
       ],
       "relations": []
@@ -686,7 +711,7 @@
     },
     {
       "id": "16:7857116451053666081",
-      "lastPropertyId": "8:3887866240978185793",
+      "lastPropertyId": "9:4039039831344266938",
       "name": "EntityFinanceTransaction",
       "properties": [
         {
@@ -729,6 +754,11 @@
           "id": "8:3887866240978185793",
           "name": "dateUtcMs",
           "type": 6
+        },
+        {
+          "id": "9:4039039831344266938",
+          "name": "createdDate",
+          "type": 9
         }
       ],
       "relations": []

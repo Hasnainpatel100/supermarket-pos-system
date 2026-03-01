@@ -18,7 +18,7 @@ class FragHomeReport extends StatelessWidget {
     final currencyFormat = NumberFormat.simpleCurrency(locale: 'en_IN');
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: colorScheme.surface,
       body: Column(
         children: [
           // ── Top Bar with Title + Date Range + Search ──
@@ -131,7 +131,7 @@ class FragHomeReport extends StatelessWidget {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -163,7 +163,7 @@ class FragHomeReport extends StatelessWidget {
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: Theme.of(context).cardColor,
                       ),
                       style: const TextStyle(fontSize: 14),
                     ),
@@ -222,25 +222,6 @@ class FragHomeReport extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
-
-          // ── Date Filter Chips ──
-          Obx(() {
-            final selected = controller.rxDateFilter.value;
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _DateChip(
-                    label: 'Custom Range',
-                    icon: Icons.tune_rounded,
-                    isSelected: selected == DateFilterType.custom,
-                    onTap: () => _pickDateRange(context, controller),
-                  ),
-                ],
-              ),
-            );
-          }),
 
           const SizedBox(height: 16),
 
@@ -588,73 +569,5 @@ class FragHomeReport extends StatelessWidget {
     if (picked != null) {
       controller.setCustomRange(picked.start, picked.end);
     }
-  }
-}
-
-// ── Date Filter Chip ──
-class _DateChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _DateChip({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [Colors.indigo.shade400, Colors.purple.shade400],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isSelected ? null : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade300,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.indigo.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : Colors.grey.shade600,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

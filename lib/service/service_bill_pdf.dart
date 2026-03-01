@@ -141,6 +141,10 @@ class ServiceBillPdf {
                   children: [
                     _metaRow('Date:', dateFormat.format(date)),
                     _metaRow('Payment:', bill.paymentMode ?? 'CASH'),
+                    if (bill.paymentMode == 'UPI' ||
+                        bill.paymentMode == 'NETBANKING')
+                      if (bill.utrNumber != null && bill.utrNumber!.isNotEmpty)
+                        _metaRow('Ref:', bill.utrNumber!),
                     _metaRow('Status:', bill.status ?? 'PAID'),
                   ],
                 ),

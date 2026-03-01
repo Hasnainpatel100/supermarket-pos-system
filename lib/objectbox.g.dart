@@ -658,7 +658,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(14, 5072473716951944501),
     name: 'EntityBill',
-    lastPropertyId: const obx_int.IdUid(13, 1370894367929224612),
+    lastPropertyId: const obx_int.IdUid(18, 4142338304114387496),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -738,6 +738,36 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(13, 1370894367929224612),
         name: 'billDate',
         type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 8632998619453123876),
+        name: 'amountReceived',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(15, 17422465027024086),
+        name: 'changeReturned',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(16, 928604356021507286),
+        name: 'utrNumber',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(17, 7225037625557498514),
+        name: 'splitCash',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(18, 4142338304114387496),
+        name: 'splitOnline',
+        type: 8,
         flags: 0,
       ),
     ],
@@ -835,7 +865,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(16, 7857116451053666081),
     name: 'EntityFinanceTransaction',
-    lastPropertyId: const obx_int.IdUid(8, 3887866240978185793),
+    lastPropertyId: const obx_int.IdUid(9, 4039039831344266938),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -884,6 +914,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(8, 3887866240978185793),
         name: 'dateUtcMs',
         type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 4039039831344266938),
+        name: 'createdDate',
+        type: 9,
         flags: 0,
       ),
     ],
@@ -1878,7 +1914,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final billDateOffset = object.billDate == null
             ? null
             : fbb.writeString(object.billDate!);
-        fbb.startTable(14);
+        final utrNumberOffset = object.utrNumber == null
+            ? null
+            : fbb.writeString(object.utrNumber!);
+        fbb.startTable(19);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, billNoOffset);
         fbb.addOffset(2, customerNameOffset);
@@ -1892,6 +1931,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addInt64(10, object.createdAtUtcMs);
         fbb.addInt64(11, object.updatedAtUtcMs);
         fbb.addOffset(12, billDateOffset);
+        fbb.addFloat64(13, object.amountReceived);
+        fbb.addFloat64(14, object.changeReturned);
+        fbb.addOffset(15, utrNumberOffset);
+        fbb.addFloat64(16, object.splitCash);
+        fbb.addFloat64(17, object.splitOnline);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -1939,6 +1983,29 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final paymentModeParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 22);
+        final amountReceivedParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          30,
+        );
+        final changeReturnedParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          32,
+        );
+        final utrNumberParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 34);
+        final splitCashParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          36,
+        );
+        final splitOnlineParam = const fb.Float64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          38,
+        );
         final billDateParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 28);
@@ -1963,6 +2030,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
           grandTotal: grandTotalParam,
           status: statusParam,
           paymentMode: paymentModeParam,
+          amountReceived: amountReceivedParam,
+          changeReturned: changeReturnedParam,
+          utrNumber: utrNumberParam,
+          splitCash: splitCashParam,
+          splitOnline: splitOnlineParam,
           billDate: billDateParam,
           createdAtUtcMs: createdAtUtcMsParam,
           updatedAtUtcMs: updatedAtUtcMsParam,
@@ -2105,7 +2177,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
             final noteOffset = object.note == null
                 ? null
                 : fbb.writeString(object.note!);
-            fbb.startTable(9);
+            final createdDateOffset = object.createdDate == null
+                ? null
+                : fbb.writeString(object.createdDate!);
+            fbb.startTable(10);
             fbb.addInt64(0, object.id);
             fbb.addOffset(1, typeOffset);
             fbb.addOffset(2, categoryOffset);
@@ -2114,6 +2189,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
             fbb.addBool(5, object.isDebit);
             fbb.addOffset(6, noteOffset);
             fbb.addInt64(7, object.dateUtcMs);
+            fbb.addOffset(8, createdDateOffset);
             fbb.finish(fbb.endTable());
             return object.id;
           },
@@ -2149,7 +2225,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 buffer,
                 rootOffset,
                 18,
-              );
+              )
+              ..createdDate = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGetNullable(buffer, rootOffset, 20);
 
             return object;
           },
@@ -2695,6 +2774,31 @@ class EntityBill_ {
     _entities[9].properties[12],
   );
 
+  /// See [EntityBill.amountReceived].
+  static final amountReceived = obx.QueryDoubleProperty<EntityBill>(
+    _entities[9].properties[13],
+  );
+
+  /// See [EntityBill.changeReturned].
+  static final changeReturned = obx.QueryDoubleProperty<EntityBill>(
+    _entities[9].properties[14],
+  );
+
+  /// See [EntityBill.utrNumber].
+  static final utrNumber = obx.QueryStringProperty<EntityBill>(
+    _entities[9].properties[15],
+  );
+
+  /// See [EntityBill.splitCash].
+  static final splitCash = obx.QueryDoubleProperty<EntityBill>(
+    _entities[9].properties[16],
+  );
+
+  /// See [EntityBill.splitOnline].
+  static final splitOnline = obx.QueryDoubleProperty<EntityBill>(
+    _entities[9].properties[17],
+  );
+
   /// see [EntityBill.items]
   static final items = obx.QueryBacklinkToMany<EntityBillItem, EntityBill>(
     EntityBillItem_.bill,
@@ -2799,5 +2903,10 @@ class EntityFinanceTransaction_ {
   /// See [EntityFinanceTransaction.dateUtcMs].
   static final dateUtcMs = obx.QueryIntegerProperty<EntityFinanceTransaction>(
     _entities[11].properties[7],
+  );
+
+  /// See [EntityFinanceTransaction.createdDate].
+  static final createdDate = obx.QueryStringProperty<EntityFinanceTransaction>(
+    _entities[11].properties[8],
   );
 }

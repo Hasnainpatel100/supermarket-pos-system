@@ -18,7 +18,7 @@ class FragmentHomeCustomer extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Row(
           children: [
@@ -124,7 +124,7 @@ class FragmentHomeCustomer extends StatelessWidget {
           preferredSize: const Size.fromHeight(56),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -165,7 +165,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                   horizontal: 20,
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).cardColor,
               ),
               onChanged: controller.updateSearch,
             ),

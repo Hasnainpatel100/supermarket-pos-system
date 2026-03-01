@@ -15,6 +15,8 @@ import '../../../../util/snackbar_util.dart';
 import '../item/controller_home_item.dart';
 import '../report/controller_home_report.dart';
 import '../report/dialog_bill_detail.dart';
+import 'controller_payment_options.dart';
+import 'dialog_payment_options.dart';
 
 class ControllerHomePos extends GetxController {
   late Box<EntityItem> _boxItem;
@@ -225,11 +227,24 @@ class ControllerHomePos extends GetxController {
     calculateTotals();
   }
 
-  void settleBill() {
+  Future<void> settleBill() async {
     if (rxCartItems.isEmpty) {
       SnackbarUtil.showError("Cart is empty");
       return;
     }
+
+    // Show Payment Options Popup
+    final dynamic result = await Get.dialog(
+      DialogPaymentOptions(grandTotal: rxGrandTotal.value),
+      barrierDismissible: false,
+    );
+
+    // If user cancelled
+    if (result == null || result is! PaymentDetails) {
+      return;
+    }
+
+    final paymentDetails = result;
 
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     final todayDate = DateFormat('d/MM/yyyy').format(DateTime.now());
@@ -247,7 +262,12 @@ class ControllerHomePos extends GetxController {
       tax: rxTaxAmount.value,
       grandTotal: rxGrandTotal.value,
       status: "PAID",
-      paymentMode: "CASH",
+      paymentMode: paymentDetails.paymentMode,
+      amountReceived: paymentDetails.amountReceived,
+      changeReturned: paymentDetails.changeReturned,
+      utrNumber: paymentDetails.utrNumber,
+      splitCash: paymentDetails.splitCash,
+      splitOnline: paymentDetails.splitOnline,
       billDate: todayDate,
       createdAtUtcMs: now,
       updatedAtUtcMs: now,

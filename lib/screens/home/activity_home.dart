@@ -4,6 +4,8 @@ import 'package:super_market/screens/home/fragment/customer/fragment_home_custom
 import 'package:super_market/screens/home/fragment/expenses/fragment_home_expenses.dart';
 import 'package:super_market/screens/home/fragment/item/fragment_home_item.dart';
 import 'package:super_market/screens/home/fragment/pos/fragment_home_pos.dart';
+import 'package:super_market/screens/home/fragment/purchase_supplier/purchase/frag_home_purchase.dart';
+import 'package:super_market/screens/home/fragment/purchase_supplier/supplier/frag_home_supplier.dart';
 import 'package:super_market/screens/home/fragment/stocks/fragment_home_stock.dart';
 
 import '../../commons/frag_coming_soon.dart';
@@ -71,6 +73,13 @@ class ActivityHome extends StatelessWidget {
               if (controller.selectedMainMenu.value == EnumMainMenu.reports) {
                 return FragHomeReport();
               }
+              if(controller.selectedMainMenu.value == EnumMainMenu.purchase){
+                return FragHomePurchase();
+              }
+              if(controller.selectedMainMenu.value == EnumMainMenu.supplier){
+                return FragHomeSupplier();
+              }
+
               if (controller.selectedMainMenu.value ==
                   EnumMainMenu.systemUsers) {
                 return FragHomeUsers(entityUser: controller.rxUser.value);

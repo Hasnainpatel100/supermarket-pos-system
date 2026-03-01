@@ -7,6 +7,8 @@ enum EnumMainMenu {
 
   pricingDiscount,
   purchaseSupplier,
+  purchase,
+  supplier,
   reports,
 
   customer,

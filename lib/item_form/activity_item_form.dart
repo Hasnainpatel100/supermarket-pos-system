@@ -24,8 +24,10 @@ class ActivityItemForm extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isEditing = editingItem != null;
 
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -67,8 +69,10 @@ class ActivityItemForm extends StatelessWidget {
           ],
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
+        foregroundColor:
+            theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
       ),
       body: Center(
         child: SizedBox(
@@ -79,7 +83,7 @@ class ActivityItemForm extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
             ),
             margin: const EdgeInsets.all(16),
-            color: Colors.white,
+            color: theme.colorScheme.surface,
             child: Padding(
               padding: const EdgeInsets.all(32),
               child: Form(
@@ -338,9 +342,11 @@ class ActivityItemForm extends StatelessWidget {
                     /// ── Settings Section ──
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
+                        color: Colors.orange.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.orange.shade100),
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.25),
+                        ),
                       ),
                       child: Obx(
                         () => SwitchListTile(
@@ -355,7 +361,7 @@ class ActivityItemForm extends StatelessWidget {
                           secondary: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: theme.colorScheme.surface,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
@@ -395,8 +401,8 @@ class ActivityItemForm extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            side: BorderSide(color: Colors.grey.shade300),
-                            foregroundColor: Colors.grey.shade700,
+                            side: BorderSide(color: theme.colorScheme.outline),
+                            foregroundColor: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const Spacer(),

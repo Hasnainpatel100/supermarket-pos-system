@@ -47,7 +47,8 @@
       "auditLogView",
       "customerCreate",
       "customerDelete",
-      "customerEdit"
+      "customerEdit",
+      "expenses"
     ],
     "storeId": "656abc9012ff99887766aaaa",
     "isActive": true
@@ -100,7 +101,8 @@
       "auditLogView",
       "customerCreate",
       "customerEdit",
-      "customerDelete"
+      "customerDelete",
+      "expenses"
     ],
     "storeId": "656abc9012ff99887766aaaa",
     "isActive": true
@@ -123,7 +125,8 @@
       "expiryManage",
       "discountOverride",
       "reportSalesView",
-      "reportStockView"
+      "reportStockView",
+      "expenses"
     ],
     "storeId": "656abc9012ff99887766aaaa",
     "isActive": true
@@ -142,7 +145,8 @@
       "posBillHold",
       "posBillResume",
       "posPaymentCollect",
-      "posBillReprint"
+      "posBillReprint",
+      "expenses"
     ],
     "storeId": "656abc9012ff99887766aaaa",
     "isActive": true

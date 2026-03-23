@@ -31,11 +31,6 @@ class RepoDrawer {
 
                 ...buildSideMenus(permissions),
                 const Divider(),
-                const SideMenuItem.simple(
-                  icon: Icons.payment_outlined,
-                  titleKey: 'Expenses',
-                  menu: EnumMainMenu.expenses,
-                ),
               ],
             ),
           ),
@@ -216,13 +211,22 @@ class RepoDrawer {
           menu: EnumMainMenu.supplier,
           titleKey: 'supplier',
           icon: Icons.supervisor_account,
-          permissions: [
-            EnumPermission.supplierManage
-          ],
+          permissions: [EnumPermission.supplierManage],
         ),
       ],
     ),
-    /* ModelDrawerMenu(
+    /* const SideMenuItem.simple(
+                  icon: Icons.payment_outlined,
+                  titleKey: 'Expenses',
+                  menu: EnumMainMenu.expenses,
+                ),*/
+    ModelDrawerMenu(
+      menu: EnumMainMenu.expenses,
+      titleKey: 'Expenses',
+      icon: Icons.payment_outlined,
+      permissions: [EnumPermission.expenses],
+    ),
+    ModelDrawerMenu(
       menu: EnumMainMenu.system,
       titleKey: 'system',
       icon: Icons.admin_panel_settings_outlined,
@@ -261,7 +265,7 @@ class RepoDrawer {
           permissions: [EnumPermission.auditLogView],
         ),
       ],
-    ),*/
+    ),
   ];
 
   /*

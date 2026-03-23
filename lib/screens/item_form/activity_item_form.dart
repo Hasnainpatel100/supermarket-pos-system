@@ -3,10 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:barcode_widget/barcode_widget.dart';
-import '../model/entity_item.dart';
-import '../service/service_item.dart';
-import '../service/service_object_box.dart';
-import '../widget/my_text_field.dart';
+import '../../model/entity_item.dart';
+import '../../service/service_item.dart';
+import '../../service/service_object_box.dart';
+import '../../widget/my_text_field.dart';
 import 'controller_item_form.dart';
 
 class ActivityItemForm extends StatelessWidget {

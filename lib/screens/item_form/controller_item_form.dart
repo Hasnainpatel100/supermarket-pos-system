@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../model/entity_item.dart';
-import '../service/service_item.dart';
+import '../../model/entity_item.dart';
+import '../../service/service_item.dart';
 import 'activity_item_batch_form.dart';
 
 class ControllerItemForm extends GetxController {

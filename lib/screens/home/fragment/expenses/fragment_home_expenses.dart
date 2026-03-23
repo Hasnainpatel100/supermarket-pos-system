@@ -77,152 +77,147 @@ class FragmentHomeExpenses extends StatelessWidget {
                 ),
                 const Spacer(),
 
-                // Modern Date Range Filter Button
-                Obx(() {
-                  final active = controller.rxDateRangeActive.value;
-                  return Tooltip(
-                    message: active
-                        ? 'Clear date filter'
-                        : 'Filter by date range',
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: active
-                            ? LinearGradient(
-                                colors: [
-                                  Colors.blue.shade500,
-                                  Colors.purple.shade500,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
-                            : null,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: active
-                              ? Colors.transparent
-                              : Colors.grey.shade300,
-                        ),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                        child: InkWell(
-                          onTap: () async {
-                            if (active) {
-                              controller.clearDateRange();
-                            } else {
-                              await controller.pickDateRange(context);
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(20),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  active
-                                      ? Icons.date_range_rounded
-                                      : Icons.date_range_outlined,
-                                  size: 16,
-                                  color: active
-                                      ? Colors.white
-                                      : Colors.grey.shade600,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  active ? _rangeLabel(controller) : 'Range',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
+                // ── Actions Row: Date Range + Refresh (grouped) ──────────────
+                Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: colorScheme.outline.withValues(alpha: 0.12),
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Date Range Filter
+                      Obx(() {
+                        final active = controller.rxDateRangeActive.value;
+                        return Tooltip(
+                          message: active
+                              ? 'Clear date filter'
+                              : 'Filter by date range',
+                          child: GestureDetector(
+                            onTap: () async {
+                              if (active) {
+                                controller.clearDateRange();
+                              } else {
+                                await controller.pickDateRange(context);
+                              }
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: active
+                                    ? LinearGradient(
+                                        colors: [
+                                          Colors.blue.shade500,
+                                          Colors.purple.shade500,
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    active
+                                        ? Icons.date_range_rounded
+                                        : Icons.date_range_outlined,
+                                    size: 15,
                                     color: active
                                         ? Colors.white
-                                        : Colors.grey.shade600,
+                                        : colorScheme.onSurfaceVariant,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    active
+                                        ? _rangeLabel(controller)
+                                        : 'Filter',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: active
+                                          ? Colors.white
+                                          : colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+
+                      // Divider
+                      Container(
+                        width: 1,
+                        height: 18,
+                        color: colorScheme.outline.withValues(alpha: 0.2),
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                      ),
+
+                      // Refresh Button
+                      Tooltip(
+                        message: 'Refresh',
+                        child: InkWell(
+                          onTap: controller.loadData,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Icon(
+                              Icons.refresh_rounded,
+                              size: 18,
+                              color: Colors.blue.shade600,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }),
-
-                const SizedBox(width: 4),
-
-                // Modern Refresh Button
-                Tooltip(
-                  message: 'Refresh',
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      onPressed: controller.loadData,
-                      icon: Icon(
-                        Icons.refresh_rounded,
-                        color: Colors.blue.shade600,
-                        size: 20,
-                      ),
-                      padding: const EdgeInsets.all(6),
-                      constraints: const BoxConstraints(),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
                 ),
 
-                const SizedBox(width: 4),
+                const SizedBox(width: 10),
 
-                // ── Modern New Transaction button ────────────────────────────
-                Tooltip(
-                  message: 'New Transaction',
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.green.shade500, Colors.teal.shade500],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.green.shade300.withOpacity(0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                // ── New Transaction Text Button ───────────────────────────────
+                FilledButton.icon(
+                  onPressed: () async {
+                    final result = await Get.to(
+                      () => const ActivityExpensesFrom(),
+                    );
+                    if (result == true) controller.loadData();
+                  },
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  label: const Text(
+                    'New Transaction',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
-                        onTap: () async {
-                          final result = await Get.to(
-                            () => const ActivityExpensesFrom(),
-                          );
-                          if (result == true) controller.loadData();
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Icon(
-                            Icons.add_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.green.shade600,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
                     ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                    shadowColor: Colors.green.shade300.withValues(alpha: 0.5),
                   ),
                 ),
               ],

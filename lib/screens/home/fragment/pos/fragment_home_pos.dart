@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:super_market/screens/home/fragment/pos/pos_item_card.dart';
-import '../../../../item_form/activity_item_form.dart';
 import '../../../customer/activity_customer_form.dart';
+import '../../../item_form/activity_item_form.dart';
 import 'controller_home_pos.dart';
 
 class FragmentHomePos extends StatelessWidget {

@@ -74,10 +74,10 @@ class ActivityHome extends StatelessWidget {
                 return FragHomeReport();
               }
               if(controller.selectedMainMenu.value == EnumMainMenu.purchase){
-                return FragHomePurchase();
+                return FragmentHomePurchase();
               }
               if(controller.selectedMainMenu.value == EnumMainMenu.supplier){
-                return FragHomeSupplier();
+                return FragmentHomeSupplier();
               }
 
               if (controller.selectedMainMenu.value ==

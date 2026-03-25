@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../repository/repo_storage.dart';
-import '../../service/service_storage.dart';
 import '../../util/app_route.dart';
 
 class ControllerSplash extends GetxController {

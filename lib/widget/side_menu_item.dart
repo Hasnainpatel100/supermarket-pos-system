@@ -28,8 +28,8 @@ class SideMenuItem extends StatelessWidget {
     required this.modelMenu,
     required this.permissions,
   }) : icon = modelMenu!.icon,
-       titleKey = modelMenu!.titleKey,
-       menu = modelMenu!.menu;
+       titleKey = modelMenu.titleKey,
+       menu = modelMenu.menu;
 
   @override
   Widget build(BuildContext context) {

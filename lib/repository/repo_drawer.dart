@@ -31,11 +31,6 @@ class RepoDrawer {
 
                 ...buildSideMenus(permissions),
                 const Divider(),
-                const SideMenuItem.simple(
-                  icon: Icons.payment_outlined,
-                  titleKey: 'Expenses',
-                  menu: EnumMainMenu.expenses,
-                ),
               ],
             ),
           ),
@@ -171,25 +166,15 @@ class RepoDrawer {
       titleKey: 'customer',
       icon: Icons.local_offer_outlined,
       permissions: [
-       EnumPermission.priceView,
+        EnumPermission.priceView,
         EnumPermission.priceUpdate,
         EnumPermission.discountApply,
         EnumPermission.discountOverride,
         EnumPermission.customerEdit,
         EnumPermission.customerEdit,
-        EnumPermission.customerDelete
+        EnumPermission.customerDelete,
       ],
     ),
-    /*ModelDrawerMenu(
-      menu: EnumMainMenu.purchaseSupplier,
-      titleKey: 'purchase_supplier',
-      icon: Icons.shopping_cart_outlined,
-      permissions: [
-        EnumPermission.purchaseCreate,
-        EnumPermission.purchaseReceive,
-        EnumPermission.supplierManage,
-      ],
-    ),*/
     ModelDrawerMenu(
       menu: EnumMainMenu.reports,
       titleKey: 'Bills',
@@ -202,7 +187,46 @@ class RepoDrawer {
         EnumPermission.reportExport,
       ],
     ),
-   /* ModelDrawerMenu(
+
+    ModelDrawerMenu(
+      menu: EnumMainMenu.purchaseSupplier,
+      titleKey: 'purchase_supplier',
+      icon: Icons.shopping_cart_outlined,
+      permissions: [
+        EnumPermission.purchaseCreate,
+        EnumPermission.purchaseReceive,
+        EnumPermission.supplierManage,
+      ],
+      children: [
+        ModelDrawerMenu(
+          menu: EnumMainMenu.purchase,
+          titleKey: 'purchase',
+          icon: Icons.shopping_cart,
+          permissions: [
+            EnumPermission.purchaseCreate,
+            EnumPermission.purchaseReceive,
+          ],
+        ),
+        ModelDrawerMenu(
+          menu: EnumMainMenu.supplier,
+          titleKey: 'supplier',
+          icon: Icons.supervisor_account,
+          permissions: [EnumPermission.supplierManage],
+        ),
+      ],
+    ),
+    /* const SideMenuItem.simple(
+                  icon: Icons.payment_outlined,
+                  titleKey: 'Expenses',
+                  menu: EnumMainMenu.expenses,
+                ),*/
+    ModelDrawerMenu(
+      menu: EnumMainMenu.expenses,
+      titleKey: 'Expenses',
+      icon: Icons.payment_outlined,
+      permissions: [EnumPermission.expenses],
+    ),
+    ModelDrawerMenu(
       menu: EnumMainMenu.system,
       titleKey: 'system',
       icon: Icons.admin_panel_settings_outlined,
@@ -241,7 +265,7 @@ class RepoDrawer {
           permissions: [EnumPermission.auditLogView],
         ),
       ],
-    ),*/
+    ),
   ];
 
   /*

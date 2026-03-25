@@ -53,6 +53,9 @@ enum EnumPermission {
   dataSyncManual,
   auditLogView,
 
+  //Expenses
+  expenses,
+
   // for app purpose only
   dashboard,
   logout,

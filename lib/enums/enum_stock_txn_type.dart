@@ -3,4 +3,5 @@ enum StockTxnType {
   outTxn,
   adjust,
   count,
+  purchaseIn,
 }

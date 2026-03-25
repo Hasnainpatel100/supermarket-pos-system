@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../enums/enum_permission.dart';
-import '../../../widget/button_permission.dart';
 import '../controller_home.dart';
 
 class FragHomePos extends StatelessWidget {
@@ -154,7 +153,7 @@ class _ModernPosAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!permissions.contains(permission)) return const SizedBox.shrink();
-    
+
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(12),

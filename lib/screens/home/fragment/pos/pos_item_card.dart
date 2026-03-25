@@ -8,7 +8,7 @@ class PosItemCard extends StatelessWidget {
   final EntityItem item;
   final VoidCallback onTap;
 
-  const PosItemCard({required this.item, required this.onTap});
+  const PosItemCard({super.key, required this.item, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +154,7 @@ class PosItemCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          "${item.sku ?? '-'}",
+                          item.sku ?? '-',
                           style: TextStyle(
                             fontSize: 9,
                             color: colorScheme.onSurfaceVariant,
@@ -167,7 +167,7 @@ class PosItemCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            "${controller.serviceCurrency.rxCurrency.value}",
+                            controller.serviceCurrency.rxCurrency.value,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: colorScheme.primary,

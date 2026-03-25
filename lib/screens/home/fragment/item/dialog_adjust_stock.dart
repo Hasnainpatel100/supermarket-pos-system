@@ -249,7 +249,7 @@ class DialogAdjustStock extends StatelessWidget {
               /// ── Reason Dropdown ──
               Obx(
                 () => DropdownButtonFormField<String>(
-                  value: selectedReason.value,
+                  initialValue: selectedReason.value,
                   decoration: InputDecoration(
                     labelText: 'Reason',
                     border: OutlineInputBorder(

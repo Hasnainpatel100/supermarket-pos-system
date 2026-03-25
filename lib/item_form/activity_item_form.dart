@@ -113,7 +113,7 @@ class ActivityItemForm extends StatelessWidget {
                         Expanded(
                           child: Obx(
                             () => DropdownButtonFormField<String>(
-                              value: controller.rxUnit.value,
+                              initialValue: controller.rxUnit.value,
                               decoration: InputDecoration(
                                 labelText: 'Unit',
                                 border: OutlineInputBorder(
@@ -365,7 +365,7 @@ class ActivityItemForm extends StatelessWidget {
                             ),
                           ),
                           value: controller.hasExpiry.value,
-                          activeColor: Colors.orange.shade700,
+                          activeThumbColor: Colors.orange.shade700,
                           onChanged: (val) => controller.hasExpiry.value = val,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),

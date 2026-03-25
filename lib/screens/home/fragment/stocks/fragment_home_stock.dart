@@ -350,6 +350,8 @@ class FragmentHomeStock extends StatelessWidget {
         return 'ADJUST';
       case StockTxnType.deduct:
         return 'DEDUCT';
+      case StockTxnType.purchaseIn:
+        return 'PURCHASE';
       default:
         return 'ALL';
     }
@@ -365,6 +367,8 @@ class FragmentHomeStock extends StatelessWidget {
         return Colors.blue.shade600;
       case StockTxnType.deduct:
         return Colors.orange.shade700;
+        case StockTxnType.purchaseIn:
+        return Colors.purple.shade600;
       default:
         return Colors.grey.shade600;
     }
@@ -380,6 +384,8 @@ class FragmentHomeStock extends StatelessWidget {
         return Icons.tune_rounded;
       case StockTxnType.deduct:
         return Icons.remove_circle_outline_rounded;
+        case StockTxnType.purchaseIn:
+        return Icons.shopping_cart_rounded;
       default:
         return Icons.circle_outlined;
     }

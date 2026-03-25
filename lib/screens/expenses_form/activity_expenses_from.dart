@@ -173,7 +173,7 @@ class ActivityExpensesFrom extends StatelessWidget {
                             controller.rxCategory.value = cats.first;
                           }
                           return DropdownButtonFormField<String>(
-                            value: controller.rxCategory.value,
+                            initialValue: controller.rxCategory.value,
                             decoration: InputDecoration(
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -191,8 +191,9 @@ class ActivityExpensesFrom extends StatelessWidget {
                                 )
                                 .toList(),
                             onChanged: (val) {
-                              if (val != null)
+                              if (val != null) {
                                 controller.rxCategory.value = val;
+                              }
                             },
                           );
                         }),

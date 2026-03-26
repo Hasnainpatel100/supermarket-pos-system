@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import '../../../../model/entity_item.dart';
-import '../../../../model/entity_item_batch.dart';
-import '../../../../objectbox.g.dart';
-import '../../../../service/service_object_box.dart';
+import '../../../../../model/entity_item.dart';
+import '../../../../../model/entity_item_batch.dart';
+import '../../../../../objectbox.g.dart';
+import '../../../../../service/service_object_box.dart';
 
 class DialogItemBatches extends StatelessWidget {
   final EntityItem entityItem;

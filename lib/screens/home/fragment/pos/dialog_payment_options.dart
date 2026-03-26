@@ -106,9 +106,9 @@ class DialogPaymentOptions extends StatelessWidget {
               final mode = controller.rxSelectedMode.value;
 
               if (mode == "CASH") {
-                return _buildCashInputs(controller, colorScheme, currency);
+                return _buildGenericInputs(controller, colorScheme, currency, showUtr: false);
               } else if (mode == "UPI" || mode == "NETBANKING") {
-                return _buildOnlineInputs(controller);
+                return _buildGenericInputs(controller, colorScheme, currency, showUtr: true);
               } else if (mode == "SPLIT") {
                 return _buildSplitInputs(controller, currency, colorScheme);
               }
@@ -169,38 +169,53 @@ class DialogPaymentOptions extends StatelessWidget {
     );
   }
 
-  Widget _buildCashInputs(
+  Widget _buildGenericInputs(
     ControllerPaymentOptions controller,
     ColorScheme colorScheme,
-    String currency,
-  ) {
+    String currency, {
+    required bool showUtr,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
-          controller: controller.cashAmountController,
+          controller: controller.amountController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: "Cash Received",
+            labelText: "Amount Received",
             prefixText: "$currency ",
             border: const OutlineInputBorder(),
           ),
-          onChanged: controller.onCashAmountChanged,
+          onChanged: controller.onAmountChanged,
         ),
+        if (showUtr) ...[
+          const SizedBox(height: 16),
+          TextField(
+            controller: controller.utrController,
+            decoration: const InputDecoration(
+              labelText: "UTR / Transaction Reference Number",
+              hintText: "Enter 12-digit UTR or Reference ID",
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.receipt_long),
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         Obx(() {
+          final dueAmt = controller.rxDueAmount.value;
           final returnAmt = controller.rxChangeReturned.value;
-          final isNegative = returnAmt < 0;
+          final isDue = dueAmt > 0;
+          
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isNegative
-                  ? colorScheme.errorContainer.withValues(alpha: 0.3)
+              color: isDue
+                  ? Colors.orange.withValues(alpha: 0.1)
                   : colorScheme.secondaryContainer.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isNegative
-                    ? colorScheme.errorContainer
+                color: isDue
+                    ? Colors.orange.withValues(alpha: 0.4)
                     : colorScheme.secondaryContainer,
               ),
             ),
@@ -208,22 +223,22 @@ class DialogPaymentOptions extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  isNegative ? "Amount Due:" : "Change to Return:",
+                  isDue ? "Amount Due:" : "Change to Return:",
                   style: TextStyle(
                     fontSize: 16,
-                    color: isNegative
-                        ? colorScheme.error
+                    color: isDue
+                        ? Colors.orange.shade800
                         : colorScheme.secondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
-                  "$currency${returnAmt.abs().toStringAsFixed(2)}",
+                  "$currency${(isDue ? dueAmt : returnAmt).toStringAsFixed(2)}",
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: isNegative
-                        ? colorScheme.error
+                    color: isDue
+                        ? Colors.orange.shade800
                         : colorScheme.secondary,
                   ),
                 ),
@@ -232,18 +247,6 @@ class DialogPaymentOptions extends StatelessWidget {
           );
         }),
       ],
-    );
-  }
-
-  Widget _buildOnlineInputs(ControllerPaymentOptions controller) {
-    return TextField(
-      controller: controller.utrController,
-      decoration: const InputDecoration(
-        labelText: "UTR / Transaction Reference Number",
-        hintText: "Enter 12-digit UTR or Reference ID",
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.receipt_long),
-      ),
     );
   }
 
@@ -256,60 +259,118 @@ class DialogPaymentOptions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: TextField(
-                controller: controller.splitCashController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  labelText: "Cash Amount",
-                  prefixText: "$currency ",
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.money),
-                ),
-                onChanged: controller.onSplitCashChanged,
-              ),
+            Text(
+              "Split Details",
+              style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextField(
-                controller: controller.splitOnlineController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  labelText: "Online Amount",
-                  prefixText: "$currency ",
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.qr_code),
-                ),
-                onChanged: controller.onSplitOnlineChanged,
-              ),
+            TextButton.icon(
+              onPressed: controller.addSplitEntry,
+              icon: const Icon(Icons.add_circle_outline, size: 18),
+              label: const Text("Add Payer"),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        _buildOnlineInputs(controller), // UTR is needed for the online part
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        Obx(() => Column(
+          children: List.generate(controller.rxSplitEntries.length, (index) {
+            final entry = controller.rxSplitEntries[index];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Obx(() => DropdownButtonFormField<String>(
+                          value: entry.mode.value,
+                          decoration: const InputDecoration(
+                            labelText: "Mode",
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'CASH', child: Text('CASH')),
+                            DropdownMenuItem(value: 'UPI', child: Text('UPI')),
+                            DropdownMenuItem(value: 'NETBANKING', child: Text('NETBANKING')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) entry.mode.value = val;
+                          },
+                        )),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 3,
+                        child: TextField(
+                          controller: entry.amountController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            labelText: "Amount",
+                            prefixText: "$currency ",
+                            border: const OutlineInputBorder(),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
+                      ),
+                      if (controller.rxSplitEntries.length > 2)
+                        IconButton(
+                          onPressed: () => controller.removeSplitEntry(index),
+                          icon: Icon(Icons.remove_circle_outline, color: colorScheme.error),
+                        ),
+                    ],
+                  ),
+                  Obx(() {
+                    if (entry.mode.value == 'UPI' || entry.mode.value == 'NETBANKING') {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: TextField(
+                          controller: entry.utrController,
+                          decoration: const InputDecoration(
+                            labelText: "UTR / Transaction Reference Number",
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            prefixIcon: Icon(Icons.receipt_long, size: 18),
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox();
+                  }),
+                ],
+              ),
+            );
+          }),
+        )),
+        const SizedBox(height: 8),
         Obx(() {
-          final totalOut =
-              controller.rxSplitCash.value + controller.rxSplitOnline.value;
+          final totalOut = controller.rxSplitTotal.value;
           final diff = totalOut - controller.grandTotal;
           final isMatch = diff.abs() <= 0.01;
+          final isDue = diff < -0.01;
+          final isOver = diff > 0.01;
 
           return Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isMatch
                   ? colorScheme.secondaryContainer.withValues(alpha: 0.3)
-                  : colorScheme.errorContainer.withValues(alpha: 0.3),
+                  : (isDue 
+                      ? Colors.orange.withValues(alpha: 0.1) 
+                      : colorScheme.errorContainer.withValues(alpha: 0.3)),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isMatch
                     ? colorScheme.secondaryContainer
-                    : colorScheme.errorContainer,
+                    : (isDue ? Colors.orange.withValues(alpha: 0.4) : colorScheme.errorContainer),
               ),
             ),
             child: Row(
@@ -319,12 +380,20 @@ class DialogPaymentOptions extends StatelessWidget {
                   "Total Input: $currency${totalOut.toStringAsFixed(2)}",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isMatch ? colorScheme.secondary : colorScheme.error,
+                    color: isMatch ? colorScheme.secondary : (isDue ? Colors.orange.shade800 : colorScheme.error),
                   ),
                 ),
-                if (!isMatch)
+                if (isDue)
                   Text(
-                    "Need: $currency${diff > 0 ? '-' : '+'}${diff.abs().toStringAsFixed(2)}",
+                    "Amount Due: $currency${diff.abs().toStringAsFixed(2)}",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange.shade800,
+                    ),
+                  )
+                else if (isOver)
+                  Text(
+                    "Overpaid: $currency${diff.abs().toStringAsFixed(2)}",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.error,

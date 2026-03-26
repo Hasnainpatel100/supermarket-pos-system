@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../widget/my_card.dart';
 import 'package:intl/intl.dart';
 
 import 'controller_home_report.dart';
@@ -275,268 +276,288 @@ class FragHomeReport extends StatelessWidget {
           Expanded(
             child: Obx(() {
               if (controller.rxListBill.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.indigo.shade100,
-                              Colors.purple.shade100,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.indigo.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.receipt_long_outlined,
-                          size: 64,
-                          color: Colors.indigo.shade400,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "No transactions found",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Try adjusting the date filter",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+                return _buildEmpty();
               }
 
-              return Card(
-                elevation: 0,
+              return MyCard(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: colorScheme.outline.withValues(alpha: 0.1),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SingleChildScrollView(
+                    child: DataTable(
+                      columnSpacing: 16,
+                      horizontalMargin: 16,
+                      headingRowColor: WidgetStateProperty.all(
+                        colorScheme.primary.withValues(alpha: 0.04),
+                      ),
+                      headingTextStyle: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: colorScheme.onSurface,
+                      ),
+                      dividerThickness: 0.5,
+                      dataRowMaxHeight: 52,
+                      columns: [
+                        _col(context, 'Date', Icons.calendar_today_rounded, Colors.indigo),
+                        _col(context, 'Bill No', Icons.receipt_rounded, Colors.blue),
+                        _col(context, 'Customer', Icons.person_outline_rounded, Colors.green),
+                        _col(context, 'Total', Icons.attach_money_rounded, Colors.orange),
+                        _col(context, 'Due', Icons.pending_actions_rounded, Colors.red),
+                        _col(context, 'Status', Icons.toggle_on_rounded, Colors.purple),
+                        _col(context, 'Actions', Icons.settings_rounded, Colors.grey),
+                      ],
+                      rows: controller.rxListBill.map((b) => _buildRow(context, b, controller, colorScheme, currencyFormat)).toList(),
+                    ),
                   ),
-                ),
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount:
-                      controller.rxListBill.length +
-                      (controller.rxHasMore.value ? 1 : 0),
-                  separatorBuilder: (_, __) => Divider(
-                    height: 1,
-                    indent: 72,
-                    endIndent: 16,
-                    color: Colors.grey.shade100,
-                  ),
-                  itemBuilder: (context, index) {
-                    // "Load More" button at the end
-                    if (index >= controller.rxListBill.length) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Center(
-                          child: Obx(
-                            () => controller.rxIsLoadingMore.value
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : TextButton.icon(
-                                    onPressed: controller.loadMore,
-                                    icon: const Icon(Icons.expand_more_rounded),
-                                    label: const Text('Load More'),
-                                  ),
-                          ),
-                        ),
-                      );
-                    }
-
-                    final bill = controller.rxListBill[index];
-                    final displayDate = bill.billDate ?? '-';
-                    final isCancelled = bill.status == "CANCELLED";
-
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ListTile(
-                        onTap: () => Get.dialog(DialogBillDetail(bill: bill)),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        leading: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: isCancelled
-                                  ? [Colors.red.shade400, Colors.red.shade700]
-                                  : [
-                                      Colors.indigo.shade400,
-                                      Colors.purple.shade400,
-                                    ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    (isCancelled ? Colors.red : Colors.indigo)
-                                        .withOpacity(0.3),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            isCancelled
-                                ? Icons.cancel_outlined
-                                : Icons.receipt_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                        ),
-                        title: Text(
-                          bill.customerName ?? "Walk-in Customer",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                            color: isCancelled
-                                ? Colors.grey
-                                : Colors.grey.shade800,
-                            decoration: isCancelled
-                                ? TextDecoration.lineThrough
-                                : null,
-                          ),
-                        ),
-                        subtitle: Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 12,
-                              color: Colors.indigo.shade400,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              displayDate,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.indigo.shade600,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: Text(
-                                '#${bill.billNo ?? "-"}',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              currencyFormat.format(bill.grandTotal ?? 0),
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: isCancelled
-                                    ? Colors.grey
-                                    : Colors.grey.shade800,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isCancelled
-                                    ? Colors.red.withOpacity(0.1)
-                                    : Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isCancelled
-                                      ? Colors.red.withOpacity(0.3)
-                                      : Colors.green.withOpacity(0.3),
-                                ),
-                              ),
-                              child: Text(
-                                bill.status ?? "PAID",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: isCancelled
-                                      ? Colors.red.shade700
-                                      : Colors.green.shade700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
                 ),
               );
             }),
           ),
 
+          // ── Pagination Footer ──
+          Obx(() => controller.rxListBill.isNotEmpty ? _buildPagination(controller) : const SizedBox.shrink()),
+
           const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+
+  Widget _buildPagination(ControllerHomeReport controller) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Total: ${controller.totalCount.value} bills',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: controller.hasPrev ? controller.prevPage : null,
+                icon: const Icon(Icons.chevron_left_rounded, size: 18),
+                label: const Text('Prev'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: Text('Page ${controller.currentPage.value + 1}',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: controller.hasNext ? controller.nextPage : null,
+                icon: const Icon(Icons.chevron_right_rounded, size: 18),
+                label: const Text('Next'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmpty() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.indigo.shade100, Colors.purple.shade100],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.indigo.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Icon(Icons.receipt_long_outlined, size: 64, color: Colors.indigo.shade400),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "No transactions found",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "Try adjusting the date filter",
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+          ),
+        ],
+      ),
+    );
+  }
+
+  DataColumn _col(BuildContext context, String label, IconData icon, Color color) {
+    return DataColumn(
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 16, color: color.withOpacity(0.8)),
+          ),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  DataRow _buildRow(
+    BuildContext context,
+    var bill,
+    ControllerHomeReport controller,
+    ColorScheme colorScheme,
+    NumberFormat currencyFormat,
+  ) {
+    final isCancelled = bill.status == "CANCELLED";
+    final isDue = bill.status == "DUE";
+
+    return DataRow(
+      color: WidgetStateProperty.resolveWith<Color?>((_) {
+        if (isCancelled) return Colors.grey.withValues(alpha: 0.05);
+        return null;
+      }),
+      cells: [
+        // Date
+        DataCell(Text(
+          bill.billDate ?? '-',
+          style: TextStyle(fontSize: 13, color: Colors.indigo.shade600, fontWeight: FontWeight.w500),
+        )),
+
+        // Bill No
+        DataCell(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Text(
+              '#${bill.billNo ?? "-"}',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+            ),
+          ),
+        ),
+
+        // Customer
+        DataCell(Text(
+          bill.customerName ?? "Walk-in Customer",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color: isCancelled ? Colors.grey : Colors.grey.shade800,
+            decoration: isCancelled ? TextDecoration.lineThrough : null,
+          ),
+        )),
+
+        // Total
+        DataCell(Text(
+          currencyFormat.format(bill.grandTotal ?? 0),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: isCancelled ? Colors.grey : Colors.grey.shade800,
+          ),
+        )),
+
+        // Due Amount
+        DataCell(Text(
+          isDue ? currencyFormat.format(bill.dueAmount ?? 0) : '-',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: isDue ? Colors.red.shade700 : Colors.grey,
+          ),
+        )),
+
+        // Status
+        DataCell(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: isCancelled
+                  ? Colors.grey.withOpacity(0.1)
+                  : (isDue ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1)),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isCancelled
+                    ? Colors.grey.withOpacity(0.3)
+                    : (isDue ? Colors.orange.withOpacity(0.3) : Colors.green.withOpacity(0.3)),
+              ),
+            ),
+            child: Text(
+              bill.status ?? "PAID",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: isCancelled
+                    ? Colors.grey.shade700
+                    : (isDue ? Colors.orange.shade800 : Colors.green.shade700),
+              ),
+            ),
+          ),
+        ),
+
+        // Actions
+        DataCell(
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500),
+            tooltip: 'Actions',
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            onSelected: (value) {
+              if (value == 'preview') {
+                Get.dialog(DialogBillDetail(bill: bill));
+              } else if (value == 'settle_due') {
+                controller.settleDuePayment(bill);
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'preview',
+                child: Row(children: [
+                  Icon(Icons.visibility_outlined, size: 20, color: Colors.blue.shade600),
+                  const SizedBox(width: 12),
+                  const Text('Preview Bill'),
+                ]),
+              ),
+              if (isDue)
+                PopupMenuItem(
+                  value: 'settle_due',
+                  child: Row(children: [
+                    Icon(Icons.payment_rounded, size: 20, color: Colors.orange.shade600),
+                    const SizedBox(width: 12),
+                    const Text('Settle Due'),
+                  ]),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

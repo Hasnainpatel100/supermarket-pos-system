@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../model/entity_finance_transaction.dart';
 import '../../../../service/service_finance.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../widget/my_card.dart';
 import '../../../expenses_form/activity_expenses_from.dart';
 import 'controller_home_expenses.dart';
 
@@ -428,35 +429,150 @@ class FragmentHomeExpenses extends StatelessWidget {
                 );
               }
 
-              return Card(
-                elevation: 0,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: colorScheme.outline.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => Divider(
-                    height: 1,
-                    indent: 72,
-                    endIndent: 16,
-                    color: Colors.grey.shade100,
-                  ),
-                  itemBuilder: (context, i) => _TransactionTile(
-                    tx: list[i],
-                    onDelete: () =>
-                        _confirmDelete(context, controller, list[i]),
+              return MyCard(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: SingleChildScrollView(
+                    child: DataTable(
+                      columnSpacing: 16,
+                      horizontalMargin: 16,
+                      headingRowColor: WidgetStateProperty.all(
+                        colorScheme.primary.withValues(alpha: 0.04),
+                      ),
+                      headingTextStyle: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: colorScheme.onSurface,
+                      ),
+                      dividerThickness: 0.5,
+                      dataRowMaxHeight: 52,
+                      columns: const [
+                        DataColumn(label: Text('Date')),
+                        DataColumn(label: Text('Type')),
+                        DataColumn(label: Text('Category')),
+                        DataColumn(label: Text('Person')),
+                        DataColumn(label: Text('Amount')),
+                        DataColumn(label: Text('Note')),
+                        DataColumn(label: Text('Actions')),
+                      ],
+                      rows: list.map((tx) {
+                        final typeColor = switch (tx.type) {
+                          'expense' => Colors.red.shade600,
+                          'borrow' => Colors.orange.shade700,
+                          'lend' => Colors.blue.shade700,
+                          _ => colorScheme.primary,
+                        };
+                        final typeIcon = switch (tx.type) {
+                          'expense' => Icons.shopping_cart_rounded,
+                          'borrow' => Icons.call_received_rounded,
+                          'lend' => Icons.call_made_rounded,
+                          _ => Icons.swap_horiz_rounded,
+                        };
+                        final displayDate = tx.createdDate != null
+                            ? tx.createdDate!
+                            : (tx.dateUtcMs != null
+                                  ? DateFormat('yyyy-MM-dd').format(
+                                      DateTime.fromMillisecondsSinceEpoch(tx.dateUtcMs!).toLocal(),
+                                    )
+                                  : '-');
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(displayDate, style: const TextStyle(fontWeight: FontWeight.w600))),
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: typeColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(typeIcon, size: 14, color: typeColor),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      (tx.type ?? '').toUpperCase(),
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: typeColor),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            DataCell(Text(tx.category ?? '-')),
+                            DataCell(Text(tx.personName ?? '-')),
+                            DataCell(Text(
+                              '₹${(tx.amount ?? 0).toStringAsFixed(2)}',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: typeColor),
+                            )),
+                            DataCell(Text(tx.note ?? '-', overflow: TextOverflow.ellipsis)),
+                            DataCell(
+                              IconButton(
+                                icon: Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 20),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Delete',
+                                onPressed: () => _confirmDelete(context, controller, tx),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               );
             }),
           ),
 
+          // ── Pagination Footer ──
+          Obx(() => controller.rxList.isNotEmpty ? _buildPagination(controller) : const SizedBox.shrink()),
+
           const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPagination(ControllerHomeExpenses controller) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Total: ${controller.totalCount.value} records',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: controller.hasPrev ? controller.prevPage : null,
+                icon: const Icon(Icons.chevron_left_rounded, size: 18),
+                label: const Text('Prev'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: Text('Page ${controller.currentPage.value + 1}',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: controller.hasNext ? controller.nextPage : null,
+                icon: const Icon(Icons.chevron_right_rounded, size: 18),
+                label: const Text('Next'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -718,197 +834,3 @@ class _ModernFilterChip extends StatelessWidget {
   }
 }
 
-// ── Transaction List Tile ─────────────────────────────────────────────────────
-class _TransactionTile extends StatelessWidget {
-  final EntityFinanceTransaction tx;
-  final VoidCallback onDelete;
-
-  const _TransactionTile({required this.tx, required this.onDelete});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDebit = tx.isDebit ?? true;
-    final (typeColor, typeIcon) = switch (tx.type) {
-      'expense' => (Colors.red.shade600, Icons.shopping_cart_rounded),
-      'borrow' => (Colors.orange.shade700, Icons.call_received_rounded),
-      'lend' => (Colors.blue.shade700, Icons.call_made_rounded),
-      _ => (colorScheme.primary, Icons.swap_horiz_rounded),
-    };
-
-    // Show createdDate if available, fallback to dateUtcMs
-    final displayDate = tx.createdDate != null
-        ? tx.createdDate!
-        : (tx.dateUtcMs != null
-              ? DateFormat('yyyy-MM-dd').format(
-                  DateTime.fromMillisecondsSinceEpoch(tx.dateUtcMs!).toLocal(),
-                )
-              : '-');
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [typeColor, typeColor.withOpacity(0.8)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: typeColor.withOpacity(0.3),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Icon(typeIcon, color: Colors.white, size: 22),
-        ),
-        title: Text(
-          tx.category ?? tx.type ?? '-',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-            color: Colors.grey,
-          ),
-        ),
-        subtitle: Row(
-          children: [
-            if (tx.personName != null) ...[
-              Icon(Icons.person_outline, size: 12, color: Colors.blue.shade600),
-              const SizedBox(width: 4),
-              Text(
-                tx.personName!,
-                style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
-              ),
-              const SizedBox(width: 12),
-            ],
-            Icon(
-              Icons.calendar_today_outlined,
-              size: 12,
-              color: Colors.purple.shade600,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              displayDate,
-              style: TextStyle(fontSize: 12, color: Colors.purple.shade700),
-            ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDebit
-                          ? [Colors.red.shade500, Colors.orange.shade500]
-                          : [Colors.green.shade500, Colors.teal.shade500],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (isDebit ? Colors.red : Colors.green).shade300
-                            .withOpacity(0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    '₹${(tx.amount ?? 0).toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (isDebit ? Colors.red : Colors.green).withOpacity(
-                      0.1,
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: (isDebit ? Colors.red : Colors.green).withOpacity(
-                        0.3,
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    isDebit ? 'DEBIT' : 'CREDIT',
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      color: isDebit
-                          ? Colors.red.shade700
-                          : Colors.green.shade700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 4),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.red.shade100),
-              ),
-              child: IconButton(
-                onPressed: onDelete,
-                icon: Icon(
-                  Icons.delete_outline_rounded,
-                  size: 18,
-                  color: Colors.red.shade600,
-                ),
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                tooltip: 'Delete',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

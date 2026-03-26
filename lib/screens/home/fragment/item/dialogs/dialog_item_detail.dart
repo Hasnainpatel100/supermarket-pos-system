@@ -2,7 +2,7 @@ import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../model/entity_item.dart';
+import '../../../../../model/entity_item.dart';
 
 /// Dialog to display all details of an EntityItem.
 /// Uses GetX stateless pattern.
@@ -51,6 +51,18 @@ class DialogItemDetail extends StatelessWidget {
                 'Selling Price',
                 entityItem.sellingPrice?.toStringAsFixed(2),
               ),
+              if (entityItem.taxName != null && entityItem.taxName!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('Tax Details', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo.shade600)),
+                const Divider(),
+                _infoRow(context, 'Tax Type', entityItem.taxType ?? 'Inclusive'),
+                _infoRow(context, 'Tax Name', entityItem.taxName),
+                _infoRow(context, 'Tax Rate', entityItem.taxRate != null ? '${entityItem.taxRate}%' : null),
+                _infoRow(context, 'Tax Amount', entityItem.taxAmount?.toStringAsFixed(2)),
+                _infoRow(context, 'Base Price', entityItem.priceBeforeTax?.toStringAsFixed(2)),
+                const Divider(),
+                const SizedBox(height: 8),
+              ],
               _infoRow(context, 'Stock Qty', '${entityItem.totalQty ?? 0}'),
               _infoRow(
                 context,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:super_market/service/service_currency.dart';
+import 'controller_home_pos.dart';
 
 class PaymentDetails {
   final String paymentMode;
@@ -9,6 +10,7 @@ class PaymentDetails {
   final String utrNumber;
   final double splitCash;
   final double splitOnline;
+  final double dueAmount;
 
   PaymentDetails({
     required this.paymentMode,
@@ -17,7 +19,19 @@ class PaymentDetails {
     this.utrNumber = '',
     this.splitCash = 0.0,
     this.splitOnline = 0.0,
+    this.dueAmount = 0.0,
   });
+}
+
+class SplitEntryController {
+  final RxString mode = 'CASH'.obs;
+  final TextEditingController amountController = TextEditingController();
+  final TextEditingController utrController = TextEditingController();
+  
+  void dispose() {
+    amountController.dispose();
+    utrController.dispose();
+  }
 }
 
 class ControllerPaymentOptions extends GetxController {
@@ -26,75 +40,102 @@ class ControllerPaymentOptions extends GetxController {
 
   final rxSelectedMode = "CASH".obs; // CASH, UPI, NETBANKING, SPLIT
 
-  // Cash mode fields
-  final cashAmountController = TextEditingController();
-  final rxCashAmountReceived = 0.0.obs;
+  // Generic mode fields (CASH, UPI, NETBANKING)
+  final amountController = TextEditingController();
+  final rxAmountReceived = 0.0.obs;
   final rxChangeReturned = 0.0.obs;
-
-  // Online mode fields (UPI, Netbanking)
+  final rxDueAmount = 0.0.obs;
   final utrController = TextEditingController();
 
   // Split mode fields
-  final splitCashController = TextEditingController();
-  final splitOnlineController = TextEditingController();
-  final rxSplitCash = 0.0.obs;
-  final rxSplitOnline = 0.0.obs;
+  final rxSplitEntries = <SplitEntryController>[].obs;
+  final rxSplitTotal = 0.0.obs;
 
   ControllerPaymentOptions({required this.grandTotal});
 
   @override
   void onInit() {
     super.onInit();
-    // Default cash amount received to the grand total
-    cashAmountController.text = grandTotal.toStringAsFixed(2);
-    rxCashAmountReceived.value = grandTotal;
-    calculateCashReturn();
+    // Default amount received to the grand total
+    amountController.text = grandTotal.toStringAsFixed(2);
+    rxAmountReceived.value = grandTotal;
+    calculateAmounts();
 
     // Default split logic
-    splitCashController.text = (grandTotal / 2).toStringAsFixed(2);
-    splitOnlineController.text = (grandTotal / 2).toStringAsFixed(2);
-    rxSplitCash.value = grandTotal / 2;
-    rxSplitOnline.value = grandTotal / 2;
+    final c1 = SplitEntryController();
+    c1.mode.value = 'CASH';
+    c1.amountController.text = (grandTotal / 2).toStringAsFixed(2);
+    
+    final c2 = SplitEntryController();
+    c2.mode.value = 'UPI';
+    c2.amountController.text = (grandTotal / 2).toStringAsFixed(2);
+    
+    rxSplitEntries.addAll([c1, c2]);
+    
+    c1.amountController.addListener(calculateSplitTotal);
+    c2.amountController.addListener(calculateSplitTotal);
+    calculateSplitTotal();
   }
 
   void setPaymentMode(String mode) {
     rxSelectedMode.value = mode;
   }
 
-  void onCashAmountChanged(String val) {
-    rxCashAmountReceived.value = double.tryParse(val) ?? 0.0;
-    calculateCashReturn();
+  void onAmountChanged(String val) {
+    rxAmountReceived.value = double.tryParse(val) ?? 0.0;
+    calculateAmounts();
   }
 
-  void calculateCashReturn() {
-    double returnAmount = rxCashAmountReceived.value - grandTotal;
-    rxChangeReturned.value = returnAmount;
+  void calculateAmounts() {
+    double received = rxAmountReceived.value;
+    if (received >= grandTotal) {
+      rxChangeReturned.value = received - grandTotal;
+      rxDueAmount.value = 0.0;
+    } else {
+      rxChangeReturned.value = 0.0;
+      rxDueAmount.value = grandTotal - received;
+    }
   }
 
-  void onSplitCashChanged(String val) {
-    rxSplitCash.value = double.tryParse(val) ?? 0.0;
+  void addSplitEntry() {
+    final c = SplitEntryController();
+    c.amountController.addListener(calculateSplitTotal);
+    rxSplitEntries.add(c);
   }
 
-  void onSplitOnlineChanged(String val) {
-    rxSplitOnline.value = double.tryParse(val) ?? 0.0;
+  void removeSplitEntry(int index) {
+    final c = rxSplitEntries[index];
+    c.amountController.removeListener(calculateSplitTotal);
+    c.dispose();
+    rxSplitEntries.removeAt(index);
+    calculateSplitTotal();
+  }
+
+  void calculateSplitTotal() {
+    double total = 0;
+    for (var e in rxSplitEntries) {
+      total += double.tryParse(e.amountController.text) ?? 0.0;
+    }
+    rxSplitTotal.value = total;
   }
 
   bool validateAndConfirm() {
     final mode = rxSelectedMode.value;
+    double due = 0.0;
+    double received = 0.0;
+    double change = 0.0;
+    double splitC = 0.0;
+    double splitO = 0.0;
 
-    if (mode == "CASH") {
-      if (rxCashAmountReceived.value < grandTotal) {
-        Get.snackbar(
-          "Error",
-          "Amount received cannot be less than Grand Total",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return false;
+    if (mode == "CASH" || mode == "UPI" || mode == "NETBANKING") {
+      received = rxAmountReceived.value;
+      if (received < grandTotal) {
+        due = grandTotal - received;
+      } else {
+        change = received - grandTotal;
       }
-    } else if (mode == "UPI" || mode == "NETBANKING") {
-      if (utrController.text.trim().isEmpty) {
+      
+      if ((mode == "UPI" || mode == "NETBANKING") && utrController.text.trim().isEmpty) {
         Get.snackbar(
           "Error",
           "Please enter UTR/Reference Number",
@@ -105,37 +146,68 @@ class ControllerPaymentOptions extends GetxController {
         return false;
       }
     } else if (mode == "SPLIT") {
-      final totalPaid = rxSplitCash.value + rxSplitOnline.value;
-      // Allow minor floating point difference
-      if ((totalPaid - grandTotal).abs() > 0.01) {
-        Get.snackbar(
-          "Error",
-          "Split amounts must exactly match Grand Total (${grandTotal.toStringAsFixed(2)})",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+      final totalPaid = rxSplitTotal.value;
+      if (totalPaid > grandTotal + 0.01) {
+        Get.snackbar("Error", "Split total cannot exceed Grand Total",
+          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
         return false;
       }
-      if (utrController.text.trim().isEmpty && rxSplitOnline.value > 0) {
-        Get.snackbar(
-          "Error",
-          "Please enter UTR/Reference Number for online split portion",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+      received = totalPaid;
+      if (totalPaid < grandTotal - 0.01) {
+        due = grandTotal - totalPaid;
+      }
+
+      for (var e in rxSplitEntries) {
+        if ((e.mode.value == 'UPI' || e.mode.value == 'NETBANKING') && e.utrController.text.trim().isEmpty) {
+          Get.snackbar(
+            "Error",
+            "Please enter UTR/Reference Number for online split portion",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+          return false;
+        }
+      }
+    }
+
+    if (due > 0.01) {
+      try {
+        final posController = Get.find<ControllerHomePos>();
+        if (posController.rxSelectedCustomer.value == null) {
+          Get.snackbar(
+            "Customer Required",
+            "Please map a customer details for the pending due amount (₹${due.toStringAsFixed(2)}).",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange.shade800,
+            colorText: Colors.white,
+          );
+          return false;
+        }
+      } catch (e) {
         return false;
+      }
+    }
+
+    if (mode == "SPLIT") {
+      for (var e in rxSplitEntries) {
+        final amt = double.tryParse(e.amountController.text) ?? 0.0;
+        if (e.mode.value == 'CASH') {
+          splitC += amt;
+        } else {
+          splitO += amt;
+        }
       }
     }
 
     final details = PaymentDetails(
       paymentMode: mode,
-      amountReceived: rxCashAmountReceived.value,
-      changeReturned: rxChangeReturned.value < 0 ? 0 : rxChangeReturned.value,
+      amountReceived: mode == "SPLIT" ? 0.0 : received,
+      dueAmount: due,
+      changeReturned: change,
       utrNumber: utrController.text.trim(),
-      splitCash: rxSplitCash.value,
-      splitOnline: rxSplitOnline.value,
+      splitCash: splitC,
+      splitOnline: splitO,
     );
 
     Get.back(result: details);
@@ -144,10 +216,11 @@ class ControllerPaymentOptions extends GetxController {
 
   @override
   void onClose() {
-    cashAmountController.dispose();
+    amountController.dispose();
     utrController.dispose();
-    splitCashController.dispose();
-    splitOnlineController.dispose();
+    for (var e in rxSplitEntries) {
+      e.dispose();
+    }
     super.onClose();
   }
 }

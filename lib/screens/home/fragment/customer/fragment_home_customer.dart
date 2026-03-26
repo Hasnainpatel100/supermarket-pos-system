@@ -225,8 +225,11 @@ class FragmentHomeCustomer extends StatelessWidget {
                   ],
                 ),
               )
-            : MyCard(
-                margin: const EdgeInsets.all(16),
+            : Column(
+                children: [
+                  Expanded(
+                    child: MyCard(
+                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: SizedBox(
                   width: double.infinity,
                   child: SingleChildScrollView(
@@ -583,6 +586,55 @@ class FragmentHomeCustomer extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+            // ── Pagination Footer ──
+            Obx(() => _buildPagination(controller)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPagination(ControllerHomeCustomer controller) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Total: ${controller.totalCount.value} customers',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: controller.hasPrev ? controller.prevPage : null,
+                icon: const Icon(Icons.chevron_left_rounded, size: 18),
+                label: const Text('Prev'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: Text('Page ${controller.currentPage.value + 1}',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: controller.hasNext ? controller.nextPage : null,
+                icon: const Icon(Icons.chevron_right_rounded, size: 18),
+                label: const Text('Next'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

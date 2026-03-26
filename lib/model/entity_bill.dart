@@ -26,6 +26,7 @@ class EntityBill {
   String? utrNumber; // UPI/Netbanking Reference No.
   double? splitCash; // Amount paid in cash in SPLIT mode
   double? splitOnline; // Amount paid online in SPLIT mode
+  double? dueAmount; // Amount pending for DUE status
 
   /// Date-only field stored as "d/MM/yyyy" e.g. "22/02/2025"
   String? billDate;
@@ -52,6 +53,7 @@ class EntityBill {
     this.utrNumber,
     this.splitCash,
     this.splitOnline,
+    this.dueAmount,
     this.billDate,
     this.createdAtUtcMs,
     this.updatedAtUtcMs,

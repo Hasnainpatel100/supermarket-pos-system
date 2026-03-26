@@ -10,6 +10,28 @@ class ControllerHomeCustomer extends GetxController {
   final RxString searchQuery = ''.obs;
   final TextEditingController searchController = TextEditingController();
 
+  // ── Pagination ──
+  static const int _pageSize = 20;
+  final RxInt currentPage = 0.obs;
+  final RxInt totalCount = 0.obs;
+
+  bool get hasPrev => currentPage.value > 0;
+  bool get hasNext => (currentPage.value + 1) * _pageSize < totalCount.value;
+
+  void nextPage() {
+    if (hasNext) {
+      currentPage.value++;
+      loadCustomers();
+    }
+  }
+
+  void prevPage() {
+    if (hasPrev) {
+      currentPage.value--;
+      loadCustomers();
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -19,19 +41,30 @@ class ControllerHomeCustomer extends GetxController {
     // Debounce search — waits 300ms after last keystroke before querying
     debounce(
       searchQuery,
-      (_) => loadCustomers(),
+      (_) {
+        currentPage.value = 0;
+        loadCustomers();
+      },
       time: const Duration(milliseconds: 300),
     );
   }
 
   void loadCustomers() {
-    final query = _boxCustomer.query(
+    final queryBuilder = _boxCustomer.query(
       EntityCustomer_.name
           .contains(searchQuery.value, caseSensitive: false)
           .or(EntityCustomer_.phone.contains(searchQuery.value)),
     )..order(EntityCustomer_.name);
 
-    rxListCustomer.assignAll(query.build().find());
+    final query = queryBuilder.build();
+    totalCount.value = query.count();
+    
+    query
+      ..offset = currentPage.value * _pageSize
+      ..limit = _pageSize;
+
+    rxListCustomer.assignAll(query.find());
+    query.close();
   }
 
   /// Called from TextField onChanged — only updates the observable,
@@ -43,6 +76,7 @@ class ControllerHomeCustomer extends GetxController {
   void clearSearch() {
     searchController.clear();
     searchQuery.value = '';
+    currentPage.value = 0;
     loadCustomers(); // immediate clear
   }
 

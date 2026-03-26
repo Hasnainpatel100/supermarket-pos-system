@@ -20,6 +20,28 @@ class ControllerHomeStock extends GetxController {
   // Filter by type: null = all
   final Rxn<StockTxnType> rxFilterType = Rxn<StockTxnType>();
 
+  // ── Pagination ──
+  static const int _pageSize = 20;
+  final RxInt currentPage = 0.obs;
+  final RxInt totalCount = 0.obs;
+
+  bool get hasPrev => currentPage.value > 0;
+  bool get hasNext => (currentPage.value + 1) * _pageSize < totalCount.value;
+
+  void nextPage() {
+    if (hasNext) {
+      currentPage.value++;
+      loadTransactions();
+    }
+  }
+
+  void prevPage() {
+    if (hasPrev) {
+      currentPage.value--;
+      loadTransactions();
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -31,7 +53,10 @@ class ControllerHomeStock extends GetxController {
     // Debounce search — waits 300ms after last keystroke before querying
     debounce(
       searchQuery,
-      (_) => loadTransactions(),
+      (_) {
+        currentPage.value = 0;
+        loadTransactions();
+      },
       time: const Duration(milliseconds: 300),
     );
   }
@@ -60,7 +85,9 @@ class ControllerHomeStock extends GetxController {
       }).toList();
     }
 
-    rxListTxn.assignAll(all);
+    totalCount.value = all.length;
+    final paged = all.skip(currentPage.value * _pageSize).take(_pageSize).toList();
+    rxListTxn.assignAll(paged);
   }
 
   /// Called from TextField onChanged — only updates the observable,
@@ -72,11 +99,13 @@ class ControllerHomeStock extends GetxController {
   void clearSearch() {
     searchQuery.value = '';
     searchController.clear();
+    currentPage.value = 0;
     loadTransactions(); // immediate clear
   }
 
   void setTypeFilter(StockTxnType? type) {
     rxFilterType.value = type;
+    currentPage.value = 0;
     loadTransactions();
   }
 

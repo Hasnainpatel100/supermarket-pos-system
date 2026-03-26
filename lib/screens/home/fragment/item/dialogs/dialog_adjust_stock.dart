@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../model/entity_item.dart';
-import '../../../../util/snackbar_util.dart';
-import 'controller_home_item.dart';
+import '../../../../../model/entity_item.dart';
+import '../../../../../util/snackbar_util.dart';
+import '../controller_home_item.dart';
 
 /// Dialog for adjusting stock (increment / decrement) of an EntityItem.
 /// hasExpiry-aware: batch fields shown for expiry items on increment,

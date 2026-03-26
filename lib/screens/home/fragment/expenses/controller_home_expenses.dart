@@ -24,6 +24,28 @@ class ControllerHomeExpenses extends GetxController {
   final Rx<DateTime?> rxToDate = Rx<DateTime?>(null);
   final rxDateRangeActive = false.obs;
 
+  // ── Pagination ──
+  static const int _pageSize = 20;
+  final RxInt currentPage = 0.obs;
+  final RxInt totalCount = 0.obs;
+
+  bool get hasPrev => currentPage.value > 0;
+  bool get hasNext => (currentPage.value + 1) * _pageSize < totalCount.value;
+
+  void nextPage() {
+    if (hasNext) {
+      currentPage.value++;
+      _applyFilter();
+    }
+  }
+
+  void prevPage() {
+    if (hasPrev) {
+      currentPage.value--;
+      _applyFilter();
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -32,6 +54,7 @@ class ControllerHomeExpenses extends GetxController {
 
   void setFilter(String filter) {
     rxFilter.value = filter;
+    currentPage.value = 0;
     _applyFilter();
   }
 
@@ -74,7 +97,9 @@ class ControllerHomeExpenses extends GetxController {
       }
     }
 
-    rxList.assignAll(list);
+    totalCount.value = list.length;
+    final paged = list.skip(currentPage.value * _pageSize).take(_pageSize).toList();
+    rxList.assignAll(paged);
   }
 
   /// Pick a date range and re-apply filter
@@ -98,6 +123,7 @@ class ControllerHomeExpenses extends GetxController {
       rxFromDate.value = result.start;
       rxToDate.value = result.end;
       rxDateRangeActive.value = true;
+      currentPage.value = 0;
       _applyFilter();
     }
   }
@@ -107,6 +133,7 @@ class ControllerHomeExpenses extends GetxController {
     rxFromDate.value = null;
     rxToDate.value = null;
     rxDateRangeActive.value = false;
+    currentPage.value = 0;
     _applyFilter();
   }
 

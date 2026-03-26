@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
@@ -21,11 +22,27 @@ class ControllerHomeReport extends GetxController {
   final Rx<DateTime> rxStartDate = DateTime.now().obs;
   final Rx<DateTime> rxEndDate = DateTime.now().obs;
 
-  // Pagination
+  // ── Pagination ──
   static const int _pageSize = 20;
-  final RxInt _currentOffset = 0.obs;
-  final RxBool rxHasMore = true.obs;
-  final RxBool rxIsLoadingMore = false.obs;
+  final RxInt currentPage = 0.obs;
+  final RxInt totalCount = 0.obs;
+
+  bool get hasPrev => currentPage.value > 0;
+  bool get hasNext => (currentPage.value + 1) * _pageSize < totalCount.value;
+
+  void nextPage() {
+    if (hasNext) {
+      currentPage.value++;
+      _loadPage();
+    }
+  }
+
+  void prevPage() {
+    if (hasPrev) {
+      currentPage.value--;
+      _loadPage();
+    }
+  }
 
   /// All matching date strings for the current filter
   List<String> _matchingDateStrings = [];
@@ -127,9 +144,7 @@ class ControllerHomeReport extends GetxController {
 
   /// Reset pagination and load first page
   void loadData() {
-    _currentOffset.value = 0;
-    rxHasMore.value = true;
-    rxListBill.clear();
+    currentPage.value = 0;
 
     _matchingDateStrings = _buildDateStrings(
       rxStartDate.value,
@@ -139,14 +154,8 @@ class ControllerHomeReport extends GetxController {
     _loadPage();
   }
 
-  /// Load the next page of bills
-  void loadMore() {
-    if (!rxHasMore.value || rxIsLoadingMore.value) return;
-    _loadPage();
-  }
-
   void _loadPage() {
-    rxIsLoadingMore.value = true;
+    rxListBill.clear();
 
     // Query bills that match any of the date strings, newest first
     Condition<EntityBill>? dateCondition;
@@ -180,8 +189,11 @@ class ControllerHomeReport extends GetxController {
     queryBuilder.order(EntityBill_.id, flags: Order.descending);
     final query = queryBuilder.build();
 
-    // Count total for stats (only on first page)
-    if (_currentOffset.value == 0) {
+    // Count total for stats and pagination
+    final allBillsCount = query.count();
+    totalCount.value = allBillsCount;
+
+    if (currentPage.value == 0) {
       final allBills = query.find();
       double totalSales = 0;
       for (var bill in allBills) {
@@ -195,15 +207,12 @@ class ControllerHomeReport extends GetxController {
     }
 
     // Paginate
-    query.offset = _currentOffset.value;
+    query.offset = currentPage.value * _pageSize;
     query.limit = _pageSize;
     final page = query.find();
     query.close();
 
-    rxListBill.addAll(page);
-    _currentOffset.value += page.length;
-    rxHasMore.value = page.length >= _pageSize;
-    rxIsLoadingMore.value = false;
+    rxListBill.assignAll(page);
   }
 
   String formatDateRange() {
@@ -212,5 +221,74 @@ class ControllerHomeReport extends GetxController {
     final end = fmt.format(rxEndDate.value);
     if (start == end) return start;
     return '$start  →  $end';
+  }
+
+  void settleDuePayment(EntityBill bill) {
+    if (bill.dueAmount == null || bill.dueAmount! <= 0) return;
+    
+    final tcAmount = TextEditingController(text: bill.dueAmount!.toStringAsFixed(2));
+    final rxMode = 'CASH'.obs;
+    
+    Get.dialog(
+      AlertDialog(
+        title: const Text("Settle Due Payment"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Pending Due: \u20B9${bill.dueAmount!.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Obx(() => DropdownButtonFormField<String>(
+              value: rxMode.value,
+              decoration: const InputDecoration(labelText: "Payment Mode", border: OutlineInputBorder()),
+              items: const [
+                DropdownMenuItem(value: 'CASH', child: Text('CASH')),
+                DropdownMenuItem(value: 'UPI', child: Text('UPI')),
+                DropdownMenuItem(value: 'NETBANKING', child: Text('NETBANKING')),
+              ],
+              onChanged: (v) { if (v != null) rxMode.value = v; },
+            )),
+            const SizedBox(height: 12),
+            TextField(
+              controller: tcAmount,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: "Amount Received", border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+          FilledButton(
+            onPressed: () {
+              final amt = double.tryParse(tcAmount.text) ?? 0.0;
+              if (amt <= 0) {
+                Get.snackbar("Error", "Enter valid amount");
+                return;
+              }
+              
+              if (rxMode.value == 'CASH') {
+                bill.splitCash = (bill.splitCash ?? 0) + amt;
+              } else {
+                bill.splitOnline = (bill.splitOnline ?? 0) + amt;
+              }
+              
+              bill.amountReceived = (bill.amountReceived ?? 0) + amt;
+              bill.dueAmount = bill.dueAmount! - amt;
+              
+              if (bill.dueAmount! <= 0) {
+                bill.dueAmount = 0;
+                bill.status = "PAID";
+              }
+              
+              _boxBill.put(bill);
+              Get.back();
+              Get.snackbar("Success", "Due payment settled successfully", backgroundColor: Colors.green, colorText: Colors.white);
+              loadData();
+            },
+            child: const Text("Settle"),
+          ),
+        ],
+      ),
+    );
   }
 }

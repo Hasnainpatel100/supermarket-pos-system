@@ -219,7 +219,7 @@
     },
     {
       "id": "8:1529149874091519370",
-      "lastPropertyId": "15:7678255708520877140",
+      "lastPropertyId": "22:2526426356779229164",
       "name": "EntityItem",
       "properties": [
         {
@@ -303,6 +303,41 @@
           "id": "15:7678255708520877140",
           "name": "updatedDate",
           "type": 6
+        },
+        {
+          "id": "16:357369110405455502",
+          "name": "category",
+          "type": 9
+        },
+        {
+          "id": "17:1373317923523355123",
+          "name": "taxName",
+          "type": 9
+        },
+        {
+          "id": "18:2214515183535524179",
+          "name": "taxRate",
+          "type": 8
+        },
+        {
+          "id": "19:8179748155319870744",
+          "name": "taxType",
+          "type": 9
+        },
+        {
+          "id": "20:2223345893023279266",
+          "name": "taxAmount",
+          "type": 8
+        },
+        {
+          "id": "21:4404483924143343085",
+          "name": "priceBeforeTax",
+          "type": 8
+        },
+        {
+          "id": "22:2526426356779229164",
+          "name": "priceAfterTax",
+          "type": 8
         }
       ],
       "relations": []
@@ -540,7 +575,7 @@
     },
     {
       "id": "14:5072473716951944501",
-      "lastPropertyId": "18:4142338304114387496",
+      "lastPropertyId": "19:4104903407223595329",
       "name": "EntityBill",
       "properties": [
         {
@@ -634,6 +669,11 @@
         {
           "id": "18:4142338304114387496",
           "name": "splitOnline",
+          "type": 8
+        },
+        {
+          "id": "19:4104903407223595329",
+          "name": "dueAmount",
           "type": 8
         }
       ],
@@ -966,9 +1006,33 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "20:775298072517949120",
+      "lastPropertyId": "3:1537584879002642470",
+      "name": "EntityTax",
+      "properties": [
+        {
+          "id": "1:3768412856227185926",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2855061454430924498",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:1537584879002642470",
+          "name": "rate",
+          "type": 8
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "19:7663124640416877913",
+  "lastEntityId": "20:775298072517949120",
   "lastIndexId": "18:1941455176561572510",
   "lastRelationId": "1:6501938934487787319",
   "lastSequenceId": "0:0",

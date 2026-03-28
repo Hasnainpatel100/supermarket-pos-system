@@ -169,17 +169,20 @@ class _TabBar extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: TextButton.icon(
-              onPressed: controller.addNewTab,
-              icon: Icon(Icons.add_rounded, size: 18, color: cs.primary),
-              label: Text(
-                "New Bill",
-                style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
+            child: Tooltip(
+              message: "New Bill (Ctrl+T)",
+              child: TextButton.icon(
+                onPressed: controller.addNewTab,
+                icon: Icon(Icons.add_rounded, size: 18, color: cs.primary),
+                label: Text(
+                  "New Bill [Ctrl+T]",
+                  style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
+                ),
               ),
             ),
           ),
@@ -901,10 +904,14 @@ class _PaymentSection extends StatelessWidget {
               ButtonSegment(value: 'Cash', label: Text('Cash'), icon: Icon(Icons.payments_outlined, size: 16)),
               ButtonSegment(value: 'UPI', label: Text('UPI'), icon: Icon(Icons.qr_code_rounded, size: 16)),
               ButtonSegment(value: 'Card', label: Text('Card'), icon: Icon(Icons.credit_card_rounded, size: 16)),
+              ButtonSegment(value: 'Split', label: Text('Split'), icon: Icon(Icons.call_split_rounded, size: 16)),
             ],
             selected: {session.rxPaymentMode.value},
             onSelectionChanged: (selected) {
               session.rxPaymentMode.value = selected.first;
+              if (selected.first == 'Split') {
+                session.initSplitPayment(2, session.rxGrandTotal.value);
+              }
             },
             showSelectedIcon: false,
             style: ButtonStyle(
@@ -918,31 +925,49 @@ class _PaymentSection extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // Amount Received
-        Text("Amount Received", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
-        const SizedBox(height: 8),
-        Obx(() => TextField(
-              controller: controller.activeSession.amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              decoration: InputDecoration(
-                prefixText: "${controller.serviceCurrency.rxCurrency.value} ",
-                prefixStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cs.primary),
-                filled: true,
-                fillColor: cs.surface,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+        // Split Payment Section
+        Obx(() {
+          final session = controller.activeSession;
+          if (session.rxPaymentMode.value != 'Split') return const SizedBox.shrink();
+          
+          return _SplitPaymentSection(controller: controller);
+        }),
+
+        // Amount Received (hidden when Split mode)
+        Obx(() {
+          final session = controller.activeSession;
+          if (session.rxPaymentMode.value == 'Split') return const SizedBox.shrink();
+          
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text("Amount Received", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: session.amountController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
+                  prefixText: "${controller.serviceCurrency.rxCurrency.value} ",
+                  prefixStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cs.primary),
+                  filled: true,
+                  fillColor: cs.surface,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: cs.primary, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: cs.primary, width: 1.5),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                onChanged: controller.onAmountChanged,
               ),
-              onChanged: controller.onAmountChanged,
-            )),
+            ],
+          );
+        }),
 
         const Spacer(),
 
@@ -1054,5 +1079,174 @@ class _SettleButtons extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+// ─── Split Payment Section ───────────────────────────────────────────────────
+
+class _SplitPaymentSection extends StatelessWidget {
+  final ControllerHomePos controller;
+  const _SplitPaymentSection({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final session = controller.activeSession;
+    final currency = controller.serviceCurrency.rxCurrency.value;
+
+    return Obx(() {
+      final splitCount = session.rxSplitCount.value;
+      final grandTotal = session.rxGrandTotal.value;
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Split count selector
+          Row(
+            children: [
+              Text("Split between", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
+              const Spacer(),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove, size: 16),
+                      onPressed: splitCount > 2 ? () {
+                        session.initSplitPayment(splitCount - 1, grandTotal);
+                      } : null,
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text("$splitCount", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: cs.primary)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add, size: 16),
+                      onPressed: splitCount < 10 ? () {
+                        session.initSplitPayment(splitCount + 1, grandTotal);
+                      } : null,
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Split entries
+          ...List.generate(splitCount, (index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Person ${index + 1}", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11, color: cs.onSurfaceVariant)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        // Amount field
+                        Expanded(
+                          flex: 2,
+                          child: TextField(
+                            controller: session.splitControllers[index],
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                            decoration: InputDecoration(
+                              prefixText: "$currency ",
+                              prefixStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cs.primary),
+                              filled: true,
+                              fillColor: cs.surfaceContainerLow,
+                              isDense: true,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            ),
+                            onChanged: (val) {
+                              final amount = double.tryParse(val) ?? 0;
+                              session.updateSplitAmount(index, amount);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Payment mode dropdown
+                        Expanded(
+                          flex: 2,
+                          child: Obx(() => DropdownButtonFormField<String>(
+                            value: session.rxSplitModes[index].value,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: cs.surfaceContainerLow,
+                              isDense: true,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'Cash', child: Text('Cash', style: TextStyle(fontSize: 12))),
+                              DropdownMenuItem(value: 'UPI', child: Text('UPI', style: TextStyle(fontSize: 12))),
+                              DropdownMenuItem(value: 'Card', child: Text('Card', style: TextStyle(fontSize: 12))),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) session.updateSplitMode(index, val);
+                            },
+                          )),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          
+          // Total check
+          Obx(() {
+            double totalSplit = 0;
+            for (var rx in session.rxSplitAmounts) {
+              totalSplit += rx.value;
+            }
+            final diff = grandTotal - totalSplit;
+            final isValid = diff.abs() < 0.01;
+            
+            return Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isValid ? Colors.green.withValues(alpha: 0.08) : Colors.red.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isValid ? "Split amounts match total" : "Difference: $currency${diff.toStringAsFixed(2)}",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isValid ? Colors.green.shade700 : Colors.red.shade700),
+                  ),
+                  Text(
+                    "Total: $currency${totalSplit.toStringAsFixed(2)}",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: cs.onSurface),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+        ],
+      );
+    });
   }
 }

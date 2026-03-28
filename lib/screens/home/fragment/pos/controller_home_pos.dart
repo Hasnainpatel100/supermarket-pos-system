@@ -32,6 +32,41 @@ class BillSession {
   final rxAmountReceived = 0.0.obs;
   final rxChangeReturned = 0.0.obs;
   final rxDueAmount = 0.0.obs;
+  
+  // Split payment fields
+  final rxSplitCount = 2.obs;
+  final rxSplitAmounts = <RxDouble>[].obs;
+  final rxSplitModes = <RxString>[].obs;
+  final splitControllers = <TextEditingController>[];
+  
+  void initSplitPayment(int count, double grandTotal) {
+    rxSplitCount.value = count;
+    // Clear existing
+    for (var c in splitControllers) c.dispose();
+    splitControllers.clear();
+    rxSplitAmounts.clear();
+    rxSplitModes.clear();
+    
+    // Initialize split amounts equally
+    double splitAmount = grandTotal / count;
+    for (int i = 0; i < count; i++) {
+      rxSplitAmounts.add(splitAmount.obs);
+      rxSplitModes.add('Cash'.obs);
+      splitControllers.add(TextEditingController(text: splitAmount.toStringAsFixed(2)));
+    }
+  }
+  
+  void updateSplitAmount(int index, double amount) {
+    if (index >= 0 && index < rxSplitAmounts.length) {
+      rxSplitAmounts[index].value = amount;
+    }
+  }
+  
+  void updateSplitMode(int index, String mode) {
+    if (index >= 0 && index < rxSplitModes.length) {
+      rxSplitModes[index].value = mode;
+    }
+  }
   final rxSelectedCartIndex = (-1).obs;
   final rxRemark = ''.obs;
 
@@ -39,6 +74,7 @@ class BillSession {
 
   void dispose() {
     amountController.dispose();
+    for (var c in splitControllers) c.dispose();
   }
 }
 

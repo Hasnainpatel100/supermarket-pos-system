@@ -16,6 +16,14 @@ class ControllerHomeUsers extends GetxController {
   final searchController = TextEditingController();
   final rxSearchQuery = ''.obs;
 
+  // Pagination
+  final int pageSize = 10;
+  final RxInt currentPage = 0.obs;
+  final RxInt totalCount = 0.obs;
+
+  bool get hasPrev => currentPage.value > 0;
+  bool get hasNext => (currentPage.value + 1) * pageSize < totalCount.value;
+
   @override
   void onInit() {
     final ob = Get.find<ServiceObjectBox>();
@@ -24,7 +32,10 @@ class ControllerHomeUsers extends GetxController {
     // Debounce search
     debounce(
       rxSearchQuery,
-      (_) => loadUsers(),
+      (_) {
+        currentPage.value = 0;
+        loadUsers();
+      },
       time: const Duration(milliseconds: 300),
     );
 
@@ -53,7 +64,34 @@ class ControllerHomeUsers extends GetxController {
         .order(EntityUser_.username)
         .build();
 
-    rxListUser.assignAll(query.find());
+    totalCount.value = query.count();
+    
+    final offset = currentPage.value * pageSize;
+    rxListUser.assignAll(query.find()
+        .skip(offset)
+        .take(pageSize)
+        .toList());
+    
+    query.close();
+  }
+
+  void nextPage() {
+    if (hasNext) {
+      currentPage.value++;
+      loadUsers();
+    }
+  }
+
+  void prevPage() {
+    if (hasPrev) {
+      currentPage.value--;
+      loadUsers();
+    }
+  }
+
+  void clearSearch() {
+    searchController.clear();
+    rxSearchQuery.value = '';
   }
 
   void saveUser(EntityUser user) {

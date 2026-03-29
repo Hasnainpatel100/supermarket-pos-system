@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:super_market/screens/home/fragment/purchase_supplier/supplier/activity_supplier_form.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../util/snackbar_util.dart';
 import '../../../../../widget/my_card.dart';
+import 'activity_supplier_form.dart';
 import 'controller_home_supplier.dart';
 
 class FragmentHomeSupplier extends StatelessWidget {

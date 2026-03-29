@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
+import 'package:super_market/screens/home/fragment/purchase_supplier/purchase/purchase_tax_calc.dart';
 
 import '../../../../../enums/enum_purchase_status.dart';
 import '../../../../../enums/enum_stock_txn_type.dart';
@@ -12,7 +13,6 @@ import '../../../../../model/entity_stock_transaction.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../objectbox.g.dart';
 import '../../../../../service/service_object_box.dart';
-
 class ControllerHomePurchase extends GetxController {
   late final Box<EntityPurchase> _boxPurchase;
   late final Box<EntityPurchaseItem> _boxPurchaseItem;
@@ -34,7 +34,8 @@ class ControllerHomePurchase extends GetxController {
   final RxInt totalCount = 0.obs;
 
   bool get hasPrev => currentPage.value > 0;
-  bool get hasNext => (currentPage.value + 1) * _pageSize < totalCount.value;
+  bool get hasNext =>
+      (currentPage.value + 1) * _pageSize < totalCount.value;
 
   @override
   void onInit() {
@@ -70,21 +71,25 @@ class ControllerHomePurchase extends GetxController {
     if (q.isNotEmpty) {
       condition = EntityPurchase_.purchaseNo
           .contains(q, caseSensitive: false)
-          .or(EntityPurchase_.supplierName.contains(q, caseSensitive: false));
+          .or(EntityPurchase_.supplierName
+          .contains(q, caseSensitive: false))
+          .or(EntityPurchase_.supplierInvoiceNo
+          .contains(q, caseSensitive: false));
     }
 
     if (filterStatus.value != null) {
-      final statusCondition =
+      final statusCond =
       EntityPurchase_.status.equals(filterStatus.value!.index);
       condition =
-      condition != null ? condition.and(statusCondition) : statusCondition;
+      condition != null ? condition.and(statusCond) : statusCond;
     }
 
     final builder = condition != null
         ? _boxPurchase.query(condition)
         : _boxPurchase.query();
 
-    builder.order(EntityPurchase_.createdAtUtcMs, flags: Order.descending);
+    builder.order(EntityPurchase_.createdAtUtcMs,
+        flags: Order.descending);
 
     final query = builder.build();
     totalCount.value = query.count();
@@ -147,28 +152,62 @@ class ControllerHomePurchase extends GetxController {
     required String supplierName,
     required DateTime purchaseDate,
     DateTime? expectedDate,
-    required List<_PurchaseItemInput> items,
+    String? supplierInvoiceNo,
+    String? notes,
+    required List<PurchaseItemInput> items,
+    double roundOff = 0,
     int? createdByUserId,
   }) {
+    // ── Validate ──
     if (items.isEmpty) return 'At least one item is required';
     for (final item in items) {
-      if (item.orderedQty <= 0) return 'Quantity must be greater than 0';
-      if (item.unitCost <= 0) return 'Unit cost must be greater than 0';
+      if (item.orderedQty <= 0) return 'Quantity must be > 0';
+      if (item.unitCost <= 0) return 'Unit cost must be > 0';
+      if (item.discountPercent < 0 || item.discountPercent > 100) {
+        return 'Discount must be between 0 and 100';
+      }
+      if (item.taxRate < 0) return 'Tax rate cannot be negative';
     }
 
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     final purchaseNo = _generatePurchaseNo();
-    final totalAmount =
-    items.fold(0.0, (sum, i) => sum + i.orderedQty * i.unitCost);
 
+    // ── Calculate per-line amounts ──
+    final lineResults = items.map((item) {
+      return PurchaseTaxCalc.calculate(
+        unitCost: item.unitCost,
+        qty: item.orderedQty,
+        discountPercent: item.discountPercent,
+        taxRate: item.taxRate,
+        isTaxInclusive: item.isTaxInclusive,
+      );
+    }).toList();
+
+    // ── Calculate purchase totals ──
+    final totals = PurchaseTaxCalc.calculateTotals(
+      lines: lineResults,
+      roundOff: roundOff,
+    );
+
+
+    // ── Save Purchase ──
     final purchase = EntityPurchase(
       purchaseNo: purchaseNo,
+      supplierInvoiceNo: supplierInvoiceNo,
       supplierId: supplierId,
       supplierName: supplierName,
       purchaseDateUtcMs: purchaseDate.toUtc().millisecondsSinceEpoch,
       expectedDateUtcMs: expectedDate?.toUtc().millisecondsSinceEpoch,
       status: PurchaseStatus.ordered.index,
-      totalAmount: totalAmount,
+      totalAmount: totals.totalAmount,
+      totalDiscountAmount: totals.totalDiscountAmount,
+      totalExclTax: totals.totalExclTax,
+      totalTaxAmount: totals.totalTaxAmount,
+      roundOff: roundOff,
+      grandTotal: totals.grandTotal,
+      paidAmount: 0,
+      paymentStatus: 'UNPAID',
+      notes: notes,
       createdByUserId: createdByUserId,
       createdAtUtcMs: now,
       updatedAtUtcMs: now,
@@ -176,14 +215,27 @@ class ControllerHomePurchase extends GetxController {
 
     final purchaseId = _boxPurchase.put(purchase);
 
-    for (final input in items) {
+    // ── Save PurchaseItems ──
+    for (int i = 0; i < items.length; i++) {
+      final input = items[i];
+      final calc = lineResults[i];
+
       final pi = EntityPurchaseItem(
         purchaseId: purchaseId,
         itemId: input.itemId,
         itemName: input.itemName,
         itemUnit: input.itemUnit,
+        hsnCode: input.hsnCode,
         orderedQty: input.orderedQty,
         unitCost: input.unitCost,
+        discountPercent: input.discountPercent,
+        discountAmount: calc.discountAmount,
+        taxRate: input.taxRate,
+        taxType: input.taxType,
+        isTaxInclusive: input.isTaxInclusive,
+        lineAmountExcl: calc.lineAmountExcl,
+        taxAmount: calc.taxAmount,
+        lineAmountIncl: calc.lineAmountIncl,
         receivedQty: 0,
       );
       _boxPurchaseItem.put(pi);
@@ -198,17 +250,15 @@ class ControllerHomePurchase extends GetxController {
   // ─────────────────────────────────────────────
 
   /// Called when goods physically arrive at the store.
-  /// For each received item this method:
-  ///   1. Creates StockTransaction (purchaseIn) — source of truth
-  ///   2. Creates ItemBatch if item.hasExpiry == true
-  ///   3. Updates EntityItem.totalQty (cache)
-  ///   4. Updates PurchaseItem.receivedQty
-  ///   5. Updates Purchase.status (PARTIAL / RECEIVED)
-  ///
-  /// Returns error string or null on success.
+  /// For each batch entry:
+  ///   1. StockTransaction (purchaseIn) — source of truth
+  ///   2. ItemBatch if item.hasExpiry == true
+  ///   3. EntityItem.totalQty cache update
+  ///   4. PurchaseItem.receivedQty update
+  ///   5. Purchase status auto-update
   String? receiveGoods({
     required EntityPurchase purchase,
-    required List<_ReceiveItemInput> receivedItems,
+    required List<ReceiveItemInput> receivedItems,
     int? performedByUserId,
   }) {
     if (receivedItems.isEmpty) return 'No items provided';
@@ -269,7 +319,43 @@ class ControllerHomePurchase extends GetxController {
   }
 
   // ─────────────────────────────────────────────
-  //  CANCEL PURCHASE
+  //  PAYMENT
+  // ─────────────────────────────────────────────
+
+  /// Record a payment made to supplier.
+  /// Returns error string or null on success.
+  String? recordPayment({
+    required EntityPurchase purchase,
+    required double amount,
+  }) {
+    if (amount <= 0) return 'Payment amount must be > 0';
+    final balance = purchase.balanceDue;
+    if (amount > balance + 0.01) {
+      return 'Payment (₹${amount.toStringAsFixed(2)}) exceeds balance due (₹${balance.toStringAsFixed(2)})';
+    }
+
+    purchase.paidAmount = (purchase.paidAmount ?? 0) + amount;
+    purchase.updatedAtUtcMs =
+        DateTime.now().toUtc().millisecondsSinceEpoch;
+
+    // Auto-update payment status
+    final paid = purchase.paidAmount ?? 0;
+    final total = purchase.grandTotal ?? 0;
+    if (paid >= total - 0.01) {
+      purchase.paymentStatus = 'PAID';
+    } else if (paid > 0) {
+      purchase.paymentStatus = 'PARTIAL';
+    } else {
+      purchase.paymentStatus = 'UNPAID';
+    }
+
+    _boxPurchase.put(purchase);
+    loadPurchases();
+    return null;
+  }
+
+  // ─────────────────────────────────────────────
+  //  CANCEL
   // ─────────────────────────────────────────────
 
   void cancelPurchase(EntityPurchase purchase) {
@@ -278,6 +364,33 @@ class ControllerHomePurchase extends GetxController {
         DateTime.now().toUtc().millisecondsSinceEpoch;
     _boxPurchase.put(purchase);
     loadPurchases();
+  }
+
+  // ─────────────────────────────────────────────
+  //  LIVE CALCULATION (used by form UI)
+  // ─────────────────────────────────────────────
+
+  /// Called by form on every field change to get live totals.
+  LineCalcResult calculateLine({
+    required double unitCost,
+    required double qty,
+    double discountPercent = 0,
+    double taxRate = 0,
+    bool isTaxInclusive = false,
+  }) {
+    return PurchaseTaxCalc.calculate(
+      unitCost: unitCost,
+      qty: qty,
+      discountPercent: discountPercent,
+      taxRate: taxRate,
+      isTaxInclusive: isTaxInclusive,
+    );
+  }
+
+  PurchaseTotals calculateTotals(
+      List<LineCalcResult> lines, double roundOff) {
+    return PurchaseTaxCalc.calculateTotals(
+        lines: lines, roundOff: roundOff);
   }
 
   // ─────────────────────────────────────────────
@@ -305,8 +418,6 @@ class ControllerHomePurchase extends GetxController {
   String _generatePurchaseNo() {
     final date = DateFormat('yyyyMMdd').format(DateTime.now());
     final prefix = 'PO-$date-';
-
-    // Count purchases created today
     final todayStart = DateTime(
       DateTime.now().year,
       DateTime.now().month,
@@ -314,7 +425,8 @@ class ControllerHomePurchase extends GetxController {
     ).toUtc().millisecondsSinceEpoch;
 
     final count = _boxPurchase
-        .query(EntityPurchase_.createdAtUtcMs.greaterOrEqual(todayStart))
+        .query(EntityPurchase_.createdAtUtcMs
+        .greaterOrEqual(todayStart))
         .build()
         .count();
 
@@ -349,36 +461,42 @@ class ControllerHomePurchase extends GetxController {
 //  INPUT DATA CLASSES
 // ─────────────────────────────────────────────
 
-class _PurchaseItemInput {
+class PurchaseItemInput {
   final int itemId;
   final String itemName;
   final String? itemUnit;
+  final String? hsnCode;
   final double orderedQty;
   final double unitCost;
+  final double discountPercent;
+  final double taxRate;
+  final String? taxType;
+  final bool isTaxInclusive;
 
-  _PurchaseItemInput({
+  PurchaseItemInput({
     required this.itemId,
     required this.itemName,
     this.itemUnit,
+    this.hsnCode,
     required this.orderedQty,
     required this.unitCost,
+    this.discountPercent = 0,
+    this.taxRate = 0,
+    this.taxType,
+    this.isTaxInclusive = false,
   });
 }
 
-class _ReceiveItemInput {
+class ReceiveItemInput {
   final int itemId;
   final int receivedQty;
   final String? batchNo;
   final int? expiryDateUtcMs;
 
-  _ReceiveItemInput({
+  ReceiveItemInput({
     required this.itemId,
     required this.receivedQty,
     this.batchNo,
     this.expiryDateUtcMs,
   });
 }
-
-// Public aliases so screens can use them directly
-typedef PurchaseItemInput = _PurchaseItemInput;
-typedef ReceiveItemInput = _ReceiveItemInput;

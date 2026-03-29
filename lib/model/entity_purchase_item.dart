@@ -20,11 +20,51 @@ class EntityPurchaseItem {
   /// Denormalized unit for display
   String? itemUnit;
 
+  /// Denormalized HSN code — snapshot at time of purchase
+  String? hsnCode;
+
   /// How many units were ordered
   double? orderedQty;
 
-  /// Cost per unit at time of purchase
+  /// Price per unit as entered by staff
+  /// May be inclusive or exclusive of tax depending on isTaxInclusive
   double? unitCost;
+
+  // ── Discount ──
+
+  /// Discount percentage on this line e.g. 5.0 = 5%
+  double? discountPercent;
+
+  /// Computed discount amount = (unitCost × qty) × discountPercent/100
+  /// Stored for audit trail
+  double? discountAmount;
+
+  // ── Tax ──
+  /// Auto-filled from EntityItem.taxRate, overridable by staff
+  double? taxRate;
+
+  /// 'GST', 'IGST', or null (no tax)
+  /// Auto-filled from EntityItem.taxType, overridable
+  String? taxType;
+
+  /// true  = With Tax    → unitCost already includes tax, extract it
+  /// false = Without Tax → unitCost is base, add tax on top
+  /// Auto-filled from EntityItem.isTaxInclusive, overridable
+  bool? isTaxInclusive;
+
+  // ── Computed Amounts (stored for audit) ──
+
+  /// Line amount after discount, BEFORE tax
+  double? lineAmountExcl;
+
+  /// Tax amount for this line
+  double? taxAmount;
+
+  /// Final line total = lineAmountExcl + taxAmount (Without Tax)
+  ///                  = unitCost × qty - discountAmount (With Tax)
+  double? lineAmountIncl;
+
+  // ── Receiving ──
 
   /// Cumulative quantity received so far.
   /// Updated each time goods are received (StockTransaction created).
@@ -37,17 +77,26 @@ class EntityPurchaseItem {
     this.itemId,
     this.itemName,
     this.itemUnit,
+    this.hsnCode,
     this.orderedQty,
     this.unitCost,
+    this.discountPercent,
+    this.discountAmount,
+    this.taxRate,
+    this.taxType,
+    this.isTaxInclusive = false,
+    this.lineAmountExcl,
+    this.taxAmount,
+    this.lineAmountIncl,
     this.receivedQty = 0,
   });
 
-  /// Convenience: total cost for this line
-  double get lineTotal => (orderedQty ?? 0) * (unitCost ?? 0);
-
-  /// Convenience: remaining qty not yet received
+  /// Remaining qty not yet received
   double get pendingQty => (orderedQty ?? 0) - (receivedQty ?? 0);
 
   /// True when all ordered quantity has been received
   bool get isFullyReceived => pendingQty <= 0;
+
+  /// Final line total for display
+  double get lineTotal => lineAmountIncl ?? (orderedQty ?? 0) * (unitCost ?? 0);
 }

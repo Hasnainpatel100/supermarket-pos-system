@@ -219,7 +219,7 @@
     },
     {
       "id": "8:1529149874091519370",
-      "lastPropertyId": "22:2526426356779229164",
+      "lastPropertyId": "23:7893846307999255751",
       "name": "EntityItem",
       "properties": [
         {
@@ -338,6 +338,11 @@
           "id": "22:2526426356779229164",
           "name": "priceAfterTax",
           "type": 8
+        },
+        {
+          "id": "23:7893846307999255751",
+          "name": "hsnCode",
+          "type": 9
         }
       ],
       "relations": []
@@ -888,7 +893,7 @@
     },
     {
       "id": "18:2509479489088488472",
-      "lastPropertyId": "11:8568673839615020505",
+      "lastPropertyId": "20:279936485855467686",
       "name": "EntityPurchase",
       "properties": [
         {
@@ -952,13 +957,58 @@
           "id": "11:8568673839615020505",
           "name": "updatedAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "12:650357860933750376",
+          "name": "supplierInvoiceNo",
+          "type": 9
+        },
+        {
+          "id": "13:4562064909691719794",
+          "name": "totalDiscountAmount",
+          "type": 8
+        },
+        {
+          "id": "14:2473485788279787924",
+          "name": "totalExclTax",
+          "type": 8
+        },
+        {
+          "id": "15:4649810057597634612",
+          "name": "totalTaxAmount",
+          "type": 8
+        },
+        {
+          "id": "16:6638158446196357793",
+          "name": "roundOff",
+          "type": 8
+        },
+        {
+          "id": "17:305158098520684014",
+          "name": "grandTotal",
+          "type": 8
+        },
+        {
+          "id": "18:7237359684559520571",
+          "name": "paidAmount",
+          "type": 8
+        },
+        {
+          "id": "19:3402819166042043246",
+          "name": "paymentStatus",
+          "type": 9
+        },
+        {
+          "id": "20:279936485855467686",
+          "name": "notes",
+          "type": 9
         }
       ],
       "relations": []
     },
     {
       "id": "19:7663124640416877913",
-      "lastPropertyId": "8:4905175097346979709",
+      "lastPropertyId": "17:6748786460108747861",
       "name": "EntityPurchaseItem",
       "properties": [
         {
@@ -1002,6 +1052,51 @@
         {
           "id": "8:4905175097346979709",
           "name": "receivedQty",
+          "type": 8
+        },
+        {
+          "id": "9:7925537145829059835",
+          "name": "hsnCode",
+          "type": 9
+        },
+        {
+          "id": "10:5053207861567579158",
+          "name": "discountPercent",
+          "type": 8
+        },
+        {
+          "id": "11:3640186704598570959",
+          "name": "discountAmount",
+          "type": 8
+        },
+        {
+          "id": "12:4241073444625471503",
+          "name": "taxRate",
+          "type": 8
+        },
+        {
+          "id": "13:5367525401161378343",
+          "name": "taxType",
+          "type": 9
+        },
+        {
+          "id": "14:7909360973399805268",
+          "name": "isTaxInclusive",
+          "type": 1
+        },
+        {
+          "id": "15:4432457356284272407",
+          "name": "lineAmountExcl",
+          "type": 8
+        },
+        {
+          "id": "16:9178834982187400298",
+          "name": "taxAmount",
+          "type": 8
+        },
+        {
+          "id": "17:6748786460108747861",
+          "name": "lineAmountIncl",
           "type": 8
         }
       ],

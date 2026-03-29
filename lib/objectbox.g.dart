@@ -710,7 +710,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(14, 5072473716951944501),
     name: 'EntityBill',
-    lastPropertyId: const obx_int.IdUid(19, 4104903407223595329),
+    lastPropertyId: const obx_int.IdUid(20, 6263340256701511849),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -826,6 +826,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(19, 4104903407223595329),
         name: 'dueAmount',
         type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(20, 6263340256701511849),
+        name: 'note',
+        type: 9,
         flags: 0,
       ),
     ],
@@ -2405,7 +2411,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final utrNumberOffset = object.utrNumber == null
             ? null
             : fbb.writeString(object.utrNumber!);
-        fbb.startTable(20);
+        final noteOffset = object.note == null
+            ? null
+            : fbb.writeString(object.note!);
+        fbb.startTable(21);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, billNoOffset);
         fbb.addOffset(2, customerNameOffset);
@@ -2425,6 +2434,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addFloat64(16, object.splitCash);
         fbb.addFloat64(17, object.splitOnline);
         fbb.addFloat64(18, object.dueAmount);
+        fbb.addOffset(19, noteOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -2513,27 +2523,31 @@ obx_int.ModelDefinition getObjectBoxModel() {
           rootOffset,
           26,
         );
-        final object = EntityBill(
-          id: idParam,
-          billNo: billNoParam,
-          customerName: customerNameParam,
-          customerPhone: customerPhoneParam,
-          totalAmount: totalAmountParam,
-          discount: discountParam,
-          tax: taxParam,
-          grandTotal: grandTotalParam,
-          status: statusParam,
-          paymentMode: paymentModeParam,
-          amountReceived: amountReceivedParam,
-          changeReturned: changeReturnedParam,
-          utrNumber: utrNumberParam,
-          splitCash: splitCashParam,
-          splitOnline: splitOnlineParam,
-          dueAmount: dueAmountParam,
-          billDate: billDateParam,
-          createdAtUtcMs: createdAtUtcMsParam,
-          updatedAtUtcMs: updatedAtUtcMsParam,
-        );
+        final object =
+            EntityBill(
+                id: idParam,
+                billNo: billNoParam,
+                customerName: customerNameParam,
+                customerPhone: customerPhoneParam,
+                totalAmount: totalAmountParam,
+                discount: discountParam,
+                tax: taxParam,
+                grandTotal: grandTotalParam,
+                status: statusParam,
+                paymentMode: paymentModeParam,
+                amountReceived: amountReceivedParam,
+                changeReturned: changeReturnedParam,
+                utrNumber: utrNumberParam,
+                splitCash: splitCashParam,
+                splitOnline: splitOnlineParam,
+                dueAmount: dueAmountParam,
+                billDate: billDateParam,
+                createdAtUtcMs: createdAtUtcMsParam,
+                updatedAtUtcMs: updatedAtUtcMsParam,
+              )
+              ..note = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGetNullable(buffer, rootOffset, 42);
         obx_int.InternalToManyAccess.setRelInfo<EntityBill>(
           object.items,
           store,
@@ -3816,6 +3830,11 @@ class EntityBill_ {
   /// See [EntityBill.dueAmount].
   static final dueAmount = obx.QueryDoubleProperty<EntityBill>(
     _entities[9].properties[18],
+  );
+
+  /// See [EntityBill.note].
+  static final note = obx.QueryStringProperty<EntityBill>(
+    _entities[9].properties[19],
   );
 
   /// see [EntityBill.items]

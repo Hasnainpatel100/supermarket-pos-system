@@ -31,6 +31,8 @@ class EntityBill {
   /// Date-only field stored as "d/MM/yyyy" e.g. "22/02/2025"
   String? billDate;
 
+  String? note;
+
   int? createdAtUtcMs;
   int? updatedAtUtcMs;
 

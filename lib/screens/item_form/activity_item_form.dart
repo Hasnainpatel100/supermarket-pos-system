@@ -166,20 +166,11 @@ class ActivityItemForm extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        MyTextField(
-                                          controller: controller.priceController,
-                                          label: "Sale Price",
-                                          required: true,
-                                          isNumber: true,
-                                        ),
-                                        const SizedBox(height: 6),
-                                        // Without Tax / With Tax modern toggle
-                                        const SizedBox(height: 8),
-                                        _TaxTypeSelector(controller: controller),
-                                      ],
+                                    child: MyTextField(
+                                      controller: controller.priceController,
+                                      label: "Sale Price",
+                                      required: true,
+                                      isNumber: true,
                                     ),
                                   ),
                                 ],
@@ -263,6 +254,11 @@ class ActivityItemForm extends StatelessWidget {
                         ),
                       ],
                     ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Sale Price Type Toggle ──
+                    _TaxTypeSelector(controller: controller),
 
                     const SizedBox(height: 24),
 
@@ -677,78 +673,57 @@ class _TaxTypeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     
     return Obx(() {
-      final isExclusive = controller.rxSalePriceType.value == 'exclusive';
+      final currentType = controller.rxSalePriceType.value;
       return Container(
-        height: 38,
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(10),
+          color: theme.colorScheme.secondaryContainer.withOpacity(0.25),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.4)),
         ),
         child: Row(
           children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => controller.rxSalePriceType.value = 'exclusive',
-                behavior: HitTestBehavior.opaque,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: isExclusive 
-                        ? (isDark ? Colors.grey.shade800 : Colors.white) 
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: isExclusive
-                        ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))]
-                        : [],
-                  ),
-                  child: Text(
-                    'Excl. Tax',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isExclusive ? FontWeight.w700 : FontWeight.w500,
-                      color: isExclusive 
-                          ? Colors.orange.shade700 
-                          : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+            Icon(Icons.sell_outlined, size: 18, color: theme.colorScheme.primary),
+            const SizedBox(width: 10),
+            Text(
+              'Sale Price Type',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: theme.colorScheme.onSurface,
               ),
             ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => controller.rxSalePriceType.value = 'inclusive',
-                behavior: HitTestBehavior.opaque,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: !isExclusive 
-                        ? (isDark ? Colors.grey.shade800 : Colors.white) 
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: !isExclusive
-                        ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))]
-                        : [],
-                  ),
-                  child: Text(
-                    'Incl. Tax',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: !isExclusive ? FontWeight.w700 : FontWeight.w500,
-                      color: !isExclusive 
-                          ? Colors.green.shade700 
-                          : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+            const Spacer(),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment<String>(
+                  value: 'exclusive',
+                  label: Text('Excl. Tax'),
+                  icon: Icon(Icons.remove_circle_outline, size: 16),
+                ),
+                ButtonSegment<String>(
+                  value: 'inclusive',
+                  label: Text('Incl. Tax'),
+                  icon: Icon(Icons.add_circle_outline, size: 16),
+                ),
+              ],
+              selected: {currentType},
+              onSelectionChanged: (selected) {
+                controller.rxSalePriceType.value = selected.first;
+              },
+              showSelectedIcon: false,
+              style: ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                textStyle: WidgetStatePropertyAll(
+                  TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                padding: WidgetStatePropertyAll(
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                ),
+                shape: WidgetStatePropertyAll(
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ),

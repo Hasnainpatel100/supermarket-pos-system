@@ -298,9 +298,10 @@ class FragHomeReport extends StatelessWidget {
                       dividerThickness: 0.5,
                       dataRowMaxHeight: 52,
                       columns: [
-                        _col(context, 'Date', Icons.calendar_today_rounded, Colors.indigo),
+                        _col(context, 'Date & Time', Icons.calendar_today_rounded, Colors.indigo),
                         _col(context, 'Bill No', Icons.receipt_rounded, Colors.blue),
                         _col(context, 'Customer', Icons.person_outline_rounded, Colors.green),
+                        _col(context, 'Payment', Icons.payment_rounded, Colors.teal),
                         _col(context, 'Total', Icons.attach_money_rounded, Colors.orange),
                         _col(context, 'Due', Icons.pending_actions_rounded, Colors.red),
                         _col(context, 'Status', Icons.toggle_on_rounded, Colors.purple),
@@ -436,15 +437,21 @@ class FragHomeReport extends StatelessWidget {
     final isCancelled = bill.status == "CANCELLED";
     final isDue = bill.status == "DUE";
 
+    String formattedDateTime = bill.billDate ?? '-';
+    if (bill.createdAtUtcMs != null) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(bill.createdAtUtcMs!, isUtc: true);
+      formattedDateTime = DateFormat('dd/MM/yyyy HH:mm').format(dt);
+    }
+
     return DataRow(
       color: WidgetStateProperty.resolveWith<Color?>((_) {
         if (isCancelled) return Colors.grey.withValues(alpha: 0.05);
         return null;
       }),
       cells: [
-        // Date
+        // Date & Time
         DataCell(Text(
-          bill.billDate ?? '-',
+          formattedDateTime,
           style: TextStyle(fontSize: 13, color: Colors.indigo.shade600, fontWeight: FontWeight.w500),
         )),
 
@@ -474,6 +481,22 @@ class FragHomeReport extends StatelessWidget {
             decoration: isCancelled ? TextDecoration.lineThrough : null,
           ),
         )),
+
+        // Payment
+        DataCell(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.teal.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.teal.withOpacity(0.3)),
+            ),
+            child: Text(
+              bill.paymentMode ?? '-',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.teal.shade700),
+            ),
+          ),
+        ),
 
         // Total
         DataCell(Text(

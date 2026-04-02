@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../service/service_storage.dart';
+import '../../../../service/service_storage.dart';
 
 class ControllerHomeSettings extends GetxController {
   final ServiceStorage _storage = Get.find<ServiceStorage>();

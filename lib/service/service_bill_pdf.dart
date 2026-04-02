@@ -6,7 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:get/get.dart';
 import '../model/entity_bill.dart';
-import '../screens/home/fragment/controller_home_settings.dart';
+import '../screens/home/fragment/setting/controller_home_settings.dart';
 import 'service_currency.dart';
 
 class ServiceBillPdf {

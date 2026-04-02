@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../service/service_bill_pdf.dart';
-import '../controller_home_settings.dart';
+import '../setting/controller_home_settings.dart';
 
 class DialogBillDetail extends StatelessWidget {
   final EntityBill bill;

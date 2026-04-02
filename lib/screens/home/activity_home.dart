@@ -39,7 +39,7 @@ class ActivityHome extends StatelessWidget {
               return SizedBox();
             }
             return SizedBox(
-              width: controller.isDrawerCollapsed.value ? 70 : 260,
+              width: controller.isDrawerCollapsed.value ? 70 : 200,
               child: RepoDrawer.drawerList(user),
             );
           }),

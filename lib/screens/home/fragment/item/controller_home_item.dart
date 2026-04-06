@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -9,134 +13,114 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_currency.dart';
 import '../../../../service/service_item.dart';
 import '../../../../service/service_object_box.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:excel/excel.dart';
-import 'dart:io';
 
-/// Sort field enum expressed as string constants
+// ─────────────────────────────────────────────────────────────────────────────
+// Sort field constants
+// ─────────────────────────────────────────────────────────────────────────────
+
 class SortField {
-  static const none = '';
-  static const name = 'name';
+  static const none  = '';
+  static const name  = 'name';
   static const price = 'price';
   static const stock = 'stock';
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Controller
+// ─────────────────────────────────────────────────────────────────────────────
+
 class ControllerHomeItem extends GetxController {
   final ServiceCurrency serviceCurrency = Get.find();
-  late final ItemService _itemService;
-  late final Box<EntityItem> _boxItem;
-  late final Box<EntityItemBatch> _boxBatch;
+  late final ItemService              _itemService;
+  late final Box<EntityItem>          _boxItem;
+  late final Box<EntityItemBatch>     _boxBatch;
   late final Box<EntityStockTransaction> _boxStockTxn;
 
-  final RxList<EntityItem> rxListItem = <EntityItem>[].obs;
-  List<EntityItem> _allItems = [];
-  final RxString searchQuery = ''.obs;
+  final RxList<EntityItem> rxListItem   = <EntityItem>[].obs;
+  List<EntityItem>         _allItems    = [];
+  final RxString           searchQuery  = ''.obs;
   final searchController = TextEditingController();
 
-  // ── Pagination ──
+  // ── Pagination ────────────────────────────────────────────────────────────
   static const int _pageSize = 20;
   final RxInt currentPage = 0.obs;
-  final RxInt totalCount = 0.obs;
+  final RxInt totalCount  = 0.obs;
 
   bool get hasPrev => currentPage.value > 0;
   bool get hasNext => (currentPage.value + 1) * _pageSize < totalCount.value;
 
   void nextPage() {
-    if (hasNext) {
-      currentPage.value++;
-      _applySortAndPagination();
-    }
+    if (hasNext) { currentPage.value++; _applySortAndPagination(); }
   }
 
   void prevPage() {
-    if (hasPrev) {
-      currentPage.value--;
-      _applySortAndPagination();
-    }
+    if (hasPrev) { currentPage.value--; _applySortAndPagination(); }
   }
 
-  // ── Sorting ──
+  // ── Sorting ───────────────────────────────────────────────────────────────
   final RxString rxSortField = SortField.none.obs;
-  final RxBool rxSortAsc = true.obs;
+  final RxBool   rxSortAsc   = true.obs;
 
+  // ─────────────────────────────────────────────────────────────────────────
   @override
   void onInit() {
     final ob = Get.find<ServiceObjectBox>();
-    _boxItem = ob.box<EntityItem>();
-    _boxBatch = ob.box<EntityItemBatch>();
-    _boxStockTxn = ob.box<EntityStockTransaction>();
-    _itemService = ItemService(_boxItem);
+    _boxItem      = ob.box<EntityItem>();
+    _boxBatch     = ob.box<EntityItemBatch>();
+    _boxStockTxn  = ob.box<EntityStockTransaction>();
+    _itemService  = ItemService(_boxItem);
     loadItems();
     super.onInit();
   }
 
-  // ──────────────────────────────────────────────────────────
-  //  SORT TOGGLE
-  // ──────────────────────────────────────────────────────────
+  // ── Sort toggle ───────────────────────────────────────────────────────────
 
-  /// Toggle sort for [field]: same field → flip asc/desc → then neutral.
-  /// Different field → switch to asc on that field.
   void toggleSort(String field) {
     if (rxSortField.value == field) {
       if (rxSortAsc.value) {
-        // asc → desc
         rxSortAsc.value = false;
       } else {
-        // desc → neutral
         rxSortField.value = SortField.none;
-        rxSortAsc.value = true;
+        rxSortAsc.value   = true;
       }
     } else {
       rxSortField.value = field;
-      rxSortAsc.value = true;
+      rxSortAsc.value   = true;
     }
     currentPage.value = 0;
     _applySortAndPagination();
   }
 
   void _applySortAndPagination() {
-    List<EntityItem> list = List.from(_allItems);
+    final list  = List<EntityItem>.from(_allItems);
     final field = rxSortField.value;
-    final asc = rxSortAsc.value;
-    
+    final asc   = rxSortAsc.value;
+
     if (field != SortField.none) {
       list.sort((a, b) {
         int cmp;
         switch (field) {
-          case SortField.name:
-            cmp = (a.name ?? '').compareTo(b.name ?? '');
-            break;
-          case SortField.price:
-            cmp = (a.sellingPrice ?? 0).compareTo(b.sellingPrice ?? 0);
-            break;
-          case SortField.stock:
-            cmp = (a.totalQty ?? 0).compareTo(b.totalQty ?? 0);
-            break;
-          default:
-            cmp = 0;
+          case SortField.name:  cmp = (a.name ?? '').compareTo(b.name ?? ''); break;
+          case SortField.price: cmp = (a.sellingPrice ?? 0).compareTo(b.sellingPrice ?? 0); break;
+          case SortField.stock: cmp = (a.totalQty ?? 0).compareTo(b.totalQty ?? 0); break;
+          default: cmp = 0;
         }
         return asc ? cmp : -cmp;
       });
     }
 
-    totalCount.value = list.length;
-    final paged = list.skip(currentPage.value * _pageSize).take(_pageSize).toList();
-    rxListItem.value = paged;
+    totalCount.value    = list.length;
+    rxListItem.value    = list.skip(currentPage.value * _pageSize).take(_pageSize).toList();
   }
 
-  // ──────────────────────────────────────────────────────────
-  //  LOAD / SEARCH
-  // ──────────────────────────────────────────────────────────
+  // ── Load / Search ─────────────────────────────────────────────────────────
 
   void loadItems() {
-    if (searchQuery.value.trim().isEmpty) {
-      _allItems = _itemService.getAllItems();
-    } else {
-      _allItems = _itemService.searchItems(searchQuery.value);
-    }
-    // Re-apply current sort & pagination after loading
+    _allItems = searchQuery.value.trim().isEmpty
+        ? _itemService.getAllItems()
+        : _itemService.searchItems(searchQuery.value);
     _applySortAndPagination();
-    debugPrint("loadItems total size: ${_allItems.length}");
+    debugPrint('loadItems total: ${_allItems.length}');
   }
 
   void updateSearch(String query) {
@@ -152,19 +136,17 @@ class ControllerHomeItem extends GetxController {
     loadItems();
   }
 
-  // ──────────────────────────────────────────────────────────
-  //  STOCK METHODS
-  // ──────────────────────────────────────────────────────────
+  // ── Stock methods ─────────────────────────────────────────────────────────
 
   bool adjustStock(EntityItem item, int delta) {
-    final success = _itemService.adjustStock(item, delta);
-    if (success) loadItems();
-    return success;
+    final ok = _itemService.adjustStock(item, delta);
+    if (ok) loadItems();
+    return ok;
   }
 
   bool adjustStockDirect(EntityItem item, int delta) {
-    final success = adjustStock(item, delta);
-    if (success) {
+    final ok = adjustStock(item, delta);
+    if (ok) {
       _logTxn(
         itemId: item.id ?? 0,
         itemName: item.name ?? '',
@@ -173,24 +155,23 @@ class ControllerHomeItem extends GetxController {
         remarks: delta >= 0 ? 'Manual increment' : 'Manual decrement',
       );
     }
-    return success;
+    return ok;
   }
 
   bool adjustStockWithNewBatch(EntityItem item, int qty, String batchNo, int? expiryMs) {
     if (qty <= 0) return false;
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    final batch = EntityItemBatch(
+    _boxBatch.put(EntityItemBatch(
       itemId: item.id,
       batchNo: batchNo,
       quantity: qty,
       expiryDateUtcMs: expiryMs,
       receivedAtUtcMs: now,
-    );
-    _boxBatch.put(batch);
-    item.totalQty = (item.totalQty ?? 0) + qty;
+    ));
+    item.totalQty      = (item.totalQty ?? 0) + qty;
     item.updatedAtUtcMs = now;
     _boxItem.put(item);
-    _logTxn(itemId: item.id ?? 0, itemName: item.name ?? '', type: StockTxnType.add, qty: qty, remarks: 'Batch added: $batchNo');
+    _logTxn(itemId: item.id ?? 0, itemName: item.name ?? '', type: StockTxnType.add, qty: qty, remarks: 'Batch: $batchNo');
     loadItems();
     return true;
   }
@@ -199,9 +180,14 @@ class ControllerHomeItem extends GetxController {
     if (qty <= 0) return false;
     final currentQty = item.totalQty ?? 0;
     if (qty > currentQty) return false;
-    final query = _boxBatch.query(EntityItemBatch_.itemId.equals(item.id ?? 0)).order(EntityItemBatch_.receivedAtUtcMs).build();
-    final batches = query.find();
-    query.close();
+
+    final q = _boxBatch
+        .query(EntityItemBatch_.itemId.equals(item.id ?? 0))
+        .order(EntityItemBatch_.receivedAtUtcMs)
+        .build();
+    final batches = q.find();
+    q.close();
+
     int remaining = qty;
     for (final batch in batches) {
       if (remaining <= 0) break;
@@ -215,37 +201,43 @@ class ControllerHomeItem extends GetxController {
         remaining = 0;
       }
     }
+
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    item.totalQty = currentQty - qty;
+    item.totalQty       = currentQty - qty;
     item.updatedAtUtcMs = now;
     _boxItem.put(item);
-    _logTxn(itemId: item.id ?? 0, itemName: item.name ?? '', type: StockTxnType.deduct, qty: -qty, remarks: 'FIFO batch deduction');
+    _logTxn(itemId: item.id ?? 0, itemName: item.name ?? '', type: StockTxnType.deduct, qty: -qty, remarks: 'FIFO deduction');
     loadItems();
     return true;
   }
 
   int getNextBatchNumber(EntityItem item) {
-    final query = _boxBatch.query(EntityItemBatch_.itemId.equals(item.id ?? 0)).build();
-    final count = query.count();
-    query.close();
+    final q     = _boxBatch.query(EntityItemBatch_.itemId.equals(item.id ?? 0)).build();
+    final count = q.count();
+    q.close();
     return count + 1;
   }
 
-  void _logTxn({required int itemId, required String itemName, required StockTxnType type, required int qty, String? remarks}) {
+  void _logTxn({
+    required int          itemId,
+    required String       itemName,
+    required StockTxnType type,
+    required int          qty,
+    String?               remarks,
+  }) {
     _boxStockTxn.put(EntityStockTransaction(
-      itemId: itemId,
-      type: type.index,
-      quantity: qty,
+      itemId:        itemId,
+      type:          type.index,
+      quantity:      qty,
       referenceType: type.name,
-      referenceId: itemName,
-      remarks: remarks,
+      referenceId:   itemName,
+      remarks:       remarks,
       createdAtUtcMs: DateTime.now().toUtc().millisecondsSinceEpoch,
     ));
   }
 
   void generateBarcode(EntityItem item) {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    item.barcode = 'ITM-${item.id}-$timestamp';
+    item.barcode = 'ITM-${item.id}-${DateTime.now().millisecondsSinceEpoch}';
     _itemService.updateItem(item);
     loadItems();
   }
@@ -269,160 +261,202 @@ class ControllerHomeItem extends GetxController {
     super.onClose();
   }
 
-  // ──────────────────────────────────────────────────────────
-  //  IMPORT EXCEL
-  // ──────────────────────────────────────────────────────────
+  // ── Excel Import ──────────────────────────────────────────────────────────
+  //
+  // Compatible with   excel ^3.0.0
+  //
+  // In excel v3 every cell value is wrapped in a typed object such as
+  //   TextCellValue("hello")  DoubleCellValue(18.0)  IntCellValue(5)
+  // Calling .toString() on such an object produces the raw wrapper string
+  //   "TextCellValue(hello)"
+  // so we strip the prefix with a regex to get the actual value.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Returns the plain string content of a cell, or null if blank.
+  String? _cellStr(Data? cell) {
+    if (cell == null) return null;
+    final raw = cell.value?.toString() ?? '';
+    if (raw.isEmpty) return null;
+
+    // excel v3 wraps values: e.g. "TextCellValue(hello)" or "DoubleCellValue(18.0)"
+    // Strip the wrapper to get the actual content.
+    final match = RegExp(r'^\w+CellValue\((.*)\)$', dotAll: true).firstMatch(raw);
+    final value = (match != null ? match.group(1) : raw)?.trim() ?? '';
+    return value.isEmpty ? null : value;
+  }
+
+  /// Returns the numeric value of a cell, or null if blank/non-numeric.
+  double? _cellDouble(Data? cell) {
+    final s = _cellStr(cell);
+    if (s == null) return null;
+    return double.tryParse(s);
+  }
 
   Future<void> importExcel() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      // ── 1. Pick file ──────────────────────────────────────────────────────
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['xlsx', 'xls'],
+        allowedExtensions: ['xlsx'],
       );
+      if (result == null || result.files.single.path == null) return; // cancelled
 
-      if (result == null || result.files.single.path == null) {
-        return; // User canceled the picker
-      }
+      // ── 2. Read bytes ─────────────────────────────────────────────────────
+      final bytes = File(result.files.single.path!).readAsBytesSync();
 
-      String filePath = result.files.single.path!;
-      var bytes = File(filePath).readAsBytesSync();
-      var excel = Excel.decodeBytes(bytes);
+      // ── 3. Decode Excel ───────────────────────────────────────────────────
+      final Excel workbook = Excel.decodeBytes(bytes);
 
       int successCount = 0;
-      int errorCount = 0;
+      int errorCount   = 0;
 
-      for (var table in excel.tables.keys) {
-        var sheet = excel.tables[table]!;
-        for (int i = 1; i < sheet.rows.length; i++) { // Skip header row
-          var row = sheet.rows[i];
-          if (row.isEmpty || row[0]?.value == null) continue; // Name is required
+      // ── 4. Iterate sheets and rows ────────────────────────────────────────
+      for (final sheetName in workbook.tables.keys) {
+        final sheet = workbook.tables[sheetName]!;
+
+        // Row index 0 = header row → skip it; start at 1
+        for (int i = 1; i < sheet.rows.length; i++) {
+          final row = sheet.rows[i];
+          if (row.isEmpty) continue;
 
           try {
-            String name = (row[0]?.value?.toString() ?? '').trim();
-            if (name.isEmpty) continue; // Name is required
+            // ── Col A (0): Name — REQUIRED ──────────────────────────────────
+            final name = _cellStr(row.isNotEmpty ? row[0] : null);
+            if (name == null || name.isEmpty) continue;
 
-            String? sku = row.length > 1 ? row[1]?.value?.toString().trim() : null;
-            if (sku != null && sku.isEmpty) sku = null;
+            // ── Col B (1): SKU ──────────────────────────────────────────────
+            final sku = row.length > 1 ? _cellStr(row[1]) : null;
 
-            String? barcode = row.length > 2 ? row[2]?.value?.toString().trim() : null;
-            if (barcode != null && barcode.isEmpty) barcode = null;
+            // ── Col C (2): Barcode ──────────────────────────────────────────
+            final barcode = row.length > 2 ? _cellStr(row[2]) : null;
 
-            String? unit = row.length > 3 ? row[3]?.value?.toString().trim() : null;
-            if (unit != null && unit.isEmpty) unit = null;
+            // ── Col D (3): Unit ─────────────────────────────────────────────
+            final unit = row.length > 3 ? _cellStr(row[3]) : null;
 
-            String? category = row.length > 4 ? row[4]?.value?.toString().trim() : null;
-            if (category != null && category.isEmpty) category = null;
+            // ── Col E (4): Category ─────────────────────────────────────────
+            final category = row.length > 4 ? _cellStr(row[4]) : null;
 
-            double? costPrice;
-            if (row.length > 5 && row[5]?.value != null) {
-              costPrice = double.tryParse(row[5]!.value.toString());
+            // ── Col F (5): Cost Price ───────────────────────────────────────
+            final costPrice = row.length > 5 ? _cellDouble(row[5]) : null;
+
+            // ── Col G (6): Selling Price ────────────────────────────────────
+            final sellingPrice = (row.length > 6 ? _cellDouble(row[6]) : null) ?? 0.0;
+
+            // ── Col H (7): Tax Name ─────────────────────────────────────────
+            final taxName = row.length > 7 ? _cellStr(row[7]) : null;
+
+            // ── Col I (8): Tax Rate  (plain number, e.g. 18  not "18%") ─────
+            final taxRate = row.length > 8 ? _cellDouble(row[8]) : null;
+
+            // ── Col J (9): Tax Type  ("inclusive" or "exclusive") ───────────
+            String taxType = 'exclusive';
+            if (row.length > 9) {
+              final t = (_cellStr(row[9]) ?? '').toLowerCase();
+              if (t == 'inclusive') taxType = 'inclusive';
             }
 
-            double sellingPrice = 0.0;
-            if (row.length > 6 && row[6]?.value != null) {
-              sellingPrice = double.tryParse(row[6]!.value.toString()) ?? 0.0;
-            }
-
-            String? taxName = row.length > 7 ? row[7]?.value?.toString().trim() : null;
-            if (taxName != null && taxName.isEmpty) taxName = null;
-
-            double? taxRate;
-            if (row.length > 8 && row[8]?.value != null) {
-              taxRate = double.tryParse(row[8]!.value.toString());
-            }
-
-            String? taxType = row.length > 9 ? row[9]?.value?.toString().trim().toLowerCase() : null;
-            if (taxType != 'inclusive' && taxType != 'exclusive') {
-                taxType = 'exclusive'; // default
-            }
-
+            // ── Col K (10): Has Expiry  ("yes" / "no" / "true" / "1") ───────
             bool hasExpiry = false;
-            if (row.length > 10 && row[10]?.value != null) {
-              String exprStr = row[10]!.value.toString().trim().toLowerCase();
-              if (exprStr == 'yes' || exprStr == 'true' || exprStr == '1') {
-                hasExpiry = true;
-              }
+            if (row.length > 10) {
+              final e = (_cellStr(row[10]) ?? '').toLowerCase();
+              hasExpiry = e == 'yes' || e == 'true' || e == '1';
             }
 
-            // Compute taxes like in ControllerItemForm
-            double? taxAmount;
-            double? priceBeforeTax;
-            double? priceAfterTax;
-            double finalSellingPrice = sellingPrice;
+            // ── Compute tax breakdown ────────────────────────────────────────
+            double? taxAmount, priceBeforeTax, priceAfterTax;
+            double  finalSellingPrice = sellingPrice;
 
             if (taxRate != null && taxRate > 0) {
               if (taxType == 'inclusive') {
-                taxAmount = finalSellingPrice * taxRate / (100 + taxRate);
+                taxAmount      = finalSellingPrice * taxRate / (100 + taxRate);
                 priceBeforeTax = finalSellingPrice - taxAmount;
-                priceAfterTax = finalSellingPrice;
+                priceAfterTax  = finalSellingPrice;
               } else {
-                taxAmount = finalSellingPrice * taxRate / 100;
-                priceBeforeTax = finalSellingPrice;
-                priceAfterTax = finalSellingPrice + taxAmount;
+                taxAmount         = finalSellingPrice * taxRate / 100;
+                priceBeforeTax    = finalSellingPrice;
+                priceAfterTax     = finalSellingPrice + taxAmount;
                 finalSellingPrice = priceAfterTax;
               }
             }
 
+            // ── Save item ────────────────────────────────────────────────────
             final now = DateTime.now().toUtc().millisecondsSinceEpoch;
-
-            EntityItem newItem = EntityItem(
-              name: name,
-              sku: sku,
-              barcode: barcode,
-              unit: unit,
-              category: category,
-              costPrice: costPrice,
-              sellingPrice: finalSellingPrice,
-              taxName: taxName,
-              taxRate: taxRate,
-              taxType: taxRate != null && taxRate > 0 ? taxType : null,
-              taxAmount: taxAmount,
+            _itemService.createItem(EntityItem(
+              name:           name,
+              sku:            sku,
+              barcode:        barcode,
+              unit:           unit,
+              category:       category,
+              costPrice:      costPrice,
+              sellingPrice:   finalSellingPrice,
+              taxName:        taxName,
+              taxRate:        taxRate,
+              taxType:        (taxRate != null && taxRate > 0) ? taxType : null,
+              taxAmount:      taxAmount,
               priceBeforeTax: priceBeforeTax,
-              priceAfterTax: priceAfterTax,
-              hasExpiry: hasExpiry,
-              isActive: true,
-              totalQty: 0,
+              priceAfterTax:  priceAfterTax,
+              hasExpiry:      hasExpiry,
+              isActive:       true,
+              totalQty:       0,
               createdAtUtcMs: now,
               updatedAtUtcMs: now,
-            );
-
-            _itemService.createItem(newItem);
+            ));
             successCount++;
-          } catch (e) {
+          } catch (rowErr) {
             errorCount++;
-            debugPrint("Error importing row $i: $e");
+            debugPrint('Row $i import error: $rowErr');
           }
         }
       }
 
       loadItems();
 
+      // ── 5. Result snackbar ────────────────────────────────────────────────
       if (successCount > 0) {
         Get.snackbar(
-          "Import Successful",
-          "$successCount items imported successfully." + (errorCount > 0 ? " ($errorCount failed due to duplicates/errors)" : ""),
+          'Import Successful ✅',
+          '$successCount item(s) imported.'
+          '${errorCount > 0 ? ' ($errorCount row(s) skipped)' : ''}',
           backgroundColor: Colors.green.shade600,
           colorText: Colors.white,
           duration: const Duration(seconds: 4),
         );
       } else if (errorCount > 0) {
         Get.snackbar(
-          "Import Failed",
-          "Failed to import items. Make sure SKUs and Barcodes are unique.",
+          'Import Failed',
+          'No items were imported. Ensure Name column is filled and '
+          'SKU / Barcode values are unique.',
           backgroundColor: Colors.red.shade600,
           colorText: Colors.white,
+          duration: const Duration(seconds: 5),
         );
       } else {
-        Get.snackbar("Import Finished", "No valid items found in the Excel file.");
+        Get.snackbar(
+          'Nothing Imported',
+          'No data rows found. Make sure row 1 is the header and '
+          'data starts from row 2.',
+          duration: const Duration(seconds: 4),
+        );
       }
 
-    } catch (e) {
-      debugPrint("Excel import error: $e");
+    } on FileSystemException {
       Get.snackbar(
-        "Import Error",
-        "Could not read the Excel file. Please check the format.",
+        'File Locked',
+        'The file is open in another program. '
+        'Close Microsoft Excel and try again.',
+        backgroundColor: Colors.orange.shade700,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
+    } catch (e, st) {
+      debugPrint('importExcel error: $e\n$st');
+      Get.snackbar(
+        'Import Error',
+        'Failed to read the file.\n$e',
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
+        duration: const Duration(seconds: 8),
+        isDismissible: true,
       );
     }
   }

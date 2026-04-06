@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../../../../model/entity_item.dart';
+import '../../setting/controller_home_settings.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Controller
@@ -13,12 +16,29 @@ import '../../../../../model/entity_item.dart';
 
 class _PrintBarcodeController extends GetxController {
   final EntityItem item;
+
   _PrintBarcodeController(this.item) {
+    // Set item-specific defaults first
     labelNameController.text = item.name ?? '';
     labelPriceController.text = item.sellingPrice != null
         ? item.sellingPrice!.toStringAsFixed(2)
         : '';
+
+    // Pre-fill from global printer settings if the controller is registered
+    if (Get.isRegistered<ControllerHomeSettings>()) {
+      final settings = Get.find<ControllerHomeSettings>();
+      rxIs1D.value       = settings.rxBarcodeType.value == '1D';
+      rxPaperSize.value  = settings.rxPaperSize.value;
+      rxShowName.value   = settings.rxShowName.value;
+      rxShowPrice.value  = settings.rxShowPrice.value;
+      rxExtraInfo.value  = settings.rxExtraInfo.value;
+      extraInfoController.text = settings.rxExtraInfo.value;
+      _defaultPrinterName = settings.rxDefaultPrinter.value;
+    }
   }
+
+  /// Printer name to use ('' = system default / let OS choose)
+  String _defaultPrinterName = '';
 
   // Barcode type
   final rxIs1D = true.obs; // true = Code128 (1D), false = QR (2D)
@@ -29,10 +49,14 @@ class _PrintBarcodeController extends GetxController {
   final customHeightController = TextEditingController(text: '30');
 
   // Optional label fields
-  final labelNameController = TextEditingController();
+  final labelNameController  = TextEditingController();
   final labelPriceController = TextEditingController();
-  final rxShowName = true.obs;
+  final rxShowName  = true.obs;
   final rxShowPrice = false.obs;
+
+  // Extra info (global default or user override)
+  final rxExtraInfo = ''.obs;
+  final extraInfoController = TextEditingController();
 
   PdfPageFormat get pdfPageFormat {
     switch (rxPaperSize.value) {
@@ -57,6 +81,7 @@ class _PrintBarcodeController extends GetxController {
     customHeightController.dispose();
     labelNameController.dispose();
     labelPriceController.dispose();
+    extraInfoController.dispose();
     super.onClose();
   }
 }
@@ -262,6 +287,27 @@ class DialogPrintBarcode extends StatelessWidget {
                                       onChanged: (_) => ctrl.rxShowPrice.refresh(),
                                     ),
                                   ],
+                                  const SizedBox(height: 6),
+                                  // Extra Info
+                                  const Text('Extra Info',
+                                      style: TextStyle(fontSize: 13)),
+                                  const SizedBox(height: 4),
+                                  TextField(
+                                    controller: ctrl.extraInfoController,
+                                    maxLines: 2,
+                                    decoration: InputDecoration(
+                                      hintText: 'Optional text on label',
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 10),
+                                      isDense: true,
+                                    ),
+                                    onChanged: (_) =>
+                                        ctrl.rxExtraInfo.refresh(),
+                                  ),
                                 ],
                               ),
                             ),
@@ -320,6 +366,16 @@ class DialogPrintBarcode extends StatelessWidget {
                                           Text(
                                             '₹ ${ctrl.labelPriceController.text}',
                                             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                                          ),
+                                        ],
+                                        if (ctrl.extraInfoController.text.isNotEmpty) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            ctrl.extraInfoController.text,
+                                            style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.black54),
+                                            textAlign: TextAlign.center,
                                           ),
                                         ],
                                       ],
@@ -386,66 +442,116 @@ class DialogPrintBarcode extends StatelessWidget {
   }
 
   Future<void> _printBarcode(_PrintBarcodeController ctrl, String barcodeData) async {
-    final is1D = ctrl.rxIs1D.value;
-    final format = ctrl.pdfPageFormat;
-    final showName = ctrl.rxShowName.value;
-    final showPrice = ctrl.rxShowPrice.value;
-    final labelName = ctrl.labelNameController.text;
+    final is1D       = ctrl.rxIs1D.value;
+    final format     = ctrl.pdfPageFormat;
+    final showName   = ctrl.rxShowName.value;
+    final showPrice  = ctrl.rxShowPrice.value;
+    final labelName  = ctrl.labelNameController.text;
     final labelPrice = ctrl.labelPriceController.text;
+    final extraInfo  = ctrl.extraInfoController.text.trim();
+    final printerName = ctrl._defaultPrinterName;
 
+    // Build the PDF bytes generator (shared between both print paths)
+    Future<Uint8List> buildPdf(PdfPageFormat fmt) async {
+      final fontRegular = await PdfGoogleFonts.robotoRegular();
+      final fontBold = await PdfGoogleFonts.robotoBold();
+
+      final doc = pw.Document(
+        theme: pw.ThemeData.withFont(
+          base: fontRegular,
+          bold: fontBold,
+        ),
+      );
+      doc.addPage(
+        pw.Page(
+          pageFormat: fmt,
+          margin: const pw.EdgeInsets.all(4 * PdfPageFormat.mm),
+          build: (ctx) {
+            final barcodeWidget = is1D
+                ? pw.BarcodeWidget(
+                    barcode: pw.Barcode.code128(),
+                    data: barcodeData,
+                    width: fmt.availableWidth,
+                    height: 20 * PdfPageFormat.mm,
+                    drawText: true,
+                  )
+                : pw.BarcodeWidget(
+                    barcode: pw.Barcode.qrCode(),
+                    data: barcodeData,
+                    width: 25 * PdfPageFormat.mm,
+                    height: 25 * PdfPageFormat.mm,
+                  );
+
+            return pw.Column(
+              mainAxisSize: pw.MainAxisSize.min,
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                if (showName && labelName.isNotEmpty)
+                  pw.Padding(
+                    padding:
+                        const pw.EdgeInsets.only(bottom: 2 * PdfPageFormat.mm),
+                    child: pw.Text(
+                      labelName,
+                      style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold, fontSize: 10),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  ),
+                pw.Center(child: barcodeWidget),
+                if (showPrice && labelPrice.isNotEmpty)
+                  pw.Padding(
+                    padding:
+                        const pw.EdgeInsets.only(top: 2 * PdfPageFormat.mm),
+                    child: pw.Text(
+                      '₹ $labelPrice',
+                      style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold, fontSize: 10),
+                    ),
+                  ),
+                if (extraInfo.isNotEmpty)
+                  pw.Padding(
+                    padding:
+                        const pw.EdgeInsets.only(top: 1 * PdfPageFormat.mm),
+                    child: pw.Text(
+                      extraInfo,
+                      style: const pw.TextStyle(fontSize: 8),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      );
+      return doc.save();
+    }
+
+    // If a specific printer is configured, resolve it and print directly
+    if (printerName.isNotEmpty) {
+      try {
+        final printers = await Printing.listPrinters();
+        final target = printers
+            .cast<Printer?>()
+            .firstWhere((p) => p?.name == printerName, orElse: () => null);
+
+        if (target != null) {
+          await Printing.directPrintPdf(
+            printer: target,
+            onLayout: (fmt) => buildPdf(fmt),
+            name: '${item.name ?? "barcode"}_barcode',
+            format: format,
+          );
+          return;
+        }
+      } catch (_) {
+        // fall through to layoutPdf dialog
+      }
+    }
+
+    // Fall back to OS print dialog
     await Printing.layoutPdf(
-      onLayout: (format) async {
-        final doc = pw.Document();
-        doc.addPage(
-          pw.Page(
-            pageFormat: format,
-            margin: const pw.EdgeInsets.all(4 * PdfPageFormat.mm),
-            build: (ctx) {
-              final barcodeWidget = is1D
-                  ? pw.BarcodeWidget(
-                      barcode: pw.Barcode.code128(),
-                      data: barcodeData,
-                      width: format.availableWidth,
-                      height: 20 * PdfPageFormat.mm,
-                      drawText: true,
-                    )
-                  : pw.BarcodeWidget(
-                      barcode: pw.Barcode.qrCode(),
-                      data: barcodeData,
-                      width: 25 * PdfPageFormat.mm,
-                      height: 25 * PdfPageFormat.mm,
-                    );
-
-              return pw.Column(
-                mainAxisSize: pw.MainAxisSize.min,
-                mainAxisAlignment: pw.MainAxisAlignment.center,
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: [
-                  if (showName && labelName.isNotEmpty)
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.only(bottom: 2 * PdfPageFormat.mm),
-                      child: pw.Text(
-                        labelName,
-                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
-                        textAlign: pw.TextAlign.center,
-                      ),
-                    ),
-                  pw.Center(child: barcodeWidget),
-                  if (showPrice && labelPrice.isNotEmpty)
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.only(top: 2 * PdfPageFormat.mm),
-                      child: pw.Text(
-                        '₹ $labelPrice',
-                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        );
-        return doc.save();
-      },
+      onLayout: (fmt) => buildPdf(fmt),
       name: '${item.name ?? "barcode"}_barcode',
       format: format,
     );

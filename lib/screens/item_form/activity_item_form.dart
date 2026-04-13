@@ -118,18 +118,75 @@ class ActivityItemForm extends StatelessWidget {
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                               ),
-                              items: const [
-                                DropdownMenuItem(value: 'pcs', child: Text('Piece (pcs)')),
-                                DropdownMenuItem(value: 'Box', child: Text('Box')),
-                                DropdownMenuItem(value: 'KG', child: Text('Kilogram (KG)')),
-                                DropdownMenuItem(value: 'g', child: Text('Gram (g)')),
-                                DropdownMenuItem(value: 'L', child: Text('Liter (L)')),
-                                DropdownMenuItem(value: 'ML', child: Text('Milliliter (ML)')),
-                                DropdownMenuItem(value: 'Dozen', child: Text('Dozen')),
-                                DropdownMenuItem(value: 'Tray', child: Text('Tray')),
-                                DropdownMenuItem(value: 'Bottle', child: Text('Bottle')),
+                              items: [
+                                ...controller.rxUnits.map((String u) {
+                                  String label = u;
+                                  if (u == 'pcs') label = 'Piece (pcs)';
+                                  else if (u == 'KG') label = 'Kilogram (KG)';
+                                  else if (u == 'g') label = 'Gram (g)';
+                                  else if (u == 'L') label = 'Liter (L)';
+                                  else if (u == 'ML') label = 'Milliliter (ML)';
+                                  return DropdownMenuItem(value: u, child: Text(label));
+                                }).toList(),
+                                DropdownMenuItem(
+                                  value: '+ Create New',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.add_circle_outline_rounded, color: Colors.teal.shade600, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text('Create New', style: TextStyle(color: Colors.teal.shade700, fontWeight: FontWeight.w600)),
+                                    ],
+                                  ),
+                                ),
                               ],
-                              onChanged: (val) => controller.rxUnit.value = val,
+                              onChanged: (val) {
+                                if (val == '+ Create New') {
+                                  final tc = TextEditingController();
+                                  Get.dialog(
+                                    AlertDialog(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      title: const Text('New Unit'),
+                                      content: TextField(
+                                        controller: tc,
+                                        autofocus: true,
+                                        decoration: InputDecoration(
+                                          labelText: 'Unit Name',
+                                          hintText: 'e.g. packet',
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                        onSubmitted: (_) {
+                                          final newUnit = tc.text.trim();
+                                          if (newUnit.isNotEmpty) {
+                                            if (!controller.rxUnits.contains(newUnit)) {
+                                              controller.rxUnits.add(newUnit);
+                                            }
+                                            controller.rxUnit.value = newUnit;
+                                          }
+                                          Get.back();
+                                        },
+                                      ),
+                                      actions: [
+                                        TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+                                        FilledButton(
+                                          onPressed: () {
+                                            final newUnit = tc.text.trim();
+                                            if (newUnit.isNotEmpty) {
+                                              if (!controller.rxUnits.contains(newUnit)) {
+                                                controller.rxUnits.add(newUnit);
+                                              }
+                                              controller.rxUnit.value = newUnit;
+                                            }
+                                            Get.back();
+                                          },
+                                          child: const Text('Create'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                } else {
+                                  controller.rxUnit.value = val;
+                                }
+                              },
                             ),
                           ),
                         ),

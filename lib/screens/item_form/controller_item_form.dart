@@ -27,6 +27,9 @@ class ControllerItemForm extends GetxController {
 
   // ── Basic Fields ──
   final rxUnit = RxnString();
+  final RxList<String> rxUnits = <String>[
+    'pcs', 'Box', 'KG', 'g', 'L', 'ML', 'Dozen', 'Tray', 'Bottle',
+  ].obs;
 
   // ── Category ──
   final RxList<String> rxCategories = <String>[
@@ -88,7 +91,15 @@ class ControllerItemForm extends GetxController {
     priceController.text = editingItem?.sellingPrice?.toString() ?? '';
     costController.text = editingItem?.costPrice?.toString() ?? '';
     unitController.text = editingItem?.unit ?? '';
-    rxUnit.value = editingItem?.unit;
+    final u = editingItem?.unit;
+    if (u != null && u.isNotEmpty) {
+      if (!rxUnits.contains(u)) {
+        rxUnits.add(u);
+      }
+      rxUnit.value = u;
+    } else {
+      rxUnit.value = null;
+    }
     hasExpiry.value = editingItem?.hasExpiry ?? false;
     rxCategory.value = editingItem?.category;
     rxTaxType.value = editingItem?.taxType ?? 'exclusive';

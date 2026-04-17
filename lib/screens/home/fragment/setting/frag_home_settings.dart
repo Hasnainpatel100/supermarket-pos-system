@@ -1040,6 +1040,245 @@ class _PrinterTab extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
+              // ── A4 Layout Settings ─────────────────────────────────────────
+              Obx(() {
+                if (controller.rxPaperSize.value != 'A4') {
+                  return const SizedBox.shrink();
+                }
+                return MyCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.grid_on_rounded,
+                                color: Colors.blue, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'A4 Layout',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                Text(
+                                  'Configure barcode grid for A4 paper',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                          color: colorScheme.onSurface
+                                              .withValues(alpha: 0.5)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Columns (barcodes per line)
+                      Text(
+                        'Barcodes per Line',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.6),
+                              letterSpacing: 0.4,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            onPressed: () {
+                              if (controller.rxA4Columns.value > 1) {
+                                controller.rxA4Columns.value =
+                                    controller.rxA4Columns.value - 1;
+                              }
+                            },
+                            tooltip: 'Decrease',
+                          ),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(8),
+                                border:
+                                    Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                              ),
+                              alignment: Alignment.center,
+                              child: Obx(() => Text(
+                                    '${controller.rxA4Columns.value} column${controller.rxA4Columns.value > 1 ? 's' : ''}',
+                                    style: const TextStyle(
+                                        fontSize: 16, fontWeight: FontWeight.bold),
+                                  )),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            onPressed: () {
+                              if (controller.rxA4Columns.value < 10) {
+                                controller.rxA4Columns.value =
+                                    controller.rxA4Columns.value + 1;
+                              }
+                            },
+                            tooltip: 'Increase',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Rows (lines per page)
+                      Text(
+                        'Lines per Page',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.6),
+                              letterSpacing: 0.4,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            onPressed: () {
+                              if (controller.rxA4Rows.value > 1) {
+                                controller.rxA4Rows.value =
+                                    controller.rxA4Rows.value - 1;
+                              }
+                            },
+                            tooltip: 'Decrease',
+                          ),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.indigo.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: Colors.indigo.withValues(alpha: 0.3)),
+                              ),
+                              alignment: Alignment.center,
+                              child: Obx(() => Text(
+                                    '${controller.rxA4Rows.value} line${controller.rxA4Rows.value > 1 ? 's' : ''}',
+                                    style: const TextStyle(
+                                        fontSize: 16, fontWeight: FontWeight.bold),
+                                  )),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            onPressed: () {
+                              if (controller.rxA4Rows.value < 20) {
+                                controller.rxA4Rows.value =
+                                    controller.rxA4Rows.value + 1;
+                              }
+                            },
+                            tooltip: 'Increase',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Capacity display
+                      Obx(() {
+                        final cols = controller.rxA4Columns.value;
+                        final rows = controller.rxA4Rows.value;
+                        final total = cols * rows;
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.teal.withValues(alpha: 0.1),
+                                Colors.green.withValues(alpha: 0.1)
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                                color: Colors.teal.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.grid_on_rounded,
+                                  color: Colors.teal, size: 24),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Page Capacity',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.teal.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    RichText(
+                                      text: TextSpan(
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.teal.shade800,
+                                        ),
+                                        children: [
+                                          TextSpan(text: '$total '),
+                                          TextSpan(
+                                            text:
+                                                'barcode${total > 1 ? 's' : ''}',
+                                            style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.normal),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding:
+                                    const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.teal.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${cols}×${rows}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.teal.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 24),
+
               // ── Save Button ───────────────────────────────────────────────
               SizedBox(
                 width: double.infinity,

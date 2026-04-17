@@ -48,6 +48,10 @@ class ControllerHomeSettings extends GetxController {
 
   final extraInfoController = TextEditingController();
 
+  /// A4 layout settings (only used when paper size is 'A4')
+  final rxA4Columns = 3.obs; // barcodes per line
+  final rxA4Rows = 8.obs;    // lines per page
+
   /// Whether a printer fetch is in progress
   final rxFetchingPrinters = false.obs;
 
@@ -132,6 +136,8 @@ class ControllerHomeSettings extends GetxController {
     rxShowPrice.value      = _storage.readBool('printer_show_price') ?? false;
     rxExtraInfo.value      = _storage.readString('printer_extra_info') ?? '';
     extraInfoController.text = rxExtraInfo.value;
+    rxA4Columns.value      = _storage.readInt('printer_a4_columns')    ?? 3;
+    rxA4Rows.value         = _storage.readInt('printer_a4_rows')       ?? 8;
   }
 
   /// Fetches available printers from the OS using the `printing` package.
@@ -164,6 +170,8 @@ class ControllerHomeSettings extends GetxController {
     await _storage.writeBool('printer_show_name',      rxShowName.value);
     await _storage.writeBool('printer_show_price',     rxShowPrice.value);
     await _storage.writeString('printer_extra_info',   rxExtraInfo.value);
+    await _storage.writeInt('printer_a4_columns',      rxA4Columns.value);
+    await _storage.writeInt('printer_a4_rows',         rxA4Rows.value);
 
     Get.snackbar(
       'Saved',

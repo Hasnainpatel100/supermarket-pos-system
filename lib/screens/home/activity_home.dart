@@ -7,7 +7,6 @@ import 'package:super_market/screens/home/fragment/pos/fragment_home_pos.dart';
 import 'package:super_market/screens/home/fragment/purchase_supplier/purchase/frag_home_purchase.dart';
 import 'package:super_market/screens/home/fragment/purchase_supplier/supplier/frag_home_supplier.dart';
 import 'package:super_market/screens/home/fragment/stocks/fragment_home_stock.dart';
-
 import '../../commons/frag_coming_soon.dart';
 import '../../enums/enum_main_menu.dart';
 import '../../model/entity_user.dart';

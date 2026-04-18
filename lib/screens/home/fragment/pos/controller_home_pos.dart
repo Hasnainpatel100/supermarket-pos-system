@@ -70,6 +70,10 @@ class BillSession {
   final rxSelectedCartIndex = (-1).obs;
   final rxRemark = ''.obs;
 
+  // Quick Customer Entry
+  final rxQuickCustomerName = ''.obs;
+  final rxQuickCustomerPhone = ''.obs;
+
   BillSession({required this.id});
 
   void dispose() {
@@ -510,7 +514,23 @@ class ControllerHomePos extends GetxController {
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     final todayDate = DateFormat('d/MM/yyyy').format(DateTime.now());
 
-    final customer = session.rxSelectedCustomer.value;
+    EntityCustomer? customer = session.rxSelectedCustomer.value;
+    
+    // If no customer selected but quick name/phone entered
+    if (customer == null && 
+        (session.rxQuickCustomerName.value.isNotEmpty || session.rxQuickCustomerPhone.value.isNotEmpty)) {
+      final newCust = EntityCustomer(
+        name: session.rxQuickCustomerName.value,
+        phone: session.rxQuickCustomerPhone.value,
+        isActive: true,
+        createdAtUtcMs: now,
+        updatedAtUtcMs: now,
+      );
+      final cid = _boxCustomer.put(newCust);
+      customer = _boxCustomer.get(cid);
+      loadCustomers(); // Refresh list
+    }
+
     final customerName = customer != null ? "${customer.name}" : "Walk-in";
     final customerPhone = customer?.phone ?? "";
 

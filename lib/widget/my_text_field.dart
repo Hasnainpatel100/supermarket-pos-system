@@ -28,10 +28,10 @@ class MyTextField extends StatelessWidget {
       obscureText: obscure,
       maxLines: maxLines,
 
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      keyboardType: isNumber ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
 
       inputFormatters: isNumber
-          ? <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly]
+          ? <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))]
           : null,
 
       // ✅ Validator without layout jump

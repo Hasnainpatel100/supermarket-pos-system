@@ -4,6 +4,7 @@ import '../../model/entity_item.dart';
 import '../../model/entity_tax.dart';
 import '../../service/service_item.dart';
 import '../../service/service_object_box.dart';
+import '../../service/service_item_excel.dart';
 import 'activity_item_batch_form.dart';
 
 class ControllerItemForm extends GetxController {
@@ -27,6 +28,9 @@ class ControllerItemForm extends GetxController {
 
   // ── Basic Fields ──
   final rxUnit = RxnString();
+  final RxList<String> rxUnits = <String>[
+    'pcs', 'Box', 'KG', 'g', 'L', 'ML', 'Dozen', 'Tray', 'Bottle',
+  ].obs;
 
   // ── Category ──
   final RxList<String> rxCategories = <String>[
@@ -88,7 +92,15 @@ class ControllerItemForm extends GetxController {
     priceController.text = editingItem?.sellingPrice?.toString() ?? '';
     costController.text = editingItem?.costPrice?.toString() ?? '';
     unitController.text = editingItem?.unit ?? '';
-    rxUnit.value = editingItem?.unit;
+    final u = editingItem?.unit;
+    if (u != null && u.isNotEmpty) {
+      if (!rxUnits.contains(u)) {
+        rxUnits.add(u);
+      }
+      rxUnit.value = u;
+    } else {
+      rxUnit.value = null;
+    }
     hasExpiry.value = editingItem?.hasExpiry ?? false;
     rxCategory.value = editingItem?.category;
     rxTaxType.value = editingItem?.taxType ?? 'exclusive';
@@ -239,6 +251,61 @@ class ControllerItemForm extends GetxController {
     } catch (e) {
       Get.snackbar("Error", "Duplicate SKU / Barcode");
     }
+  }
+
+  // ── Import/Export ──
+  void exportToExcel() async {
+    final items = itemService.getAllItems();
+    if (items.isEmpty) {
+      Get.snackbar("Info", "No items to export");
+      return;
+    }
+    
+    final excelService = ServiceItemExcel();
+    bool success = await excelService.exportItems(items);
+    if (!success) {
+      Get.snackbar("Error", "Failed to export items", snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  void importFromExcel() async {
+    final excelService = ServiceItemExcel();
+    final importedItems = await excelService.importItems();
+    
+    if (importedItems == null) {
+      return; // cancelled or failed to read
+    }
+    
+    if (importedItems.isEmpty) {
+      Get.snackbar("Error", "No valid items found in excel", snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    
+    int successCount = 0;
+    int failCount = 0;
+    
+    for (var item in importedItems) {
+      try {
+        if (item.barcode != null && item.barcode!.isNotEmpty) {
+           final existing = itemService.findByBarcode(item.barcode!);
+           if (existing != null) {
+             failCount++;
+             continue; // ignore duplicates
+           }
+        }
+        itemService.createItem(item);
+        successCount++;
+      } catch (e) {
+        failCount++;
+      }
+    }
+    
+    Get.snackbar(
+       "Import Complete", 
+       "Successfully imported $successCount items. Failed/Skipped: $failCount.",
+       snackPosition: SnackPosition.BOTTOM,
+       duration: const Duration(seconds: 4)
+    );
   }
 
   @override

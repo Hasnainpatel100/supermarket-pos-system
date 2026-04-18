@@ -53,6 +53,15 @@ class FragmentHomeItem extends StatelessWidget {
           ],
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () => controller.exportExcel(),
+            icon: const Icon(Icons.download_rounded, size: 18),
+            label: const Text('Export', style: TextStyle(fontWeight: FontWeight.bold)),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.blue.shade700,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+          ),
           Container(
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(

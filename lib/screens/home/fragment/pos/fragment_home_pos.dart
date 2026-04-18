@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../model/entity_item.dart';
 import '../../../../model/entity_customer.dart';
+import 'activity_split_bill.dart';
 import 'controller_home_pos.dart';
 
 class FragmentHomePos extends StatelessWidget {
@@ -395,6 +396,7 @@ class _CartDataTable extends StatelessWidget {
               DataColumn(label: Text("PRICE/UNIT(₹)"), numeric: true),
               DataColumn(label: Text("DISC(₹)"), numeric: true),
               DataColumn(label: Text("TOTAL(₹)"), numeric: true),
+              DataColumn(label: Text("")),
             ],
             rows: List.generate(session.rxCartItems.length, (index) {
               final item = session.rxCartItems[index];
@@ -416,7 +418,12 @@ class _CartDataTable extends StatelessWidget {
                   DataCell(Text("${index + 1}", style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12))),
                   DataCell(Text(item.itemBarcode ?? '-', style: TextStyle(fontFamily: 'monospace', fontSize: 12, color: cs.onSurfaceVariant))),
                   DataCell(Text(item.itemName ?? '-', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
-                  DataCell(Text("${item.qty}", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: cs.primary))),
+                  DataCell(
+                    InkWell(
+                      onTap: () => controller.handleShortcut(LogicalKeyboardKey.f2),
+                      child: Text("${item.qty}", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: cs.primary)),
+                    ),
+                  ),
                   DataCell(Text(item.unit ?? '-', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant))),
                   DataCell(Text((item.price ?? 0).toStringAsFixed(2), style: const TextStyle(fontSize: 12))),
                   DataCell(Text(
@@ -427,6 +434,26 @@ class _CartDataTable extends StatelessWidget {
                     (item.total ?? 0).toStringAsFixed(2),
                     style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                   )),
+                  DataCell(
+                    InkWell(
+                      onTap: () {
+                        controller.removeFromCart(index);
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 16,
+                          color: Colors.red.shade400,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               );
             }),
@@ -663,101 +690,135 @@ class _CustomerSection extends StatelessWidget {
         );
       }
 
-      // Not selected — show autocomplete
+      // Not selected — show quick entry + autocomplete
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Autocomplete<EntityCustomer>(
-            optionsBuilder: (TextEditingValue textEditingValue) {
-              if (textEditingValue.text.isEmpty) return const Iterable<EntityCustomer>.empty();
-              return controller.rxListCustomers.where((c) =>
-                  (c.name?.toLowerCase().contains(textEditingValue.text.toLowerCase()) ?? false) ||
-                  (c.phone?.contains(textEditingValue.text) ?? false));
-            },
-            displayStringForOption: (EntityCustomer option) => "${option.name} | ${option.phone ?? ''}",
-            onSelected: (EntityCustomer selection) {
-              session.rxSelectedCustomer.value = selection;
-            },
-            optionsViewBuilder: (context, onSelected, options) {
-              return Align(
-                alignment: Alignment.topLeft,
-                child: Material(
-                  elevation: 6,
-                  borderRadius: BorderRadius.circular(12),
-                  shadowColor: cs.shadow.withValues(alpha: 0.15),
-                  child: Container(
-                    constraints: const BoxConstraints(maxHeight: 250, maxWidth: 380),
-                    decoration: BoxDecoration(
-                      color: cs.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
-                    ),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      shrinkWrap: true,
-                      itemCount: options.length,
-                      separatorBuilder: (_, __) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
-                      itemBuilder: (context, index) {
-                        final c = options.elementAt(index);
-                        return ListTile(
-                          dense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                          leading: CircleAvatar(
-                            radius: 15,
-                            backgroundColor: cs.secondaryContainer,
-                            child: Text(
-                              (c.name ?? '?')[0].toUpperCase(),
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: cs.onSecondaryContainer),
-                            ),
+          Row(
+            children: [
+              Expanded(
+                child: Autocomplete<EntityCustomer>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) return const Iterable<EntityCustomer>.empty();
+                    return controller.rxListCustomers.where((c) =>
+                        (c.name?.toLowerCase().contains(textEditingValue.text.toLowerCase()) ?? false) ||
+                        (c.phone?.contains(textEditingValue.text) ?? false));
+                  },
+                  displayStringForOption: (EntityCustomer option) => "${option.name} | ${option.phone ?? ''}",
+                  onSelected: (EntityCustomer selection) {
+                    session.rxSelectedCustomer.value = selection;
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 6,
+                        borderRadius: BorderRadius.circular(12),
+                        shadowColor: cs.shadow.withValues(alpha: 0.15),
+                        child: Container(
+                          constraints: const BoxConstraints(maxHeight: 250, maxWidth: 380),
+                          decoration: BoxDecoration(
+                            color: cs.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
                           ),
-                          title: Text(c.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-                          subtitle: Text(c.phone ?? '-', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
-                          onTap: () => onSelected(c),
-                        );
-                      },
-                    ),
-                  ),
+                          child: ListView.separated(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            separatorBuilder: (_, __) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
+                            itemBuilder: (context, index) {
+                              final c = options.elementAt(index);
+                              return ListTile(
+                                dense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                leading: CircleAvatar(
+                                  radius: 15,
+                                  backgroundColor: cs.secondaryContainer,
+                                  child: Text(
+                                    (c.name ?? '?')[0].toUpperCase(),
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: cs.onSecondaryContainer),
+                                  ),
+                                ),
+                                title: Text(c.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                                subtitle: Text(c.phone ?? '-', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+                                onTap: () => onSelected(c),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      controller: textController,
+                      focusNode: focusNode,
+                      style: const TextStyle(fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: "Search customer…",
+                        hintStyle: TextStyle(fontSize: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                        prefixIcon: Icon(Icons.person_search_rounded, size: 18, color: cs.primary),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: cs.primary, width: 1.5),
+                        ),
+                        filled: true,
+                        fillColor: cs.surface,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-            fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
-              return TextField(
-                controller: textController,
-                focusNode: focusNode,
-                style: const TextStyle(fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: "Search customer…",
-                  hintStyle: TextStyle(fontSize: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
-                  prefixIcon: Icon(Icons.person_search_rounded, size: 18, color: cs.primary),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: cs.primary, width: 1.5),
-                  ),
-                  filled: true,
-                  fillColor: cs.surface,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 36,
-            child: OutlinedButton.icon(
-              onPressed: controller.openCustomerForm,
-              icon: Icon(Icons.person_add_alt_1_rounded, size: 16, color: cs.primary),
-              label: Text("Add New Customer", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary)),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                side: BorderSide(color: cs.primary.withValues(alpha: 0.3)),
               ),
-            ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                onPressed: controller.openCustomerForm,
+                icon: const Icon(Icons.add_rounded, size: 20),
+                tooltip: "Full Customer Form",
+                style: IconButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.all(10),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Quick Entry Fields
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  style: const TextStyle(fontSize: 12),
+                  decoration: InputDecoration(
+                    labelText: "Customer Name",
+                    labelStyle: const TextStyle(fontSize: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  onChanged: (val) => session.rxQuickCustomerName.value = val,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  style: const TextStyle(fontSize: 12),
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: "Phone Number",
+                    labelStyle: const TextStyle(fontSize: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  onChanged: (val) => session.rxQuickCustomerPhone.value = val,
+                ),
+              ),
+            ],
           ),
         ],
       );
@@ -903,15 +964,20 @@ class _PaymentSection extends StatelessWidget {
             segments: const [
               ButtonSegment(value: 'Cash', label: Text('Cash'), icon: Icon(Icons.payments_outlined, size: 16)),
               ButtonSegment(value: 'UPI', label: Text('UPI'), icon: Icon(Icons.qr_code_rounded, size: 16)),
-              ButtonSegment(value: 'Card', label: Text('Card'), icon: Icon(Icons.credit_card_rounded, size: 16)),
               ButtonSegment(value: 'Split', label: Text('Split'), icon: Icon(Icons.call_split_rounded, size: 16)),
             ],
             selected: {session.rxPaymentMode.value},
             onSelectionChanged: (selected) {
-              session.rxPaymentMode.value = selected.first;
               if (selected.first == 'Split') {
-                session.initSplitPayment(2, session.rxGrandTotal.value);
+                if (session.rxCartItems.isEmpty) {
+                  Get.snackbar('Cart Empty', 'Add items before splitting the bill',
+                      snackPosition: SnackPosition.TOP);
+                  return;
+                }
+                Get.to(() => const ActivitySplitBill());
+                return;
               }
+              session.rxPaymentMode.value = selected.first;
             },
             showSelectedIcon: false,
             style: ButtonStyle(
@@ -925,13 +991,6 @@ class _PaymentSection extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        // Split Payment Section
-        Obx(() {
-          final session = controller.activeSession;
-          if (session.rxPaymentMode.value != 'Split') return const SizedBox.shrink();
-          
-          return _SplitPaymentSection(controller: controller);
-        }),
 
         // Amount Received (hidden when Split mode)
         Obx(() {

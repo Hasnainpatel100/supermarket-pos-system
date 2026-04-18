@@ -13,6 +13,7 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_currency.dart';
 import '../../../../service/service_item.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_item_excel.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sort field constants
@@ -252,6 +253,20 @@ class ControllerHomeItem extends GetxController {
     if (item.id != null) {
       _itemService.deleteItem(item.id!);
       loadItems();
+    }
+  }
+
+  // ── Excel Export ──────────────────────────────────────────────────────────
+  void exportExcel() async {
+    if (_allItems.isEmpty) {
+      Get.snackbar("Info", "No items to export");
+      return;
+    }
+    
+    final excelService = ServiceItemExcel();
+    bool success = await excelService.exportItems(_allItems);
+    if (!success) {
+      Get.snackbar("Error", "Failed to export items", snackPosition: SnackPosition.BOTTOM);
     }
   }
 

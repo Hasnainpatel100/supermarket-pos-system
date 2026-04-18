@@ -13,13 +13,11 @@ import '../../enums/enum_main_menu.dart';
 import '../../model/entity_user.dart';
 import '../../repository/repo_drawer.dart';
 import 'controller_home.dart';
-import 'fragment/frag_home_dashboard.dart';
+import 'fragment/dashboard/frag_home_dashboard.dart';
 import 'fragment/frag_home_logout.dart';
-// import 'fragment/frag_home_pos.dart'; // Removed to avoid conflict
-import 'fragment/frag_home_price_discount.dart';
 import 'fragment/report/frag_home_report.dart';
-import 'fragment/frag_home_settings.dart';
-import 'fragment/controller_home_settings.dart';
+import 'fragment/setting/frag_home_settings.dart';
+import 'fragment/setting/controller_home_settings.dart';
 import 'fragment/users/frag_home_users.dart';
 
 class ActivityHome extends StatelessWidget {
@@ -41,7 +39,7 @@ class ActivityHome extends StatelessWidget {
               return SizedBox();
             }
             return SizedBox(
-              width: controller.isDrawerCollapsed.value ? 70 : 260,
+              width: controller.isDrawerCollapsed.value ? 70 : 200,
               child: RepoDrawer.drawerList(user),
             );
           }),
@@ -66,10 +64,6 @@ class ActivityHome extends StatelessWidget {
               if (controller.selectedMainMenu.value == EnumMainMenu.customer) {
                 return FragmentHomeCustomer();
               }
-              if (controller.selectedMainMenu.value ==
-                  EnumMainMenu.pricingDiscount) {
-                return FragHomePriceDiscount();
-              }
               if (controller.selectedMainMenu.value == EnumMainMenu.reports) {
                 return FragHomeReport();
               }
@@ -79,7 +73,6 @@ class ActivityHome extends StatelessWidget {
               if(controller.selectedMainMenu.value == EnumMainMenu.supplier){
                 return FragmentHomeSupplier();
               }
-
               if (controller.selectedMainMenu.value ==
                   EnumMainMenu.systemUsers) {
                 return FragHomeUsers(entityUser: controller.rxUser.value);

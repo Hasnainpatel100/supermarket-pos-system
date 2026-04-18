@@ -1,8 +1,8 @@
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
-import '../../../model/entity_bill.dart';
-import '../../../objectbox.g.dart';
-import '../../../service/service_object_box.dart';
+import '../../../../model/entity_bill.dart';
+import '../../../../objectbox.g.dart';
+import '../../../../service/service_object_box.dart';
 
 class ControllerHomeDashboard extends GetxController {
   late final Box<EntityBill> _boxBill;

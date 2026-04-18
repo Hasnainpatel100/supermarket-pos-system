@@ -194,6 +194,8 @@ class FragmentHomeSupplier extends StatelessWidget {
                             Colors.green),
                         _col(context, 'GST',
                             Icons.receipt_long_rounded, Colors.orange),
+                        _col(context, 'Outstanding',
+                            Icons.account_balance_wallet_rounded, Colors.red),
                         _col(context, 'Status',
                             Icons.toggle_on_rounded, Colors.purple),
                         _col(context, 'Actions',
@@ -302,6 +304,9 @@ class FragmentHomeSupplier extends StatelessWidget {
               color: isActive ? Colors.grey.shade700 : Colors.grey),
         )),
 
+        // Outstanding balance
+        DataCell(_buildOutstandingCell(s)),
+
         // Status badge
         DataCell(_statusBadge(isActive)),
 
@@ -370,6 +375,28 @@ class FragmentHomeSupplier extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOutstandingCell(EntitySupplier s) {
+    final amount = s.totalOutstanding ?? 0;
+    if (amount <= 0.001) {
+      return Text('—',
+          style: TextStyle(color: Colors.grey.shade400, fontSize: 13));
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '₹ ${amount.toStringAsFixed(2)}',
+        style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.red.shade700),
+      ),
     );
   }
 
@@ -578,7 +605,7 @@ class FragmentHomeSupplier extends StatelessWidget {
         shape:
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
-          width: 500,
+          width: 540,
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -603,7 +630,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                 ],
               ),
               const Divider(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _detailRow('Code', s.supplierCode),
               _detailRow('Name', s.name),
               _detailRow('Contact Person', s.contactPerson),
@@ -611,7 +638,60 @@ class FragmentHomeSupplier extends StatelessWidget {
               _detailRow('Email', s.email),
               _detailRow('GST Number', s.gstNumber),
               _detailRow('Address', s.address),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+
+              // ── Outstanding Balance ──
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: (s.totalOutstanding ?? 0) > 0.001
+                      ? Colors.red.withOpacity(0.06)
+                      : Colors.green.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: (s.totalOutstanding ?? 0) > 0.001
+                        ? Colors.red.shade200
+                        : Colors.green.shade200,
+                  ),
+                ),
+                child: Row(children: [
+                  Icon(
+                    (s.totalOutstanding ?? 0) > 0.001
+                        ? Icons.account_balance_wallet_rounded
+                        : Icons.check_circle_rounded,
+                    color: (s.totalOutstanding ?? 0) > 0.001
+                        ? Colors.red.shade600
+                        : Colors.green.shade600,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Total Outstanding',
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w500)),
+                      Text(
+                        (s.totalOutstanding ?? 0) > 0.001
+                            ? '₹ ${s.totalOutstanding!.toStringAsFixed(2)}'
+                            : 'No dues — fully settled',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: (s.totalOutstanding ?? 0) > 0.001
+                              ? Colors.red.shade700
+                              : Colors.green.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ]),
+              ),
+
+              const SizedBox(height: 20),
               Align(
                 alignment: Alignment.centerRight,
                 child: FilledButton(

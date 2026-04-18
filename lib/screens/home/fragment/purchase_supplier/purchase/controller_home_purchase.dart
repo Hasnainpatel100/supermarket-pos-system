@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 
+import '../../../../../enums/enum_payement_mode.dart';
 import '../../../../../enums/enum_purchase_status.dart';
 import '../../../../../enums/enum_stock_txn_type.dart';
 import '../../../../../model/entity_item.dart';
 import '../../../../../model/entity_item_batch.dart';
+import '../../../../../model/entity_payment.dart';
 import '../../../../../model/entity_purchase.dart';
 import '../../../../../model/entity_purchase_item.dart';
 import '../../../../../model/entity_stock_transaction.dart';
 import '../../../../../model/entity_supplier.dart';
+import '../../../../../model/entity_payment_schedule.dart';
 import '../../../../../objectbox.g.dart';
 import '../../../../../service/service_object_box.dart';
 
@@ -20,6 +23,8 @@ class ControllerHomePurchase extends GetxController {
   late final Box<EntityItemBatch> _boxBatch;
   late final Box<EntityStockTransaction> _boxStockTxn;
   late final Box<EntitySupplier> _boxSupplier;
+  late final Box<EntityPayment> _boxPayment;
+  late final Box<EntityPaymentSchedule> _boxSchedule;
 
   final RxList<EntityPurchase> rxListPurchase = <EntityPurchase>[].obs;
   final RxString searchQuery = ''.obs;
@@ -46,6 +51,9 @@ class ControllerHomePurchase extends GetxController {
     _boxBatch = ob.box<EntityItemBatch>();
     _boxStockTxn = ob.box<EntityStockTransaction>();
     _boxSupplier = ob.box<EntitySupplier>();
+    _boxPayment = ob.box<EntityPayment>();
+    _boxSchedule = ob.box<EntityPaymentSchedule>();
+
 
     loadPurchases();
 
@@ -148,6 +156,7 @@ class ControllerHomePurchase extends GetxController {
     required DateTime purchaseDate,
     DateTime? expectedDate,
     required List<_PurchaseItemInput> items,
+    String? notes,
     int? createdByUserId,
   }) {
     if (items.isEmpty) return 'At least one item is required';
@@ -169,6 +178,9 @@ class ControllerHomePurchase extends GetxController {
       expectedDateUtcMs: expectedDate?.toUtc().millisecondsSinceEpoch,
       status: PurchaseStatus.ordered.index,
       totalAmount: totalAmount,
+      amountPaid: 0,
+      amountDue: totalAmount,
+      notes: notes,
       createdByUserId: createdByUserId,
       createdAtUtcMs: now,
       updatedAtUtcMs: now,
@@ -189,6 +201,9 @@ class ControllerHomePurchase extends GetxController {
       _boxPurchaseItem.put(pi);
     }
 
+    // Update supplier outstanding cache
+    _recalcSupplierOutstanding(supplierId);
+
     loadPurchases();
     return null;
   }
@@ -198,14 +213,7 @@ class ControllerHomePurchase extends GetxController {
   // ─────────────────────────────────────────────
 
   /// Called when goods physically arrive at the store.
-  /// For each received item this method:
-  ///   1. Creates StockTransaction (purchaseIn) — source of truth
-  ///   2. Creates ItemBatch if item.hasExpiry == true
-  ///   3. Updates EntityItem.totalQty (cache)
-  ///   4. Updates PurchaseItem.receivedQty
-  ///   5. Updates Purchase.status (PARTIAL / RECEIVED)
-  ///
-  /// Returns error string or null on success.
+  /// Wraps everything in a single ObjectBox write transaction.
   String? receiveGoods({
     required EntityPurchase purchase,
     required List<_ReceiveItemInput> receivedItems,
@@ -216,54 +224,57 @@ class ControllerHomePurchase extends GetxController {
       if (r.receivedQty <= 0) return 'Received qty must be > 0';
     }
 
+    final ob = Get.find<ServiceObjectBox>();
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     final allPurchaseItems = getItemsForPurchase(purchase.id);
 
-    for (final r in receivedItems) {
-      // ── 1. StockTransaction ──
-      _boxStockTxn.put(EntityStockTransaction(
-        itemId: r.itemId,
-        type: StockTxnType.purchaseIn.index,
-        quantity: r.receivedQty,
-        referenceType: 'purchase',
-        referenceId: purchase.id.toString(),
-        remarks: 'Received via ${purchase.purchaseNo}',
-        performedByUserId: performedByUserId,
-        createdAtUtcMs: now,
-      ));
-
-      // ── 2. ItemBatch (only if hasExpiry) ──
-      final item = _boxItem.get(r.itemId);
-      if (item != null && (item.hasExpiry ?? false)) {
-        _boxBatch.put(EntityItemBatch(
+    ob.store.runInTransaction(TxMode.write, () {
+      for (final r in receivedItems) {
+        // ── 1. StockTransaction ──
+        _boxStockTxn.put(EntityStockTransaction(
           itemId: r.itemId,
-          batchNo: r.batchNo,
-          expiryDateUtcMs: r.expiryDateUtcMs,
+          type: StockTxnType.purchaseIn.index,
           quantity: r.receivedQty,
-          receivedAtUtcMs: now,
+          referenceType: 'purchase',
+          referenceId: purchase.id.toString(),
+          remarks: 'Received via ${purchase.purchaseNo}',
+          performedByUserId: performedByUserId,
+          createdAtUtcMs: now,
         ));
+
+        // ── 2. ItemBatch (only if hasExpiry) ──
+        final item = _boxItem.get(r.itemId);
+        if (item != null && (item.hasExpiry ?? false)) {
+          _boxBatch.put(EntityItemBatch(
+            itemId: r.itemId,
+            batchNo: r.batchNo,
+            expiryDateUtcMs: r.expiryDateUtcMs,
+            quantity: r.receivedQty,
+            receivedAtUtcMs: now,
+          ));
+        }
+
+        // ── 3. Update item totalQty cache ──
+        if (item != null) {
+          item.totalQty = (item.totalQty ?? 0) + r.receivedQty;
+          item.updatedAtUtcMs = now;
+          _boxItem.put(item);
+        }
+
+        // ── 4. Update PurchaseItem.receivedQty ──
+        final purchaseItem =
+            allPurchaseItems.where((pi) => pi.itemId == r.itemId).firstOrNull;
+        if (purchaseItem != null) {
+          purchaseItem.receivedQty =
+              (purchaseItem.receivedQty ?? 0) + r.receivedQty;
+          _boxPurchaseItem.put(purchaseItem);
+        }
       }
 
-      // ── 3. Update item totalQty cache ──
-      if (item != null) {
-        item.totalQty = (item.totalQty ?? 0) + r.receivedQty;
-        item.updatedAtUtcMs = now;
-        _boxItem.put(item);
-      }
+      // ── 5. Auto-update purchase status ──
+      _updatePurchaseStatus(purchase);
+    });
 
-      // ── 4. Update PurchaseItem.receivedQty ──
-      final purchaseItem = allPurchaseItems
-          .where((pi) => pi.itemId == r.itemId)
-          .firstOrNull;
-      if (purchaseItem != null) {
-        purchaseItem.receivedQty =
-            (purchaseItem.receivedQty ?? 0) + r.receivedQty;
-        _boxPurchaseItem.put(purchaseItem);
-      }
-    }
-
-    // ── 5. Auto-update purchase status ──
-    _updatePurchaseStatus(purchase);
     loadPurchases();
     return null;
   }
@@ -274,10 +285,115 @@ class ControllerHomePurchase extends GetxController {
 
   void cancelPurchase(EntityPurchase purchase) {
     purchase.status = PurchaseStatus.cancelled.index;
-    purchase.updatedAtUtcMs =
-        DateTime.now().toUtc().millisecondsSinceEpoch;
+    purchase.updatedAtUtcMs = DateTime.now().toUtc().millisecondsSinceEpoch;
     _boxPurchase.put(purchase);
+
+    // Recalculate supplier outstanding (cancelled PO no longer counts)
+    if (purchase.supplierId != null) {
+      _recalcSupplierOutstanding(purchase.supplierId!);
+    }
+
     loadPurchases();
+  }
+
+  // ─────────────────────────────────────────────
+  //  PAYMENT TRACKING
+  // ─────────────────────────────────────────────
+
+  /// Records a payment against a specific Purchase Order.
+  /// Updates purchase.amountPaid, purchase.amountDue and
+  /// recalculates supplier.totalOutstanding cache.
+  ///
+  /// Returns error string or null on success.
+  String? recordPayment({
+    required EntityPurchase purchase,
+    required double amount,
+    required PaymentMode paymentMode,
+    String? referenceNo,
+    String? note,
+    int? createdByUserId,
+  }) {
+    if (amount <= 0) return 'Payment amount must be greater than 0';
+
+    final outstanding = purchase.outstandingAmount;
+    if (amount > outstanding + 0.001) {
+      return 'Payment (₹${amount.toStringAsFixed(2)}) exceeds outstanding amount (₹${outstanding.toStringAsFixed(2)})';
+    }
+
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+
+    // ── 1. Save EntityPayment record ──
+    final payment = EntityPayment(
+      supplierId: purchase.supplierId,
+      purchaseId: purchase.id,
+      supplierName: purchase.supplierName,
+      purchaseNo: purchase.purchaseNo,
+      amount: amount,
+      paymentMode: paymentMode.index,
+      referenceNo: referenceNo?.trim().isNotEmpty == true
+          ? referenceNo!.trim()
+          : null,
+      note: note?.trim().isNotEmpty == true ? note!.trim() : null,
+      createdByUserId: createdByUserId,
+      createdAtUtcMs: now,
+    );
+    _boxPayment.put(payment);
+
+    // ── 2. Update purchase payment cache ──
+    purchase.amountPaid = (purchase.amountPaid ?? 0) + amount;
+    purchase.amountDue = (purchase.totalAmount ?? 0) - purchase.amountPaid!;
+    purchase.updatedAtUtcMs = now;
+    _boxPurchase.put(purchase);
+
+    // ── 3. Recalculate supplier outstanding ──
+    if (purchase.supplierId != null) {
+      _recalcSupplierOutstanding(purchase.supplierId!);
+    }
+
+    loadPurchases();
+    return null;
+  }
+
+  /// Returns all payments for a given purchase, newest first.
+  List<EntityPayment> getPaymentsForPurchase(int purchaseId) {
+    return _boxPayment
+        .query(EntityPayment_.purchaseId.equals(purchaseId))
+        .order(EntityPayment_.createdAtUtcMs, flags: Order.descending)
+        .build()
+        .find();
+  }
+
+  /// Returns all payments for a supplier, newest first.
+  List<EntityPayment> getPaymentsForSupplier(int supplierId) {
+    return _boxPayment
+        .query(EntityPayment_.supplierId.equals(supplierId))
+        .order(EntityPayment_.createdAtUtcMs, flags: Order.descending)
+        .build()
+        .find();
+  }
+
+  /// Recalculates and caches supplier.totalOutstanding from live purchase data.
+  /// Called after any payment or PO create/cancel.
+  void _recalcSupplierOutstanding(int supplierId) {
+    final supplier = _boxSupplier.get(supplierId);
+    if (supplier == null) return;
+
+    // Sum amountDue for all non-cancelled purchases of this supplier
+    final purchases = _boxPurchase
+        .query(
+      EntityPurchase_.supplierId.equals(supplierId).and(
+        EntityPurchase_.status.notEquals(PurchaseStatus.cancelled.index),
+      ),
+    )
+        .build()
+        .find();
+
+    final total =
+    purchases.fold(0.0, (sum, p) => sum + (p.amountDue ?? 0));
+
+    supplier.totalOutstanding = total < 0 ? 0 : total;
+    supplier.updatedAtUtcMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+    _boxSupplier.put(supplier);
   }
 
   // ─────────────────────────────────────────────
@@ -297,8 +413,7 @@ class ControllerHomePurchase extends GetxController {
         ? PurchaseStatus.partial.index
         : purchase.status;
 
-    purchase.updatedAtUtcMs =
-        DateTime.now().toUtc().millisecondsSinceEpoch;
+    purchase.updatedAtUtcMs = DateTime.now().toUtc().millisecondsSinceEpoch;
     _boxPurchase.put(purchase);
   }
 
@@ -306,7 +421,6 @@ class ControllerHomePurchase extends GetxController {
     final date = DateFormat('yyyyMMdd').format(DateTime.now());
     final prefix = 'PO-$date-';
 
-    // Count purchases created today
     final todayStart = DateTime(
       DateTime.now().year,
       DateTime.now().month,
@@ -342,6 +456,68 @@ class ControllerHomePurchase extends GetxController {
   void onClose() {
     searchController.dispose();
     super.onClose();
+  }
+// ─────────────────────────────────────────────
+// PAYMENT SCHEDULE
+// ─────────────────────────────────────────────
+
+  List<EntityPaymentSchedule> getSchedulesForPurchase(int purchaseId) {
+    return _boxSchedule
+        .query(EntityPaymentSchedule_.purchaseId.equals(purchaseId))
+        .order(EntityPaymentSchedule_.dueDateMs)
+        .build()
+        .find();
+  }
+
+  String? addPaymentSchedule({
+    required int purchaseId,
+    required double amount,
+    required DateTime dueDate,
+    String? note,
+  }) {
+    if (amount <= 0) return 'Amount must be greater than 0';
+
+    final purchase = _boxPurchase.get(purchaseId);
+    if (purchase == null) return 'Purchase not found';
+
+    _boxSchedule.put(EntityPaymentSchedule(
+      purchaseId: purchaseId,
+      supplierId: purchase.supplierId,
+      amount: amount,
+      dueDateMs: dueDate.toUtc().millisecondsSinceEpoch,
+      note: note?.trim().isNotEmpty == true ? note!.trim() : null,
+      status: 0,
+      createdAtUtcMs: DateTime.now().toUtc().millisecondsSinceEpoch,
+    ));
+
+    return null;
+  }
+
+  String? markSchedulePaid(int scheduleId) {
+    final schedule = _boxSchedule.get(scheduleId);
+    if (schedule == null) return 'Schedule not found';
+
+    schedule.status = 1;
+    schedule.paidAtMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+
+    _boxSchedule.put(schedule);
+    return null;
+  }
+
+  String? deletePaymentSchedule(int scheduleId) {
+    final removed = _boxSchedule.remove(scheduleId);
+    return removed ? null : 'Could not remove schedule';
+  }
+  List<EntityPurchase> getPurchasesForSupplier(int supplierId) {
+    return _boxPurchase
+        .query(
+      EntityPurchase_.supplierId.equals(supplierId).and(
+        EntityPurchase_.status.notEquals(PurchaseStatus.cancelled.index),
+      ),
+    )
+        .order(EntityPurchase_.createdAtUtcMs)
+        .build()
+        .find();
   }
 }
 

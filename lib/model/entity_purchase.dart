@@ -33,6 +33,15 @@ class EntityPurchase {
   /// Sum of (orderedQty × unitCost) for all items
   double? totalAmount;
 
+  /// Total amount paid against this PO (sum of EntityPayment.amount)
+  double? amountPaid;
+
+  /// Computed: totalAmount - amountPaid. Cached for fast queries.
+  double? amountDue;
+
+  String? notes;
+
+
   /// FK → EntityUser.id
   int? createdByUserId;
 
@@ -48,8 +57,14 @@ class EntityPurchase {
     this.expectedDateUtcMs,
     this.status,
     this.totalAmount,
+    this.amountPaid,
+    this.amountDue,
+    this.notes,
     this.createdByUserId,
     this.createdAtUtcMs,
     this.updatedAtUtcMs,
   });
+
+  double get outstandingAmount => (totalAmount ?? 0) - (amountPaid ?? 0);
+  bool get isFullyPaid => outstandingAmount <= 0;
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:super_market/screens/home/fragment/purchase_supplier/purchase/activity_payment_form.dart';
+import 'package:super_market/screens/home/fragment/purchase_supplier/purchase/screen_supplier_ledger.dart';
 import '../../../../../enums/enum_purchase_status.dart';
 import '../../../../../model/entity_purchase.dart';
 import '../../../../../util/snackbar_util.dart';
@@ -195,6 +197,8 @@ class FragmentHomePurchase extends StatelessWidget {
                             Icons.toggle_on_rounded, Colors.orange),
                         _col(context, 'Total',
                             Icons.currency_rupee_rounded, Colors.green),
+                        _col(context, 'Outstanding',
+                            Icons.account_balance_wallet_rounded, Colors.red),
                         _col(context, 'Actions',
                             Icons.settings_rounded, Colors.grey),
                       ],
@@ -309,6 +313,8 @@ class FragmentHomePurchase extends StatelessWidget {
         status == PurchaseStatus.partial;
     final canCancel = status == PurchaseStatus.ordered ||
         status == PurchaseStatus.draft;
+    final canPay = status != PurchaseStatus.cancelled &&
+        (p.outstandingAmount) > 0.001;
 
     final date = p.purchaseDateUtcMs != null
         ? DateFormat('dd MMM yyyy').format(
@@ -353,6 +359,9 @@ class FragmentHomePurchase extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.w600),
       )),
 
+      // Outstanding
+      DataCell(_buildOutstandingBadge(p)),
+
       // Actions
       DataCell(
         PopupMenuButton<String>(
@@ -367,6 +376,15 @@ class FragmentHomePurchase extends StatelessWidget {
                 break;
               case 'receive':
                 _goReceive(p, controller);
+                break;
+              case 'pay':
+                _goPay(p, controller);
+                break;
+              case 'ledger':
+                Get.to(
+                      () => const ScreenSupplierLedger(),
+                  arguments: p.supplierId,
+                );
                 break;
               case 'cancel':
                 _confirmCancel(context, p, controller);
@@ -391,6 +409,26 @@ class FragmentHomePurchase extends StatelessWidget {
                       size: 20, color: Colors.green.shade600),
                   const SizedBox(width: 12),
                   const Text('Receive Goods'),
+                ]),
+              ),
+            if (canPay)
+              PopupMenuItem(
+                value: 'pay',
+                child: Row(children: [
+                  Icon(Icons.payments_rounded,
+                      size: 20, color: Colors.teal.shade600),
+                  const SizedBox(width: 12),
+                  const Text('Record Payment'),
+                ]),
+              ),
+            if (p.supplierId != null)
+              PopupMenuItem(
+                value: 'ledger',
+                child: Row(children: [
+                  Icon(Icons.menu_book_rounded,
+                      size: 20, color: Colors.indigo.shade600),
+                  const SizedBox(width: 12),
+                  const Text('Supplier Ledger'),
                 ]),
               ),
             if (canCancel)
@@ -531,6 +569,52 @@ class FragmentHomePurchase extends StatelessWidget {
   // ─────────────────────────────────────────────
   //  DIALOGS / NAVIGATION
   // ─────────────────────────────────────────────
+
+  Widget _buildOutstandingBadge(EntityPurchase p) {
+    final outstanding = p.outstandingAmount;
+    final isFullyPaid = outstanding <= 0.001;
+
+    if (isFullyPaid) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.check_circle_rounded,
+              size: 13, color: Colors.green.shade600),
+          const SizedBox(width: 4),
+          Text('Paid',
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green.shade700)),
+        ]),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '₹ ${outstanding.toStringAsFixed(2)}',
+        style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.red.shade700),
+      ),
+    );
+  }
+
+  void _goPay(
+      EntityPurchase purchase, ControllerHomePurchase controller) async {
+    await Get.to(() => const ActivityPaymentForm(), arguments: purchase);
+    controller.loadPurchases();
+  }
 
   void _goReceive(
       EntityPurchase purchase, ControllerHomePurchase controller) async {

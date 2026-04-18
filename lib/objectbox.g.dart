@@ -251,7 +251,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(8, 1529149874091519370),
       name: 'EntityItem',
-      lastPropertyId: const obx_int.IdUid(22, 2526426356779229164),
+      lastPropertyId: const obx_int.IdUid(23, 7893846307999255751),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -366,6 +366,11 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(22, 2526426356779229164),
             name: 'priceAfterTax',
             type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(23, 7893846307999255751),
+            name: 'hsnCode',
+            type: 9,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -917,7 +922,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(18, 2509479489088488472),
       name: 'EntityPurchase',
-      lastPropertyId: const obx_int.IdUid(11, 8568673839615020505),
+      lastPropertyId: const obx_int.IdUid(20, 279936485855467686),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -977,6 +982,51 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(11, 8568673839615020505),
             name: 'updatedAtUtcMs',
             type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(12, 650357860933750376),
+            name: 'supplierInvoiceNo',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(13, 4562064909691719794),
+            name: 'totalDiscountAmount',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 2473485788279787924),
+            name: 'totalExclTax',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(15, 4649810057597634612),
+            name: 'totalTaxAmount',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(16, 6638158446196357793),
+            name: 'roundOff',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(17, 305158098520684014),
+            name: 'grandTotal',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(18, 7237359684559520571),
+            name: 'paidAmount',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(19, 3402819166042043246),
+            name: 'paymentStatus',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(20, 279936485855467686),
+            name: 'notes',
+            type: 9,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -984,7 +1034,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(19, 7663124640416877913),
       name: 'EntityPurchaseItem',
-      lastPropertyId: const obx_int.IdUid(8, 4905175097346979709),
+      lastPropertyId: const obx_int.IdUid(17, 6748786460108747861),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -1026,6 +1076,51 @@ final _entities = <obx_int.ModelEntity>[
         obx_int.ModelProperty(
             id: const obx_int.IdUid(8, 4905175097346979709),
             name: 'receivedQty',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(9, 7925537145829059835),
+            name: 'hsnCode',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(10, 5053207861567579158),
+            name: 'discountPercent',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 3640186704598570959),
+            name: 'discountAmount',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(12, 4241073444625471503),
+            name: 'taxRate',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(13, 5367525401161378343),
+            name: 'taxType',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 7909360973399805268),
+            name: 'isTaxInclusive',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(15, 4432457356284272407),
+            name: 'lineAmountExcl',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(16, 9178834982187400298),
+            name: 'taxAmount',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(17, 6748786460108747861),
+            name: 'lineAmountIncl',
             type: 8,
             flags: 0)
       ],
@@ -1450,7 +1545,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
               object.taxName == null ? null : fbb.writeString(object.taxName!);
           final taxTypeOffset =
               object.taxType == null ? null : fbb.writeString(object.taxType!);
-          fbb.startTable(23);
+          final hsnCodeOffset =
+              object.hsnCode == null ? null : fbb.writeString(object.hsnCode!);
+          fbb.startTable(24);
           fbb.addInt64(0, object.id ?? 0);
           fbb.addOffset(1, skuOffset);
           fbb.addOffset(2, barcodeOffset);
@@ -1473,6 +1570,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addFloat64(19, object.taxAmount);
           fbb.addFloat64(20, object.priceBeforeTax);
           fbb.addFloat64(21, object.priceAfterTax);
+          fbb.addOffset(22, hsnCodeOffset);
           fbb.finish(fbb.endTable());
           return object.id ?? 0;
         },
@@ -1507,6 +1605,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
               .vTableGetNullable(buffer, rootOffset, 44);
           final priceAfterTaxParam = const fb.Float64Reader()
               .vTableGetNullable(buffer, rootOffset, 46);
+          final hsnCodeParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 48);
           final hasExpiryParam =
               const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 20);
           final isActiveParam =
@@ -1536,6 +1636,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
               taxAmount: taxAmountParam,
               priceBeforeTax: priceBeforeTaxParam,
               priceAfterTax: priceAfterTaxParam,
+              hsnCode: hsnCodeParam,
               hasExpiry: hasExpiryParam,
               isActive: isActiveParam,
               totalQty: totalQtyParam,
@@ -2181,7 +2282,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final supplierNameOffset = object.supplierName == null
               ? null
               : fbb.writeString(object.supplierName!);
-          fbb.startTable(12);
+          final supplierInvoiceNoOffset = object.supplierInvoiceNo == null
+              ? null
+              : fbb.writeString(object.supplierInvoiceNo!);
+          final paymentStatusOffset = object.paymentStatus == null
+              ? null
+              : fbb.writeString(object.paymentStatus!);
+          final notesOffset =
+              object.notes == null ? null : fbb.writeString(object.notes!);
+          fbb.startTable(21);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, purchaseNoOffset);
           fbb.addInt64(2, object.supplierId);
@@ -2193,6 +2302,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addInt64(8, object.createdByUserId);
           fbb.addInt64(9, object.createdAtUtcMs);
           fbb.addInt64(10, object.updatedAtUtcMs);
+          fbb.addOffset(11, supplierInvoiceNoOffset);
+          fbb.addFloat64(12, object.totalDiscountAmount);
+          fbb.addFloat64(13, object.totalExclTax);
+          fbb.addFloat64(14, object.totalTaxAmount);
+          fbb.addFloat64(15, object.roundOff);
+          fbb.addFloat64(16, object.grandTotal);
+          fbb.addFloat64(17, object.paidAmount);
+          fbb.addOffset(18, paymentStatusOffset);
+          fbb.addOffset(19, notesOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2203,6 +2321,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
           final purchaseNoParam = const fb.StringReader(asciiOptimization: true)
               .vTableGetNullable(buffer, rootOffset, 6);
+          final supplierInvoiceNoParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 26);
           final supplierIdParam =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 8);
           final supplierNameParam =
@@ -2216,6 +2337,23 @@ obx_int.ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 16);
           final totalAmountParam = const fb.Float64Reader()
               .vTableGetNullable(buffer, rootOffset, 18);
+          final totalDiscountAmountParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 28);
+          final totalExclTaxParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 30);
+          final totalTaxAmountParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 32);
+          final roundOffParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 34);
+          final grandTotalParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 36);
+          final paidAmountParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 38);
+          final paymentStatusParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 40);
+          final notesParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 42);
           final createdByUserIdParam =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 20);
           final createdAtUtcMsParam =
@@ -2225,12 +2363,21 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final object = EntityPurchase(
               id: idParam,
               purchaseNo: purchaseNoParam,
+              supplierInvoiceNo: supplierInvoiceNoParam,
               supplierId: supplierIdParam,
               supplierName: supplierNameParam,
               purchaseDateUtcMs: purchaseDateUtcMsParam,
               expectedDateUtcMs: expectedDateUtcMsParam,
               status: statusParam,
               totalAmount: totalAmountParam,
+              totalDiscountAmount: totalDiscountAmountParam,
+              totalExclTax: totalExclTaxParam,
+              totalTaxAmount: totalTaxAmountParam,
+              roundOff: roundOffParam,
+              grandTotal: grandTotalParam,
+              paidAmount: paidAmountParam,
+              paymentStatus: paymentStatusParam,
+              notes: notesParam,
               createdByUserId: createdByUserIdParam,
               createdAtUtcMs: createdAtUtcMsParam,
               updatedAtUtcMs: updatedAtUtcMsParam);
@@ -2252,7 +2399,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final itemUnitOffset = object.itemUnit == null
               ? null
               : fbb.writeString(object.itemUnit!);
-          fbb.startTable(9);
+          final hsnCodeOffset =
+              object.hsnCode == null ? null : fbb.writeString(object.hsnCode!);
+          final taxTypeOffset =
+              object.taxType == null ? null : fbb.writeString(object.taxType!);
+          fbb.startTable(18);
           fbb.addInt64(0, object.id);
           fbb.addInt64(1, object.purchaseId);
           fbb.addInt64(2, object.itemId);
@@ -2261,6 +2412,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addFloat64(5, object.orderedQty);
           fbb.addFloat64(6, object.unitCost);
           fbb.addFloat64(7, object.receivedQty);
+          fbb.addOffset(8, hsnCodeOffset);
+          fbb.addFloat64(9, object.discountPercent);
+          fbb.addFloat64(10, object.discountAmount);
+          fbb.addFloat64(11, object.taxRate);
+          fbb.addOffset(12, taxTypeOffset);
+          fbb.addBool(13, object.isTaxInclusive);
+          fbb.addFloat64(14, object.lineAmountExcl);
+          fbb.addFloat64(15, object.taxAmount);
+          fbb.addFloat64(16, object.lineAmountIncl);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2277,10 +2437,28 @@ obx_int.ModelDefinition getObjectBoxModel() {
               .vTableGetNullable(buffer, rootOffset, 10);
           final itemUnitParam = const fb.StringReader(asciiOptimization: true)
               .vTableGetNullable(buffer, rootOffset, 12);
+          final hsnCodeParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 20);
           final orderedQtyParam = const fb.Float64Reader()
               .vTableGetNullable(buffer, rootOffset, 14);
           final unitCostParam = const fb.Float64Reader()
               .vTableGetNullable(buffer, rootOffset, 16);
+          final discountPercentParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 22);
+          final discountAmountParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 24);
+          final taxRateParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 26);
+          final taxTypeParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 28);
+          final isTaxInclusiveParam =
+              const fb.BoolReader().vTableGetNullable(buffer, rootOffset, 30);
+          final lineAmountExclParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 32);
+          final taxAmountParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 34);
+          final lineAmountInclParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 36);
           final receivedQtyParam = const fb.Float64Reader()
               .vTableGetNullable(buffer, rootOffset, 18);
           final object = EntityPurchaseItem(
@@ -2289,8 +2467,17 @@ obx_int.ModelDefinition getObjectBoxModel() {
               itemId: itemIdParam,
               itemName: itemNameParam,
               itemUnit: itemUnitParam,
+              hsnCode: hsnCodeParam,
               orderedQty: orderedQtyParam,
               unitCost: unitCostParam,
+              discountPercent: discountPercentParam,
+              discountAmount: discountAmountParam,
+              taxRate: taxRateParam,
+              taxType: taxTypeParam,
+              isTaxInclusive: isTaxInclusiveParam,
+              lineAmountExcl: lineAmountExclParam,
+              taxAmount: taxAmountParam,
+              lineAmountIncl: lineAmountInclParam,
               receivedQty: receivedQtyParam);
 
           return object;
@@ -2578,6 +2765,10 @@ class EntityItem_ {
   /// see [EntityItem.priceAfterTax]
   static final priceAfterTax =
       obx.QueryDoubleProperty<EntityItem>(_entities[3].properties[21]);
+
+  /// see [EntityItem.hsnCode]
+  static final hsnCode =
+      obx.QueryStringProperty<EntityItem>(_entities[3].properties[22]);
 }
 
 /// [EntityItemBatch] entity fields to define ObjectBox queries.
@@ -3018,6 +3209,42 @@ class EntityPurchase_ {
   /// see [EntityPurchase.updatedAtUtcMs]
   static final updatedAtUtcMs =
       obx.QueryIntegerProperty<EntityPurchase>(_entities[13].properties[10]);
+
+  /// see [EntityPurchase.supplierInvoiceNo]
+  static final supplierInvoiceNo =
+      obx.QueryStringProperty<EntityPurchase>(_entities[13].properties[11]);
+
+  /// see [EntityPurchase.totalDiscountAmount]
+  static final totalDiscountAmount =
+      obx.QueryDoubleProperty<EntityPurchase>(_entities[13].properties[12]);
+
+  /// see [EntityPurchase.totalExclTax]
+  static final totalExclTax =
+      obx.QueryDoubleProperty<EntityPurchase>(_entities[13].properties[13]);
+
+  /// see [EntityPurchase.totalTaxAmount]
+  static final totalTaxAmount =
+      obx.QueryDoubleProperty<EntityPurchase>(_entities[13].properties[14]);
+
+  /// see [EntityPurchase.roundOff]
+  static final roundOff =
+      obx.QueryDoubleProperty<EntityPurchase>(_entities[13].properties[15]);
+
+  /// see [EntityPurchase.grandTotal]
+  static final grandTotal =
+      obx.QueryDoubleProperty<EntityPurchase>(_entities[13].properties[16]);
+
+  /// see [EntityPurchase.paidAmount]
+  static final paidAmount =
+      obx.QueryDoubleProperty<EntityPurchase>(_entities[13].properties[17]);
+
+  /// see [EntityPurchase.paymentStatus]
+  static final paymentStatus =
+      obx.QueryStringProperty<EntityPurchase>(_entities[13].properties[18]);
+
+  /// see [EntityPurchase.notes]
+  static final notes =
+      obx.QueryStringProperty<EntityPurchase>(_entities[13].properties[19]);
 }
 
 /// [EntityPurchaseItem] entity fields to define ObjectBox queries.
@@ -3053,6 +3280,42 @@ class EntityPurchaseItem_ {
   /// see [EntityPurchaseItem.receivedQty]
   static final receivedQty =
       obx.QueryDoubleProperty<EntityPurchaseItem>(_entities[14].properties[7]);
+
+  /// see [EntityPurchaseItem.hsnCode]
+  static final hsnCode =
+      obx.QueryStringProperty<EntityPurchaseItem>(_entities[14].properties[8]);
+
+  /// see [EntityPurchaseItem.discountPercent]
+  static final discountPercent =
+      obx.QueryDoubleProperty<EntityPurchaseItem>(_entities[14].properties[9]);
+
+  /// see [EntityPurchaseItem.discountAmount]
+  static final discountAmount =
+      obx.QueryDoubleProperty<EntityPurchaseItem>(_entities[14].properties[10]);
+
+  /// see [EntityPurchaseItem.taxRate]
+  static final taxRate =
+      obx.QueryDoubleProperty<EntityPurchaseItem>(_entities[14].properties[11]);
+
+  /// see [EntityPurchaseItem.taxType]
+  static final taxType =
+      obx.QueryStringProperty<EntityPurchaseItem>(_entities[14].properties[12]);
+
+  /// see [EntityPurchaseItem.isTaxInclusive]
+  static final isTaxInclusive = obx.QueryBooleanProperty<EntityPurchaseItem>(
+      _entities[14].properties[13]);
+
+  /// see [EntityPurchaseItem.lineAmountExcl]
+  static final lineAmountExcl =
+      obx.QueryDoubleProperty<EntityPurchaseItem>(_entities[14].properties[14]);
+
+  /// see [EntityPurchaseItem.taxAmount]
+  static final taxAmount =
+      obx.QueryDoubleProperty<EntityPurchaseItem>(_entities[14].properties[15]);
+
+  /// see [EntityPurchaseItem.lineAmountIncl]
+  static final lineAmountIncl =
+      obx.QueryDoubleProperty<EntityPurchaseItem>(_entities[14].properties[16]);
 }
 
 /// [EntityTax] entity fields to define ObjectBox queries.

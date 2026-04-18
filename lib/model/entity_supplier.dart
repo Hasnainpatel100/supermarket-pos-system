@@ -20,6 +20,11 @@ class EntitySupplier {
 
   bool? isActive;
 
+  /// ⭐ PAYMENT CACHE — sum of amountDue across all non-cancelled purchases
+  /// Updated every time a payment is recorded or a PO is created/cancelled.
+  double? totalOutstanding;
+
+
   /// ⭐ TIMESTAMP FIELDS
   int? createdAtUtcMs;
   int? createdDate;
@@ -38,6 +43,7 @@ class EntitySupplier {
     this.address,
     this.gstNumber,
     this.isActive = true,
+    this.totalOutstanding=0,
     this.createdAtUtcMs,
     this.createdDate,
     this.updatedAtUtcMs,

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:dropdown_search/dropdown_search.dart';
 import '../../../../../model/entity_item.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../util/snackbar_util.dart';
 import '../../../../../widget/my_card.dart';
+import '../supplier/activity_supplier_form.dart';
+import '../supplier/controller_home_supplier.dart';
 import 'controller_home_purchase.dart';
 
-/// Screen to create a new Purchase Order.
+
 class ActivityPurchaseForm extends StatefulWidget {
   const ActivityPurchaseForm({super.key});
 
@@ -177,30 +180,83 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Supplier Dropdown
+                      // Supplier Dropdown + Add Supplier button
                       Expanded(
                         flex: 2,
-                        child: DropdownButtonFormField<EntitySupplier>(
-                          value: _selectedSupplier,
-                          decoration: InputDecoration(
-                            labelText: 'Supplier *',
-                            prefixIcon: const Icon(
-                                Icons.local_shipping_rounded,
-                                size: 20),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
-                          ),
-                          items: _suppliers
-                              .map((s) => DropdownMenuItem(
-                            value: s,
-                            child: Text(s.name ?? '-'),
-                          ))
-                              .toList(),
-                          onChanged: (val) =>
-                              setState(() => _selectedSupplier = val),
-                          hint: const Text('Select supplier'),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: DropdownSearch<EntitySupplier>(
+                                selectedItem: _selectedSupplier,
+                                items: _suppliers,
+                                itemAsString: (s) => s?.name ?? '',
+                                popupProps: PopupProps.menu(
+                                  showSearchBox: true, // 🔥 THIS ENABLES SEARCH
+                                  searchFieldProps: TextFieldProps(
+                                    decoration: InputDecoration(
+                                      hintText: "Search supplier...",
+                                      prefixIcon: Icon(Icons.search),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                dropdownDecoratorProps: DropDownDecoratorProps(
+                                  dropdownSearchDecoration: InputDecoration(
+                                    labelText: 'Supplier *',
+                                    prefixIcon: Icon(Icons.local_shipping_rounded),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                                onChanged: (val) => setState(() => _selectedSupplier = val),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            // ── Add Supplier icon button ──
+                            Tooltip(
+                              message: 'Add new supplier',
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: () async {
+                                  if (!Get.isRegistered<ControllerHomeSupplier>()) {
+                                    Get.put(ControllerHomeSupplier());
+                                  }
+                                  await Get.to(
+                                          () => const ActivitySupplierForm());
+                                  final oldIds =
+                                  _suppliers.map((s) => s.id).toSet();
+                                  final updated =
+                                  _controller.getAllActiveSuppliers();
+                                  final newSupplier = updated
+                                      .where((s) => !oldIds.contains(s.id))
+                                      .firstOrNull;
+                                  setState(() {
+                                    _suppliers = updated;
+                                    if (newSupplier != null) {
+                                      _selectedSupplier = newSupplier;
+                                    }
+                                  });
+                                },
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: Colors.indigo.shade50,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                        color: Colors.indigo.shade200),
+                                  ),
+                                  child: Icon(Icons.add_rounded,
+                                      size: 20,
+                                      color: Colors.indigo.shade600),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -461,25 +517,37 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
             // Item Dropdown
             Expanded(
               flex: 4,
-              child: DropdownButtonFormField<EntityItem>(
-                value: row.selectedItem,
-                decoration: InputDecoration(
-                  hintText: 'Select item',
-                  hintStyle: TextStyle(
-                      color: Colors.grey.shade400, fontSize: 13),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 12),
-                  isDense: true,
+              child: DropdownSearch<EntityItem>(
+                selectedItem: row.selectedItem,
+                items: _items,
+                itemAsString: (item) =>
+                '${item?.name ?? ''} (${item?.unit ?? ''})',
+
+                popupProps: PopupProps.menu(
+                  showSearchBox: true,
+                  searchFieldProps: TextFieldProps(
+                    decoration: InputDecoration(
+                      hintText: "Search item...",
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
                 ),
-                items: _items
-                    .map((item) => DropdownMenuItem(
-                  value: item,
-                  child: Text('${item.name} (${item.unit ?? ''})',
-                      style: const TextStyle(fontSize: 13)),
-                ))
-                    .toList(),
+
+                dropdownDecoratorProps: DropDownDecoratorProps(
+                  dropdownSearchDecoration: InputDecoration(
+                    hintText: 'Select item',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
+                    isDense: true,
+                  ),
+                ),
+
                 onChanged: (val) {
                   setRowState(() => row.selectedItem = val);
                   if (val?.costPrice != null) {

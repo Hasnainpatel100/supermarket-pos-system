@@ -5,6 +5,7 @@ import '../../../../../model/entity_supplier.dart';
 import '../../../../../objectbox.g.dart';
 import '../../../../../service/service_object_box.dart';
 
+
 class ControllerHomeSupplier extends GetxController {
   late final Box<EntitySupplier> _box;
 
@@ -157,9 +158,18 @@ class ControllerHomeSupplier extends GetxController {
   // ─────────────────────────────────────────────
 
   String _generateSupplierCode() {
-    final count = _box.count();
-    final seq = (count + 1).toString().padLeft(3, '0');
-    return 'SUP$seq';
+    // Query all codes, find the highest sequence number to avoid duplicates
+    // even if suppliers have been deleted.
+    final all = _box.query().build().find();
+    int maxSeq = 0;
+    for (final s in all) {
+      final code = s.supplierCode ?? '';
+      if (code.startsWith('SUP')) {
+        final seq = int.tryParse(code.substring(3)) ?? 0;
+        if (seq > maxSeq) maxSeq = seq;
+      }
+    }
+    return 'SUP${(maxSeq + 1).toString().padLeft(3, '0')}';
   }
 
   List<EntitySupplier> getAllActive() {

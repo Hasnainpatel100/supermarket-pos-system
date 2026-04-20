@@ -8,20 +8,15 @@ class EntityPurchase {
   @Id()
   int id = 0;
 
-  /// Unique internal purchase number e.g. PO-20250310-001
+  /// Unique purchase number e.g. PO-20250310-001
   @Unique()
   String? purchaseNo;
-
-  /// Supplier's own invoice number (from their physical bill)
-  /// Required for GST audit trail
-  String? supplierInvoiceNo;
 
   /// FK → EntitySupplier.id
   @Index()
   int? supplierId;
 
-  /// Denormalized supplier name — snapshot at time of order
-  /// Does NOT change if supplier renames later
+  /// Denormalized supplier name for fast display (no join needed)
   String? supplierName;
 
   /// Purchase order date stored as UTC ms
@@ -35,38 +30,17 @@ class EntityPurchase {
   @Index()
   int? status;
 
-  // ── Amount Breakdown (all computed & stored) ──
-
-  /// Raw subtotal: sum of (orderedQty × unitCost) before discount/tax
+  /// Sum of (orderedQty × unitCost) for all items
   double? totalAmount;
 
-  /// Total discount across all items
-  double? totalDiscountAmount;
+  /// Total amount paid against this PO (sum of EntityPayment.amount)
+  double? amountPaid;
 
-  /// Subtotal after discount, before tax
-  double? totalExclTax;
+  /// Computed: totalAmount - amountPaid. Cached for fast queries.
+  double? amountDue;
 
-  /// Total tax across all items
-  double? totalTaxAmount;
-
-  /// Small +/- adjustment to round to nearest rupee
-  double? roundOff;
-
-  /// Final payable amount = totalExclTax + totalTaxAmount + roundOff
-  double? grandTotal;
-
-  // ── Payment Tracking ──
-
-  /// Amount paid to supplier so far
-  double? paidAmount;
-
-  /// 'UNPAID', 'PARTIAL', 'PAID'
-  String? paymentStatus;
-
-  // ── Meta ──
-
-  /// Optional delivery/order notes
   String? notes;
+
 
   /// FK → EntityUser.id
   int? createdByUserId;
@@ -77,26 +51,20 @@ class EntityPurchase {
   EntityPurchase({
     this.id = 0,
     this.purchaseNo,
-    this.supplierInvoiceNo,
     this.supplierId,
     this.supplierName,
     this.purchaseDateUtcMs,
     this.expectedDateUtcMs,
     this.status,
     this.totalAmount,
-    this.totalDiscountAmount,
-    this.totalExclTax,
-    this.totalTaxAmount,
-    this.roundOff,
-    this.grandTotal,
-    this.paidAmount,
-    this.paymentStatus = 'UNPAID',
+    this.amountPaid,
+    this.amountDue,
     this.notes,
     this.createdByUserId,
     this.createdAtUtcMs,
     this.updatedAtUtcMs,
   });
 
-  /// Convenience: outstanding balance
-  double get balanceDue => (grandTotal ?? 0) - (paidAmount ?? 0);
+  double get outstandingAmount => (totalAmount ?? 0) - (amountPaid ?? 0);
+  bool get isFullyPaid => outstandingAmount <= 0;
 }

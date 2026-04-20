@@ -5,19 +5,39 @@ import 'package:intl/intl.dart';
 import 'controller_home_dashboard.dart';
 
 // ────────────────────────────────────────────────────────
-//  Color palette (matching photo: dark bg, purple/teal)
+//  Theme Helpers & Dynamic Colors
 // ────────────────────────────────────────────────────────
-const _kBg = Color(0xFF1A1D2E);
-const _kCard = Color(0xFF242738);
-const _kCardBorder = Color(0xFF2E3250);
-const _kPurple = Color(0xFF8B5CF6);
-const _kTeal = Color(0xFF06B6D4);
-const _kGreen = Color(0xFF10B981);
-const _kAmber = Color(0xFFF59E0B);
-const _kRed = Color(0xFFEF4444);
-const _kBlue = Color(0xFF3B82F6);
-const _kLightPurple = Color(0xFFBDA5F7);
-const _kLightTeal = Color(0xFF67E8F9);
+
+class _DashboardTheme {
+  // Vibrant accents that look good on both light/dark
+  static const purple = Color(0xFF8B5CF6);
+  static const teal = Color(0xFF06B6D4);
+  static const green = Color(0xFF10B981);
+  static const amber = Color(0xFFF59E0B);
+  static const red = Color(0xFFEF4444);
+  static const blue = Color(0xFF3B82F6);
+  static const lightPurple = Color(0xFFBDA5F7);
+  static const lightTeal = Color(0xFF67E8F9);
+
+  // Derived colors
+  static Color background(BuildContext context) =>
+      Theme.of(context).colorScheme.surfaceContainerLowest;
+
+  static Color cardBg(BuildContext context) =>
+      Theme.of(context).colorScheme.surfaceContainer;
+
+  static Color cardBorder(BuildContext context) =>
+      Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3);
+
+  static Color textPrimary(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurface;
+
+  static Color textSecondary(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurfaceVariant;
+
+  static Color chartGrid(BuildContext context) =>
+      Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.2);
+}
 
 class FragHomeDashboard extends StatelessWidget {
   const FragHomeDashboard({super.key});
@@ -29,34 +49,36 @@ class FragHomeDashboard extends StatelessWidget {
         : Get.put(ControllerHomeDashboard());
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: _DashboardTheme.background(context),
       body: Obx(() {
         if (ctrl.isLoading.value) {
           return const Center(
-            child: CircularProgressIndicator(color: _kPurple),
+            child: CircularProgressIndicator(color: _DashboardTheme.purple),
           );
         }
         return RefreshIndicator(
-          color: _kPurple,
-          backgroundColor: _kCard,
+          color: _DashboardTheme.purple,
+          backgroundColor: _DashboardTheme.cardBg(context),
           onRefresh: () async => ctrl.loadData(),
           child: CustomScrollView(
             slivers: [
               // ── Header ──
-              SliverToBoxAdapter(child: _buildHeader(ctrl)),
+              SliverToBoxAdapter(child: _buildHeader(context, ctrl)),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
               // ── Top Stat Cards ──
-              SliverToBoxAdapter(child: _buildStatCards(ctrl)),
+              SliverToBoxAdapter(child: _buildStatCards(context, ctrl)),
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
               // ── Row 2: Total Sales line chart | CashFlow bar chart ──
-              SliverToBoxAdapter(child: _buildRow2(ctrl)),
+              SliverToBoxAdapter(child: _buildRow2(context, ctrl)),
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
               // ── Row 3: Top Selling Items | Weekly Overview | Payment Mode ──
-              SliverToBoxAdapter(child: _buildRow3(ctrl)),
+              SliverToBoxAdapter(child: _buildRow3(context, ctrl)),
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
@@ -69,7 +91,7 @@ class FragHomeDashboard extends StatelessWidget {
   // ──────────────────────────────────────────────────────
   //  Header
   // ──────────────────────────────────────────────────────
-  Widget _buildHeader(ControllerHomeDashboard ctrl) {
+  Widget _buildHeader(BuildContext context, ControllerHomeDashboard ctrl) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
       child: Row(
@@ -78,7 +100,7 @@ class FragHomeDashboard extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [_kPurple, _kTeal],
+                colors: [_DashboardTheme.purple, _DashboardTheme.teal],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -91,17 +113,17 @@ class FragHomeDashboard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Dashboard',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _DashboardTheme.textPrimary(context),
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
                 DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
-                style: const TextStyle(color: Color(0xFF8892B0), fontSize: 12),
+                style: TextStyle(color: _DashboardTheme.textSecondary(context), fontSize: 12),
               ),
             ],
           ),
@@ -119,7 +141,7 @@ class FragHomeDashboard extends StatelessWidget {
   // ──────────────────────────────────────────────────────
   //  Top Stat Cards
   // ──────────────────────────────────────────────────────
-  Widget _buildStatCards(ControllerHomeDashboard ctrl) {
+  Widget _buildStatCards(BuildContext context, ControllerHomeDashboard ctrl) {
     final fmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -163,7 +185,7 @@ class FragHomeDashboard extends StatelessWidget {
   // ──────────────────────────────────────────────────────
   //  Row 2: Total Sales (line) + CashFlow (stacked bar)
   // ──────────────────────────────────────────────────────
-  Widget _buildRow2(ControllerHomeDashboard ctrl) {
+  Widget _buildRow2(BuildContext context, ControllerHomeDashboard ctrl) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -177,9 +199,9 @@ class FragHomeDashboard extends StatelessWidget {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _Legend(color: Colors.white, label: 'This Week'),
+                  _Legend(color: _DashboardTheme.textPrimary(context), label: 'This Week'),
                   const SizedBox(width: 12),
-                  _Legend(color: _kLightTeal, label: 'Last week'),
+                  _Legend(color: _DashboardTheme.lightTeal, label: 'Last week'),
                 ],
               ),
               child: _TotalSalesChart(
@@ -210,10 +232,10 @@ class FragHomeDashboard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: const [
-                      _Legend(color: Color(0xFFBDA5F7), label: 'Inflow'),
-                      SizedBox(width: 16),
-                      _Legend(color: Color(0xFF3B82F6), label: 'Outflow'),
+                    children: [
+                      _Legend(color: _DashboardTheme.lightPurple, label: 'Inflow'),
+                      const SizedBox(width: 16),
+                      _Legend(color: _DashboardTheme.blue, label: 'Outflow'),
                     ],
                   ),
                 ],
@@ -228,7 +250,7 @@ class FragHomeDashboard extends StatelessWidget {
   // ──────────────────────────────────────────────────────
   //  Row 3: Top Selling | Weekly Overview | Payment Mode
   // ──────────────────────────────────────────────────────
-  Widget _buildRow3(ControllerHomeDashboard ctrl) {
+  Widget _buildRow3(BuildContext context, ControllerHomeDashboard ctrl) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -307,8 +329,9 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFF242738),
+          color: _DashboardTheme.cardBg(context),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _DashboardTheme.cardBorder(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,8 +341,8 @@ class _StatCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: _DashboardTheme.textSecondary(context),
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -332,10 +355,10 @@ class _StatCard extends StatelessWidget {
                       color: const Color(0xFF6DE899),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Today',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Theme.of(context).colorScheme.onTertiaryContainer,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -348,9 +371,9 @@ class _StatCard extends StatelessWidget {
                       color: Color(0xFF333742),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.trending_up_rounded,
-                      color: Colors.white,
+                      color: _DashboardTheme.purple,
                       size: 14,
                     ),
                   ),
@@ -363,8 +386,8 @@ class _StatCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     value,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: _DashboardTheme.textPrimary(context),
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -376,8 +399,8 @@ class _StatCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     subtitle!,
-                    style: const TextStyle(
-                      color: Color(0xFF8892B0),
+                    style: TextStyle(
+                      color: _DashboardTheme.textSecondary(context),
                       fontSize: 11,
                     ),
                   ),
@@ -407,8 +430,9 @@ class _DashCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kCard,
+        color: _DashboardTheme.cardBg(context),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _DashboardTheme.cardBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -417,8 +441,8 @@ class _DashCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: _DashboardTheme.textPrimary(context),
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -453,9 +477,9 @@ class _PillButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: _kGreen.withValues(alpha: 0.15),
+          color: _DashboardTheme.green.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _kGreen.withValues(alpha: 0.3)),
+          border: Border.all(color: _DashboardTheme.green.withValues(alpha: 0.2)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -463,14 +487,14 @@ class _PillButton extends StatelessWidget {
             Text(
               label,
               style: const TextStyle(
-                color: _kGreen,
+                color: _DashboardTheme.green,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
             ),
             if (icon != null) ...[
               const SizedBox(width: 2),
-              Icon(icon, color: _kGreen, size: 14),
+              Icon(icon, color: _DashboardTheme.green, size: 14),
             ],
           ],
         ),
@@ -498,7 +522,7 @@ class _Legend extends StatelessWidget {
         const SizedBox(width: 5),
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF8892B0), fontSize: 11),
+          style: TextStyle(color: _DashboardTheme.textSecondary(context), fontSize: 11),
         ),
       ],
     );
@@ -540,8 +564,8 @@ class _TotalSalesChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: maxY / 4,
-            getDrawingHorizontalLine: (_) => const FlLine(
-              color: Color(0xFF2E3250),
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: _DashboardTheme.chartGrid(context),
               strokeWidth: 1,
             ),
           ),
@@ -553,9 +577,9 @@ class _TotalSalesChart extends StatelessWidget {
                 reservedSize: 44,
                 getTitlesWidget: (val, _) => Text(
                   _compact(val),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 9,
-                    color: Color(0xFF8892B0),
+                    color: _DashboardTheme.textSecondary(context),
                   ),
                 ),
               ),
@@ -572,9 +596,9 @@ class _TotalSalesChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       lbl[idx],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
-                        color: Color(0xFF8892B0),
+                        color: _DashboardTheme.textSecondary(context),
                       ),
                     ),
                   );
@@ -588,12 +612,12 @@ class _TotalSalesChart extends StatelessWidget {
           ),
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) => _kCard,
+              getTooltipColor: (_) => _DashboardTheme.cardBg(context),
               getTooltipItems: (spots) => spots
                   .map((s) => LineTooltipItem(
                         '₹${_compact(s.y)}',
                         TextStyle(
-                          color: s.barIndex == 0 ? Colors.white : _kLightTeal,
+                          color: s.barIndex == 0 ? _DashboardTheme.textPrimary(context) : _DashboardTheme.lightTeal,
                           fontWeight: FontWeight.bold,
                           fontSize: 11,
                         ),
@@ -607,7 +631,7 @@ class _TotalSalesChart extends StatelessWidget {
               spots: List.generate(7, (i) => FlSpot(i.toDouble(), tw[i])),
               isCurved: true,
               curveSmoothness: 0.4,
-              color: Colors.white,
+              color: _DashboardTheme.textPrimary(context),
               barWidth: 2.5,
               isStrokeCapRound: true,
               dotData: const FlDotData(show: false),
@@ -615,8 +639,8 @@ class _TotalSalesChart extends StatelessWidget {
                 show: true,
                 gradient: LinearGradient(
                   colors: [
-                    Colors.white.withValues(alpha: 0.12),
-                    Colors.white.withValues(alpha: 0.0),
+                    _DashboardTheme.textPrimary(context).withValues(alpha: 0.12),
+                    _DashboardTheme.textPrimary(context).withValues(alpha: 0.0),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -628,7 +652,7 @@ class _TotalSalesChart extends StatelessWidget {
               spots: List.generate(7, (i) => FlSpot(i.toDouble(), lw[i])),
               isCurved: true,
               curveSmoothness: 0.4,
-              color: _kLightTeal,
+              color: _DashboardTheme.lightTeal,
               barWidth: 2,
               isStrokeCapRound: true,
               dashArray: [6, 4],
@@ -677,14 +701,14 @@ class _CashFlowChart extends StatelessWidget {
         barRods: [
           BarChartRodData(
             toY: total > 0 ? total : 0.001,
-            color: _kLightPurple,
+            color: _DashboardTheme.lightPurple,
             width: 18,
             borderRadius: BorderRadius.circular(4),
             rodStackItems: [
               if (outF > 0)
-                BarChartRodStackItem(0, outF, const Color(0xFF3B82F6)),
+                BarChartRodStackItem(0, outF, _DashboardTheme.blue),
               if (inF > 0)
-                BarChartRodStackItem(outF, total, const Color(0xFFBDA5F7)),
+                BarChartRodStackItem(outF, total, _DashboardTheme.lightPurple),
             ],
           ),
         ],
@@ -701,8 +725,8 @@ class _CashFlowChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: maxY / 4,
-            getDrawingHorizontalLine: (_) => const FlLine(
-              color: Color(0xFF2E3250),
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: _DashboardTheme.chartGrid(context),
               strokeWidth: 1,
             ),
           ),
@@ -714,9 +738,9 @@ class _CashFlowChart extends StatelessWidget {
                 reservedSize: 40,
                 getTitlesWidget: (val, _) => Text(
                   _compact(val),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 9,
-                    color: Color(0xFF8892B0),
+                    color: _DashboardTheme.textSecondary(context),
                   ),
                 ),
               ),
@@ -733,9 +757,9 @@ class _CashFlowChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       labels[idx],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
-                        color: Color(0xFF8892B0),
+                        color: _DashboardTheme.textSecondary(context),
                       ),
                     ),
                   );
@@ -749,7 +773,7 @@ class _CashFlowChart extends StatelessWidget {
           ),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => _kCard,
+              getTooltipColor: (_) => _DashboardTheme.cardBg(context),
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 return BarTooltipItem(
                   '₹${_compact(rod.toY)}',
@@ -781,11 +805,11 @@ class _TopItemsDonut extends StatelessWidget {
   final List<Map<String, dynamic>> items;
 
   static const _palette = [
-    _kPurple,
-    _kBlue,
-    _kGreen,
-    _kAmber,
-    Colors.white,
+    _DashboardTheme.purple,
+    _DashboardTheme.blue,
+    _DashboardTheme.green,
+    _DashboardTheme.amber,
+    _DashboardTheme.lightTeal,
   ];
 
   const _TopItemsDonut({required this.items});
@@ -798,10 +822,10 @@ class _TopItemsDonut extends StatelessWidget {
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.pie_chart_outline, color: Color(0xFF2E3250), size: 48),
+            children: [
+               Icon(Icons.pie_chart_outline, color: _DashboardTheme.chartGrid(context), size: 48),
               SizedBox(height: 8),
-              Text('No sales data', style: TextStyle(color: Color(0xFF8892B0), fontSize: 12)),
+              Text('No sales data', style: TextStyle(color: _DashboardTheme.textSecondary(context), fontSize: 12)),
             ],
           ),
         ),
@@ -866,8 +890,8 @@ class _TopItemsDonut extends StatelessWidget {
                     Expanded(
                       child: Text(
                         displayName,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: _DashboardTheme.textPrimary(context),
                           fontSize: 11,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -875,8 +899,8 @@ class _TopItemsDonut extends StatelessWidget {
                     ),
                     Text(
                       '$qty',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: _DashboardTheme.textPrimary(context),
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
@@ -919,7 +943,7 @@ class _WeeklyOverviewChart extends StatelessWidget {
               barRods: [
                 BarChartRodData(
                   toY: values[i] > 0 ? values[i] : 0.001,
-                  color: const Color(0xFFBDA5F7), // Solid light purple
+                  color: _DashboardTheme.lightPurple, // Solid light purple
                   width: 22,
                   borderRadius: BorderRadius.circular(5),
                 ),
@@ -930,8 +954,8 @@ class _WeeklyOverviewChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: maxY / 4,
-            getDrawingHorizontalLine: (_) => const FlLine(
-              color: Color(0xFF2E3250),
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: _DashboardTheme.chartGrid(context),
               strokeWidth: 1,
             ),
           ),
@@ -955,9 +979,9 @@ class _WeeklyOverviewChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       labels[idx],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
-                        color: Color(0xFF8892B0),
+                        color: _DashboardTheme.textSecondary(context),
                       ),
                     ),
                   );
@@ -967,7 +991,7 @@ class _WeeklyOverviewChart extends StatelessWidget {
           ),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => _kCard,
+              getTooltipColor: (_) => _DashboardTheme.cardBg(context),
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 return BarTooltipItem(
                   '₹${_compact(rod.toY)}',
@@ -999,12 +1023,12 @@ class _PaymentDonut extends StatelessWidget {
   final Map<String, double> breakdown;
 
   static const _palette = [
-    _kBlue,
-    _kTeal,
-    _kGreen,
-    _kAmber,
-    _kPurple,
-    _kRed,
+    _DashboardTheme.blue,
+    _DashboardTheme.teal,
+    _DashboardTheme.green,
+    _DashboardTheme.amber,
+    _DashboardTheme.purple,
+    _DashboardTheme.red,
   ];
 
   const _PaymentDonut({required this.breakdown});
@@ -1017,10 +1041,10 @@ class _PaymentDonut extends StatelessWidget {
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.pie_chart_outline, color: Color(0xFF2E3250), size: 48),
-              SizedBox(height: 8),
-              Text('No data today', style: TextStyle(color: Color(0xFF8892B0), fontSize: 12)),
+            children: [
+              Icon(Icons.pie_chart_outline, color: _DashboardTheme.cardBorder(context), size: 48),
+              const SizedBox(height: 8),
+              Text('No data today', style: TextStyle(color: _DashboardTheme.textSecondary(context), fontSize: 12)),
             ],
           ),
         ),
@@ -1079,8 +1103,8 @@ class _PaymentDonut extends StatelessWidget {
                     Expanded(
                       child: Text(
                         label,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: _DashboardTheme.textPrimary(context),
                           fontSize: 11,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -1088,8 +1112,8 @@ class _PaymentDonut extends StatelessWidget {
                     ),
                     Text(
                       _compactDouble(e.value),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: _DashboardTheme.textPrimary(context),
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),

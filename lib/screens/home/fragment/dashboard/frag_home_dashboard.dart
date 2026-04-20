@@ -4,176 +4,59 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'controller_home_dashboard.dart';
 
+// ────────────────────────────────────────────────────────
+//  Color palette (matching photo: dark bg, purple/teal)
+// ────────────────────────────────────────────────────────
+const _kBg = Color(0xFF1A1D2E);
+const _kCard = Color(0xFF242738);
+const _kCardBorder = Color(0xFF2E3250);
+const _kPurple = Color(0xFF8B5CF6);
+const _kTeal = Color(0xFF06B6D4);
+const _kGreen = Color(0xFF10B981);
+const _kAmber = Color(0xFFF59E0B);
+const _kRed = Color(0xFFEF4444);
+const _kBlue = Color(0xFF3B82F6);
+const _kLightPurple = Color(0xFFBDA5F7);
+const _kLightTeal = Color(0xFF67E8F9);
+
 class FragHomeDashboard extends StatelessWidget {
   const FragHomeDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.isRegistered<ControllerHomeDashboard>()
+    final ctrl = Get.isRegistered<ControllerHomeDashboard>()
         ? Get.find<ControllerHomeDashboard>()
         : Get.put(ControllerHomeDashboard());
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: _kBg,
       body: Obx(() {
-        final colorScheme = Theme.of(context).colorScheme;
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final currencyFmt = NumberFormat.simpleCurrency(locale: 'en_IN');
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+        if (ctrl.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(color: _kPurple),
+          );
         }
         return RefreshIndicator(
-          onRefresh: () async => controller.loadData(),
+          color: _kPurple,
+          backgroundColor: _kCard,
+          onRefresh: () async => ctrl.loadData(),
           child: CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              colorScheme.primary,
-                              colorScheme.primary.withValues(alpha: 0.6),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.dashboard_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Dashboard',
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            'Today — ${DateFormat('EEE, dd MMM yyyy').format(DateTime.now())}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: controller.loadData,
-                        icon: Icon(
-                          Icons.refresh_rounded,
-                          color: colorScheme.primary,
-                        ),
-                        tooltip: 'Refresh',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // ── Header ──
+              SliverToBoxAdapter(child: _buildHeader(ctrl)),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-              // ── Stats Cards ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          title: 'Today Sales',
-                          value: currencyFmt.format(
-                            controller.todaySales.value,
-                          ),
-                          icon: Icons.attach_money_rounded,
-                          gradient: [
-                            Colors.green.shade500,
-                            Colors.teal.shade400,
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatCard(
-                          title: 'Orders',
-                          value: '${controller.todayOrders.value}',
-                          icon: Icons.receipt_long_rounded,
-                          gradient: [
-                            Colors.blue.shade500,
-                            Colors.indigo.shade400,
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatCard(
-                          title: 'Avg Bill',
-                          value: currencyFmt.format(
-                            controller.averageBill.value,
-                          ),
-                          icon: Icons.trending_up_rounded,
-                          gradient: [
-                            Colors.orange.shade500,
-                            Colors.deepOrange.shade400,
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-              // ── Line Chart: Weekly Sales ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _ChartCard(
-                    title: 'Sales — Last 7 Days',
-                    icon: Icons.show_chart_rounded,
-                    iconColor: Colors.blue.shade600,
-                    child: _WeeklySalesChart(
-                      sales: controller.weeklySales.toList(),
-                      labels: controller.weekLabels.toList(),
-                      lineColor: colorScheme.primary,
-                      isDark: isDark,
-                    ),
-                  ),
-                ),
-              ),
+              // ── Top Stat Cards ──
+              SliverToBoxAdapter(child: _buildStatCards(ctrl)),
 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              // ── Pie Chart: Payment Breakdown ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _ChartCard(
-                    title: 'Payment Mode (Today)',
-                    icon: Icons.pie_chart_rounded,
-                    iconColor: Colors.purple.shade600,
-                    child: controller.paymentBreakdown.isEmpty
-                        ? _emptyState('No transactions today')
-                        : _PaymentPieChart(
-                            breakdown: Map<String, double>.from(
-                              controller.paymentBreakdown,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
+              // ── Row 2: Total Sales line chart | CashFlow bar chart ──
+              SliverToBoxAdapter(child: _buildRow2(ctrl)),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // ── Row 3: Top Selling Items | Weekly Overview | Payment Mode ──
+              SliverToBoxAdapter(child: _buildRow3(ctrl)),
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
@@ -183,20 +66,324 @@ class FragHomeDashboard extends StatelessWidget {
     );
   }
 
-  Widget _emptyState(String msg) {
-    return SizedBox(
-      height: 180,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.bar_chart_rounded,
-              size: 48,
-              color: Colors.grey.shade300,
+  // ──────────────────────────────────────────────────────
+  //  Header
+  // ──────────────────────────────────────────────────────
+  Widget _buildHeader(ControllerHomeDashboard ctrl) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [_kPurple, _kTeal],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(height: 8),
-            Text(msg, style: TextStyle(color: Colors.grey.shade400)),
+            child: const Icon(Icons.dashboard_rounded,
+                color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Dashboard',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
+                style: const TextStyle(color: Color(0xFF8892B0), fontSize: 12),
+              ),
+            ],
+          ),
+          const Spacer(),
+          _PillButton(
+            label: 'Refresh',
+            icon: Icons.refresh_rounded,
+            onTap: ctrl.loadData,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────
+  //  Top Stat Cards
+  // ──────────────────────────────────────────────────────
+  Widget _buildStatCards(ControllerHomeDashboard ctrl) {
+    final fmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _StatCard(
+            title: "Today's Sales",
+            value: fmt.format(ctrl.todaySales.value),
+            subtitle: '${ctrl.todayOrders.value} orders',
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            title: "Today's Orders",
+            value: '${ctrl.todayOrders.value}',
+            subtitle: 'bills today',
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            title: 'Avg Bill',
+            value: fmt.format(ctrl.averageBill.value),
+            subtitle: 'per order',
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            title: 'Total Items',
+            value: '${ctrl.totalItems.value}',
+            subtitle: 'in system',
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            title: 'Customers',
+            value: '${ctrl.totalCustomers.value}',
+            subtitle: 'total',
+            isGreenBadge: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────
+  //  Row 2: Total Sales (line) + CashFlow (stacked bar)
+  // ──────────────────────────────────────────────────────
+  Widget _buildRow2(ControllerHomeDashboard ctrl) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Total Sales line chart
+          Expanded(
+            flex: 55,
+            child: _DashCard(
+              title: 'Total Sales',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _Legend(color: Colors.white, label: 'This Week'),
+                  const SizedBox(width: 12),
+                  _Legend(color: _kLightTeal, label: 'Last week'),
+                ],
+              ),
+              child: _TotalSalesChart(
+                thisWeek: ctrl.thisWeekSales.toList(),
+                lastWeek: ctrl.lastWeekSales.toList(),
+                labels: ctrl.weekLabels.toList(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // CashFlow stacked bar chart
+          Expanded(
+            flex: 45,
+            child: _DashCard(
+              title: 'CashFlow',
+              trailing: _PillButton(
+                label: 'Weekly',
+                icon: Icons.keyboard_arrow_down_rounded,
+                onTap: () {},
+              ),
+              child: Column(
+                children: [
+                  _CashFlowChart(
+                    inflow: ctrl.cashInflow.toList(),
+                    outflow: ctrl.cashOutflow.toList(),
+                    labels: ctrl.cashflowLabels.toList(),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: const [
+                      _Legend(color: Color(0xFFBDA5F7), label: 'Inflow'),
+                      SizedBox(width: 16),
+                      _Legend(color: Color(0xFF3B82F6), label: 'Outflow'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────
+  //  Row 3: Top Selling | Weekly Overview | Payment Mode
+  // ──────────────────────────────────────────────────────
+  Widget _buildRow3(ControllerHomeDashboard ctrl) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Selling Items donut
+          Expanded(
+            flex: 33,
+            child: _DashCard(
+              title: 'Top Selling Items',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _PillButton(label: 'Today', icon: Icons.keyboard_arrow_down_rounded, onTap: () {}),
+                  const SizedBox(width: 6),
+                  _PillButton(label: 'Limit: 5', icon: Icons.keyboard_arrow_down_rounded, onTap: () {}),
+                ],
+              ),
+              child: _TopItemsDonut(items: ctrl.topSellingItems.toList()),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Weekly overview bar chart
+          Expanded(
+            flex: 34,
+            child: _DashCard(
+              title: 'Dashboard Overview',
+              trailing: _PillButton(
+                label: 'Weekly',
+                icon: Icons.keyboard_arrow_down_rounded,
+                onTap: () {},
+              ),
+              child: _WeeklyOverviewChart(
+                values: ctrl.weeklyOverview.toList(),
+                labels: ctrl.overviewLabels.toList(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Payment Mode donut
+          Expanded(
+            flex: 33,
+            child: _DashCard(
+              title: 'Payment Mode',
+              child: _PaymentDonut(
+                breakdown: Map<String, double>.from(ctrl.paymentBreakdown),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────
+//  Reusable Widgets
+// ────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String? subtitle;
+  final bool isGreenBadge;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    this.subtitle,
+    this.isGreenBadge = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF242738),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (isGreenBadge)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6DE899),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Today',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF333742),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.trending_up_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    subtitle!,
+                    style: const TextStyle(
+                      color: Color(0xFF8892B0),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
@@ -204,18 +391,15 @@ class FragHomeDashboard extends StatelessWidget {
   }
 }
 
-// ── Stat Card ──
-class _StatCard extends StatelessWidget {
+class _DashCard extends StatelessWidget {
   final String title;
-  final String value;
-  final IconData icon;
-  final List<Color> gradient;
+  final Widget? trailing;
+  final Widget child;
 
-  const _StatCard({
+  const _DashCard({
     required this.title,
-    required this.value,
-    required this.icon,
-    required this.gradient,
+    required this.child,
+    this.trailing,
   });
 
   @override
@@ -223,108 +407,27 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: gradient.first.withValues(alpha: 0.35),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: _kCard,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: Colors.white, size: 18),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Chart Card Wrapper ──
-class _ChartCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color iconColor;
-  final Widget child;
-
-  const _ChartCard({
-    required this.title,
-    required this.icon,
-    required this.iconColor,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 20, color: iconColor),
-              const SizedBox(width: 8),
               Text(
                 title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+              const Spacer(),
+              if (trailing != null) trailing!,
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           child,
         ],
       ),
@@ -332,29 +435,100 @@ class _ChartCard extends StatelessWidget {
   }
 }
 
-// ── Weekly Sales Line Chart ──
-class _WeeklySalesChart extends StatelessWidget {
-  final List<double> sales;
-  final List<String> labels;
-  final Color lineColor;
-  final bool isDark;
+class _PillButton extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final VoidCallback onTap;
 
-  const _WeeklySalesChart({
-    required this.sales,
-    required this.labels,
-    required this.lineColor,
-    required this.isDark,
+  const _PillButton({
+    required this.label,
+    required this.onTap,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
-    final maxVal = sales.reduce((a, b) => a > b ? a : b);
-    final maxY = maxVal <= 0 ? 1000.0 : maxVal * 1.25;
-
-    final spots = List.generate(
-      sales.length,
-      (i) => FlSpot(i.toDouble(), sales[i]),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: _kGreen.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _kGreen.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: _kGreen,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (icon != null) ...[
+              const SizedBox(width: 2),
+              Icon(icon, color: _kGreen, size: 14),
+            ],
+          ],
+        ),
+      ),
     );
+  }
+}
+
+class _Legend extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _Legend({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(color: Color(0xFF8892B0), fontSize: 11),
+        ),
+      ],
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────
+//  Total Sales: This Week vs Last Week (line chart)
+// ────────────────────────────────────────────────────────
+class _TotalSalesChart extends StatelessWidget {
+  final List<double> thisWeek;
+  final List<double> lastWeek;
+  final List<String> labels;
+
+  const _TotalSalesChart({
+    required this.thisWeek,
+    required this.lastWeek,
+    required this.labels,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Ensure we have data; use 7 points
+    final tw = List.generate(7, (i) => i < thisWeek.length ? thisWeek[i] : 0.0);
+    final lw = List.generate(7, (i) => i < lastWeek.length ? lastWeek[i] : 0.0);
+    final lbl = List.generate(7, (i) => i < labels.length ? labels[i] : '');
+
+    final allValues = [...tw, ...lw];
+    final maxVal = allValues.reduce((a, b) => a > b ? a : b);
+    final maxY = maxVal <= 0 ? 1000.0 : maxVal * 1.3;
 
     return SizedBox(
       height: 200,
@@ -366,10 +540,8 @@ class _WeeklySalesChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: maxY / 4,
-            getDrawingHorizontalLine: (v) => FlLine(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.07)
-                  : Colors.grey.withValues(alpha: 0.12),
+            getDrawingHorizontalLine: (_) => const FlLine(
+              color: Color(0xFF2E3250),
               strokeWidth: 1,
             ),
           ),
@@ -378,10 +550,174 @@ class _WeeklySalesChart extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 48,
+                reservedSize: 44,
                 getTitlesWidget: (val, _) => Text(
-                  _formatCompact(val),
-                  style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
+                  _compact(val),
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: Color(0xFF8892B0),
+                  ),
+                ),
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (val, _) {
+                  final idx = val.toInt();
+                  if (idx < 0 || idx >= lbl.length) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      lbl[idx],
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF8892B0),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false)),
+          ),
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (_) => _kCard,
+              getTooltipItems: (spots) => spots
+                  .map((s) => LineTooltipItem(
+                        '₹${_compact(s.y)}',
+                        TextStyle(
+                          color: s.barIndex == 0 ? Colors.white : _kLightTeal,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ),
+          lineBarsData: [
+            // This week – solid white
+            LineChartBarData(
+              spots: List.generate(7, (i) => FlSpot(i.toDouble(), tw[i])),
+              isCurved: true,
+              curveSmoothness: 0.4,
+              color: Colors.white,
+              barWidth: 2.5,
+              isStrokeCapRound: true,
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.12),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+            // Last week – dashed teal
+            LineChartBarData(
+              spots: List.generate(7, (i) => FlSpot(i.toDouble(), lw[i])),
+              isCurved: true,
+              curveSmoothness: 0.4,
+              color: _kLightTeal,
+              barWidth: 2,
+              isStrokeCapRound: true,
+              dashArray: [6, 4],
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _compact(double v) {
+    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
+    return v.toStringAsFixed(0);
+  }
+}
+
+// ────────────────────────────────────────────────────────
+//  CashFlow: Stacked bar (Inflow purple | Outflow teal)
+// ────────────────────────────────────────────────────────
+class _CashFlowChart extends StatelessWidget {
+  final List<double> inflow;
+  final List<double> outflow;
+  final List<String> labels;
+
+  const _CashFlowChart({
+    required this.inflow,
+    required this.outflow,
+    required this.labels,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final allVals = [...inflow, ...outflow];
+    final maxVal = allVals.reduce((a, b) => a > b ? a : b);
+    final maxY = maxVal <= 0 ? 1000.0 : maxVal * 1.3;
+
+    final groups = List.generate(inflow.length, (i) {
+      final inF = inflow[i];
+      final outF = outflow[i];
+      final total = inF + outF;
+      return BarChartGroupData(
+        x: i,
+        barRods: [
+          BarChartRodData(
+            toY: total > 0 ? total : 0.001,
+            color: _kLightPurple,
+            width: 18,
+            borderRadius: BorderRadius.circular(4),
+            rodStackItems: [
+              if (outF > 0)
+                BarChartRodStackItem(0, outF, const Color(0xFF3B82F6)),
+              if (inF > 0)
+                BarChartRodStackItem(outF, total, const Color(0xFFBDA5F7)),
+            ],
+          ),
+        ],
+      );
+    });
+
+    return SizedBox(
+      height: 200,
+      child: BarChart(
+        BarChartData(
+          maxY: maxY,
+          barGroups: groups,
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maxY / 4,
+            getDrawingHorizontalLine: (_) => const FlLine(
+              color: Color(0xFF2E3250),
+              strokeWidth: 1,
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                getTitlesWidget: (val, _) => Text(
+                  _compact(val),
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: Color(0xFF8892B0),
+                  ),
                 ),
               ),
             ),
@@ -397,10 +733,9 @@ class _WeeklySalesChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       labels[idx],
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade500,
+                        color: Color(0xFF8892B0),
                       ),
                     ),
                   );
@@ -408,166 +743,389 @@ class _WeeklySalesChart extends StatelessWidget {
               ),
             ),
             rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
+                sideTitles: SideTitles(showTitles: false)),
             topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
+                sideTitles: SideTitles(showTitles: false)),
+          ),
+          barTouchData: BarTouchData(
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) => _kCard,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                return BarTooltipItem(
+                  '₹${_compact(rod.toY)}',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                );
+              },
             ),
           ),
-          lineTouchData: LineTouchData(
-            touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (touchedSpot) =>
-                  lineColor.withValues(alpha: 0.85),
-              getTooltipItems: (spots) => spots
-                  .map(
-                    (s) => LineTooltipItem(
-                      '₹${_formatCompact(s.y)}',
-                      const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          lineBarsData: [
-            LineChartBarData(
-              spots: spots,
-              isCurved: true,
-              curveSmoothness: 0.35,
-              color: lineColor,
-              barWidth: 3,
-              isStrokeCapRound: true,
-              dotData: FlDotData(
-                show: true,
-                getDotPainter: (spot, pct, bar, idx) => FlDotCirclePainter(
-                  radius: 4,
-                  color: Colors.white,
-                  strokeWidth: 2.5,
-                  strokeColor: lineColor,
-                ),
-              ),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [
-                    lineColor.withValues(alpha: 0.25),
-                    lineColor.withValues(alpha: 0.0),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
   }
 
-  String _formatCompact(double val) {
-    if (val >= 100000) return '${(val / 100000).toStringAsFixed(1)}L';
-    if (val >= 1000) return '${(val / 1000).toStringAsFixed(1)}K';
-    return val.toStringAsFixed(0);
+  String _compact(double v) {
+    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
+    return v.toStringAsFixed(0);
   }
 }
 
-// ── Payment Pie Chart ──
-class _PaymentPieChart extends StatelessWidget {
-  final Map<String, double> breakdown;
+// ────────────────────────────────────────────────────────
+//  Top Selling Items: Donut + legend
+// ────────────────────────────────────────────────────────
+class _TopItemsDonut extends StatelessWidget {
+  final List<Map<String, dynamic>> items;
 
-  const _PaymentPieChart({required this.breakdown});
-
-  static const List<Color> _palette = [
-    Color(0xFF4CAF50), // green – CASH
-    Color(0xFF2196F3), // blue  – CARD
-    Color(0xFFFF9800), // amber – UPI
-    Color(0xFF9C27B0), // purple– other
-    Color(0xFFF44336), // red
+  static const _palette = [
+    _kPurple,
+    _kBlue,
+    _kGreen,
+    _kAmber,
+    Colors.white,
   ];
+
+  const _TopItemsDonut({required this.items});
 
   @override
   Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return SizedBox(
+        height: 180,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.pie_chart_outline, color: Color(0xFF2E3250), size: 48),
+              SizedBox(height: 8),
+              Text('No sales data', style: TextStyle(color: Color(0xFF8892B0), fontSize: 12)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final totalQty =
+        items.fold<int>(0, (sum, m) => sum + (m['qty'] as int? ?? 0));
+
+    return Row(
+      children: [
+        // Donut
+        SizedBox(
+          width: 140,
+          height: 160,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 38,
+              sections: List.generate(items.length, (i) {
+                final qty = (items[i]['qty'] as int? ?? 0).toDouble();
+                final pct = totalQty > 0 ? qty / totalQty * 100 : 0;
+                return PieChartSectionData(
+                  color: _palette[i % _palette.length],
+                  value: qty,
+                  title: '${pct.toStringAsFixed(0)}%',
+                  radius: 42,
+                  titleStyle: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Legend
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(items.length, (i) {
+              final name = items[i]['name'] as String;
+              final qty = items[i]['qty'] as int? ?? 0;
+              final color = _palette[i % _palette.length];
+              final displayName =
+                  name.length > 14 ? '${name.substring(0, 12)}..' : name;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        displayName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      '$qty',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────
+//  Weekly Overview: solid purple bar chart
+// ────────────────────────────────────────────────────────
+class _WeeklyOverviewChart extends StatelessWidget {
+  final List<double> values;
+  final List<String> labels;
+
+  const _WeeklyOverviewChart({required this.values, required this.labels});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxVal = values.isEmpty
+        ? 1000.0
+        : values.reduce((a, b) => a > b ? a : b);
+    final maxY = maxVal <= 0 ? 1000.0 : maxVal * 1.3;
+
+    return SizedBox(
+      height: 160,
+      child: BarChart(
+        BarChartData(
+          maxY: maxY,
+          barGroups: List.generate(values.length, (i) {
+            return BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: values[i] > 0 ? values[i] : 0.001,
+                  color: const Color(0xFFBDA5F7), // Solid light purple
+                  width: 22,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ],
+            );
+          }),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maxY / 4,
+            getDrawingHorizontalLine: (_) => const FlLine(
+              color: Color(0xFF2E3250),
+              strokeWidth: 1,
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          titlesData: FlTitlesData(
+            leftTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (val, _) {
+                  final idx = val.toInt();
+                  if (idx < 0 || idx >= labels.length) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      labels[idx],
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF8892B0),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          barTouchData: BarTouchData(
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) => _kCard,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                return BarTooltipItem(
+                  '₹${_compact(rod.toY)}',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _compact(double v) {
+    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
+    return v.toStringAsFixed(0);
+  }
+}
+
+// ────────────────────────────────────────────────────────
+//  Payment Mode: Donut chart
+// ────────────────────────────────────────────────────────
+class _PaymentDonut extends StatelessWidget {
+  final Map<String, double> breakdown;
+
+  static const _palette = [
+    _kBlue,
+    _kTeal,
+    _kGreen,
+    _kAmber,
+    _kPurple,
+    _kRed,
+  ];
+
+  const _PaymentDonut({required this.breakdown});
+
+  @override
+  Widget build(BuildContext context) {
+    if (breakdown.isEmpty) {
+      return SizedBox(
+        height: 160,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.pie_chart_outline, color: Color(0xFF2E3250), size: 48),
+              SizedBox(height: 8),
+              Text('No data today', style: TextStyle(color: Color(0xFF8892B0), fontSize: 12)),
+            ],
+          ),
+        ),
+      );
+    }
+
     final total = breakdown.values.fold(0.0, (a, b) => a + b);
     final entries = breakdown.entries.toList();
 
     return Row(
       children: [
-        Expanded(
-          child: SizedBox(
-            height: 180,
-            child: PieChart(
-              PieChartData(
-                sectionsSpace: 3,
-                centerSpaceRadius: 42,
-                sections: List.generate(entries.length, (i) {
-                  final e = entries[i];
-                  final pct = total > 0 ? e.value / total * 100 : 0;
-                  final color = _palette[i % _palette.length];
-                  return PieChartSectionData(
-                    color: color,
-                    value: e.value,
-                    title: '${pct.toStringAsFixed(0)}%',
-                    radius: 52,
-                    titleStyle: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  );
-                }),
-              ),
+        // Donut
+        SizedBox(
+          width: 130,
+          height: 160,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 36,
+              sections: List.generate(entries.length, (i) {
+                final color = _palette[i % _palette.length];
+                return PieChartSectionData(
+                  color: color,
+                  value: entries[i].value,
+                  title: '',
+                  radius: 40,
+                );
+              }),
             ),
           ),
         ),
-        const SizedBox(width: 20),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(entries.length, (i) {
-            final e = entries[i];
-            final color = _palette[i % _palette.length];
-            final pct = total > 0 ? e.value / total * 100 : 0;
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
+        const SizedBox(width: 8),
+        // Legend
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(entries.length, (i) {
+              final e = entries[i];
+              final color = _palette[i % _palette.length];
+              final pct = total > 0 ? e.value / total * 100 : 0;
+              final label = _modeLabel(e.key);
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        e.key,
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        label,
                         style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 11,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      Text(
-                        '${pct.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey.shade500,
-                        ),
+                    ),
+                    Text(
+                      _compactDouble(e.value),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
         ),
       ],
     );
+  }
+
+  String _compactDouble(double v) {
+    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+    return v.toStringAsFixed(0);
+  }
+
+  String _modeLabel(String key) {
+    switch (key.toUpperCase()) {
+      case 'CASH':
+        return 'Cash';
+      case 'CARD':
+        return 'Card';
+      case 'UPI':
+        return 'UPI / GPay';
+      case 'SPLIT':
+        return 'Split';
+      case 'NETBANKING':
+        return 'Net Banking';
+      case 'DUE':
+        return 'Due';
+      default:
+        return key;
+    }
   }
 }

@@ -638,6 +638,149 @@ class ControllerHomePos extends GetxController {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CANCEL BILL — reverse stock & mark CANCELLED
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<void> cancelBill(EntityBill bill) async {
+    if (bill.status == 'CANCELLED') {
+      SnackbarUtil.showError('This bill is already cancelled');
+      return;
+    }
+
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+
+    // Restore stock for every item on the bill
+    for (final billItem in bill.items) {
+      final stockItem = billItem.item.target;
+      if (stockItem == null) continue;
+
+      final soldQty = billItem.qty ?? 0;
+      if (soldQty <= 0) continue;
+
+      // Add stock back
+      stockItem.totalQty = (stockItem.totalQty ?? 0) + soldQty;
+      stockItem.updatedAtUtcMs = now;
+      _boxItem.put(stockItem);
+
+      // If item has expiry batches, re-create a batch entry
+      if (stockItem.hasExpiry == true) {
+        final batch = EntityItemBatch(
+          itemId: stockItem.id ?? 0,
+          quantity: soldQty,
+          receivedAtUtcMs: now,
+        );
+        _boxBatch.put(batch);
+      }
+
+      // Audit trail — reversal transaction
+      _boxStockTxn.put(EntityStockTransaction(
+        itemId: stockItem.id ?? 0,
+        type: StockTxnType.returnStock.index,
+        quantity: soldQty,
+        referenceType: 'bill_cancel',
+        referenceId: bill.billNo ?? '',
+        remarks: 'Stock returned — bill cancelled',
+        createdAtUtcMs: now,
+      ));
+    }
+
+    // Mark bill cancelled
+    bill.status = 'CANCELLED';
+    bill.updatedAtUtcMs = now;
+    _boxBill.put(bill);
+
+    // Refresh dependent controllers
+    loadItems();
+    if (Get.isRegistered<ControllerHomeItem>()) {
+      Get.find<ControllerHomeItem>().loadItems();
+    }
+    if (Get.isRegistered<ControllerHomeReport>()) {
+      Get.find<ControllerHomeReport>().loadData();
+    }
+
+    SnackbarUtil.showSuccess('Bill ${bill.billNo} has been cancelled');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EDIT BILL — cancel old bill & reload items into POS cart
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<void> editBill(EntityBill bill) async {
+    if (bill.status == 'CANCELLED') {
+      SnackbarUtil.showError('Cannot edit a cancelled bill');
+      return;
+    }
+
+    // Snapshot the bill data before cancelling
+    final billItems = bill.items.toList();
+    final customerName = bill.customerName;
+    final customerPhone = bill.customerPhone;
+    final discount = bill.discount ?? 0;
+    final taxAmount = bill.tax ?? 0;
+    final paymentMode = bill.paymentMode ?? 'Cash';
+    final note = bill.note ?? '';
+
+    // Step 1 — cancel the bill (this restores stock)
+    await cancelBill(bill);
+
+    // Step 2 — open a new tab and load items into it
+    addNewTab();
+    final session = activeSession;
+
+    // Restore customer if available
+    if (customerName != null && customerName != 'Walk-in') {
+      // Try to find existing customer by phone first, then by name
+      EntityCustomer? customer;
+      if (customerPhone != null && customerPhone.isNotEmpty) {
+        customer = _boxCustomer
+            .query(EntityCustomer_.phone.equals(customerPhone))
+            .build()
+            .findFirst();
+      }
+      customer ??= _boxCustomer
+          .query(EntityCustomer_.name.equals(customerName))
+          .build()
+          .findFirst();
+      if (customer != null) {
+        session.rxSelectedCustomer.value = customer;
+      } else {
+        session.rxQuickCustomerName.value = customerName;
+        session.rxQuickCustomerPhone.value = customerPhone ?? '';
+      }
+    }
+
+    // Restore cart items
+    for (final oldItem in billItems) {
+      final newCartItem = EntityBillItem(
+        itemName: oldItem.itemName,
+        itemBarcode: oldItem.itemBarcode,
+        unit: oldItem.unit,
+        price: oldItem.price,
+        qty: oldItem.qty,
+        tax: oldItem.tax,
+        discount: oldItem.discount,
+        total: oldItem.total,
+      );
+      newCartItem.item.target = oldItem.item.target;
+      session.rxCartItems.add(newCartItem);
+    }
+
+    // Restore bill-level settings
+    session.rxDiscountAmount.value = discount;
+    if (taxAmount > 0) {
+      // Approximate the tax rate from the saved amounts
+      final subTotal = bill.totalAmount ?? 0;
+      if (subTotal > 0) {
+        session.rxTaxRate.value = (taxAmount / subTotal) * 100;
+      }
+    }
+    session.rxPaymentMode.value = paymentMode;
+    session.rxRemark.value = note;
+
+    calculateTotals();
+  }
+
   Future<void> openCustomerForm() async {
     final countBefore = _boxCustomer.count();
     await Get.to(() => const ActivityCustomerForm());

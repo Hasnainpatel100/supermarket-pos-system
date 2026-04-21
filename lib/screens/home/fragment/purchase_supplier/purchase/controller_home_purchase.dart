@@ -10,6 +10,7 @@ import '../../../../../model/entity_item_batch.dart';
 import '../../../../../model/entity_payment.dart';
 import '../../../../../model/entity_purchase.dart';
 import '../../../../../model/entity_purchase_item.dart';
+import '../../../../../model/entity_purchase_receipt.dart';
 import '../../../../../model/entity_stock_transaction.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../model/entity_payment_schedule.dart';
@@ -216,7 +217,9 @@ class ControllerHomePurchase extends GetxController {
   /// Wraps everything in a single ObjectBox write transaction.
   String? receiveGoods({
     required EntityPurchase purchase,
-    required List<_ReceiveItemInput> receivedItems,
+
+    required List<ReceiveItemInput> receivedItems,
+    required EntityPurchaseReceipt receipt,
     int? performedByUserId,
   }) {
     if (receivedItems.isEmpty) return 'No items provided';
@@ -543,13 +546,17 @@ class _PurchaseItemInput {
 
 class _ReceiveItemInput {
   final int itemId;
+  final int purchaseItemId;
   final int receivedQty;
+  final double unitCost;
   final String? batchNo;
   final int? expiryDateUtcMs;
 
   _ReceiveItemInput({
     required this.itemId,
     required this.receivedQty,
+    required this.unitCost,
+    required this.purchaseItemId,
     this.batchNo,
     this.expiryDateUtcMs,
   });

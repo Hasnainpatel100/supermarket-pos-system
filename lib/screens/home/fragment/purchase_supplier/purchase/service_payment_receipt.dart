@@ -42,8 +42,33 @@ class ServicePaymentReceipt {
       ),
     );
 
-    final double totalPaid =
+    // Sort payments by time (old → new)
+    payments.sort((a, b) =>
+        (a.createdAtUtcMs ?? 0).compareTo(b.createdAtUtcMs ?? 0));
+
+// Total of ALL payments
+    final double allTotalPaid =
     payments.fold(0, (sum, p) => sum + (p.amount ?? 0));
+
+// detect split group using reference
+    final lastRef = payments.isNotEmpty ? payments.last.referenceNo : null;
+
+// get all payments of current session
+    final currentSessionPayments = payments.where((p) {
+      if (lastRef == null) return false;
+      return p.referenceNo == lastRef;
+    }).toList();
+
+// sum of current session
+    final double currentPayment = currentSessionPayments.isNotEmpty
+        ? currentSessionPayments.fold(0.0, (sum, p) => sum + (p.amount ?? 0))
+        : (payments.isNotEmpty ? (payments.last.amount ?? 0) : 0);
+
+// PREVIOUSLY paid
+    final double previouslyPaid = allTotalPaid - currentPayment;
+
+    final double outstanding = (purchase.totalAmount ?? 0) - allTotalPaid;
+
     final String voucherNo =
         'VCH-${purchase.purchaseNo}-${DateFormat('yyyyMMddHHmm').format(DateTime.now())}';
     final String printedAt =
@@ -144,6 +169,8 @@ class ServicePaymentReceipt {
                   _metaCell('Voucher No', voucherNo, black),
                   _metaCell('PO Number', purchase.purchaseNo ?? '-', black),
                   _metaCell('Date', printedAt, black),
+                  _metaCell('Mode', _getPaymentModes(payments), black),
+
                 ],
               ),
             ),
@@ -192,7 +219,9 @@ class ServicePaymentReceipt {
 
             _buildSummaryTable(
               purchase: purchase,
-              totalPaid: totalPaid,
+              allTotalPaid: allTotalPaid,
+              currentPayment:currentPayment,
+              previouslyPaid:previouslyPaid,
               green: green,
               greenLight: greenLight,
               grey: grey,
@@ -223,12 +252,12 @@ class ServicePaymentReceipt {
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
               decoration: pw.BoxDecoration(
-                color: purchase.outstandingAmount <= 0
+                color: outstanding <= 0
                     ? greenLight
                     : PdfColor.fromInt(0xFFFFEBEE),
                 borderRadius: pw.BorderRadius.circular(6),
                 border: pw.Border.all(
-                  color: purchase.outstandingAmount <= 0 ? green : red,
+                  color: outstanding <= 0 ? green : red,
                 ),
               ),
               child: pw.Row(
@@ -236,24 +265,24 @@ class ServicePaymentReceipt {
                 children: [
                   pw.Row(children: [
                     pw.Text(
-                      purchase.outstandingAmount <= 0
+                      outstanding <= 0
                           ? '✓  Fully Settled'
                           : '⚠  Balance Due',
                       style: pw.TextStyle(
                         fontSize: 10,
                         fontWeight: pw.FontWeight.bold,
-                        color: purchase.outstandingAmount <= 0 ? green : red,
+                        color: outstanding <= 0 ? green : red,
                       ),
                     ),
                   ]),
                   pw.Text(
-                    purchase.outstandingAmount <= 0
-                        ? 'NIL'
-                        : 'Rs. ${purchase.outstandingAmount.toStringAsFixed(2)}',
+                    outstanding <= 0
+                        ? 'Rs. 0.00'
+                        : 'Rs. ${outstanding.toStringAsFixed(2)}',
                     style: pw.TextStyle(
                       fontSize: 11,
                       fontWeight: pw.FontWeight.bold,
-                      color: purchase.outstandingAmount <= 0 ? green : red,
+                      color: outstanding <= 0 ? green : red,
                     ),
                   ),
                 ],
@@ -330,17 +359,25 @@ class ServicePaymentReceipt {
     );
   }
 
+  static String _getPaymentModes(List<EntityPayment> payments) {
+    final modes = payments.map((p) => PaymentMode.values[p.paymentMode ?? 0].label).toSet();
+    return modes.join(', ');
+  }
+
   static pw.Widget _buildSummaryTable({
     required EntityPurchase purchase,
-    required double totalPaid,
+    required double allTotalPaid,
+    required double currentPayment,
+    required double previouslyPaid,
     required PdfColor green,
     required PdfColor greenLight,
     required PdfColor grey,
   }) {
     final rows = [
-      ['Total Invoice Amount', 'Rs. ${(purchase.totalAmount ?? 0).toStringAsFixed(2)}'],
-      ['Previously Paid', 'Rs. ${((purchase.amountPaid ?? 0) - totalPaid).clamp(0, double.infinity).toStringAsFixed(2)}'],
-      ['This Payment', 'Rs. ${totalPaid.toStringAsFixed(2)}'],
+      ['Total purchase Amount', 'Rs. ${(purchase.totalAmount ?? 0).toStringAsFixed(2)}'],
+      ['Previously Paid', 'Rs. ${previouslyPaid.toStringAsFixed(2)}'],
+      ['This Payment', 'Rs. ${currentPayment.toStringAsFixed(2)}'],
+      ['Outstanding', 'Rs. ${(purchase.totalAmount! - allTotalPaid).toStringAsFixed(2)}'],
     ];
 
     return pw.Table(
@@ -360,9 +397,9 @@ class ServicePaymentReceipt {
         pw.TableRow(
           decoration: pw.BoxDecoration(color: greenLight),
           children: [
-            _tableCell('Total Paid (This Session)',
+            _tableCell('paid Now',
                 isLabel: true, grey: green, bold: true),
-            _tableCell('Rs. ${totalPaid.toStringAsFixed(2)}',
+            _tableCell('Rs. ${currentPayment.toStringAsFixed(2)}',
                 isLabel: false,
                 grey: green,
                 bold: true,
@@ -439,7 +476,7 @@ class ServicePaymentReceipt {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       alignment: align,
-      child: pw.Text(
+      child: pw.Text(+++
         text,
         style: pw.TextStyle(
           fontSize: 9,
@@ -450,3 +487,5 @@ class ServicePaymentReceipt {
     );
   }
 }
+
+

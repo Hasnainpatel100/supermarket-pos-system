@@ -220,14 +220,14 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
     // Refresh payments list and offer to print receipt
     final updatedPayments =
     _controller.getPaymentsForPurchase(_purchase.id);
-    final sessionCount = _isSplitMode
-        ? _splits.where((s) => s.amount > 0).length
-        : 1;
-    final sessionPayments = updatedPayments.length >= sessionCount
-        ? updatedPayments.sublist(updatedPayments.length - sessionCount)
-        : updatedPayments;
+    // final sessionCount = _isSplitMode
+    //     ? _splits.where((s) => s.amount > 0).length
+    //     : 1;
+    // final sessionPayments = updatedPayments.length >= sessionCount
+    //     ? updatedPayments.sublist(updatedPayments.length - sessionCount)
+    //     : updatedPayments;
 
-    if (mounted) _showReceiptDialog(sessionPayments, totalPaid);
+    if (mounted) _showReceiptDialog(updatedPayments, totalPaid);
   }
 
   void _showReceiptDialog(List<EntityPayment> sessionPayments, double totalPaid) {

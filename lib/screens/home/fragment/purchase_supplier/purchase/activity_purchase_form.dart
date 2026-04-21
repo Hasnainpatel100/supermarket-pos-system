@@ -10,7 +10,6 @@ import '../supplier/activity_supplier_form.dart';
 import '../supplier/controller_home_supplier.dart';
 import 'controller_home_purchase.dart';
 
-
 class ActivityPurchaseForm extends StatefulWidget {
   const ActivityPurchaseForm({super.key});
 
@@ -194,6 +193,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                                 popupProps: PopupProps.menu(
                                   showSearchBox: true, // 🔥 THIS ENABLES SEARCH
                                   searchFieldProps: TextFieldProps(
+                                    autofocus: true, // ✅ focus search box on first tap
                                     decoration: InputDecoration(
                                       hintText: "Search supplier...",
                                       prefixIcon: Icon(Icons.search),
@@ -526,6 +526,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                 popupProps: PopupProps.menu(
                   showSearchBox: true,
                   searchFieldProps: TextFieldProps(
+                    autofocus: true, // ✅ focus search box on first tap
                     decoration: InputDecoration(
                       hintText: "Search item...",
                       prefixIcon: Icon(Icons.search),

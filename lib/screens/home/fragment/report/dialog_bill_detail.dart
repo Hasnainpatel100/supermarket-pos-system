@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../service/service_bill_pdf.dart';
 import '../setting/controller_home_settings.dart';
+import '../pos/controller_home_pos.dart';
 
 class DialogBillDetail extends StatelessWidget {
   final EntityBill bill;
@@ -346,38 +347,142 @@ class DialogBillDetail extends StatelessWidget {
                   top: BorderSide(color: colorScheme.outlineVariant),
                 ),
               ),
+              child: Column(
+                children: [
+                  // ── Cancel & Edit Row (only for non-cancelled bills) ──
+                  if (bill.status != 'CANCELLED') ...[
+                    Row(
+                      children: [
+                        // Cancel Bill
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _confirmCancelBill(context),
+                            icon: Icon(Icons.cancel_outlined, size: 18, color: Colors.red.shade600),
+                            label: Text(
+                              'Cancel Bill',
+                              style: TextStyle(color: Colors.red.shade600, fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              side: BorderSide(color: Colors.red.shade300),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Edit Bill
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _confirmEditBill(context),
+                            icon: Icon(Icons.edit_note_rounded, size: 18, color: Colors.amber.shade800),
+                            label: Text(
+                              'Edit Bill',
+                              style: TextStyle(color: Colors.amber.shade800, fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              side: BorderSide(color: Colors.amber.shade400),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  // ── PDF & WhatsApp Row ──
+                  Row(
+                    children: [
+                      // Preview PDF
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _previewPdf(context, settings),
+                          icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                          label: const Text('Preview PDF'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // WhatsApp
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton.icon(
+                          onPressed: () => _shareWhatsApp(context, settings),
+                          icon: const Icon(Icons.send_rounded, size: 18),
+                          label: const Text('Send on WhatsApp'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF25D366),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Cancel Bill Confirmation ────────────────────────────────
+  void _confirmCancelBill(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.cancel_outlined, color: Colors.red.shade600, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Text('Cancel Bill?'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Bill #${bill.billNo ?? "N/A"}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.15)),
+              ),
               child: Row(
                 children: [
-                  // Preview PDF
+                  Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red.shade600),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _previewPdf(context, settings),
-                      icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                      label: const Text('Preview PDF'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // WhatsApp
-                  Expanded(
-                    flex: 2,
-                    child: FilledButton.icon(
-                      onPressed: () => _shareWhatsApp(context, settings),
-                      icon: const Icon(Icons.send_rounded, size: 18),
-                      label: const Text('Send on WhatsApp'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                    child: Text(
+                      'This will reverse all stock and mark the bill as cancelled. This action cannot be undone.',
+                      style: TextStyle(fontSize: 12, color: Colors.red.shade700, height: 1.4),
                     ),
                   ),
                 ],
@@ -385,6 +490,98 @@ class DialogBillDetail extends StatelessWidget {
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('No, Keep It'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Get.back(); // close confirmation
+              final posController = Get.find<ControllerHomePos>();
+              await posController.cancelBill(bill);
+              Get.back(); // close bill detail dialog
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Yes, Cancel Bill'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Edit Bill Confirmation ─────────────────────────────────
+  void _confirmEditBill(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.edit_note_rounded, color: Colors.amber.shade800, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Text('Edit Bill?'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Bill #${bill.billNo ?? "N/A"}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.amber.withValues(alpha: 0.15)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, size: 18, color: Colors.amber.shade800),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'The current bill will be cancelled and all items will be loaded back into a new POS tab for editing. You can then make changes and settle again.',
+                      style: TextStyle(fontSize: 12, color: Colors.amber.shade900, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Get.back(); // close confirmation
+              final posController = Get.find<ControllerHomePos>();
+              await posController.editBill(bill);
+              Get.back(); // close bill detail dialog
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.amber.shade700,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Yes, Edit Bill'),
+          ),
+        ],
       ),
     );
   }

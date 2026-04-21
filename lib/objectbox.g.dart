@@ -2902,6 +2902,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final billFilePathParam =
               const fb.StringReader(asciiOptimization: true)
                   .vTableGetNullable(buffer, rootOffset, 16);
+          final taxAmountParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 30);
+          final discountAmountParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 32);
+          final freightChargesParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 34);
           final receivedDateUtcMsParam =
               const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 18);
           final totalAmountParam = const fb.Float64Reader()
@@ -2922,18 +2928,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
               invoiceNumber: invoiceNumberParam,
               invoiceDateUtcMs: invoiceDateUtcMsParam,
               billFilePath: billFilePathParam,
+              taxAmount: taxAmountParam,
+              discountAmount: discountAmountParam,
+              freightCharges: freightChargesParam,
               receivedDateUtcMs: receivedDateUtcMsParam,
               totalAmount: totalAmountParam,
               status: statusParam,
               receivedByUserId: receivedByUserIdParam,
               createdAtUtcMs: createdAtUtcMsParam,
-              updatedAtUtcMs: updatedAtUtcMsParam)
-            ..taxAmount = const fb.Float64Reader()
-                .vTableGetNullable(buffer, rootOffset, 30)
-            ..discountAmount = const fb.Float64Reader()
-                .vTableGetNullable(buffer, rootOffset, 32)
-            ..freightCharges = const fb.Float64Reader()
-                .vTableGetNullable(buffer, rootOffset, 34);
+              updatedAtUtcMs: updatedAtUtcMsParam);
 
           return object;
         }),

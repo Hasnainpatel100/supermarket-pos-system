@@ -476,7 +476,7 @@ class ServicePaymentReceipt {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       alignment: align,
-      child: pw.Text(+++
+      child: pw.Text(
         text,
         style: pw.TextStyle(
           fontSize: 9,

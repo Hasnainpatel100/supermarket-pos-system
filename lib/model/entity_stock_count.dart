@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 @Entity()
 class EntityStockCount {
@@ -16,6 +17,11 @@ class EntityStockCount {
 
   int? countedAtUtcMs;
   int? approvedAtUtcMs;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
+
 
   EntityStockCount({
     this.id,

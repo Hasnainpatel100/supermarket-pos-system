@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:2878268411412392911",
-      "lastPropertyId": "20:1290635763236857997",
+      "lastPropertyId": "22:4527988087202639523",
       "name": "EntityBill",
       "properties": [
         {
@@ -13,13 +13,6 @@
           "name": "id",
           "type": 6,
           "flags": 1
-        },
-        {
-          "id": "2:4814837060998056363",
-          "name": "billNo",
-          "type": 9,
-          "flags": 2080,
-          "indexId": "1:7249287635883550705"
         },
         {
           "id": "3:6167835034958836757",
@@ -110,13 +103,27 @@
           "id": "20:1290635763236857997",
           "name": "updatedAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "21:5121260447282704551",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "24:379018452671284987"
+        },
+        {
+          "id": "22:4527988087202639523",
+          "name": "billNo",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "44:451981533829852869"
         }
       ],
       "relations": []
     },
     {
       "id": "2:4410059418278672947",
-      "lastPropertyId": "11:1237021338702357375",
+      "lastPropertyId": "12:865289310902369752",
       "name": "EntityBillItem",
       "properties": [
         {
@@ -180,13 +187,20 @@
           "flags": 520,
           "indexId": "3:2846946097585171882",
           "relationTarget": "EntityItem"
+        },
+        {
+          "id": "12:865289310902369752",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "25:6388003929852131719"
         }
       ],
       "relations": []
     },
     {
       "id": "3:7474113114096540497",
-      "lastPropertyId": "13:2189781318800187225",
+      "lastPropertyId": "14:3785517406141277272",
       "name": "EntityCustomer",
       "properties": [
         {
@@ -256,13 +270,20 @@
           "id": "13:2189781318800187225",
           "name": "updatedAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "14:3785517406141277272",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "26:5086587676375576030"
         }
       ],
       "relations": []
     },
     {
       "id": "4:3094658187569964694",
-      "lastPropertyId": "9:5343007601457743375",
+      "lastPropertyId": "10:4595980654182973727",
       "name": "EntityFinanceTransaction",
       "properties": [
         {
@@ -310,13 +331,20 @@
           "id": "9:5343007601457743375",
           "name": "createdDate",
           "type": 9
+        },
+        {
+          "id": "10:4595980654182973727",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "27:2994789312364009724"
         }
       ],
       "relations": []
     },
     {
       "id": "5:4200907631521009698",
-      "lastPropertyId": "23:6735767828865157179",
+      "lastPropertyId": "24:2768228725239054336",
       "name": "EntityItem",
       "properties": [
         {
@@ -440,13 +468,20 @@
           "id": "23:6735767828865157179",
           "name": "hsnCode",
           "type": 9
+        },
+        {
+          "id": "24:2768228725239054336",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "28:488388801088634367"
         }
       ],
       "relations": []
     },
     {
       "id": "6:6927370652899698714",
-      "lastPropertyId": "6:9110045201121799746",
+      "lastPropertyId": "7:1318350465599470879",
       "name": "EntityItemBatch",
       "properties": [
         {
@@ -481,13 +516,20 @@
           "id": "6:9110045201121799746",
           "name": "receivedAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "7:1318350465599470879",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "29:1810187897443415672"
         }
       ],
       "relations": []
     },
     {
       "id": "7:2185278543093680623",
-      "lastPropertyId": "11:3689970272001219657",
+      "lastPropertyId": "12:7701677427278675346",
       "name": "EntityPayment",
       "properties": [
         {
@@ -551,13 +593,20 @@
           "type": 6,
           "flags": 8,
           "indexId": "11:5814606397723986837"
+        },
+        {
+          "id": "12:7701677427278675346",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "30:6272423794469116716"
         }
       ],
       "relations": []
     },
     {
       "id": "8:6883595749581815237",
-      "lastPropertyId": "14:5490720401298706833",
+      "lastPropertyId": "15:8368269095374272751",
       "name": "EntityPurchase",
       "properties": [
         {
@@ -636,13 +685,20 @@
           "id": "14:5490720401298706833",
           "name": "updatedAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "15:8368269095374272751",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "32:1638941617558684305"
         }
       ],
       "relations": []
     },
     {
       "id": "9:4927066779145615744",
-      "lastPropertyId": "17:2133895141320525903",
+      "lastPropertyId": "18:4770958583392822232",
       "name": "EntityPurchaseItem",
       "properties": [
         {
@@ -732,13 +788,20 @@
           "id": "17:2133895141320525903",
           "name": "lineAmountIncl",
           "type": 8
+        },
+        {
+          "id": "18:4770958583392822232",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "33:4234477867543063930"
         }
       ],
       "relations": []
     },
     {
       "id": "10:3442798637465048529",
-      "lastPropertyId": "6:6429470900201448305",
+      "lastPropertyId": "7:290215345911573594",
       "name": "EntitySale",
       "properties": [
         {
@@ -773,13 +836,20 @@
           "id": "6:6429470900201448305",
           "name": "createdAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "7:290215345911573594",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "36:6505596809170391713"
         }
       ],
       "relations": []
     },
     {
       "id": "11:753822427470922294",
-      "lastPropertyId": "6:5371550275082574777",
+      "lastPropertyId": "7:5232570768008224839",
       "name": "EntitySaleItem",
       "properties": [
         {
@@ -812,13 +882,20 @@
           "id": "6:5371550275082574777",
           "name": "total",
           "type": 8
+        },
+        {
+          "id": "7:5232570768008224839",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "37:8441984929764916518"
         }
       ],
       "relations": []
     },
     {
       "id": "12:2460289773211707598",
-      "lastPropertyId": "9:1057875891869488749",
+      "lastPropertyId": "10:7658160959028051787",
       "name": "EntityStockCount",
       "properties": [
         {
@@ -866,13 +943,20 @@
           "id": "9:1057875891869488749",
           "name": "approvedAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "10:7658160959028051787",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "38:5369095759705779408"
         }
       ],
       "relations": []
     },
     {
       "id": "13:4748936195650513542",
-      "lastPropertyId": "9:7457375549228639249",
+      "lastPropertyId": "10:6970884430040584931",
       "name": "EntityStockTransaction",
       "properties": [
         {
@@ -922,13 +1006,20 @@
           "id": "9:7457375549228639249",
           "name": "createdAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "10:6970884430040584931",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "39:1735632671374537200"
         }
       ],
       "relations": []
     },
     {
       "id": "14:760800378639740071",
-      "lastPropertyId": "15:9041470286357561805",
+      "lastPropertyId": "16:597296676136012103",
       "name": "EntitySupplier",
       "properties": [
         {
@@ -1010,13 +1101,20 @@
           "id": "15:9041470286357561805",
           "name": "updatedDate",
           "type": 6
+        },
+        {
+          "id": "16:597296676136012103",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "40:339030684688476176"
         }
       ],
       "relations": []
     },
     {
       "id": "15:5685493506003033424",
-      "lastPropertyId": "3:1154508843487906124",
+      "lastPropertyId": "4:937354547259553187",
       "name": "EntityTax",
       "properties": [
         {
@@ -1034,13 +1132,20 @@
           "id": "3:1154508843487906124",
           "name": "rate",
           "type": 8
+        },
+        {
+          "id": "4:937354547259553187",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "41:7763161504222879608"
         }
       ],
       "relations": []
     },
     {
       "id": "16:6335299156258795294",
-      "lastPropertyId": "3:5540129224516669149",
+      "lastPropertyId": "4:3207313806227379223",
       "name": "EntityTodo",
       "properties": [
         {
@@ -1058,13 +1163,20 @@
           "id": "3:5540129224516669149",
           "name": "done",
           "type": 1
+        },
+        {
+          "id": "4:3207313806227379223",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "42:2292303954814210251"
         }
       ],
       "relations": []
     },
     {
       "id": "17:1010656294651710212",
-      "lastPropertyId": "21:1056096135484377559",
+      "lastPropertyId": "22:4160013507129670468",
       "name": "EntityUser",
       "properties": [
         {
@@ -1172,13 +1284,20 @@
           "id": "21:1056096135484377559",
           "name": "isSync",
           "type": 1
+        },
+        {
+          "id": "22:4160013507129670468",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "43:1600527702711398747"
         }
       ],
       "relations": []
     },
     {
       "id": "18:8238430295109690270",
-      "lastPropertyId": "9:8874060693311395233",
+      "lastPropertyId": "10:4724732826756477797",
       "name": "EntityPaymentSchedule",
       "properties": [
         {
@@ -1226,13 +1345,20 @@
           "id": "9:8874060693311395233",
           "name": "createdAtUtcMs",
           "type": 6
+        },
+        {
+          "id": "10:4724732826756477797",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "31:3761116686951489662"
         }
       ],
       "relations": []
     },
     {
       "id": "19:7468914568217546173",
-      "lastPropertyId": "16:9002259736532535126",
+      "lastPropertyId": "17:8100799871482105579",
       "name": "EntityPurchaseReceipt",
       "properties": [
         {
@@ -1321,13 +1447,20 @@
           "id": "16:9002259736532535126",
           "name": "freightCharges",
           "type": 8
+        },
+        {
+          "id": "17:8100799871482105579",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "34:412269176493536573"
         }
       ],
       "relations": []
     },
     {
       "id": "20:5990908327355788466",
-      "lastPropertyId": "12:4716189172743315545",
+      "lastPropertyId": "13:2166020674674263914",
       "name": "EntityPurchaseReceiptItem",
       "properties": [
         {
@@ -1392,20 +1525,31 @@
           "id": "12:4716189172743315545",
           "name": "damagedQty",
           "type": 8
+        },
+        {
+          "id": "13:2166020674674263914",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "35:1708092360859876599"
         }
       ],
       "relations": []
     }
   ],
   "lastEntityId": "20:5990908327355788466",
-  "lastIndexId": "23:3801308396307661640",
+  "lastIndexId": "44:451981533829852869",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
-  "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredIndexUids": [
+    7249287635883550705
+  ],
+  "retiredPropertyUids": [
+    4814837060998056363
+  ],
   "retiredRelationUids": [],
   "version": 1
 }

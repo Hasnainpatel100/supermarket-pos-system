@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 @Entity()
 class EntitySaleItem {
@@ -12,6 +13,11 @@ int? quantity;
 
 double? price;
 double? total;
+
+
+@Unique()
+String objectId = ObjectId().hexString;  //mongo id
+
 
 EntitySaleItem({
 this.id,

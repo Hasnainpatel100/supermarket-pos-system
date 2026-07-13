@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 @Entity()
 class EntityItemBatch {
@@ -8,6 +9,9 @@ class EntityItemBatch {
   int? itemId;
 
   String? batchNo;
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
 
   @Index()
   int? expiryDateUtcMs;

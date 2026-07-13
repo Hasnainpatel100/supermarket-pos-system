@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 import 'entity_bill_item.dart';
 
 @Entity()
@@ -8,6 +9,10 @@ class EntityBill {
 
   @Unique()
   String? billNo;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
 
   String? customerName;
   String? customerPhone;

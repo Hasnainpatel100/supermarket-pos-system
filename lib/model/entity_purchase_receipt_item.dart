@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 /// Represents actual items received under a receipt.
 /// This is NOT the same as ordered items.
@@ -14,6 +15,11 @@ class EntityPurchaseReceiptItem {
   /// 🔥 IMPORTANT LINK → EntityPurchaseItem.id
   /// Helps map ordered item → received item
   int? purchaseItemId;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
+
 
   /// FK → EntityItem.id
   int? itemId;

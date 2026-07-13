@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 /// One line item inside a Purchase Order.
 /// receivedQty is updated when goods arrive via StockTransaction.
@@ -13,6 +14,11 @@ class EntityPurchaseItem {
 
   /// FK → EntityItem.id
   int? itemId;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
+
 
   /// Denormalized item name for display without joins
   String? itemName;

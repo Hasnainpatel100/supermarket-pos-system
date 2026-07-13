@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 @Entity()
 class EntityStockTransaction {
@@ -11,6 +12,11 @@ class EntityStockTransaction {
   int? type; // StockTxnType.index
 
   int? quantity;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
+
 
   String? referenceType;
   String? referenceId;

@@ -270,7 +270,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
         ),
         const SizedBox(height: 20),
         Text(
-          'SuperMarket POS',
+          'Inventory POS',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,

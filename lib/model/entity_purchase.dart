@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 /// Represents a Purchase Order (INTENT layer).
 /// This entity stores what was ordered — NOT what arrived.
@@ -11,6 +12,10 @@ class EntityPurchase {
   /// Unique purchase number e.g. PO-20250310-001
   @Unique()
   String? purchaseNo;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
 
   /// FK → EntitySupplier.id
   @Index()

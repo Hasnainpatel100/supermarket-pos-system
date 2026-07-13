@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 @Entity()
 class EntityItem {
@@ -16,6 +17,10 @@ class EntityItem {
 
   String? name;
   String? unit;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
 
   /// Category (e.g. "Beverages", "Snacks")
   String? category;

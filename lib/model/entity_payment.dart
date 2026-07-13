@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 /// Represents a single payment made to a supplier.
 /// Linked to a specific Purchase Order and Supplier.
@@ -14,6 +15,10 @@ class EntityPayment {
   /// FK → EntityPurchase.id (nullable: supports advance payments not tied to a PO)
   @Index()
   int? purchaseId;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
 
   /// Denormalized for fast display
   String? supplierName;

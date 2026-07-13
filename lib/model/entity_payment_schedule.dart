@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 @Entity()
 class EntityPaymentSchedule {
@@ -13,6 +14,10 @@ class EntityPaymentSchedule {
   int? status;          // 0 = pending, 1 = paid
   int? paidAtMs;
   int? createdAtUtcMs;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
 
   EntityPaymentSchedule({
     this.id = 0,

@@ -62,9 +62,6 @@ class FragHomeDashboard extends StatelessWidget {
           onRefresh: () async => ctrl.loadData(),
           child: CustomScrollView(
             slivers: [
-              // ── Header ──
-              SliverToBoxAdapter(child: _buildHeader(context, ctrl)),
-
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
               // ── Top Stat Cards ──
@@ -88,55 +85,7 @@ class FragHomeDashboard extends StatelessWidget {
     );
   }
 
-  // ──────────────────────────────────────────────────────
-  //  Header
-  // ──────────────────────────────────────────────────────
-  Widget _buildHeader(BuildContext context, ControllerHomeDashboard ctrl) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [_DashboardTheme.purple, _DashboardTheme.teal],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.dashboard_rounded,
-                color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Dashboard',
-                style: TextStyle(
-                  color: _DashboardTheme.textPrimary(context),
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
-                style: TextStyle(color: _DashboardTheme.textSecondary(context), fontSize: 12),
-              ),
-            ],
-          ),
-          const Spacer(),
-          _PillButton(
-            label: 'Refresh',
-            icon: Icons.refresh_rounded,
-            onTap: ctrl.loadData,
-          ),
-        ],
-      ),
-    );
-  }
+
 
   // ──────────────────────────────────────────────────────
   //  Top Stat Cards

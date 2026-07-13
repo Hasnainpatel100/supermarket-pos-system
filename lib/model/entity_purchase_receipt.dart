@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 /// Represents actual goods receipt (GRN) + supplier invoice.
 /// This is the REAL transaction layer (what actually arrived).
@@ -14,6 +15,11 @@ class EntityPurchaseReceipt {
   /// Supplier snapshot (denormalized for fast UI)
   int? supplierId;
   String? supplierName;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
+
 
   // ── Invoice Details (CRITICAL) ──
 

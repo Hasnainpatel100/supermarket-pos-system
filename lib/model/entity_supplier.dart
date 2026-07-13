@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 @Entity()
 class EntitySupplier {
@@ -10,6 +11,11 @@ class EntitySupplier {
   
   @Unique()
   String? mongoId;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
+
 
   String? name;
   String? contactPerson;

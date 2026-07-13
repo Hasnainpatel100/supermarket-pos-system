@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'package:objectid/objectid.dart';
 
 @Entity()
 class EntityUser {
@@ -15,6 +16,10 @@ class EntityUser {
   String? gender;
   String? username;
   String? password;
+
+
+  @Unique()
+  String objectId = ObjectId().hexString;  //mongo id
 
   // todo: alternate mobile number
   // todo: id proof key

@@ -43,6 +43,7 @@ dependencies:
 
   file_picker: ^8.0.0+1
   objectid: ^4.0.3
+  google_fonts: ^4.0.4
 
 
 dev_dependencies:

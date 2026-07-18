@@ -43,9 +43,8 @@ class MyTextField extends StatelessWidget {
       },
 
       decoration: InputDecoration(
-        border: const OutlineInputBorder(),
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-
+        
         // ⭐ Label with required *
         label: RichText(
           text: TextSpan(
@@ -55,7 +54,7 @@ class MyTextField extends StatelessWidget {
                 ? [
                     TextSpan(
                       text: ' *',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.red,
                         fontWeight: FontWeight.bold,
                       ),

@@ -359,7 +359,22 @@ class AppTextField extends StatelessWidget {
         return null;
       },
       decoration: InputDecoration(
-        labelText: label,
+        label: Text.rich(
+          TextSpan(
+            text: label.replaceAll(' *', '').trim(),
+            children: required
+                ? [
+                    const TextSpan(
+                      text: ' *',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ]
+                : [],
+          ),
+        ),
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
         prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 20) : null,

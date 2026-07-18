@@ -291,9 +291,70 @@ class AppTextField extends StatelessWidget {
       inputFormatters: inputFormatters,
       readOnly: readOnly,
       onTap: onTap,
-      validator: validator ?? (value) {
-        if (required && (value == null || value.trim().isEmpty)) {
-          return ''; // Triggers red border highlighting without layout shifts
+      validator: (value) {
+        if (validator != null) {
+          final customErr = validator!(value);
+          if (customErr != null) return customErr;
+        }
+
+        final trimmed = value?.trim() ?? '';
+
+        if (required && trimmed.isEmpty) {
+          final cleanLabel = label.replaceAll(' *', '').trim();
+          return "$cleanLabel is required";
+        }
+
+        if (trimmed.isNotEmpty) {
+          final cleanLabel = label.toLowerCase();
+          
+          // 1. Phone number validation (exactly 10 digits)
+          if (cleanLabel.contains('phone') || cleanLabel.contains('mobile')) {
+            final digitsOnly = trimmed.replaceAll(RegExp(r'\D'), '');
+            if (digitsOnly.length != 10 || trimmed.length != 10) {
+              return "Phone number must be exactly 10 digits";
+            }
+            if (digitsOnly != trimmed) {
+              return "Phone number must contain only digits";
+            }
+          }
+          
+          // 2. Email validation (valid email format, and gmail ends with @gmail.com)
+          if (cleanLabel.contains('email') || cleanLabel.contains('mail')) {
+            final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+            if (!emailRegex.hasMatch(trimmed)) {
+              return "Please enter a valid email address";
+            }
+            if (trimmed.toLowerCase().contains('gmail') && !trimmed.toLowerCase().endsWith('@gmail.com')) {
+              return "Gmail address must end with @gmail.com";
+            }
+          }
+
+          // 3. Cost/Price/Amount validation (must not exceed 99,999,999 or 8 digits before decimal)
+          final isNumeric = keyboardType == TextInputType.number || 
+                            keyboardType.toString().contains('number') || 
+                            inputFormatters?.isNotEmpty == true ||
+                            cleanLabel.contains('cost') ||
+                            cleanLabel.contains('price') ||
+                            cleanLabel.contains('amount') ||
+                            cleanLabel.contains('mrp') ||
+                            cleanLabel.contains('rate') ||
+                            cleanLabel.contains('tax') ||
+                            cleanLabel.contains('discount');
+
+          if (isNumeric) {
+            final numVal = double.tryParse(trimmed);
+            if (numVal != null) {
+              if (numVal > 99999999.99) {
+                return "Amount cannot exceed 99,999,999";
+              }
+              final parts = trimmed.split('.');
+              if (parts[0].replaceAll(RegExp(r'\D'), '').length > 8) {
+                return "Amount too large (max 8 digits)";
+              }
+            } else if (keyboardType.toString().contains('number')) {
+              return "Please enter a valid number";
+            }
+          }
         }
         return null;
       },
@@ -303,11 +364,7 @@ class AppTextField extends StatelessWidget {
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
         prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 20) : null,
         suffixIcon: suffixIcon,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        errorStyle: const TextStyle(height: 0, fontSize: 0),
       ),
     );
   }

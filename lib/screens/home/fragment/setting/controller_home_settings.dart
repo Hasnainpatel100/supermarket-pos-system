@@ -6,6 +6,7 @@ import '../../../../service/service_storage.dart';
 
 class ControllerHomeSettings extends GetxController {
   final ServiceStorage _storage = Get.find<ServiceStorage>();
+  final formKey = GlobalKey<FormState>();
 
   // ─── Store Info ───────────────────────────────────────────────────────────
   final rxStoreName    = ''.obs;
@@ -86,11 +87,22 @@ class ControllerHomeSettings extends GetxController {
   }
 
   Future<void> saveStoreDetails() async {
-    rxStoreName.value    = storeNameController.text;
-    rxStoreAddress.value = storeAddressController.text;
-    rxStorePhone.value   = storePhoneController.text;
-    rxStoreEmail.value   = storeEmailController.text;
-    rxStoreGstin.value   = storeGstinController.text;
+    if (!formKey.currentState!.validate()) {
+      Get.snackbar(
+        'Validation Error',
+        'Please correct the store details errors',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    rxStoreName.value    = storeNameController.text.trim();
+    rxStoreAddress.value = storeAddressController.text.trim();
+    rxStorePhone.value   = storePhoneController.text.trim();
+    rxStoreEmail.value   = storeEmailController.text.trim();
+    rxStoreGstin.value   = storeGstinController.text.trim();
 
     await _storage.writeString('store_name',    rxStoreName.value);
     await _storage.writeString('store_address', rxStoreAddress.value);

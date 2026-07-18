@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:super_market/widget/icon_box.dart';
+import '../../../../widget/app_dialog_components.dart';
 
 import '../../../../service/service_currency.dart';
 import '../../../../service/service_locale.dart';
@@ -194,10 +195,12 @@ class _ProfileTab extends StatelessWidget {
               const SizedBox(height: 4),
               MyCard(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                child: Form(
+                  key: controllerSettings.formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
@@ -243,6 +246,7 @@ class _ProfileTab extends StatelessWidget {
                       icon: Icons.business_outlined,
                       isDark: isDark,
                       colorScheme: colorScheme,
+                      required: true,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -253,6 +257,7 @@ class _ProfileTab extends StatelessWidget {
                       maxLines: 2,
                       isDark: isDark,
                       colorScheme: colorScheme,
+                      required: true,
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -266,6 +271,7 @@ class _ProfileTab extends StatelessWidget {
                             icon: Icons.phone_outlined,
                             isDark: isDark,
                             colorScheme: colorScheme,
+                            required: true,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -290,6 +296,7 @@ class _ProfileTab extends StatelessWidget {
                       icon: Icons.email_outlined,
                       isDark: isDark,
                       colorScheme: colorScheme,
+                      required: true,
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
@@ -313,6 +320,7 @@ class _ProfileTab extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
               const SizedBox(height: 28),
 
 
@@ -429,34 +437,19 @@ class _ProfileTab extends StatelessWidget {
     required bool isDark,
     required ColorScheme colorScheme,
     int maxLines = 1,
+    bool required = false,
   }) {
-    return TextField(
+    return AppTextField(
       controller: controller,
+      label: label,
+      prefixIcon: icon,
       maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 20, color: colorScheme.primary),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide:
-              BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
-        ),
-        filled: true,
-        fillColor: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : colorScheme.surfaceContainerLowest,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
+      required: required,
+      keyboardType: label.toLowerCase().contains('phone')
+          ? TextInputType.phone
+          : label.toLowerCase().contains('email')
+              ? TextInputType.emailAddress
+              : TextInputType.text,
     );
   }
 

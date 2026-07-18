@@ -37,7 +37,7 @@ class MyTextField extends StatelessWidget {
       // ✅ Validator without layout jump
       validator: (value) {
         if (required && (value == null || value.trim().isEmpty)) {
-          return ''; // <-- VERY IMPORTANT
+          return '${label ?? "Field"} is required';
         }
         return null;
       },
@@ -62,12 +62,6 @@ class MyTextField extends StatelessWidget {
                   ]
                 : [],
           ),
-        ),
-
-        // 🔒 Reserve error space permanently
-        errorStyle: const TextStyle(
-          height: 0, // no text height
-          fontSize: 0, // invisible
         ),
       ),
     );

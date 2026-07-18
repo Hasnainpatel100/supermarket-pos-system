@@ -282,6 +282,11 @@ class AppThemes {
         hintStyle: TextStyle(
           color: baseColorScheme.onSurfaceVariant.withValues(alpha: 0.6),
         ),
+        errorStyle: GoogleFonts.plusJakartaSans(
+          color: baseColorScheme.error,
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       
       filledButtonTheme: FilledButtonThemeData(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../widget/app_dialog_components.dart';
 import 'controller_home_pos.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -152,83 +153,67 @@ class _ActivitySplitBillState extends State<ActivitySplitBill>
     final cs       = Theme.of(context).colorScheme;
     final currency = _ctrl.serviceCurrency.rxCurrency.value;
 
-    return Scaffold(
-      backgroundColor: cs.surfaceContainerLowest,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: cs.surface,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Get.back(),
-        ),
-        title: Obx(() {
-          final total = _ctrl.activeSession.rxGrandTotal.value;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Split Bill',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              Text(
-                'Grand Total: $currency${total.toStringAsFixed(2)}',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: cs.primary,
-                    fontWeight: FontWeight.w600),
-              ),
-            ],
-          );
-        }),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.people_alt_rounded), text: 'Person Wise'),
-            Tab(icon: Icon(Icons.checklist_rounded),  text: 'Item Wise'),
-          ],
-          labelColor: cs.primary,
-          unselectedLabelColor: cs.onSurfaceVariant,
-          indicatorColor: cs.primary,
-          labelStyle:
-              const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-        ),
+    return AppDialog(
+      maxWidth: 900,
+      maxHeight: 750,
+      header: DialogHeader(
+        title: 'Split Bill',
+        icon: Icons.call_split_rounded,
+        iconColor: cs.primary,
       ),
-
-      // ── Tabs ──
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Tab 0 – Person Wise
-          _PersonWiseTab(
-            personCount:  _personCount,
-            names:        _nameCtrl,
-            amounts:      _amountCtrl,
-            modes:        _modes,
-            currency:     currency,
-            grandTotal:   _ctrl.activeSession.rxGrandTotal.value,
-            cs:           cs,
-            palette:      _palette,
-            payModes:     _payModes,
-            onCount:  (n) => _initPersons(n),
-            onMode:   (i, m) => setState(() => _modes[i] = m),
-            onAmount: () => setState(() {}),
+          // TabBar header
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(icon: Icon(Icons.people_alt_rounded), text: 'Person Wise'),
+              Tab(icon: Icon(Icons.checklist_rounded),  text: 'Item Wise'),
+            ],
+            labelColor: cs.primary,
+            unselectedLabelColor: cs.onSurfaceVariant,
+            indicatorColor: cs.primary,
+            labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
           ),
-          // Tab 1 – Item Wise
-          _ItemWiseTab(
-            controller:  _ctrl,
-            personCount: _personCount,
-            names:       _nameCtrl,
-            itemPerson:  _itemPerson,
-            currency:    currency,
-            cs:          cs,
-            palette:     _palette,
-            onAssign: (ii, pi) => setState(() => _itemPerson[ii] = pi),
-            personTotal: _iwPersonTotal,
+          // TabBar content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Tab 0 – Person Wise
+                _PersonWiseTab(
+                  personCount:  _personCount,
+                  names:        _nameCtrl,
+                  amounts:      _amountCtrl,
+                  modes:        _modes,
+                  currency:     currency,
+                  grandTotal:   _ctrl.activeSession.rxGrandTotal.value,
+                  cs:           cs,
+                  palette:      _palette,
+                  payModes:     _payModes,
+                  onCount:  (n) => _initPersons(n),
+                  onMode:   (i, m) => setState(() => _modes[i] = m),
+                  onAmount: () => setState(() {}),
+                ),
+                // Tab 1 – Item Wise
+                _ItemWiseTab(
+                  controller:  _ctrl,
+                  personCount: _personCount,
+                  names:       _nameCtrl,
+                  itemPerson:  _itemPerson,
+                  currency:    currency,
+                  cs:          cs,
+                  palette:     _palette,
+                  onAssign: (ii, pi) => setState(() => _itemPerson[ii] = pi),
+                  personTotal: _iwPersonTotal,
+                ),
+              ],
+            ),
           ),
         ],
       ),
-
-      // ── Bottom bar ──
-      bottomNavigationBar: _BottomBar(
+      footer: _BottomBar(
         isPersonWise:  _tabController.index == 0,
         pwTotal:       _pwTotal,
         grandTotal:    _ctrl.activeSession.rxGrandTotal.value,

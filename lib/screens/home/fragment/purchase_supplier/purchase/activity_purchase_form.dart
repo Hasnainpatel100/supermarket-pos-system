@@ -5,7 +5,7 @@ import 'package:dropdown_search/dropdown_search.dart';
 import '../../../../../model/entity_item.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../util/snackbar_util.dart';
-import '../../../../../widget/my_card.dart';
+import '../../../../../widget/app_dialog_components.dart';
 import '../supplier/activity_supplier_form.dart';
 import '../supplier/controller_home_supplier.dart';
 import 'controller_home_purchase.dart';
@@ -132,50 +132,31 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.deepPurple.shade400,
-                    Colors.deepPurple.shade700
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.deepPurple.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2))
-                ],
-              ),
-              child: const Icon(Icons.add_shopping_cart_rounded,
-                  color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Text('New Purchase Order',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-          ],
-        ),
+    return AppDialog(
+      maxWidth: 950,
+      maxHeight: 750,
+      header: const DialogHeader(
+        title: 'New Purchase Order',
+        icon: Icons.add_shopping_cart_rounded,
+        iconColor: Colors.deepPurple,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Section 1: Purchase Info ──
-            MyCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _sectionHeader(
-                      'Purchase Information', Icons.info_outline_rounded),
-                  const SizedBox(height: 16),
+      body: DialogBody(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 650;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Section 1: Purchase Info ──
+                const FormSection(
+                  icon: Icons.info_outline_rounded,
+                  color: Colors.deepPurple,
+                  title: 'Purchase Information',
+                ),
+                const SizedBox(height: 16),
+
+                if (isWide)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -191,12 +172,12 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                                 items: _suppliers,
                                 itemAsString: (s) => s?.name ?? '',
                                 popupProps: PopupProps.menu(
-                                  showSearchBox: true, // 🔥 THIS ENABLES SEARCH
+                                  showSearchBox: true,
                                   searchFieldProps: TextFieldProps(
-                                    autofocus: true, // ✅ focus search box on first tap
+                                    autofocus: true,
                                     decoration: InputDecoration(
                                       hintText: "Search supplier...",
-                                      prefixIcon: Icon(Icons.search),
+                                      prefixIcon: const Icon(Icons.search),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
@@ -206,17 +187,19 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                                 dropdownDecoratorProps: DropDownDecoratorProps(
                                   dropdownSearchDecoration: InputDecoration(
                                     labelText: 'Supplier *',
-                                    prefixIcon: Icon(Icons.local_shipping_rounded),
+                                    prefixIcon: const Icon(Icons.local_shipping_rounded),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    isDense: true,
                                   ),
                                 ),
                                 onChanged: (val) => setState(() => _selectedSupplier = val),
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            // ── Add Supplier icon button ──
+                            const SizedBox(width: 8),
+                            // Add Supplier button
                             Tooltip(
                               message: 'Add new supplier',
                               child: InkWell(
@@ -225,15 +208,13 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                                   if (!Get.isRegistered<ControllerHomeSupplier>()) {
                                     Get.put(ControllerHomeSupplier());
                                   }
-                                  await Get.to(
-                                          () => const ActivitySupplierForm());
-                                  final oldIds =
-                                  _suppliers.map((s) => s.id).toSet();
-                                  final updated =
-                                  _controller.getAllActiveSuppliers();
-                                  final newSupplier = updated
-                                      .where((s) => !oldIds.contains(s.id))
-                                      .firstOrNull;
+                                  await Get.dialog(
+                                    const ActivitySupplierForm(),
+                                    barrierDismissible: false,
+                                  );
+                                  final oldIds = _suppliers.map((s) => s.id).toSet();
+                                  final updated = _controller.getAllActiveSuppliers();
+                                  final newSupplier = updated.where((s) => !oldIds.contains(s.id)).firstOrNull;
                                   setState(() {
                                     _suppliers = updated;
                                     if (newSupplier != null) {
@@ -242,17 +223,14 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                                   });
                                 },
                                 child: Container(
-                                  width: 36,
-                                  height: 36,
+                                  width: 44,
+                                  height: 44,
                                   decoration: BoxDecoration(
                                     color: Colors.indigo.shade50,
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                        color: Colors.indigo.shade200),
+                                    border: Border.all(color: Colors.indigo.shade200),
                                   ),
-                                  child: Icon(Icons.add_rounded,
-                                      size: 20,
-                                      color: Colors.indigo.shade600),
+                                  child: Icon(Icons.add_rounded, size: 20, color: Colors.indigo.shade600),
                                 ),
                               ),
                             ),
@@ -260,248 +238,235 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                         ),
                       ),
                       const SizedBox(width: 16),
-
                       // Purchase Date
                       Expanded(
-                        child: InkWell(
+                        child: AppDatePicker(
+                          controller: TextEditingController(text: DateFormat('dd MMM yyyy').format(_purchaseDate)),
+                          label: 'Purchase Date *',
                           onTap: _pickPurchaseDate,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: 'Purchase Date *',
-                              prefixIcon: const Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 20),
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
-                            ),
-                            child: Text(
-                              DateFormat('dd MMM yyyy')
-                                  .format(_purchaseDate),
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
-
                       // Expected Date
                       Expanded(
-                        child: InkWell(
-                          onTap: _pickExpectedDate,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: 'Expected Delivery',
-                              prefixIcon: const Icon(
-                                  Icons.event_available_rounded,
-                                  size: 20),
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
-                            ),
-                            child: Text(
-                              _expectedDate != null
-                                  ? DateFormat('dd MMM yyyy')
-                                  .format(_expectedDate!)
-                                  : 'Not set',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: _expectedDate != null
-                                      ? null
-                                      : Colors.grey.shade400),
-                            ),
+                        child: AppDatePicker(
+                          controller: TextEditingController(
+                            text: _expectedDate != null ? DateFormat('dd MMM yyyy').format(_expectedDate!) : '',
                           ),
+                          label: 'Expected Delivery',
+                          onTap: _pickExpectedDate,
                         ),
                       ),
                     ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // ── Section 2: Items ──
-            MyCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                  )
+                else ...[
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
-                          child: _sectionHeader(
-                              'Order Items', Icons.inventory_2_rounded)),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [
-                            Colors.teal.shade400,
-                            Colors.teal.shade700
-                          ]),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: _addRow,
-                            borderRadius: BorderRadius.circular(10),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 8),
-                              child: Row(children: const [
-                                Icon(Icons.add_rounded,
-                                    color: Colors.white, size: 18),
-                                SizedBox(width: 6),
-                                Text('Add Item',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13)),
-                              ]),
+                        child: DropdownSearch<EntitySupplier>(
+                          selectedItem: _selectedSupplier,
+                          items: _suppliers,
+                          itemAsString: (s) => s?.name ?? '',
+                          popupProps: PopupProps.menu(
+                            showSearchBox: true,
+                            searchFieldProps: TextFieldProps(
+                              autofocus: true,
+                              decoration: InputDecoration(
+                                hintText: "Search supplier...",
+                                prefixIcon: const Icon(Icons.search),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
                             ),
+                          ),
+                          dropdownDecoratorProps: DropDownDecoratorProps(
+                            dropdownSearchDecoration: InputDecoration(
+                              labelText: 'Supplier *',
+                              prefixIcon: const Icon(Icons.local_shipping_rounded),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              isDense: true,
+                            ),
+                          ),
+                          onChanged: (val) => setState(() => _selectedSupplier = val),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Tooltip(
+                        message: 'Add new supplier',
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () async {
+                            if (!Get.isRegistered<ControllerHomeSupplier>()) {
+                              Get.put(ControllerHomeSupplier());
+                            }
+                            await Get.dialog(
+                              const ActivitySupplierForm(),
+                              barrierDismissible: false,
+                            );
+                            final oldIds = _suppliers.map((s) => s.id).toSet();
+                            final updated = _controller.getAllActiveSuppliers();
+                            final newSupplier = updated.where((s) => !oldIds.contains(s.id)).firstOrNull;
+                            setState(() {
+                              _suppliers = updated;
+                              if (newSupplier != null) {
+                                _selectedSupplier = newSupplier;
+                              }
+                            });
+                          },
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.indigo.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.indigo.shade200),
+                            ),
+                            child: Icon(Icons.add_rounded, size: 20, color: Colors.indigo.shade600),
                           ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-
-                  // Header row
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(8),
+                  AppDatePicker(
+                    controller: TextEditingController(text: DateFormat('dd MMM yyyy').format(_purchaseDate)),
+                    label: 'Purchase Date *',
+                    onTap: _pickPurchaseDate,
+                  ),
+                  const SizedBox(height: 16),
+                  AppDatePicker(
+                    controller: TextEditingController(
+                      text: _expectedDate != null ? DateFormat('dd MMM yyyy').format(_expectedDate!) : '',
                     ),
-                    child: Row(children: [
-                      Expanded(
-                          flex: 4,
-                          child: Text('Item',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade700,
-                                  fontSize: 13))),
-                      Expanded(
-                          flex: 2,
-                          child: Text('Qty',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade700,
-                                  fontSize: 13))),
-                      Expanded(
-                          flex: 2,
-                          child: Text('Unit Cost (₹)',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade700,
-                                  fontSize: 13))),
-                      Expanded(
-                          flex: 2,
-                          child: Text('Total (₹)',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade700,
-                                  fontSize: 13))),
-                      const SizedBox(width: 36),
-                    ]),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Item rows
-                  ...List.generate(
-                    _rows.length,
-                        (i) => _buildItemRow(i),
-                  ),
-
-                  const Divider(height: 24),
-
-                  // Total footer
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text('Total Order Amount:',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade600,
-                              fontSize: 14)),
-                      const SizedBox(width: 12),
-                      Text(
-                        '₹ ${_totalAmount.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.deepPurple),
-                      ),
-                    ],
+                    label: 'Expected Delivery',
+                    onTap: _pickExpectedDate,
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(height: 24),
 
-            // ── Action Buttons ──
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 14),
-                  ),
-                  onPressed: () => Get.back(),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [
-                      Colors.deepPurple.shade400,
-                      Colors.deepPurple.shade700
-                    ]),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.deepPurple.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2))
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _isSaving ? null : _save,
-                      borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 14),
-                        child: Row(children: [
-                          _isSaving
-                              ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
-                              : const Icon(Icons.save_rounded,
-                              color: Colors.white, size: 18),
-                          const SizedBox(width: 8),
-                          const Text('Create Purchase Order',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                        ]),
+                const SizedBox(height: 24),
+
+                // ── Section 2: Items ──
+                Row(
+                  children: [
+                    const Expanded(
+                      child: FormSection(
+                        icon: Icons.inventory_2_rounded,
+                        color: Colors.deepPurple,
+                        title: 'Order Items',
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [
+                          Colors.teal.shade400,
+                          Colors.teal.shade700
+                        ]),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _addRow,
+                          borderRadius: BorderRadius.circular(10),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            child: Row(
+                              children: [
+                                Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                                SizedBox(width: 6),
+                                Text('Add Item', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Header row
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withOpacity(0.04),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: Text(
+                          'Item',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Qty',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Unit Cost (₹)',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Total (₹)',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(width: 44), // matches close button space
+                    ],
                   ),
                 ),
+                const SizedBox(height: 8),
+
+                // Item rows
+                ...List.generate(
+                  _rows.length,
+                  (i) => _buildItemRow(i),
+                ),
+
+                const Divider(height: 24),
+
+                // Total footer
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text('Total Order Amount:', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey.shade600, fontSize: 14)),
+                    const SizedBox(width: 12),
+                    Text(
+                      '₹ ${_totalAmount.toStringAsFixed(2)}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.deepPurple),
+                    ),
+                  ],
+                ),
               ],
-            ),
-          ],
+            );
+          },
         ),
+      ),
+      footer: DialogFooter(
+        onCancel: () => Get.back(),
+        onSave: _save,
+        saveLabel: 'Create Purchase Order',
+        isSaving: _isSaving,
+        saveButtonColor: Colors.deepPurple.shade700,
       ),
     );
   }
@@ -520,40 +485,34 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
               child: DropdownSearch<EntityItem>(
                 selectedItem: row.selectedItem,
                 items: _items,
-                itemAsString: (item) =>
-                '${item?.name ?? ''} (${item?.unit ?? ''})',
-
+                itemAsString: (item) => '${item?.name ?? ''} (${item?.unit ?? ''})',
                 popupProps: PopupProps.menu(
                   showSearchBox: true,
                   searchFieldProps: TextFieldProps(
-                    autofocus: true, // ✅ focus search box on first tap
+                    autofocus: true,
                     decoration: InputDecoration(
                       hintText: "Search item...",
-                      prefixIcon: Icon(Icons.search),
+                      prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                   ),
                 ),
-
                 dropdownDecoratorProps: DropDownDecoratorProps(
                   dropdownSearchDecoration: InputDecoration(
                     hintText: 'Select item',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     isDense: true,
                   ),
                 ),
-
                 onChanged: (val) {
                   setRowState(() => row.selectedItem = val);
                   if (val?.costPrice != null) {
-                    row.costCtrl.text =
-                        val!.costPrice!.toStringAsFixed(2);
+                    row.costCtrl.text = val!.costPrice!.toStringAsFixed(2);
                   }
                   setState(() {});
                 },
@@ -570,10 +529,8 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: '0',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   isDense: true,
                 ),
               ),
@@ -590,10 +547,8 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                 decoration: InputDecoration(
                   hintText: '0.00',
                   prefixText: '₹ ',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   isDense: true,
                 ),
               ),
@@ -604,8 +559,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
             Expanded(
               flex: 2,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 13),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
                 decoration: BoxDecoration(
                   color: Colors.deepPurple.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(10),
@@ -613,10 +567,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                 ),
                 child: Text(
                   '₹ ${((double.tryParse(row.qtyCtrl.text) ?? 0) * (double.tryParse(row.costCtrl.text) ?? 0)).toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      color: Colors.deepPurple),
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.deepPurple),
                 ),
               ),
             ),
@@ -626,9 +577,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
             IconButton(
               onPressed: () => _removeRow(index),
               icon: Icon(Icons.remove_circle_outline_rounded,
-                  color: _rows.length > 1
-                      ? Colors.red.shade400
-                      : Colors.grey.shade300),
+                  color: _rows.length > 1 ? Colors.red.shade400 : Colors.grey.shade300),
               tooltip: 'Remove item',
             ),
           ],
@@ -636,21 +585,8 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
       ),
     );
   }
-
-  Widget _sectionHeader(String title, IconData icon) {
-    return Row(children: [
-      Icon(icon, size: 20, color: Colors.deepPurple.shade500),
-      const SizedBox(width: 8),
-      Text(title,
-          style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Colors.deepPurple.shade700)),
-    ]);
-  }
 }
 
-/// Internal state for each item row in the form
 class _ItemRow {
   EntityItem? selectedItem;
   final TextEditingController qtyCtrl = TextEditingController();

@@ -783,7 +783,10 @@ class ControllerHomePos extends GetxController {
 
   Future<void> openCustomerForm() async {
     final countBefore = _boxCustomer.count();
-    await Get.to(() => const ActivityCustomerForm());
+    await Get.dialog(
+      const ActivityCustomerForm(),
+      barrierDismissible: false,
+    );
     loadCustomers();
     if (_boxCustomer.count() > countBefore) {
       final newCustomer = _boxCustomer.query().order(EntityCustomer_.id, flags: Order.descending).build().findFirst();

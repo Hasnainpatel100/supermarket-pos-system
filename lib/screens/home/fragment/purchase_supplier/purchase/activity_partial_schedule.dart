@@ -6,7 +6,7 @@ import '../../../../../model/entity_payment_schedule.dart';
 import '../../../../../model/entity_purchase.dart';
 import '../../../../../util/snackbar_util.dart';
 import '../../../../../widget/my_card.dart';
-import '../../../../../model/entity_payment_schedule.dart';
+import '../../../../../widget/app_dialog_components.dart';
 import 'controller_home_purchase.dart';
 
 /// Screen to schedule future partial payments for a Purchase Order.
@@ -193,46 +193,15 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
   // ── build ──
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [Colors.orange.shade500, Colors.orange.shade800]),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.orange.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2)),
-                ],
-              ),
-              child: const Icon(Icons.calendar_month_rounded,
-                  color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Payment Schedule',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              Text(
-                '${_purchase.purchaseNo} · ${_purchase.supplierName}',
-                style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.w500),
-              ),
-            ]),
-          ],
-        ),
+    return AppDialog(
+      maxWidth: 700,
+      maxHeight: 700,
+      header: DialogHeader(
+        title: 'Payment Schedule',
+        icon: Icons.calendar_month_rounded,
+        iconColor: Colors.orange.shade700,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+      body: DialogBody(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -252,6 +221,22 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
             else
               _buildScheduleList(),
           ],
+        ),
+      ),
+      footer: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.12),
+            ),
+          ),
+        ),
+        alignment: Alignment.centerRight,
+        child: SecondaryButton(
+          label: 'Close',
+          onPressed: () => Get.back(),
+          icon: Icons.close_rounded,
         ),
       ),
     );

@@ -86,7 +86,10 @@ class FragmentHomeSupplier extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () async {
-                  await Get.to(() => const ActivitySupplierForm());
+                  await Get.dialog(
+                    const ActivitySupplierForm(),
+                    barrierDismissible: false,
+                  );
                   controller.loadSuppliers();
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -545,7 +548,11 @@ class FragmentHomeSupplier extends StatelessWidget {
 
   void _onEdit(
       EntitySupplier supplier, ControllerHomeSupplier controller) async {
-    await Get.to(() => const ActivitySupplierForm(), arguments: supplier);
+    await Get.dialog(
+      const ActivitySupplierForm(),
+      arguments: supplier,
+      barrierDismissible: false,
+    );
     controller.loadSuppliers();
   }
 

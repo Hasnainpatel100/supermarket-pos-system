@@ -194,8 +194,9 @@ class FragmentHomeExpenses extends StatelessWidget {
                 // ── New Transaction Text Button ───────────────────────────────
                 FilledButton.icon(
                   onPressed: () async {
-                    final result = await Get.to(
-                      () => const ActivityExpensesFrom(),
+                    final result = await Get.dialog(
+                      const ActivityExpensesFrom(),
+                      barrierDismissible: false,
                     );
                     if (result == true) controller.loadData();
                   },

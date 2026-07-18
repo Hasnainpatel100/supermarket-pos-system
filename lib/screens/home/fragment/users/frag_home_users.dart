@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:super_market/screens/home/fragment/users/controller_home_users.dart';
+import 'package:super_market/screens/user/activity_user.dart';
 import 'package:super_market/widget/my_card.dart';
 
 import '../../../../enums/enum_permission.dart';
 import '../../../../enums/enum_user_action.dart';
 import '../../../../model/entity_user.dart';
-import '../../../../util/app_route.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../controller_home.dart';
 
@@ -42,7 +42,10 @@ class FragHomeUsers extends StatelessWidget {
           if (canCreate)
             FilledButton.icon(
               onPressed: () async {
-                await Get.toNamed(AppRoute.user);
+                await Get.dialog(
+                  const ActivityUser(),
+                  barrierDismissible: false,
+                );
                 controller.loadUsers();
               },
               icon: const Icon(Icons.person_add_rounded, size: 18),
@@ -395,10 +398,11 @@ class FragHomeUsers extends StatelessWidget {
   ) {
     switch (action) {
       case EnumUserAction.edit:
-        Get.toNamed(
-          AppRoute.user,
+        Get.dialog(
+          const ActivityUser(),
           arguments: user,
-        )?.then((_) => controller.loadUsers());
+          barrierDismissible: false,
+        ).then((_) => controller.loadUsers());
         break;
 
       case EnumUserAction.assignRole:

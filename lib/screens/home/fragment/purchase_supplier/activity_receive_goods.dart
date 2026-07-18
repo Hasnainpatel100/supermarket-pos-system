@@ -12,6 +12,7 @@ import '../../../../model/entity_purchase_item.dart';
 import '../../../../model/entity_purchase_receipt.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../../widget/my_card.dart';
+import '../../../../widget/app_dialog_components.dart';
 
 /// Receive Goods Screen.
 ///
@@ -296,180 +297,82 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
     final colorScheme = Theme.of(context).colorScheme;
     final status = PurchaseStatus.values[_purchase.status ?? 0];
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [Colors.green.shade500, Colors.green.shade800]),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.green.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2))
+    return AppDialog(
+      maxWidth: 950,
+      maxHeight: 750,
+      header: DialogHeader(
+        title: 'Receive Goods',
+        icon: Icons.move_to_inbox_rounded,
+        iconColor: Colors.green.shade600,
+      ),
+      body: DialogBody(
+        child: _rows.isEmpty
+            ? _buildAlreadyReceived()
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Purchase summary ──
+                  MyCard(
+                    child: Row(children: [
+                      _summaryChip('PO Number',
+                          _purchase.purchaseNo ?? '-', Colors.deepPurple),
+                      const SizedBox(width: 24),
+                      _summaryChip('Supplier',
+                          _purchase.supplierName ?? '-', Colors.indigo),
+                      const SizedBox(width: 24),
+                      _summaryChip(
+                          'Status', status.label, Color(status.colorValue)),
+                    ]),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Warning note ──
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.amber.shade200),
+                    ),
+                    child: Row(children: [
+                      Icon(Icons.info_outline_rounded,
+                          color: Colors.amber.shade700, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Receiving goods will create StockTransactions and update inventory immediately. This cannot be undone.',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.amber.shade800),
+                        ),
+                      ),
+                    ]),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── One card per item ──
+                  ...List.generate(
+                      _rows.length, (i) => _buildItemCard(_rows[i])),
+
+                  const SizedBox(height: 8),
+
+                  // ── Invoice Details Section ──
+                  _buildInvoiceDetailsSection(),
+                  const SizedBox(height: 16),
+
+                  // ── Summary Section ──
+                  _buildSummarySection(),
                 ],
               ),
-              child: const Icon(Icons.move_to_inbox_rounded,
-                  color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Receive Goods',
-                    style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                Text(
-                  '${_purchase.purchaseNo} · ${_purchase.supplierName}',
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
-      body: _rows.isEmpty
-          ? _buildAlreadyReceived()
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Purchase summary ──
-            MyCard(
-              child: Row(children: [
-                _summaryChip('PO Number',
-                    _purchase.purchaseNo ?? '-', Colors.deepPurple),
-                const SizedBox(width: 24),
-                _summaryChip('Supplier',
-                    _purchase.supplierName ?? '-', Colors.indigo),
-                const SizedBox(width: 24),
-                _summaryChip(
-                    'Status', status.label, Color(status.colorValue)),
-              ]),
+      footer: _rows.isEmpty
+          ? null
+          : DialogFooter(
+              onCancel: () => Get.back(),
+              onSave: _confirm,
+              saveLabel: _confirmed ? 'Confirmed' : 'Confirm Goods Received',
+              isSaving: _isSaving,
+              saveButtonColor: _confirmed ? Colors.grey : Colors.green.shade600,
             ),
-            const SizedBox(height: 16),
-
-            // ── Warning note ──
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.amber.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.amber.shade200),
-              ),
-              child: Row(children: [
-                Icon(Icons.info_outline_rounded,
-                    color: Colors.amber.shade700, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Receiving goods will create StockTransactions and update inventory immediately. This cannot be undone.',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.amber.shade800),
-                  ),
-                ),
-              ]),
-            ),
-            const SizedBox(height: 16),
-
-            // ── One card per item ──
-            ...List.generate(
-                _rows.length, (i) => _buildItemCard(_rows[i])),
-
-            const SizedBox(height: 8),
-
-            // ── Invoice Details Section ──
-            _buildInvoiceDetailsSection(),
-            const SizedBox(height: 16),
-
-            // ── Summary Section ──
-            _buildSummarySection(),
-            const SizedBox(height: 24),
-
-            // ── Action buttons ──
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 14),
-                  ),
-                  onPressed: _confirmed ? null : () => Get.back(),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: _confirmed
-                        ? LinearGradient(colors: [
-                      Colors.grey.shade400,
-                      Colors.grey.shade500
-                    ])
-                        : LinearGradient(colors: [
-                      Colors.green.shade500,
-                      Colors.green.shade800
-                    ]),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.green.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2))
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: (_isSaving || _confirmed) ? null : _confirm,
-                      borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 14),
-                        child: Row(children: [
-                          _isSaving
-                              ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2))
-                              : Icon(
-                              _confirmed
-                                  ? Icons.lock_rounded
-                                  : Icons.check_circle_rounded,
-                              color: Colors.white,
-                              size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                              _confirmed
-                                  ? 'Confirmed'
-                                  : 'Confirm Goods Received',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                        ]),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
     );
   }
 

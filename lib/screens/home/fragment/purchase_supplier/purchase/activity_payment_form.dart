@@ -7,6 +7,7 @@ import '../../../../../model/entity_payment.dart';
 import '../../../../../model/entity_purchase.dart';
 import '../../../../../util/snackbar_util.dart';
 import '../../../../../widget/my_card.dart';
+import '../../../../../widget/app_dialog_components.dart';
 import 'controller_home_purchase.dart';
 import 'activity_partial_schedule.dart';
 import 'service_payment_receipt.dart';
@@ -298,61 +299,27 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
     final colorScheme = Theme.of(context).colorScheme;
     final isFullyPaid = _outstanding <= 0;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.green.shade500, Colors.green.shade800],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.green.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.payments_rounded,
-                  color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Record Payment',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 18)),
-                Text(
-                  '${_purchase.purchaseNo} · ${_purchase.supplierName}',
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
-          ],
-        ),
+    return AppDialog(
+      maxWidth: 950,
+      maxHeight: 750,
+      header: DialogHeader(
+        title: 'Record Payment',
+        icon: Icons.payments_rounded,
+        iconColor: Colors.green.shade600,
         actions: [
           IconButton(
             tooltip: 'Schedule Payments',
             icon: Icon(Icons.calendar_month_rounded,
                 color: Colors.orange.shade600),
-            onPressed: () => Get.to(
-                  () => const ActivityPartialSchedule(),
+            onPressed: () => Get.dialog(
+              const ActivityPartialSchedule(),
               arguments: _purchase,
+              barrierDismissible: false,
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+      body: DialogBody(
         child: Form(
           key: _formKey,
           child: Column(
@@ -374,11 +341,11 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _sectionHeader(
-                          _isSplitMode ? 'Split Payment' : 'Payment Details',
-                          _isSplitMode
-                              ? Icons.call_split_rounded
-                              : Icons.edit_rounded),
+                      FormSection(
+                        title: _isSplitMode ? 'Split Payment' : 'Payment Details',
+                        icon: _isSplitMode ? Icons.call_split_rounded : Icons.edit_rounded,
+                        color: Colors.green.shade600,
+                      ),
                       const Divider(height: 24),
 
                       if (_isSplitMode) ...[
@@ -395,8 +362,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                         maxLines: 2,
                         decoration: InputDecoration(
                           labelText: 'Note (optional)',
-                          hintText:
-                          'e.g. Advance payment for next order',
+                          hintText: 'e.g. Advance payment for next order',
                           hintStyle: TextStyle(
                               color: Colors.grey.shade400, fontSize: 13),
                           prefixIcon: const Icon(
@@ -407,26 +373,6 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
                         ),
-                      ),
-                      const SizedBox(height: 28),
-
-                      // ── Action Buttons ──
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 14),
-                            ),
-                            onPressed: () => Get.back(),
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 12),
-                          _buildSaveButton(),
-                        ],
                       ),
                     ],
                   ),
@@ -441,6 +387,13 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
             ],
           ),
         ),
+      ),
+      footer: DialogFooter(
+        onCancel: () => Get.back(),
+        onSave: _save,
+        saveLabel: 'Record Payment',
+        isSaving: _isSaving,
+        saveButtonColor: Colors.green.shade600,
       ),
     );
   }

@@ -106,7 +106,10 @@ class FragmentHomeItem extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () async {
-                  await Get.to(() => const ActivityItemForm());
+                  await Get.dialog(
+                    const ActivityItemForm(),
+                    barrierDismissible: false,
+                  );
                   controller.loadItems();
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -540,7 +543,11 @@ class FragmentHomeItem extends StatelessWidget {
   }
 
   void _onEdit(EntityItem item, ControllerHomeItem controller) async {
-    await Get.to(() => const ActivityItemForm(), arguments: item);
+    await Get.dialog(
+      const ActivityItemForm(),
+      arguments: item,
+      barrierDismissible: false,
+    );
     controller.loadItems();
   }
 

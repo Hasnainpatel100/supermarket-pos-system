@@ -974,7 +974,10 @@ class _PaymentSection extends StatelessWidget {
                       snackPosition: SnackPosition.TOP);
                   return;
                 }
-                Get.to(() => const ActivitySplitBill());
+                Get.dialog(
+                  const ActivitySplitBill(),
+                  barrierDismissible: false,
+                );
                 return;
               }
               session.rxPaymentMode.value = selected.first;

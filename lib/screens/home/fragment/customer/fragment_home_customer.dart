@@ -88,7 +88,10 @@ class FragmentHomeCustomer extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () async {
-                  await Get.to(() => const ActivityCustomerForm());
+                  await Get.dialog(
+                    const ActivityCustomerForm(),
+                    barrierDismissible: false,
+                  );
                   controller.loadCustomers();
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -643,7 +646,11 @@ class FragmentHomeCustomer extends StatelessWidget {
     EntityCustomer customer,
     ControllerHomeCustomer controller,
   ) async {
-    await Get.to(() => const ActivityCustomerForm(), arguments: customer);
+    await Get.dialog(
+      const ActivityCustomerForm(),
+      arguments: customer,
+      barrierDismissible: false,
+    );
     controller.loadCustomers();
   }
 

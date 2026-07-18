@@ -90,7 +90,10 @@ class FragmentHomePurchase extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () async {
-                  await Get.to(() => const ActivityPurchaseForm());
+                  await Get.dialog(
+                    const ActivityPurchaseForm(),
+                    barrierDismissible: false,
+                  );
                   controller.loadPurchases();
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -612,13 +615,21 @@ class FragmentHomePurchase extends StatelessWidget {
 
   void _goPay(
       EntityPurchase purchase, ControllerHomePurchase controller) async {
-    await Get.to(() => const ActivityPaymentForm(), arguments: purchase);
+    await Get.dialog(
+      const ActivityPaymentForm(),
+      arguments: purchase,
+      barrierDismissible: false,
+    );
     controller.loadPurchases();
   }
 
   void _goReceive(
       EntityPurchase purchase, ControllerHomePurchase controller) async {
-    await Get.to(() => const ActivityReceiveGoods(), arguments: purchase);
+    await Get.dialog(
+      const ActivityReceiveGoods(),
+      arguments: purchase,
+      barrierDismissible: false,
+    );
     controller.loadPurchases();
   }
 

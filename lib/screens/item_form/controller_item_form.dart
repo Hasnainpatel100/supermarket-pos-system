@@ -243,7 +243,11 @@ class ControllerItemForm extends GetxController {
       }
 
       if (hasExpiry.value) {
-        await Get.to(() => const ActivityItemBatchForm(), arguments: savedItem);
+        await Get.dialog(
+          const ActivityItemBatchForm(),
+          arguments: savedItem,
+          barrierDismissible: false,
+        );
         Get.back();
       } else {
         Get.back();

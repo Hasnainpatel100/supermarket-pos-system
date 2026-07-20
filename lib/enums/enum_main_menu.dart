@@ -10,8 +10,8 @@ enum EnumMainMenu {
   purchase,
   supplier,
   reports,
-
   customer,
+  bills,
 
   system,
   systemUsers, // 1. system

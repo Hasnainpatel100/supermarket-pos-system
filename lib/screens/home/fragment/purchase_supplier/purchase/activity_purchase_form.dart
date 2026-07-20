@@ -80,7 +80,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
 
   void _save() {
     if (_selectedSupplier == null) {
-      SnackbarUtil.showError('Please select a supplier');
+      SnackbarUtil.showError('Please select a supplier'.tr);
       return;
     }
 
@@ -93,7 +93,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
 
     if (validRows.isEmpty) {
       SnackbarUtil.showError(
-          'Add at least one item with valid qty and cost');
+          'Add at least one item with valid qty and cost'.tr);
       return;
     }
 
@@ -124,7 +124,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
       return;
     }
 
-    SnackbarUtil.showSuccess('Purchase order created!');
+    SnackbarUtil.showSuccess('Purchase order created!'.tr);
     Get.back();
   }
 
@@ -158,7 +158,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                   color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
-            const Text('New Purchase Order',
+            Text('New Purchase Order'.tr,
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           ],
         ),
@@ -174,7 +174,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _sectionHeader(
-                      'Purchase Information', Icons.info_outline_rounded),
+                      'Purchase Information'.tr, Icons.info_outline_rounded),
                   const SizedBox(height: 16),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,7 +195,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                                   searchFieldProps: TextFieldProps(
                                     autofocus: true, // ✅ focus search box on first tap
                                     decoration: InputDecoration(
-                                      hintText: "Search supplier...",
+                                      hintText: 'Search supplier...'.tr,
                                       prefixIcon: Icon(Icons.search),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -205,7 +205,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                                 ),
                                 dropdownDecoratorProps: DropDownDecoratorProps(
                                   dropdownSearchDecoration: InputDecoration(
-                                    labelText: 'Supplier *',
+                                    labelText: 'Supplier *'.tr,
                                     prefixIcon: Icon(Icons.local_shipping_rounded),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -218,7 +218,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                             const SizedBox(width: 6),
                             // ── Add Supplier icon button ──
                             Tooltip(
-                              message: 'Add new supplier',
+                              message: 'Add new supplier'.tr,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(10),
                                 onTap: () async {
@@ -268,7 +268,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                           borderRadius: BorderRadius.circular(12),
                           child: InputDecorator(
                             decoration: InputDecoration(
-                              labelText: 'Purchase Date *',
+                              labelText: 'Purchase Date *'.tr,
                               prefixIcon: const Icon(
                                   Icons.calendar_today_rounded,
                                   size: 20),
@@ -294,7 +294,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                           borderRadius: BorderRadius.circular(12),
                           child: InputDecorator(
                             decoration: InputDecoration(
-                              labelText: 'Expected Delivery',
+                              labelText: 'Expected Delivery'.tr,
                               prefixIcon: const Icon(
                                   Icons.event_available_rounded,
                                   size: 20),
@@ -307,7 +307,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                               _expectedDate != null
                                   ? DateFormat('dd MMM yyyy')
                                   .format(_expectedDate!)
-                                  : 'Not set',
+                                  : 'Not set'.tr,
                               style: TextStyle(
                                   fontSize: 14,
                                   color: _expectedDate != null
@@ -333,7 +333,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                     children: [
                       Expanded(
                           child: _sectionHeader(
-                              'Order Items', Icons.inventory_2_rounded)),
+                              'Order Items'.tr, Icons.inventory_2_rounded)),
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(colors: [
@@ -350,11 +350,11 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 14, vertical: 8),
-                              child: Row(children: const [
-                                Icon(Icons.add_rounded,
+                              child: Row(children: [
+                                const Icon(Icons.add_rounded,
                                     color: Colors.white, size: 18),
-                                SizedBox(width: 6),
-                                Text('Add Item',
+                                const SizedBox(width: 6),
+                                Text('Add Item'.tr,
                                     style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -379,28 +379,28 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                     child: Row(children: [
                       Expanded(
                           flex: 4,
-                          child: Text('Item',
+                          child: Text('Item'.tr,
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey.shade700,
                                   fontSize: 13))),
                       Expanded(
                           flex: 2,
-                          child: Text('Qty',
+                          child: Text('Qty'.tr,
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey.shade700,
                                   fontSize: 13))),
                       Expanded(
                           flex: 2,
-                          child: Text('Unit Cost (₹)',
+                          child: Text('Unit Cost (₹)'.tr,
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey.shade700,
                                   fontSize: 13))),
                       Expanded(
                           flex: 2,
-                          child: Text('Total (₹)',
+                          child: Text('Total (₹)'.tr,
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey.shade700,
@@ -422,7 +422,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text('Total Order Amount:',
+                      Text('Total Order Amount:'.tr,
                           style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: Colors.grey.shade600,
@@ -454,7 +454,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                         horizontal: 24, vertical: 14),
                   ),
                   onPressed: () => Get.back(),
-                  child: const Text('Cancel'),
+                  child: Text('Cancel'.tr),
                 ),
                 const SizedBox(width: 12),
                 Container(
@@ -489,7 +489,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                               : const Icon(Icons.save_rounded,
                               color: Colors.white, size: 18),
                           const SizedBox(width: 8),
-                          const Text('Create Purchase Order',
+                          Text('Create Purchase Order'.tr,
                               style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold)),
@@ -528,7 +528,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                   searchFieldProps: TextFieldProps(
                     autofocus: true, // ✅ focus search box on first tap
                     decoration: InputDecoration(
-                      hintText: "Search item...",
+                      hintText: 'Search item...'.tr,
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -539,7 +539,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
 
                 dropdownDecoratorProps: DropDownDecoratorProps(
                   dropdownSearchDecoration: InputDecoration(
-                    hintText: 'Select item',
+                    hintText: 'Select item'.tr,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -629,7 +629,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                   color: _rows.length > 1
                       ? Colors.red.shade400
                       : Colors.grey.shade300),
-              tooltip: 'Remove item',
+              tooltip: 'Remove item'.tr,
             ),
           ],
         ),

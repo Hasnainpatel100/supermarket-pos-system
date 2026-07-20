@@ -10,6 +10,7 @@ import 'util/static_methods.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppTranslation.loadTranslations();
   await StaticMethods.initServices();
   runApp(MyApp());
 }

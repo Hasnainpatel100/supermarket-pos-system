@@ -38,6 +38,7 @@ enum EnumPermission {
 
 
   // Reports
+
   reportSalesView,
   reportStockView,
   reportProfitView,

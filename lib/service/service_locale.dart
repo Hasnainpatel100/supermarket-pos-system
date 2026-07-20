@@ -13,7 +13,6 @@ class ServiceLocale {
     _loadLocale();
     return this;
   }
-
   void _loadLocale() {
     final code = _storage.readString(_key);
     if (code != null) {
@@ -21,7 +20,6 @@ class ServiceLocale {
       rxLocale.value = Locale(parts[0], parts.length > 1 ? parts[1] : null);
     }
   }
-
   Future<void> update(Locale locale) async {
     rxLocale.value = locale;
     final code = locale.countryCode == null

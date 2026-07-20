@@ -12,13 +12,11 @@ class ControllerSplash extends GetxController {
     redirectToHomeScreen();
     super.onReady();
   }
-
   void redirectToHomeScreen() {
     Future.delayed(Duration(seconds: 3), () {
       isUserLogin();
     });
   }
-
   void isUserLogin() async {
     String strUser = await _repoStorage.getUser();
     debugPrint("splash strUser: $strUser");

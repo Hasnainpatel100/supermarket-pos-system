@@ -153,7 +153,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
     if (_isSplitMode) {
       // Extra cross-field validations
       if (_hasDuplicateMode()) {
-        SnackbarUtil.showError('Each payment mode must be unique in a split.');
+        SnackbarUtil.showError('Each payment mode must be unique in a split.'.tr);
         return;
       }
       final total = _splitTotal;
@@ -163,7 +163,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
         return;
       }
       if (total <= 0) {
-        SnackbarUtil.showError('Split total must be greater than zero.');
+        SnackbarUtil.showError('Split total must be greater than zero.'.tr);
         return;
       }
     }
@@ -188,7 +188,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
               : splitGroupRef,
           note: _noteCtrl.text.isNotEmpty
               ? '[Split] ${_noteCtrl.text}'
-              : '[Split Payment]',
+              : '[Split Payment]'.tr,
         );
         if (error != null) break;
       }
@@ -238,7 +238,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
         title: Row(children: [
           Icon(Icons.check_circle_rounded, color: Colors.green.shade600, size: 28),
           const SizedBox(width: 10),
-          const Text('Payment Recorded!'),
+          Text('Payment Recorded!'.tr),
         ]),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(
@@ -247,14 +247,14 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Would you like to print or share a payment voucher?',
+            'Would you like to print or share a payment voucher?'.tr,
             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
         ]),
         actions: [
           TextButton(
             onPressed: () { Navigator.pop(ctx); Get.back(); },
-            child: const Text('Skip'),
+            child: Text('Skip'.tr),
           ),
           Container(
             decoration: BoxDecoration(
@@ -275,12 +275,12 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                   );
                   Get.back();
                 },
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.print_rounded, color: Colors.white, size: 18),
                     SizedBox(width: 8),
-                    Text('Print Voucher',
+                    Text('Print Voucher'.tr,
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ]),
                 ),
@@ -325,7 +325,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Record Payment',
+                Text('Record Payment'.tr,
                     style: TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 18)),
                 Text(
@@ -341,7 +341,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Schedule Payments',
+            tooltip: 'Schedule Payments'.tr,
             icon: Icon(Icons.calendar_month_rounded,
                 color: Colors.orange.shade600),
             onPressed: () => Get.to(
@@ -375,7 +375,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _sectionHeader(
-                          _isSplitMode ? 'Split Payment' : 'Payment Details',
+                          _isSplitMode ? 'Split Payment'.tr : 'Payment Details'.tr,
                           _isSplitMode
                               ? Icons.call_split_rounded
                               : Icons.edit_rounded),
@@ -394,9 +394,9 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                         controller: _noteCtrl,
                         maxLines: 2,
                         decoration: InputDecoration(
-                          labelText: 'Note (optional)',
+                          labelText: 'Note (optional)'.tr,
                           hintText:
-                          'e.g. Advance payment for next order',
+                          'e.g. Advance payment for next order'.tr,
                           hintStyle: TextStyle(
                               color: Colors.grey.shade400, fontSize: 13),
                           prefixIcon: const Icon(
@@ -422,7 +422,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                                   horizontal: 24, vertical: 14),
                             ),
                             onPressed: () => Get.back(),
-                            child: const Text('Cancel'),
+                            child: Text('Cancel'.tr),
                           ),
                           const SizedBox(width: 12),
                           _buildSaveButton(),
@@ -456,7 +456,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
             size: 18, color: Colors.green.shade600),
         const SizedBox(width: 8),
         Text(
-          'Split Payment',
+          'Split Payment'.tr,
           style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -488,7 +488,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
             ),
             child: Text(
               _splitRemaining.abs() < 0.01
-                  ? '✓ Balanced'
+                  ? '✓ Balanced'.tr
                   : 'Remaining: ₹${_splitRemaining.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 12,
@@ -517,7 +517,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
           keyboardType:
           const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
-            labelText: 'Amount *',
+            labelText: 'Amount *'.tr,
             prefixText: '₹ ',
             prefixIcon:
             const Icon(Icons.currency_rupee_rounded, size: 20),
@@ -534,7 +534,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
         const SizedBox(height: 20),
 
         // Payment Mode
-        Text('Payment Mode *',
+        Text('Payment Mode *'.tr,
             style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -608,7 +608,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
             onPressed: _addSplit,
             icon: Icon(Icons.add_circle_outline_rounded,
                 size: 18, color: Colors.green.shade600),
-            label: Text('Add another payment mode',
+            label: Text('Add another payment mode'.tr,
                 style: TextStyle(
                     color: Colors.green.shade600,
                     fontWeight: FontWeight.w600)),
@@ -662,7 +662,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                     onPressed: () => _removeSplit(index),
                     icon: Icon(Icons.remove_circle_outline_rounded,
                         color: Colors.red.shade400, size: 20),
-                    tooltip: 'Remove',
+                    tooltip: 'Remove'.tr,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -741,7 +741,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                         decimal: true),
                     onChanged: (_) => setState(() {}), // refresh remaining
                     decoration: InputDecoration(
-                      labelText: 'Amount *',
+                      labelText: 'Amount *'.tr,
                       prefixText: '₹ ',
                       isDense: true,
                       border: OutlineInputBorder(
@@ -751,11 +751,11 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) {
-                        return 'Required';
+                        return 'Required'.tr;
                       }
                       final amt = double.tryParse(v.trim());
                       if (amt == null || amt <= 0) {
-                        return 'Invalid';
+                        return 'Invalid'.tr;
                       }
                       return null;
                     },
@@ -800,17 +800,17 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
             children: [
               Expanded(
                   child: _summaryTile(
-                      'Total Amount',
+                      'Total Amount'.tr,
                       '₹ ${(_purchase.totalAmount ?? 0).toStringAsFixed(2)}',
                       Colors.grey.shade700)),
               Expanded(
                   child: _summaryTile(
-                      'Amount Paid',
+                      'Amount Paid'.tr,
                       '₹ ${(_purchase.amountPaid ?? 0).toStringAsFixed(2)}',
                       Colors.green.shade600)),
               Expanded(
                 child: _summaryTile(
-                  'Outstanding',
+                  'Outstanding'.tr,
                   '₹ ${_outstanding.toStringAsFixed(2)}',
                   isFullyPaid
                       ? Colors.green.shade600
@@ -865,13 +865,13 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
             color: Colors.green.shade500, size: 40),
         const SizedBox(width: 16),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Fully Paid',
+          Text('Fully Paid'.tr,
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.green.shade700)),
           const SizedBox(height: 2),
-          Text('This purchase order has been fully settled.',
+          Text('This purchase order has been fully settled.'.tr,
               style: TextStyle(
                   fontSize: 13, color: Colors.green.shade600)),
         ]),
@@ -1008,7 +1008,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                         border: Border.all(
                             color: Colors.purple.shade200),
                       ),
-                      child: Text('Split',
+                      child: Text('Split'.tr,
                           style: TextStyle(
                               fontSize: 10,
                               color: Colors.purple.shade600,
@@ -1076,7 +1076,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
                   : const Icon(Icons.check_rounded,
                   color: Colors.white, size: 18),
               const SizedBox(width: 8),
-              const Text('Record Payment',
+              Text('Record Payment'.tr,
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold)),
@@ -1104,9 +1104,9 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
   }
 
   String? _validateAmount(String? v, double maxAmount) {
-    if (v == null || v.trim().isEmpty) return 'Amount is required';
+    if (v == null || v.trim().isEmpty) return 'Amount is required'.tr;
     final amt = double.tryParse(v.trim());
-    if (amt == null || amt <= 0) return 'Enter a valid amount';
+    if (amt == null || amt <= 0) return 'Enter a valid amount'.tr;
     if (amt > maxAmount + 0.001) {
       return 'Cannot exceed ₹${maxAmount.toStringAsFixed(2)}';
     }
@@ -1114,10 +1114,10 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
   }
 
   String _referenceLabel(PaymentMode mode) => switch (mode) {
-    PaymentMode.cheque => 'Cheque Number',
-    PaymentMode.bankTransfer => 'UTR / Transaction ID',
-    PaymentMode.upi => 'UPI Transaction ID',
-    _ => 'Reference No',
+    PaymentMode.cheque => 'Cheque Number'.tr,
+    PaymentMode.bankTransfer => 'UTR / Transaction ID'.tr,
+    PaymentMode.upi => 'UPI Transaction ID'.tr,
+    _ => 'Reference No'.tr,
   };
 
   IconData _modeIcon(PaymentMode mode) => switch (mode) {

@@ -80,7 +80,7 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
     }
 
     SnackbarUtil.showSuccess(
-        _isEdit ? 'Supplier updated!' : 'Supplier created!');
+        _isEdit ? 'Supplier updated!'.tr : 'Supplier created!'.tr);
     Get.back();
   }
 
@@ -120,7 +120,7 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
             ),
             const SizedBox(width: 12),
             Text(
-              _isEdit ? 'Edit Supplier' : 'New Supplier',
+              _isEdit ? 'Edit Supplier'.tr : 'New Supplier'.tr,
               style: const TextStyle(
                   fontWeight: FontWeight.bold, fontSize: 18),
             ),
@@ -145,7 +145,7 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                             color: Colors.indigo.shade500),
                         const SizedBox(width: 8),
                         Text(
-                          'Supplier Information',
+                          'Supplier Information'.tr,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -157,8 +157,8 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                     const SizedBox(height: 4),
                     Text(
                       _isEdit
-                          ? 'Update supplier details below'
-                          : 'Fill in supplier details below',
+                          ? 'Update supplier details below'.tr
+                          : 'Fill in supplier details below'.tr,
                       style: TextStyle(
                           fontSize: 12, color: Colors.grey.shade500),
                     ),
@@ -167,11 +167,11 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                     // ── Name (required) ──
                     _buildField(
                       controller: _nameCtrl,
-                      label: 'Supplier Name *',
-                      hint: 'e.g. Fresh Farms Pvt Ltd',
+                      label: 'Supplier Name *'.tr,
+                      hint: 'e.g. Fresh Farms Pvt Ltd'.tr,
                       icon: Icons.business_rounded,
                       validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Name is required'
+                          ? 'Name is required'.tr
                           : null,
                     ),
                     const SizedBox(height: 16),
@@ -179,8 +179,8 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                     // ── Contact Person ──
                     _buildField(
                       controller: _contactCtrl,
-                      label: 'Contact Person',
-                      hint: 'e.g. Ramesh Kumar',
+                      label: 'Contact Person'.tr,
+                      hint: 'e.g. Ramesh Kumar'.tr,
                       icon: Icons.person_outline_rounded,
                     ),
                     const SizedBox(height: 16),
@@ -188,8 +188,8 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                     // ── Phone ──
                     _buildField(
                       controller: _phoneCtrl,
-                      label: 'Phone',
-                      hint: 'e.g. 9876543210',
+                      label: 'Phone'.tr,
+                      hint: 'e.g. 9876543210'.tr,
                       icon: Icons.phone_rounded,
                       keyboardType: TextInputType.phone,
                     ),
@@ -198,8 +198,8 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                     // ── Email ──
                     _buildField(
                       controller: _emailCtrl,
-                      label: 'Email',
-                      hint: 'e.g. supplier@example.com',
+                      label: 'Email'.tr,
+                      hint: 'e.g. supplier@example.com'.tr,
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -208,8 +208,8 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                     // ── GST ──
                     _buildField(
                       controller: _gstCtrl,
-                      label: 'GST Number',
-                      hint: 'e.g. 27AAPFU0939F1ZV',
+                      label: 'GST Number'.tr,
+                      hint: 'e.g. 27AAPFU0939F1ZV'.tr,
                       icon: Icons.receipt_long_rounded,
                     ),
                     const SizedBox(height: 16),
@@ -217,8 +217,8 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                     // ── Address ──
                     _buildField(
                       controller: _addressCtrl,
-                      label: 'Address',
-                      hint: 'Street, City, State',
+                      label: 'Address'.tr,
+                      hint: 'Street, City, State'.tr,
                       icon: Icons.location_on_outlined,
                       maxLines: 3,
                     ),
@@ -236,7 +236,7 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                                 horizontal: 24, vertical: 14),
                           ),
                           onPressed: () => Get.back(),
-                          child: const Text('Cancel'),
+                          child: Text('Cancel'.tr),
                         ),
                         const SizedBox(width: 12),
                         Container(
@@ -271,8 +271,8 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
                                     const SizedBox(width: 8),
                                     Text(
                                       _isEdit
-                                          ? 'Update Supplier'
-                                          : 'Save Supplier',
+                                          ? 'Update Supplier'.tr
+                                          : 'Save Supplier'.tr,
                                       style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold),

@@ -43,9 +43,9 @@ class FragmentHomeItem extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('item_list_title'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 Text(
-                  'Manage your inventory',
+                  'manage_inventory'.tr,
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
                 ),
               ],
@@ -56,7 +56,7 @@ class FragmentHomeItem extends StatelessWidget {
           TextButton.icon(
             onPressed: () => controller.exportExcel(),
             icon: const Icon(Icons.download_rounded, size: 18),
-            label: const Text('Export', style: TextStyle(fontWeight: FontWeight.bold)),
+            label: Text('export'.tr, style: TextStyle(fontWeight: FontWeight.bold)),
             style: TextButton.styleFrom(
               foregroundColor: Colors.blue.shade700,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -81,10 +81,10 @@ class FragmentHomeItem extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
-                    children: const [
+                    children:[
                       Icon(Icons.file_upload_outlined, size: 18, color: Colors.white),
                       SizedBox(width: 8),
-                      Text('Import', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text('import'.tr, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                     ],
                   ),
                 ),
@@ -113,10 +113,10 @@ class FragmentHomeItem extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
-                    children: const [
+                    children: [
                       Icon(Icons.add_circle_outline_rounded, size: 18, color: Colors.white),
                       SizedBox(width: 8),
-                      Text('New Item', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text('add_item'.tr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                     ],
                   ),
                 ),
@@ -136,15 +136,15 @@ class FragmentHomeItem extends StatelessWidget {
             child: TextField(
               controller: controller.searchController,
               decoration: InputDecoration(
-                hintText: 'Search by name, SKU, or barcode...',
+                hintText: 'search_item'.tr,
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 prefixIcon: Icon(Icons.search_rounded, color: Colors.blue.shade600, size: 22),
                 suffixIcon: Obx(
-                  () => controller.searchQuery.value.isNotEmpty
+                      () => controller.searchQuery.value.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.close_rounded, color: Colors.red.shade400, size: 20),
-                          onPressed: controller.clearSearch,
-                        )
+                    icon: Icon(Icons.close_rounded, color: Colors.red.shade400, size: 20),
+                    onPressed: controller.clearSearch,
+                  )
                       : const SizedBox.shrink(),
                 ),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -159,32 +159,32 @@ class FragmentHomeItem extends StatelessWidget {
       ),
 
       body: Obx(
-        () => controller.rxListItem.isEmpty
+            () => controller.rxListItem.isEmpty
             ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [Colors.blue.shade100, Colors.cyan.shade100]),
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
-                      ),
-                      child: Icon(Icons.inventory_2_outlined, size: 64, color: Colors.blue.shade400),
-                    ),
-                    const SizedBox(height: 16),
-                    Text('No items found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
-                    const SizedBox(height: 6),
-                    Text('Add a new item to get started', style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
-                  ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [Colors.blue.shade100, Colors.cyan.shade100]),
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
                 ),
-              )
+                child: Icon(Icons.inventory_2_outlined, size: 64, color: Colors.blue.shade400),
+              ),
+              const SizedBox(height: 16),
+              Text('No items found'.tr, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+              const SizedBox(height: 6),
+              Text('Add a new item to get started'.tr, style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
+            ],
+          ),
+        )
             : Column(
-                children: [
-                  Expanded(
-                    child: MyCard(
-                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          children: [
+            Expanded(
+              child: MyCard(
+                margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: SizedBox(
                   width: double.infinity,
                   child: SingleChildScrollView(
@@ -200,14 +200,14 @@ class FragmentHomeItem extends StatelessWidget {
                           label: _SortableHeader(
                             controller: controller,
                             field: SortField.name,
-                            label: 'Name',
+                            label: 'name'.tr,
                             icon: Icons.label_outlined,
                             iconColor: Colors.blue.shade600,
                             bgColor: Colors.blue.shade50,
                           ),
                         ),
                         DataColumn(
-                          label: Text('SKU', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                          label: Text('SKU'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
                         ),
                         DataColumn(
                           label: Row(
@@ -219,16 +219,16 @@ class FragmentHomeItem extends StatelessWidget {
                                 child: Icon(Icons.qr_code_2_rounded, size: 16, color: Colors.deepPurple.shade400),
                               ),
                               const SizedBox(width: 8),
-                              Text('Barcode', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                              Text('barcode'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
                         DataColumn(
-                          label: Text('Unit', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                          label: Text('unit'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
                         ),
                         DataColumn(
                           numeric: true,
-                          label: Text('Cost', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                          label: Text('cost'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
                         ),
                         // ── PRICE (sortable) ──
                         DataColumn(
@@ -236,7 +236,7 @@ class FragmentHomeItem extends StatelessWidget {
                           label: _SortableHeader(
                             controller: controller,
                             field: SortField.price,
-                            label: 'Price',
+                            label: 'price'.tr,
                             icon: Icons.arrow_upward_rounded,
                             iconColor: Colors.teal.shade600,
                             bgColor: Colors.teal.shade50,
@@ -248,7 +248,7 @@ class FragmentHomeItem extends StatelessWidget {
                           label: _SortableHeader(
                             controller: controller,
                             field: SortField.stock,
-                            label: 'Stock',
+                            label: 'stock'.tr,
                             icon: Icons.warehouse_outlined,
                             iconColor: Colors.blue.shade600,
                             bgColor: Colors.blue.shade50,
@@ -264,7 +264,7 @@ class FragmentHomeItem extends StatelessWidget {
                                 child: Icon(Icons.toggle_on_rounded, size: 16, color: Colors.purple.shade600),
                               ),
                               const SizedBox(width: 8),
-                              Text('Status', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                              Text('status'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -278,7 +278,7 @@ class FragmentHomeItem extends StatelessWidget {
                                 child: Icon(Icons.settings_rounded, size: 16, color: Colors.grey.shade700),
                               ),
                               const SizedBox(width: 8),
-                              Text('Actions', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                              Text('actions'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -378,7 +378,7 @@ class FragmentHomeItem extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 5),
                                   Text(
-                                    isActive ? 'Active' : 'Inactive',
+                                    isActive ? 'active'.tr : 'inactive'.tr,
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -393,7 +393,7 @@ class FragmentHomeItem extends StatelessWidget {
                             DataCell(
                               PopupMenuButton<String>(
                                 icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500),
-                                tooltip: 'Actions',
+                                tooltip: 'Actions'.tr,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 onSelected: (value) {
                                   switch (value) {
@@ -423,7 +423,7 @@ class FragmentHomeItem extends StatelessWidget {
                                     child: Row(children: [
                                       Icon(Icons.edit_outlined, size: 20, color: colorScheme.primary),
                                       const SizedBox(width: 12),
-                                      const Text('Edit'),
+                                      Text('edit'.tr),
                                     ]),
                                   ),
                                   PopupMenuItem(
@@ -431,7 +431,7 @@ class FragmentHomeItem extends StatelessWidget {
                                     child: Row(children: [
                                       Icon(Icons.print_rounded, size: 20, color: Colors.deepPurple.shade400),
                                       const SizedBox(width: 12),
-                                      const Text('Print Barcode'),
+                                      Text('print_barcode'.tr),
                                     ]),
                                   ),
                                   PopupMenuItem(
@@ -439,7 +439,7 @@ class FragmentHomeItem extends StatelessWidget {
                                     child: Row(children: [
                                       Icon(Icons.tune_rounded, size: 20, color: Colors.teal.shade600),
                                       const SizedBox(width: 12),
-                                      const Text('Adjust Stock'),
+                                      Text('adjust_stock'.tr),
                                     ]),
                                   ),
                                   if (item.hasExpiry == true)
@@ -448,7 +448,7 @@ class FragmentHomeItem extends StatelessWidget {
                                       child: Row(children: [
                                         Icon(Icons.history_edu_rounded, size: 20, color: Colors.blue.shade600),
                                         const SizedBox(width: 12),
-                                        const Text('View Batches'),
+                                        Text('view_batches'.tr),
                                       ]),
                                     ),
                                   PopupMenuItem(
@@ -456,7 +456,7 @@ class FragmentHomeItem extends StatelessWidget {
                                     child: Row(children: [
                                       Icon(Icons.visibility_outlined, size: 20, color: Colors.deepPurple.shade400),
                                       const SizedBox(width: 12),
-                                      const Text('View Details'),
+                                      Text('view_details'.tr),
                                     ]),
                                   ),
                                   const PopupMenuDivider(),
@@ -470,7 +470,7 @@ class FragmentHomeItem extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 12),
                                       Text(
-                                        isActive ? 'Deactivate' : 'Activate',
+                                        isActive ? 'deactivate'.tr : 'activate'.tr,
                                         style: TextStyle(color: isActive ? Colors.red.shade400 : Colors.green.shade600),
                                       ),
                                     ]),
@@ -502,7 +502,7 @@ class FragmentHomeItem extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: ${controller.totalCount.value} items',
+            'total_items_count'.trParams({'count': '${controller.totalCount.value}'}),
             style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           ),
           Row(
@@ -510,7 +510,7 @@ class FragmentHomeItem extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasPrev ? controller.prevPage : null,
                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
-                label: const Text('Prev'),
+                label: Text('prev'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -519,7 +519,7 @@ class FragmentHomeItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Text('Page ${controller.currentPage.value + 1}',
+                child: Text('page_number'.trParams({'number': '${controller.currentPage.value + 1}'}),
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
                 ),
               ),
@@ -527,7 +527,7 @@ class FragmentHomeItem extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasNext ? controller.nextPage : null,
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
-                label: const Text('Next'),
+                label: Text('next'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -559,9 +559,10 @@ class FragmentHomeItem extends StatelessWidget {
   void _confirmToggleActive(BuildContext context, EntityItem item, ControllerHomeItem controller) {
     final isCurrentlyActive = item.isActive ?? true;
     Get.defaultDialog(
-      title: isCurrentlyActive ? 'Deactivate Item?' : 'Activate Item?',
+      title: isCurrentlyActive ? 'deactivate_item'.tr : 'activate_item'.tr,
       titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      middleText: 'Are you sure you want to ${isCurrentlyActive ? "deactivate" : "activate"} "${item.name}"?',
+      middleText: (isCurrentlyActive ? 'deactivate_item_confirm' : 'activate_item_confirm')
+          .trParams({'item': item.name ?? ''}),
       confirm: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
           backgroundColor: isCurrentlyActive ? Colors.red.shade400 : Colors.green.shade500,
@@ -573,9 +574,11 @@ class FragmentHomeItem extends StatelessWidget {
         onPressed: () {
           controller.toggleActive(item);
           Get.back();
-          SnackbarUtil.showSuccess('${item.name} ${!(isCurrentlyActive) ? "activated" : "deactivated"}');
+          SnackbarUtil.showSuccess(
+            (!(isCurrentlyActive) ? 'item_activated' : 'item_deactivated').trParams({'item': item.name ?? ''}),
+          );
         },
-        label: Text(isCurrentlyActive ? 'Deactivate' : 'Activate'),
+        label: Text(isCurrentlyActive ? 'deactivate'.tr : 'activate'.tr),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(
@@ -583,7 +586,7 @@ class FragmentHomeItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         ),
         onPressed: () => Get.back(),
-        child: const Text('Cancel'),
+        child: Text('cancel'.tr),
       ),
     );
   }

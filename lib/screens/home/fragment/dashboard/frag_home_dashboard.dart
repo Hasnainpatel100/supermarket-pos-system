@@ -114,7 +114,7 @@ class FragHomeDashboard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Dashboard',
+                'dashboard'.tr,
                 style: TextStyle(
                   color: _DashboardTheme.textPrimary(context),
                   fontSize: 20,
@@ -129,7 +129,7 @@ class FragHomeDashboard extends StatelessWidget {
           ),
           const Spacer(),
           _PillButton(
-            label: 'Refresh',
+            label: 'refresh'.tr,
             icon: Icons.refresh_rounded,
             onTap: ctrl.loadData,
           ),
@@ -148,33 +148,33 @@ class FragHomeDashboard extends StatelessWidget {
       child: Row(
         children: [
           _StatCard(
-            title: "Today's Sales",
+            title: 'todays_sales'.tr,
             value: fmt.format(ctrl.todaySales.value),
-            subtitle: '${ctrl.todayOrders.value} orders',
+            subtitle: '${ctrl.todayOrders.value} ${'orders'.tr}',
           ),
           const SizedBox(width: 10),
           _StatCard(
-            title: "Today's Orders",
+            title: 'todays_orders'.tr,
             value: '${ctrl.todayOrders.value}',
-            subtitle: 'bills today',
+            subtitle: 'bills_today'.tr,
           ),
           const SizedBox(width: 10),
           _StatCard(
-            title: 'Avg Bill',
+            title: 'avg_bill'.tr,
             value: fmt.format(ctrl.averageBill.value),
-            subtitle: 'per order',
+            subtitle: 'per_order'.tr,
           ),
           const SizedBox(width: 10),
           _StatCard(
-            title: 'Total Items',
+            title: 'total_items'.tr,
             value: '${ctrl.totalItems.value}',
-            subtitle: 'in system',
+            subtitle: 'in_system'.tr,
           ),
           const SizedBox(width: 10),
           _StatCard(
-            title: 'Customers',
+            title: 'total_customers'.tr,
             value: '${ctrl.totalCustomers.value}',
-            subtitle: 'total',
+            subtitle: 'total'.tr,
             isGreenBadge: true,
           ),
         ],
@@ -195,13 +195,13 @@ class FragHomeDashboard extends StatelessWidget {
           Expanded(
             flex: 55,
             child: _DashCard(
-              title: 'Total Sales',
+              title: 'total_sales'.tr,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _Legend(color: _DashboardTheme.textPrimary(context), label: 'This Week'),
+                  _Legend(color: _DashboardTheme.textPrimary(context), label: 'this_week'.tr),
                   const SizedBox(width: 12),
-                  _Legend(color: _DashboardTheme.lightTeal, label: 'Last week'),
+                  _Legend(color: _DashboardTheme.lightTeal, label: 'last_week'.tr),
                 ],
               ),
               child: _TotalSalesChart(
@@ -216,9 +216,9 @@ class FragHomeDashboard extends StatelessWidget {
           Expanded(
             flex: 45,
             child: _DashCard(
-              title: 'CashFlow',
+              title: 'cashflow'.tr,
               trailing: _PillButton(
-                label: 'Weekly',
+                label: 'weekly'.tr,
                 icon: Icons.keyboard_arrow_down_rounded,
                 onTap: () {},
               ),
@@ -233,9 +233,9 @@ class FragHomeDashboard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      _Legend(color: _DashboardTheme.lightPurple, label: 'Inflow'),
+                      _Legend(color: _DashboardTheme.lightPurple, label: 'inflow'.tr),
                       const SizedBox(width: 16),
-                      _Legend(color: _DashboardTheme.blue, label: 'Outflow'),
+                      _Legend(color: _DashboardTheme.blue, label: 'outflow'.tr),
                     ],
                   ),
                 ],
@@ -260,13 +260,13 @@ class FragHomeDashboard extends StatelessWidget {
           Expanded(
             flex: 33,
             child: _DashCard(
-              title: 'Top Selling Items',
+              title: 'top_selling_items'.tr,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _PillButton(label: 'Today', icon: Icons.keyboard_arrow_down_rounded, onTap: () {}),
+                  _PillButton(label: 'today'.tr, icon: Icons.keyboard_arrow_down_rounded, onTap: () {}),
                   const SizedBox(width: 6),
-                  _PillButton(label: 'Limit: 5', icon: Icons.keyboard_arrow_down_rounded, onTap: () {}),
+                  _PillButton(label: 'limit_5'.tr, icon: Icons.keyboard_arrow_down_rounded, onTap: () {}),
                 ],
               ),
               child: _TopItemsDonut(items: ctrl.topSellingItems.toList()),
@@ -277,9 +277,9 @@ class FragHomeDashboard extends StatelessWidget {
           Expanded(
             flex: 34,
             child: _DashCard(
-              title: 'Dashboard Overview',
+              title: 'dashboard_overview'.tr,
               trailing: _PillButton(
-                label: 'Weekly',
+                label: 'weekly'.tr,
                 icon: Icons.keyboard_arrow_down_rounded,
                 onTap: () {},
               ),
@@ -294,7 +294,7 @@ class FragHomeDashboard extends StatelessWidget {
           Expanded(
             flex: 33,
             child: _DashCard(
-              title: 'Payment Mode',
+              title: 'payment_mode'.tr,
               child: _PaymentDonut(
                 breakdown: Map<String, double>.from(ctrl.paymentBreakdown),
               ),
@@ -356,7 +356,7 @@ class _StatCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'Today',
+                      'today'.tr,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onTertiaryContainer,
                         fontSize: 10,

@@ -32,9 +32,9 @@ class ActivityItemBatchForm extends StatelessWidget {
               size: 24,
             ),
             const SizedBox(width: 10),
-            const Text(
-              'Add Item Batch',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              'add_item_batch'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -63,7 +63,7 @@ class ActivityItemBatchForm extends StatelessWidget {
                     _FormSectionHeader(
                       icon: Icons.qr_code_2_rounded,
                       color: Colors.deepPurple,
-                      title: 'Batch Details',
+                      title: 'batch_details'.tr,
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -71,7 +71,7 @@ class ActivityItemBatchForm extends StatelessWidget {
                         Expanded(
                           child: MyTextField(
                             controller: controller.batchNoController,
-                            label: "Batch Number",
+                            label: 'batch_number'.tr,
                             required: true,
                           ),
                         ),
@@ -79,7 +79,7 @@ class ActivityItemBatchForm extends StatelessWidget {
                         Expanded(
                           child: MyTextField(
                             controller: controller.quantityController,
-                            label: "Quantity",
+                            label: 'quantity'.tr,
                             isNumber: true,
                             required: true,
                           ),
@@ -90,12 +90,12 @@ class ActivityItemBatchForm extends StatelessWidget {
                     _FormSectionHeader(
                       icon: Icons.calendar_today_rounded,
                       color: Colors.orange,
-                      title: 'Expiry Information',
+                      title: 'expiry_information'.tr,
                     ),
                     const SizedBox(height: 16),
                     MyDatePicker(
                       controller: controller.expiryDateController,
-                      label: "Expiry Date",
+                      label: 'expiry_date'.tr,
                     ),
                     const SizedBox(height: 24),
                     Row(
@@ -103,13 +103,13 @@ class ActivityItemBatchForm extends StatelessWidget {
                       children: [
                         OutlinedButton(
                           onPressed: () => Get.back(),
-                          child: const Text("Skip / Cancel"),
+                          child: Text('skip_cancel'.tr),
                         ),
                         const SizedBox(width: 12),
                         FilledButton.icon(
                           onPressed: controller.saveBatch,
                           icon: const Icon(Icons.save_rounded, size: 18),
-                          label: const Text("Save Batch"),
+                          label: Text('save_batch'.tr),
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,

@@ -33,7 +33,7 @@ class ActivityCustomerForm extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              isEditing ? 'Edit Customer' : 'New Customer',
+              isEditing ? 'edit_customer'.tr : 'new_customer'.tr,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
@@ -65,12 +65,12 @@ class ActivityCustomerForm extends StatelessWidget {
                       _FormSectionHeader(
                         icon: Icons.person_outline_rounded,
                         color: Colors.blue.shade600,
-                        title: 'Basic Information',
+                        title: 'basic_information'.tr,
                       ),
                       const SizedBox(height: 16),
                       MyTextField(
                         controller: controller.nameController,
-                        label: "Customer Name",
+                        label: 'customer_name'.tr,
                         required: true,
                         prefixIcon: Icons.person_rounded,
                       ),
@@ -80,7 +80,7 @@ class ActivityCustomerForm extends StatelessWidget {
                           Expanded(
                             child: MyTextField(
                               controller: controller.phoneController,
-                              label: "Phone Number",
+                              label: 'phone_number'.tr,
                               prefixIcon: Icons.phone_rounded,
                               isNumber: true,
                             ),
@@ -89,7 +89,7 @@ class ActivityCustomerForm extends StatelessWidget {
                           Expanded(
                             child: MyTextField(
                               controller: controller.emailController,
-                              label: "Email Address",
+                              label: 'email_address'.tr,
                               prefixIcon: Icons.email_rounded,
                             ),
                           ),
@@ -102,12 +102,12 @@ class ActivityCustomerForm extends StatelessWidget {
                       _FormSectionHeader(
                         icon: Icons.location_on_outlined,
                         color: Colors.green.shade600,
-                        title: 'Address Details',
+                        title: 'address_details'.tr,
                       ),
                       const SizedBox(height: 16),
                       MyTextField(
                         controller: controller.addressController,
-                        label: "Street Address",
+                        label: 'street_address'.tr,
                         prefixIcon: Icons.home_rounded,
                       ),
                       const SizedBox(height: 16),
@@ -117,21 +117,21 @@ class ActivityCustomerForm extends StatelessWidget {
                             flex: 2,
                             child: MyTextField(
                               controller: controller.cityController,
-                              label: "City",
+                              label: 'city'.tr,
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: MyTextField(
                               controller: controller.stateController,
-                              label: "State",
+                              label: 'state'.tr,
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: MyTextField(
                               controller: controller.zipController,
-                              label: "Zip Code",
+                              label: 'zip_code'.tr,
                               isNumber: true,
                             ),
                           ),
@@ -144,12 +144,12 @@ class ActivityCustomerForm extends StatelessWidget {
                       _FormSectionHeader(
                         icon: Icons.note_alt_outlined,
                         color: Colors.orange.shade600,
-                        title: 'Additional Notes',
+                        title: 'additional_notes'.tr,
                       ),
                       const SizedBox(height: 16),
                       MyTextField(
                         controller: controller.notesController,
-                        label: "Notes",
+                        label: 'notes'.tr,
                         maxLines: 3,
                         prefixIcon: Icons.comment_rounded,
                       ),
@@ -160,11 +160,11 @@ class ActivityCustomerForm extends StatelessWidget {
                       _FormSectionHeader(
                         icon: Icons.star_rounded,
                         color: Colors.amber.shade700,
-                        title: 'VIP Status',
+                        title: 'vip_status'.tr,
                       ),
                       const SizedBox(height: 12),
                       Obx(
-                        () => Container(
+                            () => Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 12,
@@ -195,7 +195,7 @@ class ActivityCustomerForm extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'VIP Customer',
+                                      'vip_customer'.tr,
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         color: controller.rxIsVip.value
@@ -205,8 +205,8 @@ class ActivityCustomerForm extends StatelessWidget {
                                     ),
                                     Text(
                                       controller.rxIsVip.value
-                                          ? 'This customer has VIP privileges'
-                                          : 'Mark as VIP for special treatment',
+                                          ? 'vip_privileges_active'.tr
+                                          : 'mark_as_vip'.tr,
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey.shade500,
@@ -218,7 +218,7 @@ class ActivityCustomerForm extends StatelessWidget {
                               Switch(
                                 value: controller.rxIsVip.value,
                                 onChanged: (val) =>
-                                    controller.rxIsVip.value = val,
+                                controller.rxIsVip.value = val,
                                 activeTrackColor: Colors.amber.shade600,
                               ),
                             ],
@@ -237,7 +237,7 @@ class ActivityCustomerForm extends StatelessWidget {
                               Icons.arrow_back_rounded,
                               size: 18,
                             ),
-                            label: const Text('Back'),
+                            label: Text('back'.tr),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 20,
@@ -263,7 +263,7 @@ class ActivityCustomerForm extends StatelessWidget {
                               size: 18,
                             ),
                             label: Text(
-                              isEditing ? "Update Customer" : "Save Customer",
+                              isEditing ? 'update_customer'.tr : 'save_customer'.tr,
                             ),
                             style: FilledButton.styleFrom(
                               padding: const EdgeInsets.symmetric(

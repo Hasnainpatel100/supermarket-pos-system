@@ -12,7 +12,7 @@ class FragmentHomeCustomer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ControllerHomeCustomer controller =
-        Get.isRegistered<ControllerHomeCustomer>()
+    Get.isRegistered<ControllerHomeCustomer>()
         ? Get.find<ControllerHomeCustomer>()
         : Get.put(ControllerHomeCustomer());
     final colorScheme = Theme.of(context).colorScheme;
@@ -49,12 +49,12 @@ class FragmentHomeCustomer extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Customers',
+                Text(
+                  'customers'.tr,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 Text(
-                  'Manage your client base',
+                  'manage_customer_base'.tr,
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey.shade500,
@@ -98,7 +98,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                     vertical: 8,
                   ),
                   child: Row(
-                    children: const [
+                    children:[
                       Icon(
                         Icons.person_add_rounded,
                         size: 18,
@@ -106,7 +106,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'New Customer',
+                        'new_customer'.tr,
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -137,7 +137,7 @@ class FragmentHomeCustomer extends StatelessWidget {
             child: TextField(
               controller: controller.searchController,
               decoration: InputDecoration(
-                hintText: 'Search by name or phone...',
+                hintText: 'search_customer_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 prefixIcon: Icon(
                   Icons.search_rounded,
@@ -145,15 +145,15 @@ class FragmentHomeCustomer extends StatelessWidget {
                   size: 22,
                 ),
                 suffixIcon: Obx(
-                  () => controller.searchQuery.value.isNotEmpty
+                      () => controller.searchQuery.value.isNotEmpty
                       ? IconButton(
-                          icon: Icon(
-                            Icons.close_rounded,
-                            color: Colors.red.shade400,
-                            size: 20,
-                          ),
-                          onPressed: controller.clearSearch,
-                        )
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: Colors.red.shade400,
+                      size: 20,
+                    ),
+                    onPressed: controller.clearSearch,
+                  )
                       : const SizedBox.shrink(),
                 ),
                 border: OutlineInputBorder(
@@ -174,62 +174,62 @@ class FragmentHomeCustomer extends StatelessWidget {
       ),
 
       body: Obx(
-        () => controller.rxListCustomer.isEmpty
+            () => controller.rxListCustomer.isEmpty
             ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.blue.shade100,
-                            Colors.purple.shade100,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.person_off_rounded,
-                        size: 64,
-                        color: Colors.blue.shade400,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No customers found',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Add a new customer to get started',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade400,
-                      ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.blue.shade100,
+                      Colors.purple.shade100,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-              )
+                child: Icon(
+                  Icons.person_off_rounded,
+                  size: 64,
+                  color: Colors.blue.shade400,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'no_customers_found'.tr,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'add_new_customer_to_get_started'.tr,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade400,
+                ),
+              ),
+            ],
+          ),
+        )
             : Column(
-                children: [
-                  Expanded(
-                    child: MyCard(
-                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          children: [
+            Expanded(
+              child: MyCard(
+                margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: SizedBox(
                   width: double.infinity,
                   child: SingleChildScrollView(
@@ -264,7 +264,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Name',
+                                'name'.tr,
                                 style: TextStyle(
                                   color: Colors.grey.shade700,
                                   fontWeight: FontWeight.bold,
@@ -291,7 +291,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Phone',
+                                'phone'.tr,
                                 style: TextStyle(
                                   color: Colors.grey.shade700,
                                   fontWeight: FontWeight.bold,
@@ -318,7 +318,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'City',
+                                'city'.tr,
                                 style: TextStyle(
                                   color: Colors.grey.shade700,
                                   fontWeight: FontWeight.bold,
@@ -345,7 +345,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Status',
+                                'status'.tr,
                                 style: TextStyle(
                                   color: Colors.grey.shade700,
                                   fontWeight: FontWeight.bold,
@@ -372,7 +372,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Actions',
+                                'actions'.tr,
                                 style: TextStyle(
                                   color: Colors.grey.shade700,
                                   fontWeight: FontWeight.bold,
@@ -383,14 +383,14 @@ class FragmentHomeCustomer extends StatelessWidget {
                         ),
                       ],
                       rows: controller.rxListCustomer.map((
-                        EntityCustomer customer,
-                      ) {
+                          EntityCustomer customer,
+                          ) {
                         final isActive = customer.isActive ?? true;
 
                         return DataRow(
                           color: WidgetStateProperty.resolveWith<Color?>((
-                            states,
-                          ) {
+                              states,
+                              ) {
                             if (!isActive) {
                               return Colors.grey.withValues(alpha: 0.05);
                             }
@@ -479,7 +479,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 5),
                                     Text(
-                                      isActive ? 'Active' : 'Inactive',
+                                      isActive ? 'active'.tr : 'inactive'.tr,
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -500,7 +500,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                                   Icons.more_vert_rounded,
                                   color: Colors.grey.shade500,
                                 ),
-                                tooltip: 'Actions',
+                                tooltip: 'actions'.tr,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -532,7 +532,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                                           color: Colors.blue.shade600,
                                         ),
                                         const SizedBox(width: 12),
-                                        const Text('View Details'),
+                                        Text('view_details'.tr),
                                       ],
                                     ),
                                   ),
@@ -546,7 +546,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                                           color: colorScheme.primary,
                                         ),
                                         const SizedBox(width: 12),
-                                        const Text('Edit'),
+                                        Text('edit'.tr),
                                       ],
                                     ),
                                   ),
@@ -565,7 +565,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                                         ),
                                         const SizedBox(width: 12),
                                         Text(
-                                          isActive ? 'Deactivate' : 'Activate',
+                                          isActive ? 'deactivate'.tr : 'activate'.tr,
                                           style: TextStyle(
                                             color: isActive
                                                 ? Colors.orange.shade500
@@ -602,7 +602,7 @@ class FragmentHomeCustomer extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: ${controller.totalCount.value} customers',
+            'total_customers_count'.trParams({'count': '${controller.totalCount.value}'}),
             style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           ),
           Row(
@@ -610,7 +610,7 @@ class FragmentHomeCustomer extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasPrev ? controller.prevPage : null,
                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
-                label: const Text('Prev'),
+                label: Text('prev'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -619,7 +619,7 @@ class FragmentHomeCustomer extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Text('Page ${controller.currentPage.value + 1}',
+                child: Text('page_number'.trParams({'number': '${controller.currentPage.value + 1}'}),
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
                 ),
               ),
@@ -627,7 +627,7 @@ class FragmentHomeCustomer extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasNext ? controller.nextPage : null,
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
-                label: const Text('Next'),
+                label: Text('next'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -640,25 +640,25 @@ class FragmentHomeCustomer extends StatelessWidget {
   }
 
   void _onEdit(
-    EntityCustomer customer,
-    ControllerHomeCustomer controller,
-  ) async {
+      EntityCustomer customer,
+      ControllerHomeCustomer controller,
+      ) async {
     await Get.to(() => const ActivityCustomerForm(), arguments: customer);
     controller.loadCustomers();
   }
 
   void _confirmToggleActive(
-    BuildContext context,
-    EntityCustomer customer,
-    ControllerHomeCustomer controller,
-  ) {
+      BuildContext context,
+      EntityCustomer customer,
+      ControllerHomeCustomer controller,
+      ) {
     final isCurrentlyActive = customer.isActive ?? true;
 
     Get.defaultDialog(
-      title: isCurrentlyActive ? 'Deactivate Customer?' : 'Activate Customer?',
+      title: isCurrentlyActive ? 'deactivate_customer'.tr : 'activate_customer'.tr,
       titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      middleText:
-          'Are you sure you want to ${isCurrentlyActive ? "deactivate" : "activate"} "${customer.name}"?',
+      middleText: (isCurrentlyActive ? 'deactivate_customer_confirm' : 'activate_customer_confirm')
+          .trParams({'item': customer.name ?? ''}),
       confirm: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
           backgroundColor: isCurrentlyActive
@@ -680,10 +680,10 @@ class FragmentHomeCustomer extends StatelessWidget {
           controller.toggleActive(customer);
           Get.back();
           SnackbarUtil.showSuccess(
-            '${customer.name} ${!(isCurrentlyActive) ? "activated" : "deactivated"}',
+            (!(isCurrentlyActive) ? 'customer_activated' : 'customer_deactivated').trParams({'item': customer.name ?? ''}),
           );
         },
-        label: Text(isCurrentlyActive ? 'Deactivate' : 'Activate'),
+        label: Text(isCurrentlyActive ? 'deactivate'.tr : 'activate'.tr),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(
@@ -693,7 +693,7 @@ class FragmentHomeCustomer extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         ),
         onPressed: () => Get.back(),
-        child: const Text('Cancel'),
+        child: Text('cancel'.tr),
       ),
     );
   }
@@ -714,7 +714,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                   Icon(Icons.person, color: Theme.of(context).primaryColor),
                   const SizedBox(width: 10),
                   Text(
-                    'Customer Details',
+                    'customer_details'.tr,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -728,12 +728,12 @@ class FragmentHomeCustomer extends StatelessWidget {
               ),
               const Divider(),
               const SizedBox(height: 16),
-              _buildDetailRow(context, "Name", customer.name),
-              _buildDetailRow(context, "Phone", customer.phone),
-              _buildDetailRow(context, "Email", customer.email),
+              _buildDetailRow(context, 'name'.tr, customer.name),
+              _buildDetailRow(context, 'phone'.tr, customer.phone),
+              _buildDetailRow(context, 'email'.tr, customer.email),
               const SizedBox(height: 16),
-              const Text(
-                "Address",
+              Text(
+                "address".tr,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.grey,
@@ -746,8 +746,8 @@ class FragmentHomeCustomer extends StatelessWidget {
               ),
               if (customer.notes != null && customer.notes!.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text(
-                  "Notes",
+                Text(
+                  "notes".tr,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.grey,
@@ -767,7 +767,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: FilledButton(
                   onPressed: () => Get.back(),
-                  child: const Text("Close"),
+                  child: Text("close".tr),
                 ),
               ),
             ],

@@ -135,7 +135,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
   double get _balance => _totalInvoiced - _totalPaid;
 
   String get _supplierName =>
-      _purchases.isNotEmpty ? (_purchases.first.supplierName ?? 'Supplier') : 'Supplier';
+      _purchases.isNotEmpty ? (_purchases.first.supplierName ?? 'Supplier'.tr) : 'Supplier'.tr;
 
   // ── date filter ──────────────────────────────────────────
   Future<void> _pickDateRange() async {
@@ -182,7 +182,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
           ),
           const SizedBox(width: 12),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Supplier Ledger',
+            Text('Supplier Ledger'.tr,
                 style:
                 TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             Text(
@@ -199,11 +199,11 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
           labelColor: Colors.indigo.shade700,
           unselectedLabelColor: Colors.grey.shade500,
           indicatorColor: Colors.indigo.shade700,
-          tabs: const [
-            Tab(text: 'Ledger', icon: Icon(Icons.list_alt_rounded, size: 18)),
+          tabs: [
+            Tab(text: 'Ledger'.tr, icon: const Icon(Icons.list_alt_rounded, size: 18)),
             Tab(
-                text: 'Summary',
-                icon: Icon(Icons.bar_chart_rounded, size: 18)),
+                text: 'Summary'.tr,
+                icon: const Icon(Icons.bar_chart_rounded, size: 18)),
           ],
         ),
       ),
@@ -241,7 +241,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: FilterChip(
-                          label: Text(f.label),
+                          label: Text(f.label.tr),
                           selected: isActive,
                           selectedColor: Colors.indigo.shade100,
                           checkmarkColor: Colors.indigo.shade700,
@@ -268,14 +268,14 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
                       ? Colors.indigo.shade600
                       : Colors.grey.shade400,
                 ),
-                tooltip: 'Filter by date',
+                tooltip: 'Filter by date'.tr,
                 onPressed: _pickDateRange,
               ),
               if (_dateFilter != null)
                 IconButton(
                   icon: Icon(Icons.clear_rounded,
                       color: Colors.grey.shade400, size: 18),
-                  tooltip: 'Clear date filter',
+                  tooltip: 'Clear date filter'.tr,
                   onPressed: () => setState(() => _dateFilter = null),
                 ),
             ],
@@ -310,26 +310,26 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
           child: Row(children: [
             Expanded(
                 flex: 2,
-                child: _colHeader('Date')),
+                child: _colHeader('Date'.tr)),
             Expanded(
                 flex: 4,
-                child: _colHeader('Description')),
+                child: _colHeader('Description'.tr)),
             Expanded(
                 flex: 2,
-                child: _colHeader('Debit', align: TextAlign.right)),
+                child: _colHeader('Debit'.tr, align: TextAlign.right)),
             Expanded(
                 flex: 2,
-                child: _colHeader('Credit', align: TextAlign.right)),
+                child: _colHeader('Credit'.tr, align: TextAlign.right)),
             Expanded(
                 flex: 2,
-                child: _colHeader('Balance', align: TextAlign.right)),
+                child: _colHeader('Balance'.tr, align: TextAlign.right)),
           ]),
         ),
 
         // ── Entries ──
         Expanded(
           child: entries.isEmpty
-              ? _buildEmptyState('No entries found.')
+              ? _buildEmptyState('No entries found.'.tr)
               : ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             itemCount: entries.length,
@@ -440,7 +440,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
       ),
       child: Row(children: [
-        const Expanded(flex: 6, child: Text('TOTALS', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+        Expanded(flex: 6, child: Text('TOTALS'.tr, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
         Expanded(
           flex: 2,
           child: Text(
@@ -509,7 +509,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
             ],
           ),
           child: Column(children: [
-            Text('Outstanding Balance',
+            Text('Outstanding Balance'.tr,
                 style: TextStyle(
                     color: Colors.indigo.shade200, fontSize: 13)),
             const SizedBox(height: 8),
@@ -523,8 +523,8 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
             const SizedBox(height: 4),
             Text(
               _balance <= 0
-                  ? 'Account is clear ✓'
-                  : 'Amount owed to supplier',
+                  ? 'Account is clear ✓'.tr
+                  : 'Amount owed to supplier'.tr,
               style: TextStyle(
                   color: _balance <= 0
                       ? Colors.greenAccent
@@ -545,15 +545,15 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
           mainAxisSpacing: 12,
           childAspectRatio: 2.2,
           children: [
-            _statCard('Total Invoiced',
+            _statCard('Total Invoiced'.tr,
                 '₹ ${_totalInvoiced.toStringAsFixed(2)}',
                 Colors.red.shade600, Icons.receipt_long_rounded),
-            _statCard('Total Paid',
+            _statCard('Total Paid'.tr,
                 '₹ ${_totalPaid.toStringAsFixed(2)}',
                 Colors.green.shade600, Icons.check_circle_outline_rounded),
-            _statCard('Total POs', '$totalPOs',
+            _statCard('Total POs'.tr, '$totalPOs',
                 Colors.indigo.shade600, Icons.inventory_2_rounded),
-            _statCard('Unpaid POs', '$unpaidPOs',
+            _statCard('Unpaid POs'.tr, '$unpaidPOs',
                 unpaidPOs > 0
                     ? Colors.orange.shade600
                     : Colors.green.shade600,
@@ -569,7 +569,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _sectionHeader(
-                  'Purchase Orders', Icons.list_alt_rounded),
+                  'Purchase Orders'.tr, Icons.list_alt_rounded),
               const Divider(height: 20),
               ..._purchases.map((p) => _buildPOSummaryTile(p)),
             ],
@@ -595,7 +595,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Oldest unpaid invoice',
+                      Text('Oldest unpaid invoice'.tr,
                           style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: Colors.orange.shade800)),
@@ -665,7 +665,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
           ),
           Text(
             isPaid
-                ? 'Fully paid'
+                ? 'Fully paid'.tr
                 : '₹ ${outstanding.toStringAsFixed(2)} due',
             style: TextStyle(
                 fontSize: 10,

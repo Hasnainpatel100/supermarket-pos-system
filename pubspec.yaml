@@ -58,3 +58,4 @@ flutter:
   assets:
     - assets/json/
     - assets/fonts/
+    - assets/translations/

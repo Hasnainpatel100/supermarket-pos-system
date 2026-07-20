@@ -171,12 +171,12 @@ class _TabBar extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Tooltip(
-              message: "New Bill (Ctrl+T)",
+              message: 'new_bill_ctrl_t'.tr,
               child: TextButton.icon(
                 onPressed: controller.addNewTab,
                 icon: Icon(Icons.add_rounded, size: 18, color: cs.primary),
                 label: Text(
-                  "New Bill [Ctrl+T]",
+                  'new_bill_ctrl_t'.tr,
                   style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600, fontSize: 13),
                 ),
                 style: TextButton.styleFrom(
@@ -249,7 +249,7 @@ class _SearchBar extends StatelessWidget {
                           children: [
                             Icon(Icons.search_off_rounded, size: 20, color: cs.onSurfaceVariant),
                             const SizedBox(width: 8),
-                            Text("No items found", style: TextStyle(color: cs.onSurfaceVariant)),
+                            Text('no_items_found'.tr, style: TextStyle(color: cs.onSurfaceVariant)),
                           ],
                         ),
                       )
@@ -299,13 +299,13 @@ class _SearchBar extends StatelessWidget {
             controller: textEditingController,
             focusNode: focusNode,
             decoration: InputDecoration(
-              hintText: "Search by name, code, or barcode…",
+              hintText: 'search_name_code_barcode'.tr,
               hintStyle: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.6), fontSize: 13),
               prefixIcon: Icon(Icons.search_rounded, color: cs.primary, size: 20),
               suffixIcon: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Chip(
-                  label: Text("Auto-Focus", style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+                  label: Text('auto_focus'.tr, style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
                   backgroundColor: cs.surfaceContainerHighest,
@@ -365,12 +365,12 @@ class _CartDataTable extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                "Cart is empty",
+                'cart_is_empty'.tr,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: 6),
               Text(
-                "Search items above to add them to the bill",
+                'search_items_to_add'.tr,
                 style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
               ),
             ],
@@ -387,16 +387,16 @@ class _CartDataTable extends StatelessWidget {
             dataRowMaxHeight: 48,
             horizontalMargin: 16,
             columnSpacing: 20,
-            columns: const [
-              DataColumn(label: Text("#")),
-              DataColumn(label: Text("CODE")),
-              DataColumn(label: Text("ITEM NAME")),
-              DataColumn(label: Text("QTY"), numeric: true),
-              DataColumn(label: Text("UNIT")),
-              DataColumn(label: Text("PRICE/UNIT(₹)"), numeric: true),
-              DataColumn(label: Text("DISC(₹)"), numeric: true),
-              DataColumn(label: Text("TOTAL(₹)"), numeric: true),
-              DataColumn(label: Text("")),
+            columns: [
+              DataColumn(label: Text('col_hash'.tr)),
+              DataColumn(label: Text('col_code'.tr)),
+              DataColumn(label: Text('col_item_name'.tr)),
+              DataColumn(label: Text('col_qty'.tr), numeric: true),
+              DataColumn(label: Text('col_unit'.tr)),
+              DataColumn(label: Text('col_price_unit'.tr), numeric: true),
+              DataColumn(label: Text('col_disc'.tr), numeric: true),
+              DataColumn(label: Text('col_total'.tr), numeric: true),
+              const DataColumn(label: Text("")),
             ],
             rows: List.generate(session.rxCartItems.length, (index) {
               final item = session.rxCartItems[index];
@@ -483,11 +483,11 @@ class _ActionBar extends StatelessWidget {
         spacing: 8,
         runSpacing: 6,
         children: [
-          _ActionChip(icon: Icons.pin_rounded, label: "Qty [F2]", onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f2)),
-          _ActionChip(icon: Icons.discount_outlined, label: "Item Disc [F3]", onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f3)),
-          _ActionChip(icon: Icons.delete_outline_rounded, label: "Remove [DEL]", onPressed: () => controller.handleShortcut(LogicalKeyboardKey.delete), isDestructive: true),
-          _ActionChip(icon: Icons.percent_rounded, label: "Bill Disc [F4]", onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f4)),
-          _ActionChip(icon: Icons.note_alt_outlined, label: "Remarks [F5]", onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f5)),
+          _ActionChip(icon: Icons.pin_rounded, label: 'qty_f2'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f2)),
+          _ActionChip(icon: Icons.discount_outlined, label: 'item_disc_f3'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f3)),
+          _ActionChip(icon: Icons.delete_outline_rounded, label: 'remove_del'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.delete), isDestructive: true),
+          _ActionChip(icon: Icons.percent_rounded, label: 'bill_disc_f4'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f4)),
+          _ActionChip(icon: Icons.note_alt_outlined, label: 'remarks_f5'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f5)),
         ],
       ),
     );
@@ -665,7 +665,7 @@ class _CustomerSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      selected.name ?? "Unknown",
+                      selected.name ?? 'unknown'.tr,
                       style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: cs.onSurface),
                     ),
                     const SizedBox(height: 2),
@@ -756,7 +756,7 @@ class _CustomerSection extends StatelessWidget {
                       focusNode: focusNode,
                       style: const TextStyle(fontSize: 13),
                       decoration: InputDecoration(
-                        hintText: "Search customer…",
+                        hintText: 'search_customer_hint'.tr,
                         hintStyle: TextStyle(fontSize: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
                         prefixIcon: Icon(Icons.person_search_rounded, size: 18, color: cs.primary),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -780,7 +780,7 @@ class _CustomerSection extends StatelessWidget {
               IconButton.filledTonal(
                 onPressed: controller.openCustomerForm,
                 icon: const Icon(Icons.add_rounded, size: 20),
-                tooltip: "Full Customer Form",
+                tooltip: 'full_customer_form'.tr,
                 style: IconButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   padding: const EdgeInsets.all(10),
@@ -796,7 +796,7 @@ class _CustomerSection extends StatelessWidget {
                 child: TextField(
                   style: const TextStyle(fontSize: 12),
                   decoration: InputDecoration(
-                    labelText: "Customer Name",
+                    labelText: 'customer_name'.tr,
                     labelStyle: const TextStyle(fontSize: 12),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -810,7 +810,7 @@ class _CustomerSection extends StatelessWidget {
                   style: const TextStyle(fontSize: 12),
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: "Phone Number",
+                    labelText: 'phone_number'.tr,
                     labelStyle: const TextStyle(fontSize: 12),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -857,9 +857,9 @@ class _SummaryCard extends StatelessWidget {
             // Items / Qty summary
             Row(
               children: [
-                _SummaryChip(icon: Icons.inventory_2_outlined, label: "$totalItems items", cs: cs),
+                _SummaryChip(icon: Icons.inventory_2_outlined, label: "$totalItems ${'items_label'.tr}", cs: cs),
                 const SizedBox(width: 10),
-                _SummaryChip(icon: Icons.add_shopping_cart_rounded, label: "$totalQty qty", cs: cs),
+                _SummaryChip(icon: Icons.add_shopping_cart_rounded, label: "$totalQty ${'qty_label'.tr}", cs: cs),
               ],
             ),
             const SizedBox(height: 12),
@@ -867,14 +867,14 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Subtotal
-            _SummaryRow(label: "Subtotal", value: "$currency${session.rxSubTotal.value.toStringAsFixed(2)}", cs: cs),
+            _SummaryRow(label: 'subtotal'.tr, value: "$currency${session.rxSubTotal.value.toStringAsFixed(2)}", cs: cs),
             if (session.rxTaxAmount.value > 0) ...[
               const SizedBox(height: 6),
-              _SummaryRow(label: "Tax", value: "+$currency${session.rxTaxAmount.value.toStringAsFixed(2)}", cs: cs, valueColor: Colors.orange.shade600),
+              _SummaryRow(label: 'tax'.tr, value: "+$currency${session.rxTaxAmount.value.toStringAsFixed(2)}", cs: cs, valueColor: Colors.orange.shade600),
             ],
             if (session.rxDiscountAmount.value > 0) ...[
               const SizedBox(height: 6),
-              _SummaryRow(label: "Discount", value: "-$currency${session.rxDiscountAmount.value.toStringAsFixed(2)}", cs: cs, valueColor: Colors.green.shade600),
+              _SummaryRow(label: 'discount'.tr, value: "-$currency${session.rxDiscountAmount.value.toStringAsFixed(2)}", cs: cs, valueColor: Colors.green.shade600),
             ],
             const SizedBox(height: 10),
             Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.2)),
@@ -884,7 +884,7 @@ class _SummaryCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Grand Total", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: cs.onSurface)),
+                Text('grand_total'.tr, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: cs.onSurface)),
                 Text(
                   "$currency${session.rxGrandTotal.value.toStringAsFixed(2)}",
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: cs.primary),
@@ -956,21 +956,21 @@ class _PaymentSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Payment Mode
-        Text("Payment Mode", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
+        Text('payment_mode'.tr, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
         const SizedBox(height: 8),
         Obx(() {
           final session = controller.activeSession;
           return SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'Cash', label: Text('Cash'), icon: Icon(Icons.payments_outlined, size: 16)),
-              ButtonSegment(value: 'UPI', label: Text('UPI'), icon: Icon(Icons.qr_code_rounded, size: 16)),
-              ButtonSegment(value: 'Split', label: Text('Split'), icon: Icon(Icons.call_split_rounded, size: 16)),
+            segments: [
+              ButtonSegment(value: 'Cash', label: Text('cash'.tr), icon: const Icon(Icons.payments_outlined, size: 16)),
+              ButtonSegment(value: 'UPI', label: Text('upi'.tr), icon: const Icon(Icons.qr_code_rounded, size: 16)),
+              ButtonSegment(value: 'Split', label: Text('split'.tr), icon: const Icon(Icons.call_split_rounded, size: 16)),
             ],
             selected: {session.rxPaymentMode.value},
             onSelectionChanged: (selected) {
               if (selected.first == 'Split') {
                 if (session.rxCartItems.isEmpty) {
-                  Get.snackbar('Cart Empty', 'Add items before splitting the bill',
+                  Get.snackbar('cart_empty_title'.tr, 'add_items_before_split'.tr,
                       snackPosition: SnackPosition.TOP);
                   return;
                 }
@@ -1000,7 +1000,7 @@ class _PaymentSection extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text("Amount Received", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
+              Text('amount_received'.tr, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
               const SizedBox(height: 8),
               TextField(
                 controller: session.amountController,
@@ -1064,7 +1064,7 @@ class _PaymentSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isDue ? "Amount Due" : "Change to Return",
+                        isDue ? 'amount_due'.tr : 'change_to_return'.tr,
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDue ? Colors.orange.shade700 : Colors.green.shade700),
                       ),
                       Text(
@@ -1110,9 +1110,9 @@ class _SettleButtons extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: controller.settleBill,
             icon: const Icon(Icons.print_rounded, size: 18, color: Colors.white),
-            label: const Text(
-              "Save & Print Bill [Ctrl+P]",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+            label: Text(
+              'save_print_bill'.tr,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
@@ -1127,7 +1127,7 @@ class _SettleButtons extends StatelessWidget {
           onPressed: () {},
           icon: Icon(Icons.account_balance_wallet_outlined, size: 16, color: cs.primary),
           label: Text(
-            "Other / Credit Payments",
+            'other_credit_payments'.tr,
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
           ),
           style: OutlinedButton.styleFrom(
@@ -1163,7 +1163,7 @@ class _SplitPaymentSection extends StatelessWidget {
           // Split count selector
           Row(
             children: [
-              Text("Split between", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
+              Text('split_between'.tr, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
               const Spacer(),
               Container(
                 decoration: BoxDecoration(
@@ -1216,7 +1216,7 @@ class _SplitPaymentSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Person ${index + 1}", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11, color: cs.onSurfaceVariant)),
+                    Text("${'person_n'.trParams({'n': '${index + 1}'})}", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11, color: cs.onSurfaceVariant)),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -1255,10 +1255,10 @@ class _SplitPaymentSection extends StatelessWidget {
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                             ),
-                            items: const [
-                              DropdownMenuItem(value: 'Cash', child: Text('Cash', style: TextStyle(fontSize: 12))),
-                              DropdownMenuItem(value: 'UPI', child: Text('UPI', style: TextStyle(fontSize: 12))),
-                              DropdownMenuItem(value: 'Card', child: Text('Card', style: TextStyle(fontSize: 12))),
+                            items:[
+                              DropdownMenuItem(value: 'Cash', child: Text('cash'.tr, style: const TextStyle(fontSize: 12))),
+                              DropdownMenuItem(value: 'UPI', child: Text('upi'.tr, style: const TextStyle(fontSize: 12))),
+                              DropdownMenuItem(value: 'Card', child: Text('card'.tr, style: const TextStyle(fontSize: 12))),
                             ],
                             onChanged: (val) {
                               if (val != null) session.updateSplitMode(index, val);
@@ -1292,11 +1292,11 @@ class _SplitPaymentSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isValid ? "Split amounts match total" : "Difference: $currency${diff.toStringAsFixed(2)}",
+                    isValid ? 'split_amounts_match'.tr : "${'difference_amount'.trParams({'currency': currency, 'amount': diff.toStringAsFixed(2)})}",
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isValid ? Colors.green.shade700 : Colors.red.shade700),
                   ),
                   Text(
-                    "Total: $currency${totalSplit.toStringAsFixed(2)}",
+                    "${'total_split'.trParams({'currency': currency, 'amount': totalSplit.toStringAsFixed(2)})}",
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: cs.onSurface),
                   ),
                 ],

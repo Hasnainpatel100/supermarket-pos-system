@@ -95,7 +95,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
   void _addInstalment() {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedDate == null) {
-      SnackbarUtil.showError('Please pick a due date.');
+      SnackbarUtil.showError('Please pick a due date.'.tr);
       return;
     }
 
@@ -132,18 +132,18 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Mark as Paid?'),
+        title: Text('Mark as Paid?'.tr),
         content: Text(
             'Mark instalment of ₹${(schedule.amount ?? 0).toStringAsFixed(2)} as paid?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text('Cancel'.tr)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade600),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Mark Paid',
+            child: Text('Mark Paid'.tr,
                 style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -156,7 +156,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
       SnackbarUtil.showError(error);
     } else {
       _loadSchedules();
-      SnackbarUtil.showSuccess('Marked as paid.');
+      SnackbarUtil.showSuccess('Marked as paid.'.tr);
     }
   }
 
@@ -165,17 +165,17 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Instalment?'),
-        content: const Text('This will remove the scheduled payment.'),
+        title: Text('Delete Instalment?'.tr),
+        content: Text('This will remove the scheduled payment.'.tr),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text('Cancel'.tr)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.shade600),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: Text('Delete'.tr, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -218,7 +218,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
             ),
             const SizedBox(width: 12),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Payment Schedule',
+              Text('Payment Schedule'.tr,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               Text(
                 '${_purchase.purchaseNo} · ${_purchase.supplierName}',
@@ -266,21 +266,21 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
       children: [
         Expanded(
             child: _overviewTile(
-                'Outstanding',
+                'Outstanding'.tr,
                 '₹ ${_outstanding.toStringAsFixed(2)}',
                 Colors.red.shade600,
                 Icons.account_balance_wallet_rounded)),
         const SizedBox(width: 10),
         Expanded(
             child: _overviewTile(
-                'Scheduled',
+                'Scheduled'.tr,
                 '₹ ${_pendingScheduled.toStringAsFixed(2)}',
                 Colors.orange.shade600,
                 Icons.pending_actions_rounded)),
         const SizedBox(width: 10),
         Expanded(
             child: _overviewTile(
-                'Unscheduled',
+                'Unscheduled'.tr,
                 '₹ ${_unscheduled.toStringAsFixed(2)}',
                 _unscheduled < 0.01
                     ? Colors.green.shade600
@@ -338,7 +338,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
                   keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
-                    labelText: 'Amount *',
+                    labelText: 'Amount *'.tr,
                     prefixText: '₹ ',
                     prefixIcon:
                     const Icon(Icons.currency_rupee_rounded, size: 20),
@@ -352,9 +352,9 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
                     TextStyle(color: Colors.orange.shade600),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Required';
+                    if (v == null || v.trim().isEmpty) return 'Required'.tr;
                     final a = double.tryParse(v.trim());
-                    if (a == null || a <= 0) return 'Invalid amount';
+                    if (a == null || a <= 0) return 'Invalid amount'.tr;
                     return null;
                   },
                 ),
@@ -366,9 +366,9 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
                   child: AbsorbPointer(
                     child: TextFormField(
                       decoration: InputDecoration(
-                        labelText: 'Due Date *',
+                        labelText: 'Due Date *'.tr,
                         hintText: _selectedDate == null
-                            ? 'Pick a date'
+                            ? 'Pick a date'.tr
                             : DateFormat('dd MMM yyyy')
                             .format(_selectedDate!),
                         prefixIcon:
@@ -394,8 +394,8 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
             TextFormField(
               controller: _noteCtrl,
               decoration: InputDecoration(
-                labelText: 'Note (optional)',
-                hintText: 'e.g. 2nd instalment',
+                labelText: 'Note (optional)'.tr,
+                hintText: 'e.g. 2nd instalment'.tr,
                 prefixIcon:
                 const Icon(Icons.note_alt_outlined, size: 20),
                 border: OutlineInputBorder(
@@ -440,7 +440,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
                             : const Icon(Icons.add_alarm_rounded,
                             color: Colors.white, size: 18),
                         const SizedBox(width: 8),
-                        const Text('Schedule Instalment',
+                        Text('Schedule Instalment'.tr,
                             style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold)),
@@ -473,7 +473,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('Instalment Schedule',
+          _sectionHeader('Instalment Schedule'.tr,
               Icons.list_alt_rounded, Colors.orange.shade700),
           const Divider(height: 20),
           ...sorted.map((s) => _buildScheduleTile(s)),
@@ -545,10 +545,10 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
                 Row(children: [
                   Text(
                     isPaid
-                        ? 'Paid'
+                        ? 'Paid'.tr
                         : isOverdue
-                        ? 'Overdue'
-                        : 'Pending',
+                        ? 'Overdue'.tr
+                        : 'Pending'.tr,
                     style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
@@ -564,7 +564,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: Colors.red.shade200),
                       ),
-                      child: Text('OVERDUE',
+                      child: Text('OVERDUE'.tr,
                           style: TextStyle(
                               fontSize: 9,
                               color: Colors.red.shade700,
@@ -598,21 +598,21 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12)),
             itemBuilder: (ctx) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                   value: 'paid',
                   child: Row(children: [
-                    Icon(Icons.check_rounded,
+                    const Icon(Icons.check_rounded,
                         size: 18, color: Colors.green),
-                    SizedBox(width: 8),
-                    Text('Mark as Paid'),
+                    const SizedBox(width: 8),
+                    Text('Mark as Paid'.tr),
                   ])),
-              const PopupMenuItem(
+              PopupMenuItem(
                   value: 'delete',
                   child: Row(children: [
-                    Icon(Icons.delete_outline_rounded,
+                    const Icon(Icons.delete_outline_rounded,
                         size: 18, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Delete'),
+                    const SizedBox(width: 8),
+                    Text('Delete'.tr),
                   ])),
             ],
             onSelected: (v) {
@@ -635,7 +635,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
           Icon(Icons.calendar_today_outlined,
               size: 48, color: Colors.grey.shade300),
           const SizedBox(height: 12),
-          Text('No instalments scheduled yet.',
+          Text('No instalments scheduled yet.'.tr,
               style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
         ]),
       ),

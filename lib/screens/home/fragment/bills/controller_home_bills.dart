@@ -7,7 +7,7 @@ import '../../../../service/service_object_box.dart';
 
 enum DateFilterType { today, yesterday, thisWeek, thisMonth, custom }
 
-class ControllerHomeReport extends GetxController {
+class ControllerHomeBills extends GetxController {
   late final Box<EntityBill> _boxBill;
 
   final RxList<EntityBill> rxListBill = <EntityBill>[].obs;

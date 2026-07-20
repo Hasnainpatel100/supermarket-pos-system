@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../enums/enum_main_menu.dart';
 import '../enums/enum_permission.dart';
@@ -175,18 +176,6 @@ class RepoDrawer {
         EnumPermission.customerDelete,
       ],
     ),
-    ModelDrawerMenu(
-      menu: EnumMainMenu.reports,
-      titleKey: 'Bills',
-      icon: Icons.assessment_outlined,
-      permissions: [
-        EnumPermission.reportSalesView,
-        EnumPermission.reportStockView,
-        EnumPermission.reportProfitView,
-        EnumPermission.reportTaxView,
-        EnumPermission.reportExport,
-      ],
-    ),
 
     ModelDrawerMenu(
       menu: EnumMainMenu.purchaseSupplier,
@@ -213,6 +202,18 @@ class RepoDrawer {
           icon: Icons.supervisor_account,
           permissions: [EnumPermission.supplierManage],
         ),
+      ],
+    ),
+    ModelDrawerMenu(
+      menu: EnumMainMenu.reports,
+      titleKey: 'reports',
+      icon: Icons.bar_chart_outlined,
+      permissions: [
+        EnumPermission.reportSalesView,
+        EnumPermission.reportStockView,
+        EnumPermission.reportProfitView,
+        EnumPermission.reportTaxView,
+        EnumPermission.reportExport,
       ],
     ),
     /* const SideMenuItem.simple(

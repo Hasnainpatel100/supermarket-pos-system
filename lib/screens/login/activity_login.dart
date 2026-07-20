@@ -42,7 +42,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
                         children: [
                           // Section title
                           Text(
-                            'Sign In',
+                            'sign_in'.tr,
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall
@@ -50,7 +50,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Enter your credentials to continue',
+                            'sign_in_subtitle'.tr,
                             style:
                                 Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       color: colorScheme.onSurface
@@ -61,7 +61,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
 
                           // ── Username / Email Field ──
                           Text(
-                            'Username',
+                            'username'.tr,
                             style:
                                 Theme.of(context).textTheme.labelLarge?.copyWith(
                                       fontWeight: FontWeight.w600,
@@ -72,7 +72,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
                             controller: controller.emailController,
                             textInputAction: TextInputAction.next,
                             decoration: InputDecoration(
-                              hintText: 'Enter your username',
+                              hintText: 'username_hint'.tr,
                               hintStyle: TextStyle(
                                 color: colorScheme.onSurface
                                     .withValues(alpha: 0.35),
@@ -117,7 +117,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
 
                           // ── Password Field ──
                           Text(
-                            'Password',
+                            'password'.tr,
                             style:
                                 Theme.of(context).textTheme.labelLarge?.copyWith(
                                       fontWeight: FontWeight.w600,
@@ -131,7 +131,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
                               textInputAction: TextInputAction.done,
                               onSubmitted: (_) => controller.login(),
                               decoration: InputDecoration(
-                                hintText: 'Enter your password',
+                                hintText: 'password_hint'.tr,
                                 hintStyle: TextStyle(
                                   color: colorScheme.onSurface
                                       .withValues(alpha: 0.35),
@@ -199,9 +199,9 @@ class ActivityLogin extends GetView<ControllerLogin> {
                             child: FilledButton.icon(
                               onPressed: controller.login,
                               icon: const Icon(Icons.login_rounded, size: 20),
-                              label: const Text(
-                                'Sign In',
-                                style: TextStyle(
+                              label: Text(
+                                'sign_in'.tr,
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -222,7 +222,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
 
                   // ── Footer ──
                   Text(
-                    'Supermarket POS v1.0.0',
+                    'pos_version'.tr,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color:
                               colorScheme.onSurface.withValues(alpha: 0.4),
@@ -270,7 +270,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
         ),
         const SizedBox(height: 20),
         Text(
-          'SuperMarket POS',
+          'supermarket_pos'.tr,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -279,7 +279,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Point of Sale System',
+          'pos_system_subtitle'.tr,
           style: TextStyle(
             fontSize: 14,
             color: colorScheme.onSurface.withValues(alpha: 0.5),

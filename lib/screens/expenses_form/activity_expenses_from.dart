@@ -17,12 +17,12 @@ class ActivityExpensesFrom extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Get.back(),
         ),
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.add_card_rounded, size: 22),
             SizedBox(width: 10),
             Text(
-              'New Transaction',
+              'new_transaction'.tr,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
@@ -51,40 +51,40 @@ class ActivityExpensesFrom extends StatelessWidget {
                         _SectionHeader(
                           icon: Icons.category_rounded,
                           color: colorScheme.primary,
-                          title: 'Transaction Type',
+                          title: 'transaction_type'.tr,
                         ),
                         const SizedBox(height: 10),
                         Obx(() {
                           return Row(
                             children: [
                               _TypeButton(
-                                label: 'Expense',
+                                label: 'expense'.tr,
                                 icon: Icons.shopping_cart_rounded,
                                 color: Colors.red.shade600,
                                 isSelected:
-                                    controller.rxType.value ==
+                                controller.rxType.value ==
                                     TransactionType.expense,
                                 onTap: () => controller.rxType.value =
                                     TransactionType.expense,
                               ),
                               const SizedBox(width: 10),
                               _TypeButton(
-                                label: 'Borrow',
+                                label: 'borrow'.tr,
                                 icon: Icons.call_received_rounded,
                                 color: Colors.orange.shade700,
                                 isSelected:
-                                    controller.rxType.value ==
+                                controller.rxType.value ==
                                     TransactionType.borrow,
                                 onTap: () => controller.rxType.value =
                                     TransactionType.borrow,
                               ),
                               const SizedBox(width: 10),
                               _TypeButton(
-                                label: 'Lend',
+                                label: 'lend'.tr,
                                 icon: Icons.call_made_rounded,
                                 color: Colors.blue.shade700,
                                 isSelected:
-                                    controller.rxType.value ==
+                                controller.rxType.value ==
                                     TransactionType.lend,
                                 onTap: () => controller.rxType.value =
                                     TransactionType.lend,
@@ -128,8 +128,8 @@ class ActivityExpensesFrom extends StatelessWidget {
                               ),
                               title: Text(
                                 isDebit
-                                    ? 'Debit (Money Out)'
-                                    : 'Credit (Money In)',
+                                    ? 'debit_money_out'.tr
+                                    : 'credit_money_in'.tr,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: isDebit
@@ -139,8 +139,8 @@ class ActivityExpensesFrom extends StatelessWidget {
                               ),
                               subtitle: Text(
                                 isDebit
-                                    ? 'Money is going out of your pocket'
-                                    : 'Money is coming into your pocket',
+                                    ? 'money_going_out'.tr
+                                    : 'money_coming_in'.tr,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey.shade600,
@@ -153,7 +153,7 @@ class ActivityExpensesFrom extends StatelessWidget {
                                 alpha: 0.3,
                               ),
                               onChanged: (val) =>
-                                  controller.rxIsDebit.value = val,
+                              controller.rxIsDebit.value = val,
                             ),
                           );
                         }),
@@ -164,7 +164,7 @@ class ActivityExpensesFrom extends StatelessWidget {
                         _SectionHeader(
                           icon: Icons.label_rounded,
                           color: Colors.purple.shade600,
-                          title: 'Category',
+                          title: 'category'.tr,
                         ),
                         const SizedBox(height: 10),
                         Obx(() {
@@ -179,16 +179,16 @@ class ActivityExpensesFrom extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               prefixIcon: const Icon(Icons.tag_rounded),
-                              labelText: 'Category',
+                              labelText: 'category'.tr,
                               isDense: true,
                             ),
                             items: cats
                                 .map(
                                   (c) => DropdownMenuItem(
-                                    value: c,
-                                    child: Text(c),
-                                  ),
-                                )
+                                value: c,
+                                child: Text(c),
+                              ),
+                            )
                                 .toList(),
                             onChanged: (val) {
                               if (val != null) {
@@ -207,11 +207,11 @@ class ActivityExpensesFrom extends StatelessWidget {
                               child: TextFormField(
                                 controller: controller.amountController,
                                 keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
+                                const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
                                 decoration: InputDecoration(
-                                  labelText: 'Amount *',
+                                  labelText: '${'amount'.tr} *',
                                   prefixIcon: const Icon(
                                     Icons.currency_rupee_rounded,
                                   ),
@@ -222,10 +222,10 @@ class ActivityExpensesFrom extends StatelessWidget {
                                 ),
                                 validator: (v) {
                                   if (v == null || v.trim().isEmpty) {
-                                    return 'Required';
+                                    return 'required'.tr;
                                   }
                                   if (double.tryParse(v.trim()) == null) {
-                                    return 'Invalid number';
+                                    return 'invalid_number'.tr;
                                   }
                                   return null;
                                 },
@@ -239,7 +239,7 @@ class ActivityExpensesFrom extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                   child: InputDecorator(
                                     decoration: InputDecoration(
-                                      labelText: 'Date',
+                                      labelText: 'date'.tr,
                                       prefixIcon: const Icon(
                                         Icons.calendar_today_rounded,
                                       ),
@@ -268,10 +268,10 @@ class ActivityExpensesFrom extends StatelessWidget {
                         Obx(() {
                           final type = controller.rxType.value;
                           final label = type == TransactionType.expense
-                              ? 'Vendor / Person (optional)'
+                              ? 'vendor_person_optional'.tr
                               : type == TransactionType.borrow
-                              ? 'Borrowed From *'
-                              : 'Lent To *';
+                              ? 'borrowed_from'.tr
+                              : 'lent_to'.tr;
                           return TextFormField(
                             controller: controller.personNameController,
                             decoration: InputDecoration(
@@ -287,7 +287,7 @@ class ActivityExpensesFrom extends StatelessWidget {
                             validator: (v) {
                               if (type != TransactionType.expense &&
                                   (v == null || v.trim().isEmpty)) {
-                                return 'Person name is required for ${controller.typeName}';
+                                return 'person_name_required_for_type'.trParams({'type': controller.typeName});
                               }
                               return null;
                             },
@@ -301,7 +301,7 @@ class ActivityExpensesFrom extends StatelessWidget {
                           controller: controller.noteController,
                           maxLines: 2,
                           decoration: InputDecoration(
-                            labelText: 'Note (optional)',
+                            labelText: 'note_optional'.tr,
                             prefixIcon: const Padding(
                               padding: EdgeInsets.only(bottom: 24),
                               child: Icon(Icons.notes_rounded),
@@ -329,7 +329,7 @@ class ActivityExpensesFrom extends StatelessWidget {
                       OutlinedButton.icon(
                         onPressed: () => Get.back(),
                         icon: const Icon(Icons.close_rounded, size: 18),
-                        label: const Text('Cancel'),
+                        label: Text('cancel'.tr),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
@@ -346,16 +346,16 @@ class ActivityExpensesFrom extends StatelessWidget {
                           final type = controller.rxType.value;
                           final (label, color) = switch (type) {
                             TransactionType.expense => (
-                              'Save Expense',
-                              Colors.red.shade600,
+                            'save_expense'.tr,
+                            Colors.red.shade600,
                             ),
                             TransactionType.borrow => (
-                              'Save Borrow',
-                              Colors.orange.shade700,
+                            'save_borrow'.tr,
+                            Colors.orange.shade700,
                             ),
                             TransactionType.lend => (
-                              'Save Lend',
-                              Colors.blue.shade700,
+                            'save_lend'.tr,
+                            Colors.blue.shade700,
                             ),
                           };
                           return FilledButton.icon(
@@ -417,12 +417,12 @@ class _TypeButton extends StatelessWidget {
             ),
             boxShadow: isSelected
                 ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
+              BoxShadow(
+                color: color.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ]
                 : [],
           ),
           child: Column(

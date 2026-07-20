@@ -62,7 +62,7 @@ class ActivityItemForm extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              isEditing ? 'Edit Item' : 'New Item',
+              isEditing ? 'edit_item'.tr : 'new_item'.tr,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
@@ -91,12 +91,12 @@ class ActivityItemForm extends StatelessWidget {
                     _FormSectionHeader(
                       icon: Icons.info_outline_rounded,
                       color: Colors.blue.shade600,
-                      title: 'Basic Information',
+                      title: 'basic_information'.tr,
                     ),
                     const SizedBox(height: 16),
                     MyTextField(
                       controller: controller.nameController,
-                      label: "Item Name",
+                      label: 'item_name'.tr,
                       required: true,
                     ),
                     const SizedBox(height: 16),
@@ -105,27 +105,27 @@ class ActivityItemForm extends StatelessWidget {
                         Expanded(
                           child: MyTextField(
                             controller: controller.skuController,
-                            label: "SKU",
+                            label: 'sku'.tr,
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Obx(
-                            () => DropdownButtonFormField<String>(
+                                () => DropdownButtonFormField<String>(
                               value: controller.rxUnit.value,
                               decoration: InputDecoration(
-                                labelText: 'Unit',
+                                labelText: 'unit'.tr,
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                               ),
                               items: [
                                 ...controller.rxUnits.map((String u) {
                                   String label = u;
-                                  if (u == 'pcs') label = 'Piece (pcs)';
-                                  else if (u == 'KG') label = 'Kilogram (KG)';
-                                  else if (u == 'g') label = 'Gram (g)';
-                                  else if (u == 'L') label = 'Liter (L)';
-                                  else if (u == 'ML') label = 'Milliliter (ML)';
+                                  if (u == 'pcs') label = 'unit_pcs'.tr;
+                                  else if (u == 'KG') label = 'unit_kg'.tr;
+                                  else if (u == 'g') label = 'unit_g'.tr;
+                                  else if (u == 'L') label = 'unit_l'.tr;
+                                  else if (u == 'ML') label = 'unit_ml'.tr;
                                   return DropdownMenuItem(value: u, child: Text(label));
                                 }).toList(),
                                 DropdownMenuItem(
@@ -134,7 +134,7 @@ class ActivityItemForm extends StatelessWidget {
                                     children: [
                                       Icon(Icons.add_circle_outline_rounded, color: Colors.teal.shade600, size: 18),
                                       const SizedBox(width: 8),
-                                      Text('Create New', style: TextStyle(color: Colors.teal.shade700, fontWeight: FontWeight.w600)),
+                                      Text('create_new'.tr, style: TextStyle(color: Colors.teal.shade700, fontWeight: FontWeight.w600)),
                                     ],
                                   ),
                                 ),
@@ -145,13 +145,13 @@ class ActivityItemForm extends StatelessWidget {
                                   Get.dialog(
                                     AlertDialog(
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                      title: const Text('New Unit'),
+                                      title: Text('new_unit'.tr),
                                       content: TextField(
                                         controller: tc,
                                         autofocus: true,
                                         decoration: InputDecoration(
-                                          labelText: 'Unit Name',
-                                          hintText: 'e.g. packet',
+                                          labelText: 'unit_name'.tr,
+                                          hintText: 'unit_name_hint'.tr,
                                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                         ),
                                         onSubmitted: (_) {
@@ -166,7 +166,7 @@ class ActivityItemForm extends StatelessWidget {
                                         },
                                       ),
                                       actions: [
-                                        TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+                                        TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
                                         FilledButton(
                                           onPressed: () {
                                             final newUnit = tc.text.trim();
@@ -178,7 +178,7 @@ class ActivityItemForm extends StatelessWidget {
                                             }
                                             Get.back();
                                           },
-                                          child: const Text('Create'),
+                                          child: Text('create'.tr),
                                         ),
                                       ],
                                     ),
@@ -209,7 +209,7 @@ class ActivityItemForm extends StatelessWidget {
                               _FormSectionHeader(
                                 icon: Icons.attach_money_rounded,
                                 color: Colors.green.shade600,
-                                title: 'Pricing',
+                                title: 'pricing_section'.tr,
                               ),
                               const SizedBox(height: 16),
                               Row(
@@ -217,7 +217,7 @@ class ActivityItemForm extends StatelessWidget {
                                   Expanded(
                                     child: MyTextField(
                                       controller: controller.costController,
-                                      label: "Cost",
+                                      label: 'cost'.tr,
                                       isNumber: true,
                                     ),
                                   ),
@@ -225,7 +225,7 @@ class ActivityItemForm extends StatelessWidget {
                                   Expanded(
                                     child: MyTextField(
                                       controller: controller.priceController,
-                                      label: "Sale Price",
+                                      label: 'sale_price'.tr,
                                       required: true,
                                       isNumber: true,
                                     ),
@@ -243,7 +243,7 @@ class ActivityItemForm extends StatelessWidget {
                               _FormSectionHeader(
                                 icon: Icons.qr_code_rounded,
                                 color: Colors.deepPurple.shade500,
-                                title: 'Barcode',
+                                title: 'barcode_section'.tr,
                               ),
                               const SizedBox(height: 16),
                               Row(
@@ -251,7 +251,7 @@ class ActivityItemForm extends StatelessWidget {
                                   Expanded(
                                     child: MyTextField(
                                       controller: controller.barcodeController,
-                                      label: "Barcode",
+                                      label: 'barcode'.tr,
                                       required: true,
                                     ),
                                   ),
@@ -259,7 +259,7 @@ class ActivityItemForm extends StatelessWidget {
                                   _BarcodeActionButton(
                                     icon: Icons.auto_awesome_rounded,
                                     color: Colors.amber.shade700,
-                                    tooltip: 'Auto-generate',
+                                    tooltip: 'auto_generate'.tr,
                                     onPressed: () {
                                       final random = Random();
                                       final digits = List.generate(13, (_) => random.nextInt(10)).join();
@@ -273,7 +273,7 @@ class ActivityItemForm extends StatelessWidget {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Text(
-                                                  'Generated Barcode',
+                                                  'generated_barcode'.tr,
                                                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                                                 ),
                                                 const SizedBox(height: 24),
@@ -289,7 +289,7 @@ class ActivityItemForm extends StatelessWidget {
                                                   child: BarcodeWidget(barcode: Barcode.qrCode(), data: digits, width: 150, height: 150, color: Colors.black),
                                                 ),
                                                 const SizedBox(height: 24),
-                                                FilledButton(onPressed: () => Get.back(), child: const Text('Close')),
+                                                FilledButton(onPressed: () => Get.back(), child: Text('close'.tr)),
                                               ],
                                             ),
                                           ),
@@ -301,7 +301,7 @@ class ActivityItemForm extends StatelessWidget {
                                   _BarcodeActionButton(
                                     icon: Icons.qr_code_scanner_rounded,
                                     color: colorScheme.primary,
-                                    tooltip: 'Scan',
+                                    tooltip: 'scan'.tr,
                                     onPressed: () {},
                                   ),
                                 ],
@@ -323,7 +323,7 @@ class ActivityItemForm extends StatelessWidget {
                     _FormSectionHeader(
                       icon: Icons.percent_rounded,
                       color: Colors.indigo.shade600,
-                      title: 'Taxes',
+                      title: 'taxes_section'.tr,
                     ),
                     const SizedBox(height: 12),
                     Container(
@@ -346,10 +346,10 @@ class ActivityItemForm extends StatelessWidget {
                         border: Border.all(color: Colors.orange.withOpacity(0.25)),
                       ),
                       child: Obx(
-                        () => SwitchListTile(
-                          title: const Text(
-                            "Has Expiry Date",
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Colors.orange),
+                            () => SwitchListTile(
+                          title: Text(
+                            'has_expiry_date'.tr,
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Colors.orange),
                           ),
                           secondary: Container(
                             padding: const EdgeInsets.all(8),
@@ -373,7 +373,7 @@ class ActivityItemForm extends StatelessWidget {
                         OutlinedButton.icon(
                           onPressed: () => Get.back(),
                           icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                          label: const Text('Back'),
+                          label: Text('back'.tr),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -408,7 +408,7 @@ class ActivityItemForm extends StatelessWidget {
                               color: Colors.white,
                             ),
                             label: Text(
-                              isEditing ? "Update Item" : "Save Item",
+                              isEditing ? "update_item".tr : "save_item".tr,
                               style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -448,7 +448,7 @@ class _CategoryDropdown extends StatelessWidget {
       return DropdownButtonFormField<String>(
         value: controller.rxCategory.value,
         decoration: InputDecoration(
-          labelText: 'Category',
+          labelText: 'category'.tr,
           prefixIcon: Icon(Icons.category_outlined, color: Colors.teal.shade600, size: 20),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -461,7 +461,7 @@ class _CategoryDropdown extends StatelessWidget {
                 children: [
                   Icon(Icons.add_circle_outline_rounded, color: Colors.teal.shade600, size: 18),
                   const SizedBox(width: 8),
-                  Text('Create New', style: TextStyle(color: Colors.teal.shade700, fontWeight: FontWeight.w600)),
+                  Text('create_new'.tr, style: TextStyle(color: Colors.teal.shade700, fontWeight: FontWeight.w600)),
                 ],
               ),
             );
@@ -488,7 +488,7 @@ class _CategoryDropdown extends StatelessWidget {
           children: [
             Icon(Icons.category_outlined, color: Colors.teal.shade600),
             const SizedBox(width: 8),
-            const Text('New Category'),
+            Text('new_category'.tr),
           ],
         ),
         content: TextField(
@@ -496,8 +496,8 @@ class _CategoryDropdown extends StatelessWidget {
           autofocus: true,
           textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
-            labelText: 'Category Name',
-            hintText: 'e.g. Beverages',
+            labelText: 'category_name'.tr,
+            hintText: 'category_name_hint'.tr,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           onSubmitted: (_) {
@@ -506,13 +506,13 @@ class _CategoryDropdown extends StatelessWidget {
           },
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
           FilledButton(
             onPressed: () {
               controller.createCategory(tc.text);
               Get.back();
             },
-            child: const Text('Create'),
+            child: Text('create'.tr),
           ),
         ],
       ),
@@ -537,11 +537,11 @@ class _TaxSection extends StatelessWidget {
 
       // Build dropdown items: None + presets + Create New
       final List<DropdownMenuItem<int?>> items = [
-        const DropdownMenuItem<int?>(value: null, child: Text('None')),
+        DropdownMenuItem<int?>(value: null, child: Text('none'.tr)),
         ...presets.map((t) => DropdownMenuItem<int?>(
-              value: t.id,
-              child: Text('${t.name} (${t.rate}%)'),
-            )),
+          value: t.id,
+          child: Text('${t.name} (${t.rate}%)'),
+        )),
         const DropdownMenuItem<int?>(value: -1, child: _CreateNewTaxItem()),
       ];
 
@@ -552,7 +552,7 @@ class _TaxSection extends StatelessWidget {
           DropdownButtonFormField<int?>(
             value: presets.any((t) => t.id == selectedId) ? selectedId : null,
             decoration: InputDecoration(
-              labelText: 'Tax Rate',
+              labelText: 'tax_rate'.tr,
               prefixIcon: Icon(Icons.percent_rounded, color: Colors.indigo.shade400, size: 20),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -582,8 +582,8 @@ class _TaxSection extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   controller.rxSalePriceType.value == 'inclusive'
-                      ? 'Price entered is inclusive of tax'
-                      : 'Tax will be added on top of entered price',
+                      ? 'price_inclusive_of_tax'.tr
+                      : 'tax_added_on_top'.tr,
                   style: TextStyle(fontSize: 12, color: Colors.indigo.shade600),
                 ),
               ],
@@ -595,19 +595,19 @@ class _TaxSection extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _TaxInfoChip(
-                  label: 'Tax Amt',
+                  label: 'tax_amt'.tr,
                   value: controller.rxComputedTaxAmount.value.toStringAsFixed(2),
                   color: Colors.red.shade600,
                   icon: Icons.percent_rounded,
                 ),
                 _TaxInfoChip(
-                  label: 'Base Price',
+                  label: 'base_price'.tr,
                   value: controller.rxComputedBasePrice.value.toStringAsFixed(2),
                   color: Colors.orange.shade700,
                   icon: Icons.price_change_outlined,
                 ),
                 _TaxInfoChip(
-                  label: 'Total Price',
+                  label: 'total_price'.tr,
                   value: controller.rxComputedTotalPrice.value.toStringAsFixed(2),
                   color: Colors.green.shade700,
                   icon: Icons.attach_money_rounded,
@@ -630,7 +630,7 @@ class _TaxSection extends StatelessWidget {
           children: [
             Icon(Icons.percent_rounded, color: Colors.indigo.shade600),
             const SizedBox(width: 8),
-            const Text('New Tax'),
+            Text('new_tax'.tr),
           ],
         ),
         content: Column(
@@ -641,8 +641,8 @@ class _TaxSection extends StatelessWidget {
               autofocus: true,
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
-                labelText: 'Tax Name',
-                hintText: 'e.g. SGST, CGST, VAT',
+                labelText: 'tax_name'.tr,
+                hintText: 'tax_name_hint'.tr,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -651,8 +651,8 @@ class _TaxSection extends StatelessWidget {
               controller: rateTc,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                labelText: 'Rate (%)',
-                hintText: 'e.g. 9, 18',
+                labelText: 'rate'.tr + ' (%)',
+                hintText: 'rate_hint'.tr,
                 suffixText: '%',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -660,17 +660,17 @@ class _TaxSection extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
           FilledButton(
             onPressed: () async {
               final rate = double.tryParse(rateTc.text) ?? 0;
               final tax = await controller.createTaxPreset(nameTc.text, rate);
               Get.back();
               if (tax != null) {
-                Get.snackbar('Tax Created', '${tax.name} ${tax.rate}% added', duration: const Duration(seconds: 2));
+                Get.snackbar('tax_created'.tr, '${tax.name} ${tax.rate}% ' + 'add'.tr, duration: const Duration(seconds: 2));
               }
             },
-            child: const Text('Create & Apply'),
+            child: Text('create_and_apply'.tr),
           ),
         ],
       ),
@@ -686,7 +686,7 @@ class _CreateNewTaxItem extends StatelessWidget {
       children: [
         Icon(Icons.add_circle_outline_rounded, color: Colors.indigo.shade600, size: 18),
         const SizedBox(width: 8),
-        Text('Create New Tax', style: TextStyle(color: Colors.indigo.shade700, fontWeight: FontWeight.w600)),
+        Text('create_new_tax'.tr, style: TextStyle(color: Colors.indigo.shade700, fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -724,13 +724,13 @@ class _TaxInfoChip extends StatelessWidget {
 
 class _TaxTypeSelector extends StatelessWidget {
   final ControllerItemForm controller;
-  
+
   const _TaxTypeSelector({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Obx(() {
       final currentType = controller.rxSalePriceType.value;
       return Container(
@@ -745,7 +745,7 @@ class _TaxTypeSelector extends StatelessWidget {
             Icon(Icons.sell_outlined, size: 18, color: theme.colorScheme.primary),
             const SizedBox(width: 10),
             Text(
-              'Sale Price Type',
+              'sale_price_type'.tr,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
@@ -754,16 +754,16 @@ class _TaxTypeSelector extends StatelessWidget {
             ),
             const Spacer(),
             SegmentedButton<String>(
-              segments: const [
+              segments: [
                 ButtonSegment<String>(
                   value: 'exclusive',
-                  label: Text('Excl. Tax'),
-                  icon: Icon(Icons.remove_circle_outline, size: 16),
+                  label: Text('excl_tax'.tr),
+                  icon: const Icon(Icons.remove_circle_outline, size: 16),
                 ),
                 ButtonSegment<String>(
                   value: 'inclusive',
-                  label: Text('Incl. Tax'),
-                  icon: Icon(Icons.add_circle_outline, size: 16),
+                  label: Text('incl_tax'.tr),
+                  icon: const Icon(Icons.add_circle_outline, size: 16),
                 ),
               ],
               selected: {currentType},

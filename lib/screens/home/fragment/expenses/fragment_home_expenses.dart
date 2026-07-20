@@ -60,15 +60,15 @@ class FragmentHomeExpenses extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Finance',
+                      'Finance'.tr,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                     Text(
-                      'Track your expenses',
+                      'Track your expenses'.tr,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade500,
@@ -100,8 +100,8 @@ class FragmentHomeExpenses extends StatelessWidget {
                         final active = controller.rxDateRangeActive.value;
                         return Tooltip(
                           message: active
-                              ? 'Clear date filter'
-                              : 'Filter by date range',
+                              ? 'Clear date filter'.tr
+                              : 'Filter by date range'.tr,
                           child: GestureDetector(
                             onTap: () async {
                               if (active) {
@@ -119,13 +119,13 @@ class FragmentHomeExpenses extends StatelessWidget {
                               decoration: BoxDecoration(
                                 gradient: active
                                     ? LinearGradient(
-                                        colors: [
-                                          Colors.blue.shade500,
-                                          Colors.purple.shade500,
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      )
+                                  colors: [
+                                    Colors.blue.shade500,
+                                    Colors.purple.shade500,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
                                     : null,
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -145,7 +145,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                                   Text(
                                     active
                                         ? _rangeLabel(controller)
-                                        : 'Filter',
+                                        : 'Filter'.tr,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -171,7 +171,7 @@ class FragmentHomeExpenses extends StatelessWidget {
 
                       // Refresh Button
                       Tooltip(
-                        message: 'Refresh',
+                        message: 'Refresh'.tr,
                         child: InkWell(
                           onTap: controller.loadData,
                           borderRadius: BorderRadius.circular(10),
@@ -195,13 +195,13 @@ class FragmentHomeExpenses extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: () async {
                     final result = await Get.to(
-                      () => const ActivityExpensesFrom(),
+                          () => const ActivityExpensesFrom(),
                     );
                     if (result == true) controller.loadData();
                   },
                   icon: const Icon(Icons.add_rounded, size: 16),
-                  label: const Text(
-                    'New Transaction',
+                  label: Text(
+                    'New Transaction'.tr,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -287,7 +287,7 @@ class FragmentHomeExpenses extends StatelessWidget {
               child: Row(
                 children: [
                   _ModernMiniStat(
-                    label: 'Expenses',
+                    label: 'Expenses'.tr,
                     value: currFmt.format(controller.totalExpense.value),
                     icon: Icons.shopping_cart_rounded,
                     gradient: LinearGradient(
@@ -298,7 +298,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   _ModernMiniStat(
-                    label: 'Borrowed',
+                    label: 'Borrowed'.tr,
                     value: currFmt.format(controller.totalBorrow.value),
                     icon: Icons.call_received_rounded,
                     gradient: LinearGradient(
@@ -309,7 +309,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   _ModernMiniStat(
-                    label: 'Lent',
+                    label: 'Lent'.tr,
                     value: currFmt.format(controller.totalLend.value),
                     icon: Icons.call_made_rounded,
                     gradient: LinearGradient(
@@ -333,7 +333,7 @@ class FragmentHomeExpenses extends StatelessWidget {
               child: Row(
                 children: [
                   _ModernFilterChip(
-                    label: 'All',
+                    label: 'All'.tr,
                     icon: Icons.list_alt_rounded,
                     isSelected: controller.rxFilter.value == 'all',
                     gradient: LinearGradient(
@@ -345,7 +345,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   _ModernFilterChip(
-                    label: 'Expense',
+                    label: 'Expense'.tr,
                     icon: Icons.shopping_cart_rounded,
                     isSelected: controller.rxFilter.value == 'expense',
                     gradient: LinearGradient(
@@ -357,7 +357,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   _ModernFilterChip(
-                    label: 'Borrow',
+                    label: 'Borrow'.tr,
                     icon: Icons.call_received_rounded,
                     isSelected: controller.rxFilter.value == 'borrow',
                     gradient: LinearGradient(
@@ -369,7 +369,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   _ModernFilterChip(
-                    label: 'Lend',
+                    label: 'Lend'.tr,
                     icon: Icons.call_made_rounded,
                     isSelected: controller.rxFilter.value == 'lend',
                     gradient: LinearGradient(
@@ -409,7 +409,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No transactions yet',
+                        'No transactions yet'.tr,
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
@@ -418,7 +418,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Tap + to record an expense or transaction',
+                        'Tap + to record an expense or transaction'.tr,
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade400,
@@ -447,14 +447,14 @@ class FragmentHomeExpenses extends StatelessWidget {
                       ),
                       dividerThickness: 0.5,
                       dataRowMaxHeight: 52,
-                      columns: const [
-                        DataColumn(label: Text('Date')),
-                        DataColumn(label: Text('Type')),
-                        DataColumn(label: Text('Category')),
-                        DataColumn(label: Text('Person')),
-                        DataColumn(label: Text('Amount')),
-                        DataColumn(label: Text('Note')),
-                        DataColumn(label: Text('Actions')),
+                      columns: [
+                        DataColumn(label: Text('Date'.tr)),
+                        DataColumn(label: Text('Type'.tr)),
+                        DataColumn(label: Text('Category'.tr)),
+                        DataColumn(label: Text('Person'.tr)),
+                        DataColumn(label: Text('Amount'.tr)),
+                        DataColumn(label: Text('Note'.tr)),
+                        DataColumn(label: Text('Actions'.tr)),
                       ],
                       rows: list.map((tx) {
                         final typeColor = switch (tx.type) {
@@ -472,10 +472,10 @@ class FragmentHomeExpenses extends StatelessWidget {
                         final displayDate = tx.createdDate != null
                             ? tx.createdDate!
                             : (tx.dateUtcMs != null
-                                  ? DateFormat('yyyy-MM-dd').format(
-                                      DateTime.fromMillisecondsSinceEpoch(tx.dateUtcMs!).toLocal(),
-                                    )
-                                  : '-');
+                            ? DateFormat('yyyy-MM-dd').format(
+                          DateTime.fromMillisecondsSinceEpoch(tx.dateUtcMs!).toLocal(),
+                        )
+                            : '-');
                         return DataRow(
                           cells: [
                             DataCell(Text(displayDate, style: const TextStyle(fontWeight: FontWeight.w600))),
@@ -511,7 +511,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                                 icon: Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 20),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
-                                tooltip: 'Delete',
+                                tooltip: 'Delete'.tr,
                                 onPressed: () => _confirmDelete(context, controller, tx),
                               ),
                             ),
@@ -549,7 +549,7 @@ class FragmentHomeExpenses extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasPrev ? controller.prevPage : null,
                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
-                label: const Text('Prev'),
+                label: Text('Prev'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -566,7 +566,7 @@ class FragmentHomeExpenses extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasNext ? controller.nextPage : null,
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
-                label: const Text('Next'),
+                label: Text('Next'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -587,10 +587,10 @@ class FragmentHomeExpenses extends StatelessWidget {
 
   /// Show a confirmation dialog before deleting
   void _confirmDelete(
-    BuildContext context,
-    ControllerHomeExpenses controller,
-    EntityFinanceTransaction tx,
-  ) {
+      BuildContext context,
+      ControllerHomeExpenses controller,
+      EntityFinanceTransaction tx,
+      ) {
     final typeColor = switch (tx.type) {
       'expense' => Colors.red.shade600,
       'borrow' => Colors.orange.shade700,
@@ -613,8 +613,8 @@ class FragmentHomeExpenses extends StatelessWidget {
             size: 28,
           ),
         ),
-        title: const Text(
-          'Delete Transaction?',
+        title: Text(
+          'Delete Transaction?'.tr,
           style: TextStyle(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
@@ -622,7 +622,7 @@ class FragmentHomeExpenses extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Are you sure you want to delete this transaction?',
+              'Are you sure you want to delete this transaction?'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade600),
             ),
@@ -656,7 +656,7 @@ class FragmentHomeExpenses extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'This action cannot be undone.',
+              'This action cannot be undone.'.tr,
               style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
             ),
           ],
@@ -670,7 +670,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Cancel'),
+            child: Text('Cancel'.tr),
           ),
           FilledButton.icon(
             onPressed: () {
@@ -678,7 +678,7 @@ class FragmentHomeExpenses extends StatelessWidget {
               controller.delete(tx.id);
             },
             icon: const Icon(Icons.delete_rounded, size: 16),
-            label: const Text('Delete'),
+            label: Text('Delete'.tr),
             style: FilledButton.styleFrom(
               backgroundColor: Colors.red.shade600,
               shape: RoundedRectangleBorder(
@@ -796,19 +796,19 @@ class _ModernFilterChip extends StatelessWidget {
           ),
           boxShadow: isSelected
               ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ]
               : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

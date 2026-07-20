@@ -3,18 +3,18 @@ import 'package:get/get.dart';
 import '../../../../widget/my_card.dart';
 import 'package:intl/intl.dart';
 
-import 'controller_home_report.dart';
+import 'controller_home_bills.dart';
 import 'dialog_bill_detail.dart';
 
-class FragHomeReport extends StatelessWidget {
-  const FragHomeReport({super.key});
+class FragHomeBills extends StatelessWidget {
+  const FragHomeBills({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final ControllerHomeReport controller =
-        Get.isRegistered<ControllerHomeReport>()
-        ? Get.find<ControllerHomeReport>()
-        : Get.put(ControllerHomeReport());
+    final ControllerHomeBills controller =
+        Get.isRegistered<ControllerHomeBills>()
+        ? Get.find<ControllerHomeBills>()
+        : Get.put(ControllerHomeBills());
     final colorScheme = Theme.of(context).colorScheme;
     final currencyFormat = NumberFormat.simpleCurrency(locale: 'en_IN');
 
@@ -55,7 +55,7 @@ class FragHomeReport extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Bills Report",
+                      'bills_report'.tr,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
                             fontWeight: FontWeight.bold,
@@ -111,7 +111,7 @@ class FragHomeReport extends StatelessWidget {
                   ),
                   child: IconButton(
                     onPressed: controller.loadData,
-                    tooltip: "Refresh",
+                    tooltip: 'refresh'.tr,
                     icon: Icon(
                       Icons.refresh_rounded,
                       color: Colors.indigo.shade600,
@@ -145,7 +145,7 @@ class FragHomeReport extends StatelessWidget {
                     child: TextField(
                       onChanged: controller.setSearchQuery,
                       decoration: InputDecoration(
-                        hintText: "Search by customer name or phone...",
+                        hintText: 'search_customer_phone_hint'.tr,
                         hintStyle: TextStyle(
                           color: Colors.grey.shade400,
                           fontSize: 13,
@@ -175,7 +175,7 @@ class FragHomeReport extends StatelessWidget {
                   final selected = controller.rxDateFilter.value;
                   final isCustom = selected == DateFilterType.custom;
                   return Tooltip(
-                    message: "Filter by Date Range",
+                    message: 'filter_by_date_range'.tr,
                     child: InkWell(
                       onTap: () => _pickDateRange(context, controller),
                       borderRadius: BorderRadius.circular(16),
@@ -232,7 +232,7 @@ class FragHomeReport extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  "Transactions",
+                  'transactions_label'.tr,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.grey.shade800,
@@ -298,14 +298,14 @@ class FragHomeReport extends StatelessWidget {
                       dividerThickness: 0.5,
                       dataRowMaxHeight: 52,
                       columns: [
-                        _col(context, 'Date & Time', Icons.calendar_today_rounded, Colors.indigo),
-                        _col(context, 'Bill No', Icons.receipt_rounded, Colors.blue),
-                        _col(context, 'Customer', Icons.person_outline_rounded, Colors.green),
-                        _col(context, 'Payment', Icons.payment_rounded, Colors.teal),
-                        _col(context, 'Total', Icons.attach_money_rounded, Colors.orange),
-                        _col(context, 'Due', Icons.pending_actions_rounded, Colors.red),
-                        _col(context, 'Status', Icons.toggle_on_rounded, Colors.purple),
-                        _col(context, 'Actions', Icons.settings_rounded, Colors.grey),
+                        _col(context, 'date_and_time_col'.tr, Icons.calendar_today_rounded, Colors.indigo),
+                        _col(context, 'bill_no_col'.tr, Icons.receipt_rounded, Colors.blue),
+                        _col(context, 'customer_col'.tr, Icons.person_outline_rounded, Colors.green),
+                        _col(context, 'payment_col'.tr, Icons.payment_rounded, Colors.teal),
+                        _col(context, 'total_col'.tr, Icons.attach_money_rounded, Colors.orange),
+                        _col(context, 'due_col'.tr, Icons.pending_actions_rounded, Colors.red),
+                        _col(context, 'status_col'.tr, Icons.toggle_on_rounded, Colors.purple),
+                        _col(context, 'actions_col'.tr, Icons.settings_rounded, Colors.grey),
                       ],
                       rows: controller.rxListBill.map((b) => _buildRow(context, b, controller, colorScheme, currencyFormat)).toList(),
                     ),
@@ -324,14 +324,14 @@ class FragHomeReport extends StatelessWidget {
     );
   }
 
-  Widget _buildPagination(ControllerHomeReport controller) {
+  Widget _buildPagination(ControllerHomeBills controller) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: ${controller.totalCount.value} bills',
+            'total_bills_count'.trParams({'count': '${controller.totalCount.value}'}),
             style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           ),
           Row(
@@ -339,7 +339,7 @@ class FragHomeReport extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasPrev ? controller.prevPage : null,
                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
-                label: const Text('Prev'),
+                label: Text('prev'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -348,7 +348,7 @@ class FragHomeReport extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Text('Page ${controller.currentPage.value + 1}',
+                child: Text('page_number'.trParams({'number': '${controller.currentPage.value + 1}'}),
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
                 ),
               ),
@@ -356,7 +356,7 @@ class FragHomeReport extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasNext ? controller.nextPage : null,
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
-                label: const Text('Next'),
+                label: Text('next'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -394,12 +394,12 @@ class FragHomeReport extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            "No transactions found",
+            'no_transactions_found'.tr,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 6),
           Text(
-            "Try adjusting the date filter",
+            'try_adjust_date_filter'.tr,
             style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
           ),
         ],
@@ -430,7 +430,7 @@ class FragHomeReport extends StatelessWidget {
   DataRow _buildRow(
     BuildContext context,
     var bill,
-    ControllerHomeReport controller,
+    ControllerHomeBills controller,
     ColorScheme colorScheme,
     NumberFormat currencyFormat,
   ) {
@@ -473,7 +473,7 @@ class FragHomeReport extends StatelessWidget {
 
         // Customer
         DataCell(Text(
-          bill.customerName ?? "Walk-in Customer",
+          bill.customerName ?? 'walk_in_customer'.tr,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,
@@ -550,7 +550,7 @@ class FragHomeReport extends StatelessWidget {
         DataCell(
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500),
-            tooltip: 'Actions',
+            tooltip: 'actions'.tr,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             onSelected: (value) {
               if (value == 'preview') {
@@ -565,7 +565,7 @@ class FragHomeReport extends StatelessWidget {
                 child: Row(children: [
                   Icon(Icons.visibility_outlined, size: 20, color: Colors.blue.shade600),
                   const SizedBox(width: 12),
-                  const Text('Preview Bill'),
+                  Text('preview_bill'.tr),
                 ]),
               ),
               if (isDue)
@@ -574,7 +574,7 @@ class FragHomeReport extends StatelessWidget {
                   child: Row(children: [
                     Icon(Icons.payment_rounded, size: 20, color: Colors.orange.shade600),
                     const SizedBox(width: 12),
-                    const Text('Settle Due'),
+                    Text('settle_due'.tr),
                   ]),
                 ),
             ],
@@ -586,7 +586,7 @@ class FragHomeReport extends StatelessWidget {
 
   void _pickDateRange(
     BuildContext context,
-    ControllerHomeReport controller,
+    ControllerHomeBills controller,
   ) async {
     final colorScheme = Theme.of(context).colorScheme;
     final picked = await showDateRangePicker(

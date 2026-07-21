@@ -14,8 +14,11 @@ class ActivityCustomerForm extends StatelessWidget {
       ControllerCustomerForm(editingCustomer: editingCustomer),
     );
     final isEditing = editingCustomer != null;
+    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -38,66 +41,9 @@ class ActivityCustomerForm extends StatelessWidget {
           ],
         ),
         elevation: 0,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
+        foregroundColor: theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
       ),
-      body: DialogBody(
-        child: Form(
-          key: controller.formKey,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 550;
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  /// ── Basic Info Section ──
-                  const FormSection(
-                    icon: Icons.person_outline_rounded,
-                    color: Colors.blue,
-                    title: 'Basic Information',
-                  ),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    controller: controller.nameController,
-                    label: "Customer Name",
-                    required: true,
-                    prefixIcon: Icons.person_rounded,
-                  ),
-                  const SizedBox(height: 16),
-
-                  if (isWide)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: AppNumberField(
-                            controller: controller.phoneController,
-                            label: "Phone Number",
-                            prefixIcon: Icons.phone_rounded,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: AppTextField(
-                            controller: controller.emailController,
-                            label: "Email Address",
-                            prefixIcon: Icons.email_rounded,
-                          ),
-                        ),
-                      ],
-                    )
-                  else ...[
-                    AppNumberField(
-                      controller: controller.phoneController,
-                      label: "Phone Number",
-                      prefixIcon: Icons.phone_rounded,
-                    ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: controller.emailController,
-                      label: "Email Address",
-                      prefixIcon: Icons.email_rounded,
-                    ),
-                  ],
       body: Center(
         child: SizedBox(
           width: 600,
@@ -120,13 +66,13 @@ class ActivityCustomerForm extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       /// ── Basic Info Section ──
-                      _FormSectionHeader(
+                      FormSection(
                         icon: Icons.person_outline_rounded,
                         color: Colors.blue.shade600,
                         title: 'basic_information'.tr,
                       ),
                       const SizedBox(height: 16),
-                      MyTextField(
+                      AppTextField(
                         controller: controller.nameController,
                         label: 'customer_name'.tr,
                         required: true,
@@ -136,16 +82,15 @@ class ActivityCustomerForm extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: MyTextField(
+                            child: AppNumberField(
                               controller: controller.phoneController,
                               label: 'phone_number'.tr,
                               prefixIcon: Icons.phone_rounded,
-                              isNumber: true,
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: MyTextField(
+                            child: AppTextField(
                               controller: controller.emailController,
                               label: 'email_address'.tr,
                               prefixIcon: Icons.email_rounded,
@@ -154,16 +99,16 @@ class ActivityCustomerForm extends StatelessWidget {
                         ],
                       ),
 
-                  const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
                       /// ── Address Section ──
-                      _FormSectionHeader(
+                      FormSection(
                         icon: Icons.location_on_outlined,
                         color: Colors.green.shade600,
                         title: 'address_details'.tr,
                       ),
                       const SizedBox(height: 16),
-                      MyTextField(
+                      AppTextField(
                         controller: controller.addressController,
                         label: 'street_address'.tr,
                         prefixIcon: Icons.home_rounded,
@@ -173,198 +118,55 @@ class ActivityCustomerForm extends StatelessWidget {
                         children: [
                           Expanded(
                             flex: 2,
-                            child: MyTextField(
+                            child: AppTextField(
                               controller: controller.cityController,
                               label: 'city'.tr,
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: MyTextField(
+                            child: AppTextField(
                               controller: controller.stateController,
                               label: 'state'.tr,
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: MyTextField(
+                            child: AppNumberField(
                               controller: controller.zipController,
                               label: 'zip_code'.tr,
-                              isNumber: true,
                             ),
                           ),
                         ],
                       ),
-                  /// ── Address Section ──
-                  const FormSection(
-                    icon: Icons.location_on_outlined,
-                    color: Colors.green,
-                    title: 'Address Details',
-                  ),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    controller: controller.addressController,
-                    label: "Street Address",
-                    prefixIcon: Icons.home_rounded,
-                  ),
-                  const SizedBox(height: 16),
 
-                  if (isWide)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: AppTextField(
-                            controller: controller.cityController,
-                            label: "City",
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: AppTextField(
-                            controller: controller.stateController,
-                            label: "State",
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: AppNumberField(
-                            controller: controller.zipController,
-                            label: "Zip Code",
-                          ),
-                        ),
-                      ],
-                    )
-                  else ...[
-                    AppTextField(
-                      controller: controller.cityController,
-                      label: "City",
-                    ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: controller.stateController,
-                      label: "State",
-                    ),
-                    const SizedBox(height: 16),
-                    AppNumberField(
-                      controller: controller.zipController,
-                      label: "Zip Code",
-                    ),
-                  ],
-
-                  const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
                       /// ── Notes Section ──
-                      _FormSectionHeader(
+                      FormSection(
                         icon: Icons.note_alt_outlined,
-                        color: Colors.orange.shade600,
+                        color: Colors.orange.shade700,
                         title: 'additional_notes'.tr,
                       ),
                       const SizedBox(height: 16),
-                      MyTextField(
+                      AppTextField(
                         controller: controller.notesController,
                         label: 'notes'.tr,
                         maxLines: 3,
                         prefixIcon: Icons.comment_rounded,
                       ),
-                  /// ── Notes Section ──
-                  const FormSection(
-                    icon: Icons.note_alt_outlined,
-                    color: Colors.orange,
-                    title: 'Additional Notes',
-                  ),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    controller: controller.notesController,
-                    label: "Notes",
-                    maxLines: 3,
-                    prefixIcon: Icons.comment_rounded,
-                  ),
 
-                  const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                  /// ── VIP Section ──
-                  const FormSection(
-                    icon: Icons.star_rounded,
-                    color: Colors.amber,
-                    title: 'VIP Status',
-                  ),
-                  const SizedBox(height: 12),
-                  Obx(
-                    () => Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: controller.rxIsVip.value
-                            ? Colors.amber.withOpacity(0.08)
-                            : Colors.grey.withOpacity(0.04),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: controller.rxIsVip.value
-                              ? Colors.amber.shade300
-                              : Colors.grey.shade200,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.star_rounded,
-                            color: controller.rxIsVip.value
-                                ? Colors.amber.shade600
-                                : Colors.grey.shade400,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'VIP Customer',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: controller.rxIsVip.value
-                                        ? Colors.amber.shade800
-                                        : Colors.grey.shade700,
-                                  ),
-                                ),
-                                Text(
-                                  controller.rxIsVip.value
-                                      ? 'This customer has VIP privileges'
-                                      : 'Mark as VIP for special treatment',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Switch(
-                            value: controller.rxIsVip.value,
-                            onChanged: (val) =>
-                                controller.rxIsVip.value = val,
-                            activeTrackColor: Colors.amber.shade600,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
                       /// ── VIP Section ──
-                      _FormSectionHeader(
+                      FormSection(
                         icon: Icons.star_rounded,
                         color: Colors.amber.shade700,
                         title: 'vip_status'.tr,
                       ),
                       const SizedBox(height: 12),
                       Obx(
-                            () => Container(
+                        () => Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 12,
@@ -418,7 +220,7 @@ class ActivityCustomerForm extends StatelessWidget {
                               Switch(
                                 value: controller.rxIsVip.value,
                                 onChanged: (val) =>
-                                controller.rxIsVip.value = val,
+                                    controller.rxIsVip.value = val,
                                 activeTrackColor: Colors.amber.shade600,
                               ),
                             ],
@@ -484,42 +286,6 @@ class ActivityCustomerForm extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FormSectionHeader extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String title;
-
-  const _FormSectionHeader({
-    required this.icon,
-    required this.color,
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-      footer: DialogFooter(
-        onCancel: () => Get.back(),
-        onSave: controller.saveCustomer,
-        saveLabel: isEditing ? "Update Customer" : "Save Customer",
       ),
     );
   }

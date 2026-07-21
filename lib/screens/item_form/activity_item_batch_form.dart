@@ -22,6 +22,27 @@ class ActivityItemBatchForm extends StatelessWidget {
         title: 'Add Item Batch',
         icon: Icons.inventory_2_rounded,
         iconColor: colorScheme.primary,
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Get.back(),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.inventory_2_rounded,
+              color: colorScheme.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'add_item_batch'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        elevation: 0,
       ),
       body: DialogBody(
         child: Form(
@@ -41,11 +62,36 @@ class ActivityItemBatchForm extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   if (isWide)
+      body: Center(
+        child: SizedBox(
+          width: 600,
+          child: Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: colorScheme.outline.withValues(alpha: 0.15),
+              ),
+            ),
+            margin: const EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: controller.formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _FormSectionHeader(
+                      icon: Icons.qr_code_2_rounded,
+                      color: Colors.deepPurple,
+                      title: 'batch_details'.tr,
+                    ),
+                    const SizedBox(height: 16),
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: AppTextField(
+                          child: MyTextField(
                             controller: controller.batchNoController,
                             label: "Batch Number",
                             required: true,
@@ -53,9 +99,10 @@ class ActivityItemBatchForm extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: AppNumberField(
+                          child: MyTextField(
                             controller: controller.quantityController,
-                            label: "Quantity",
+                            label: 'quantity'.tr,
+                            isNumber: true,
                             required: true,
                           ),
                         ),
@@ -68,6 +115,45 @@ class ActivityItemBatchForm extends StatelessWidget {
                       required: true,
                     ),
                     const SizedBox(height: 16),
+                    _FormSectionHeader(
+                      icon: Icons.calendar_today_rounded,
+                      color: Colors.orange,
+                      title: 'expiry_information'.tr,
+                    ),
+                    const SizedBox(height: 16),
+                    MyDatePicker(
+                      controller: controller.expiryDateController,
+                      label: 'expiry_date'.tr,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Get.back(),
+                          child: Text('skip_cancel'.tr),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton.icon(
+                          onPressed: controller.saveBatch,
+                          icon: const Icon(Icons.save_rounded, size: 18),
+                          label: Text('save_batch'.tr),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
                     AppNumberField(
                       controller: controller.quantityController,
                       label: "Quantity",

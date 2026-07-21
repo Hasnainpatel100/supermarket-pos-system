@@ -402,7 +402,7 @@ class DialogBillDetail extends StatelessWidget {
                         child: OutlinedButton.icon(
                           onPressed: () => _previewPdf(context, settings),
                           icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                          label: const Text('Preview PDF'),
+                          label: Text('preview_pdf'.tr),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 13),
                             shape: RoundedRectangleBorder(
@@ -418,7 +418,7 @@ class DialogBillDetail extends StatelessWidget {
                         child: FilledButton.icon(
                           onPressed: () => _shareWhatsApp(context, settings),
                           icon: const Icon(Icons.send_rounded, size: 18),
-                          label: const Text('Send on WhatsApp'),
+                          label: Text('send_on_whatsapp'.tr),
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFF25D366),
                             foregroundColor: Colors.white,
@@ -456,7 +456,7 @@ class DialogBillDetail extends StatelessWidget {
               child: Icon(Icons.cancel_outlined, color: Colors.red.shade600, size: 24),
             ),
             const SizedBox(width: 12),
-            const Text('Cancel Bill?'),
+            Text('cancel_bill_q'.tr),
           ],
         ),
         content: Column(
@@ -481,7 +481,7 @@ class DialogBillDetail extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'This will reverse all stock and mark the bill as cancelled. This action cannot be undone.',
+                      'cancel_bill_warning'.tr,
                       style: TextStyle(fontSize: 12, color: Colors.red.shade700, height: 1.4),
                     ),
                   ),
@@ -493,7 +493,7 @@ class DialogBillDetail extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('No, Keep It'),
+            child: Text('no_keep_it'.tr),
           ),
           FilledButton(
             onPressed: () async {
@@ -506,7 +506,7 @@ class DialogBillDetail extends StatelessWidget {
               backgroundColor: Colors.red.shade600,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Yes, Cancel Bill'),
+            child: Text('yes_cancel_bill'.tr),
           ),
         ],
       ),
@@ -529,7 +529,7 @@ class DialogBillDetail extends StatelessWidget {
               child: Icon(Icons.edit_note_rounded, color: Colors.amber.shade800, size: 24),
             ),
             const SizedBox(width: 12),
-            const Text('Edit Bill?'),
+             Text('edit_bill_q'.tr),
           ],
         ),
         content: Column(
@@ -554,7 +554,7 @@ class DialogBillDetail extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'The current bill will be cancelled and all items will be loaded back into a new POS tab for editing. You can then make changes and settle again.',
+                      'edit_bill_info'.tr,
                       style: TextStyle(fontSize: 12, color: Colors.amber.shade900, height: 1.4),
                     ),
                   ),
@@ -566,7 +566,7 @@ class DialogBillDetail extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Cancel'),
+            child: Text('cancel'.tr),
           ),
           FilledButton(
             onPressed: () async {
@@ -579,7 +579,7 @@ class DialogBillDetail extends StatelessWidget {
               backgroundColor: Colors.amber.shade700,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Yes, Edit Bill'),
+            child: Text('yes_edit_bill'.tr),
           ),
         ],
       ),
@@ -596,8 +596,8 @@ class DialogBillDetail extends StatelessWidget {
       // Open PDF with the system default viewer
       await Process.run('cmd', ['/c', 'start', '', pdfFile.path]);
       Get.snackbar(
-        'PDF Saved',
-        'Bill PDF saved at:\n${pdfFile.path}',
+        'pdf_saved'.tr,
+        'bill_pdf_saved_at'.trParams({'path': pdfFile.path}),
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
@@ -605,8 +605,8 @@ class DialogBillDetail extends StatelessWidget {
       );
     } catch (e) {
       Get.snackbar(
-        'Error',
-        'Could not generate PDF: $e',
+        'error'.tr,
+        'could_not_generate_pdf'.trParams({'error': '$e'}),
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -644,7 +644,7 @@ class DialogBillDetail extends StatelessWidget {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Send Bill on WhatsApp'),
+        title: Text('send_bill_on_whatsapp'.tr),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -663,8 +663,8 @@ class DialogBillDetail extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               isFromBill
-                  ? 'Send bill to customer\'s number?'
-                  : 'Send bill to this number?',
+                  ? 'send_bill_to_customer_q'.tr
+                  : 'send_bill_to_number_q'.tr,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
@@ -676,7 +676,7 @@ class DialogBillDetail extends StatelessWidget {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF25D366),
@@ -685,7 +685,7 @@ class DialogBillDetail extends StatelessWidget {
               Get.back();
               _launchWhatsApp(context, settings, phone);
             },
-            child: const Text('Send'),
+            child: Text('send'.tr),
           ),
         ],
       ),
@@ -702,7 +702,7 @@ class DialogBillDetail extends StatelessWidget {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Enter Customer Number'),
+        title: Text('enter_customer_number'.tr),
         content: Form(
           key: formKey,
           child: Column(
@@ -721,8 +721,8 @@ class DialogBillDetail extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'No phone number on file.\nEnter a 10-digit mobile number to send the bill.',
+              Text(
+                'no_phone_on_file'.tr,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13),
               ),
@@ -732,7 +732,7 @@ class DialogBillDetail extends StatelessWidget {
                 keyboardType: TextInputType.number,
                 maxLength: 10,
                 decoration: InputDecoration(
-                  labelText: 'Mobile Number',
+                  labelText: 'mobile_number'.tr,
                   prefixText: '+91 ',
                   prefixIcon: const Icon(Icons.phone_rounded),
                   border: OutlineInputBorder(
@@ -742,7 +742,7 @@ class DialogBillDetail extends StatelessWidget {
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length != 10) {
-                    return 'Please enter a valid 10-digit number';
+                    return 'enter_valid_10_digit'.tr;
                   }
                   return null;
                 },
@@ -751,7 +751,7 @@ class DialogBillDetail extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF25D366),
@@ -766,7 +766,7 @@ class DialogBillDetail extends StatelessWidget {
                 );
               }
             },
-            child: const Text('Continue'),
+            child: Text('continue_btn'.tr),
           ),
         ],
       ),

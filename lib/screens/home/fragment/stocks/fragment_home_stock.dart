@@ -45,12 +45,12 @@ class FragmentHomeStock extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Stock Ledger',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                Text(
+                  'stock_ledger'.tr,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 Text(
-                  'Track inventory movements',
+                  'track_inventory_movements'.tr,
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey.shade500,
@@ -79,7 +79,7 @@ class FragmentHomeStock extends StatelessWidget {
             child: TextField(
               controller: controller.searchController,
               decoration: InputDecoration(
-                hintText: 'Search by item name or remarks...',
+                hintText: 'search_stock_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 prefixIcon: Icon(
                   Icons.search_rounded,
@@ -126,7 +126,7 @@ class FragmentHomeStock extends StatelessWidget {
               child: Row(
                 children: [
                   _FilterChip(
-                    label: 'All',
+                    label: 'all'.tr,
                     color: Colors.grey.shade600,
                     isSelected: selected == null,
                     onTap: () => controller.setTypeFilter(null),
@@ -184,7 +184,7 @@ class FragmentHomeStock extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No stock movements yet',
+                        'no_stock_movements'.tr,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -193,7 +193,7 @@ class FragmentHomeStock extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Stock changes will appear here automatically',
+                        'stock_movements_hint'.tr,
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade400,
@@ -222,12 +222,12 @@ class FragmentHomeStock extends StatelessWidget {
                       ),
                       dividerThickness: 0.5,
                       dataRowMaxHeight: 56,
-                      columns: const [
-                        DataColumn(label: Text('Date & Time')),
-                        DataColumn(label: Text('Item')),
-                        DataColumn(label: Text('Type')),
-                        DataColumn(label: Text('Qty'), numeric: true),
-                        DataColumn(label: Text('Remarks')),
+                      columns: [
+                        DataColumn(label: Text('date_time'.tr)),
+                        DataColumn(label: Text('item'.tr)),
+                        DataColumn(label: Text('type'.tr)),
+                        DataColumn(label: Text('qty'.tr), numeric: true),
+                        DataColumn(label: Text('remarks'.tr)),
                       ],
                       rows: controller.rxListTxn.map((txn) {
                         final type = _typeFromIndex(txn.type);
@@ -344,7 +344,7 @@ class FragmentHomeStock extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: ${controller.totalCount.value} transactions',
+            '${'total'.tr}: ${controller.totalCount.value} ${'transactions'.tr}',
             style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           ),
           Row(
@@ -352,7 +352,7 @@ class FragmentHomeStock extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasPrev ? controller.prevPage : null,
                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
-                label: const Text('Prev'),
+                label: Text('prev'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -361,7 +361,7 @@ class FragmentHomeStock extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Text('Page ${controller.currentPage.value + 1}',
+                child: Text('${'page'.tr} ${controller.currentPage.value + 1}',
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange.shade700),
                 ),
               ),
@@ -369,7 +369,7 @@ class FragmentHomeStock extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.hasNext ? controller.nextPage : null,
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
-                label: const Text('Next'),
+                label: Text('next'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -389,17 +389,17 @@ class FragmentHomeStock extends StatelessWidget {
   String _typeLabel(StockTxnType? type) {
     switch (type) {
       case StockTxnType.sell:
-        return 'SELL';
+        return 'txn_sell'.tr;
       case StockTxnType.add:
-        return 'ADD';
+        return 'txn_add'.tr;
       case StockTxnType.adjust:
-        return 'ADJUST';
+        return 'txn_adjust'.tr;
       case StockTxnType.deduct:
-        return 'DEDUCT';
+        return 'txn_deduct'.tr;
       case StockTxnType.purchaseIn:
-        return 'PURCHASE';
+        return 'txn_purchase'.tr;
       default:
-        return 'ALL';
+        return 'all'.tr;
     }
   }
 

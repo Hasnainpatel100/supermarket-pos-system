@@ -48,12 +48,12 @@ class FragmentHomeSupplier extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Suppliers',
+                Text(
+                  'Suppliers'.tr,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 Text(
-                  'Manage your vendor base',
+                  'Manage your vendor base'.tr,
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey.shade500,
@@ -97,12 +97,12 @@ class FragmentHomeSupplier extends StatelessWidget {
                   padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
-                    children: const [
-                      Icon(Icons.add_business_rounded,
+                    children: [
+                      const Icon(Icons.add_business_rounded,
                           size: 18, color: Colors.white),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'New Supplier',
+                        'New Supplier'.tr,
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -133,7 +133,7 @@ class FragmentHomeSupplier extends StatelessWidget {
             child: TextField(
               controller: controller.searchController,
               decoration: InputDecoration(
-                hintText: 'Search by name, phone or code...',
+                hintText: 'Search by name, phone or code...'.tr,
                 hintStyle:
                 TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 prefixIcon: Icon(Icons.search_rounded,
@@ -189,19 +189,19 @@ class FragmentHomeSupplier extends StatelessWidget {
                       dividerThickness: 0.5,
                       dataRowMaxHeight: 52,
                       columns: [
-                        _col(context, 'Code', Icons.tag_rounded,
+                        _col(context, 'Code'.tr, Icons.tag_rounded,
                             Colors.indigo),
-                        _col(context, 'Name',
+                        _col(context, 'Name'.tr,
                             Icons.person_outline_rounded, Colors.blue),
-                        _col(context, 'Phone', Icons.phone_rounded,
+                        _col(context, 'Phone'.tr, Icons.phone_rounded,
                             Colors.green),
-                        _col(context, 'GST',
+                        _col(context, 'GST'.tr,
                             Icons.receipt_long_rounded, Colors.orange),
-                        _col(context, 'Outstanding',
+                        _col(context, 'Outstanding'.tr,
                             Icons.account_balance_wallet_rounded, Colors.red),
-                        _col(context, 'Status',
+                        _col(context, 'Status'.tr,
                             Icons.toggle_on_rounded, Colors.purple),
-                        _col(context, 'Actions',
+                        _col(context, 'Actions'.tr,
                             Icons.settings_rounded, Colors.grey),
                       ],
                       rows: controller.rxListSupplier
@@ -317,7 +317,7 @@ class FragmentHomeSupplier extends StatelessWidget {
         DataCell(
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500),
-            tooltip: 'Actions',
+            tooltip: 'Actions'.tr,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12)),
             onSelected: (value) {
@@ -340,7 +340,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                   Icon(Icons.visibility_outlined,
                       size: 20, color: Colors.blue.shade600),
                   const SizedBox(width: 12),
-                  const Text('View Details'),
+                  Text('View Details'.tr),
                 ]),
               ),
               PopupMenuItem(
@@ -349,7 +349,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                   Icon(Icons.edit_outlined,
                       size: 20, color: colorScheme.primary),
                   const SizedBox(width: 12),
-                  const Text('Edit'),
+                  Text('Edit'.tr),
                 ]),
               ),
               PopupMenuItem(
@@ -366,7 +366,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    isActive ? 'Deactivate' : 'Activate',
+                    isActive ? 'Deactivate'.tr : 'Activate'.tr,
                     style: TextStyle(
                         color: isActive
                             ? Colors.orange.shade500
@@ -425,7 +425,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           ),
           const SizedBox(width: 5),
           Text(
-            isActive ? 'Active' : 'Inactive',
+            isActive ? 'Active'.tr : 'Inactive'.tr,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -457,7 +457,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                 onPressed:
                 controller.hasPrev ? controller.prevPage : null,
                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
-                label: const Text('Prev'),
+                label: Text('Prev'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -482,7 +482,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                 onPressed:
                 controller.hasNext ? controller.nextPage : null,
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
-                label: const Text('Next'),
+                label: Text('Next'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -526,7 +526,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No suppliers found',
+            'No suppliers found'.tr,
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -534,7 +534,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Add a new supplier to get started',
+            'Add a new supplier to get started'.tr,
             style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
           ),
         ],
@@ -563,7 +563,7 @@ class FragmentHomeSupplier extends StatelessWidget {
       ) {
     final isActive = supplier.isActive ?? true;
     Get.defaultDialog(
-      title: isActive ? 'Deactivate Supplier?' : 'Activate Supplier?',
+      title: isActive ? 'Deactivate Supplier?'.tr : 'Activate Supplier?'.tr,
       titleStyle:
       const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
       middleText:
@@ -591,7 +591,7 @@ class FragmentHomeSupplier extends StatelessWidget {
             '${supplier.name} ${!isActive ? "activated" : "deactivated"}',
           );
         },
-        label: Text(isActive ? 'Deactivate' : 'Activate'),
+        label: Text(isActive ? 'Deactivate'.tr : 'Activate'.tr),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(
@@ -601,7 +601,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         ),
         onPressed: () => Get.back(),
-        child: const Text('Cancel'),
+        child: Text('Cancel'.tr),
       ),
     );
   }
@@ -624,7 +624,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                       color: Theme.of(context).primaryColor),
                   const SizedBox(width: 10),
                   Text(
-                    'Supplier Details',
+                    'Supplier Details'.tr,
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge
@@ -638,13 +638,13 @@ class FragmentHomeSupplier extends StatelessWidget {
               ),
               const Divider(),
               const SizedBox(height: 12),
-              _detailRow('Code', s.supplierCode),
-              _detailRow('Name', s.name),
-              _detailRow('Contact Person', s.contactPerson),
-              _detailRow('Phone', s.phone),
-              _detailRow('Email', s.email),
-              _detailRow('GST Number', s.gstNumber),
-              _detailRow('Address', s.address),
+              _detailRow('Code'.tr, s.supplierCode),
+              _detailRow('Name'.tr, s.name),
+              _detailRow('Contact Person'.tr, s.contactPerson),
+              _detailRow('Phone'.tr, s.phone),
+              _detailRow('Email'.tr, s.email),
+              _detailRow('GST Number'.tr, s.gstNumber),
+              _detailRow('Address'.tr, s.address),
               const SizedBox(height: 16),
 
               // ── Outstanding Balance ──
@@ -676,7 +676,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Total Outstanding',
+                      Text('Total Outstanding'.tr,
                           style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey.shade500,
@@ -684,7 +684,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                       Text(
                         (s.totalOutstanding ?? 0) > 0.001
                             ? '₹ ${s.totalOutstanding!.toStringAsFixed(2)}'
-                            : 'No dues — fully settled',
+                            : 'No dues — fully settled'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -703,7 +703,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: FilledButton(
                   onPressed: () => Get.back(),
-                  child: const Text('Close'),
+                  child: Text('Close'.tr),
                 ),
               ),
             ],

@@ -24,13 +24,13 @@ class FragHomeLogout extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              'Logout'.tr,
+              'logout'.tr,
               style: Theme.of(Get.context!).textTheme.titleLarge,
             ),
           ],
         ),
         content: Text(
-          'Do you want to logout from the app?'.tr,
+          'confirm_logout_msg'.tr,
           style: Theme.of(Get.context!).textTheme.bodyMedium,
         ),
         actions: [

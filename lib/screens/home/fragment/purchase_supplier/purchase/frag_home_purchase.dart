@@ -50,11 +50,11 @@ class FragmentHomePurchase extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Purchases',
+                Text('Purchases'.tr,
                     style: TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 18)),
                 Text(
-                  'Manage purchase orders',
+                  'Manage purchase orders'.tr,
                   style: TextStyle(
                       fontSize: 11,
                       color: Colors.grey.shade500,
@@ -101,11 +101,11 @@ class FragmentHomePurchase extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 8),
                   child: Row(
-                    children: const [
+                    children: [
                       Icon(Icons.add_shopping_cart_rounded,
                           size: 18, color: Colors.white),
                       SizedBox(width: 8),
-                      Text('New Purchase',
+                      Text('New Purchase'.tr,
                           style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -133,7 +133,7 @@ class FragmentHomePurchase extends StatelessWidget {
             child: TextField(
               controller: controller.searchController,
               decoration: InputDecoration(
-                hintText: 'Search by PO number or supplier...',
+                hintText: 'Search by PO number or supplier...'.tr,
                 hintStyle:
                 TextStyle(color: Colors.grey.shade400, fontSize: 14),
                 prefixIcon: Icon(Icons.search_rounded,
@@ -190,19 +190,19 @@ class FragmentHomePurchase extends StatelessWidget {
                       dividerThickness: 0.5,
                       dataRowMaxHeight: 52,
                       columns: [
-                        _col(context, 'PO Number',
+                        _col(context, 'PO Number'.tr,
                             Icons.tag_rounded, Colors.deepPurple),
-                        _col(context, 'Supplier',
+                        _col(context, 'Supplier'.tr,
                             Icons.local_shipping_rounded, Colors.indigo),
-                        _col(context, 'Date',
+                        _col(context, 'Date'.tr,
                             Icons.calendar_today_rounded, Colors.blue),
-                        _col(context, 'Status',
+                        _col(context, 'Status'.tr,
                             Icons.toggle_on_rounded, Colors.orange),
-                        _col(context, 'Total',
+                        _col(context, 'Total'.tr,
                             Icons.currency_rupee_rounded, Colors.green),
-                        _col(context, 'Outstanding',
+                        _col(context, 'Outstanding'.tr,
                             Icons.account_balance_wallet_rounded, Colors.red),
-                        _col(context, 'Actions',
+                        _col(context, 'Actions'.tr,
                             Icons.settings_rounded, Colors.grey),
                       ],
                       rows: controller.rxListPurchase
@@ -236,7 +236,7 @@ class FragmentHomePurchase extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _chip('All', null, selected, controller),
+              _chip('All'.tr, null, selected, controller),
               const SizedBox(width: 8),
               ...PurchaseStatus.values.map((s) => Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -319,6 +319,9 @@ class FragmentHomePurchase extends StatelessWidget {
     final canPay = status != PurchaseStatus.cancelled &&
         (p.outstandingAmount) > 0.001;
 
+    // ── Delete is only available for POs created TODAY ──
+    final canDelete = controller.canDeletePurchase(p);
+
     final date = p.purchaseDateUtcMs != null
         ? DateFormat('dd MMM yyyy').format(
         DateTime.fromMillisecondsSinceEpoch(p.purchaseDateUtcMs!,
@@ -369,7 +372,7 @@ class FragmentHomePurchase extends StatelessWidget {
       DataCell(
         PopupMenuButton<String>(
           icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500),
-          tooltip: 'Actions',
+          tooltip: 'Actions'.tr,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12)),
           onSelected: (value) {
@@ -392,6 +395,9 @@ class FragmentHomePurchase extends StatelessWidget {
               case 'cancel':
                 _confirmCancel(context, p, controller);
                 break;
+              case 'delete':
+                _confirmDelete(context, p, controller);
+                break;
             }
           },
           itemBuilder: (_) => [
@@ -401,7 +407,7 @@ class FragmentHomePurchase extends StatelessWidget {
                 Icon(Icons.visibility_outlined,
                     size: 20, color: Colors.blue.shade600),
                 const SizedBox(width: 12),
-                const Text('View Details'),
+                Text('View Details'.tr),
               ]),
             ),
             if (canReceive)
@@ -411,7 +417,7 @@ class FragmentHomePurchase extends StatelessWidget {
                   Icon(Icons.move_to_inbox_rounded,
                       size: 20, color: Colors.green.shade600),
                   const SizedBox(width: 12),
-                  const Text('Receive Goods'),
+                  Text('Receive Goods'.tr),
                 ]),
               ),
             if (canPay)
@@ -421,7 +427,7 @@ class FragmentHomePurchase extends StatelessWidget {
                   Icon(Icons.payments_rounded,
                       size: 20, color: Colors.teal.shade600),
                   const SizedBox(width: 12),
-                  const Text('Record Payment'),
+                  Text('Record Payment'.tr),
                 ]),
               ),
             if (p.supplierId != null)
@@ -431,7 +437,7 @@ class FragmentHomePurchase extends StatelessWidget {
                   Icon(Icons.menu_book_rounded,
                       size: 20, color: Colors.indigo.shade600),
                   const SizedBox(width: 12),
-                  const Text('Supplier Ledger'),
+                  Text('Supplier Ledger'.tr),
                 ]),
               ),
             if (canCancel)
@@ -441,10 +447,26 @@ class FragmentHomePurchase extends StatelessWidget {
                   Icon(Icons.cancel_outlined,
                       size: 20, color: Colors.red.shade400),
                   const SizedBox(width: 12),
-                  const Text('Cancel Purchase',
+                  Text('Cancel Purchase'.tr,
                       style: TextStyle(color: Colors.red)),
                 ]),
               ),
+            // ── Delete (today's POs only) ──
+            if (canDelete) ...[
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(children: [
+                  Icon(Icons.delete_forever_rounded,
+                      size: 20, color: Colors.red.shade700),
+                  const SizedBox(width: 12),
+                  Text('Delete Purchase'.tr,
+                      style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontWeight: FontWeight.bold)),
+                ]),
+              ),
+            ],
           ],
         ),
       ),
@@ -493,7 +515,7 @@ class FragmentHomePurchase extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: controller.hasPrev ? controller.prevPage : null,
               icon: const Icon(Icons.chevron_left_rounded, size: 18),
-              label: const Text('Prev'),
+              label: Text('Prev'.tr),
               style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10))),
@@ -515,7 +537,7 @@ class FragmentHomePurchase extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: controller.hasNext ? controller.nextPage : null,
               icon: const Icon(Icons.chevron_right_rounded, size: 18),
-              label: const Text('Next'),
+              label: Text('Next'.tr),
               style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10))),
@@ -556,13 +578,13 @@ class FragmentHomePurchase extends StatelessWidget {
                 size: 64, color: Colors.deepPurple.shade400),
           ),
           const SizedBox(height: 16),
-          Text('No purchases found',
+          Text('No purchases found'.tr,
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: Colors.grey.shade600)),
           const SizedBox(height: 6),
-          Text('Create a new purchase order to get started',
+          Text('Create a new purchase order to get started'.tr,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
         ],
       ),
@@ -588,7 +610,7 @@ class FragmentHomePurchase extends StatelessWidget {
           Icon(Icons.check_circle_rounded,
               size: 13, color: Colors.green.shade600),
           const SizedBox(width: 4),
-          Text('Paid',
+          Text('Paid'.tr,
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -639,7 +661,7 @@ class FragmentHomePurchase extends StatelessWidget {
       ControllerHomePurchase controller,
       ) {
     Get.defaultDialog(
-      title: 'Cancel Purchase?',
+      title: 'Cancel Purchase?'.tr,
       titleStyle:
       const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
       middleText:
@@ -659,7 +681,7 @@ class FragmentHomePurchase extends StatelessWidget {
           Get.back();
           SnackbarUtil.showSuccess('Purchase ${purchase.purchaseNo} cancelled');
         },
-        label: const Text('Cancel Purchase'),
+        label: Text('Cancel Purchase'.tr),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(
@@ -669,7 +691,81 @@ class FragmentHomePurchase extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         ),
         onPressed: () => Get.back(),
-        child: const Text('Go Back'),
+        child: Text('Go Back'.tr),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────
+  //  DELETE CONFIRM DIALOG
+  // ─────────────────────────────────────────────
+
+  void _confirmDelete(
+      BuildContext context,
+      EntityPurchase purchase,
+      ControllerHomePurchase controller,
+      ) {
+    Get.defaultDialog(
+      title: 'Delete Purchase?'.tr,
+      titleStyle: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          color: Colors.red.shade700),
+      content: Column(
+        children: [
+          Icon(Icons.delete_forever_rounded,
+              size: 48, color: Colors.red.shade300),
+          const SizedBox(height: 12),
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              children: [
+                TextSpan(text: 'You are about to permanently delete\n'.tr),
+                TextSpan(
+                  text: purchase.purchaseNo ?? 'this purchase'.tr,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(
+                    text:
+                    '.\n\nThis will remove all order items and cannot be undone.'.tr),
+              ],
+            ),
+          ),
+        ],
+      ),
+      confirm: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red.shade700,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+        icon: const Icon(Icons.delete_forever_rounded, size: 20),
+        onPressed: () {
+          final error = controller.deletePurchase(purchase);
+          Get.back();
+          if (error != null) {
+            SnackbarUtil.showError(error);
+          } else {
+            SnackbarUtil.showSuccess(
+                '${purchase.purchaseNo} deleted successfully');
+          }
+        },
+        label: Text('Delete'.tr,
+            style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
+      cancel: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+        onPressed: () => Get.back(),
+        child: Text('Go Back'.tr),
       ),
     );
   }
@@ -699,7 +795,7 @@ class FragmentHomePurchase extends StatelessWidget {
                 Icon(Icons.shopping_cart_rounded,
                     color: Theme.of(context).primaryColor),
                 const SizedBox(width: 10),
-                Text('Purchase Details',
+                Text('Purchase Details'.tr,
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge
@@ -717,14 +813,14 @@ class FragmentHomePurchase extends StatelessWidget {
               // PO Info
               Row(children: [
                 Expanded(
-                    child: _detailRow('PO Number', p.purchaseNo)),
+                    child: _detailRow('PO Number'.tr, p.purchaseNo)),
                 Expanded(
-                    child: _detailRow('Supplier', p.supplierName)),
+                    child: _detailRow('Supplier'.tr, p.supplierName)),
               ]),
               Row(children: [
                 Expanded(
                     child: _detailRow(
-                        'Purchase Date',
+                        'Purchase Date'.tr,
                         p.purchaseDateUtcMs != null
                             ? DateFormat('dd MMM yyyy').format(
                             DateTime.fromMillisecondsSinceEpoch(
@@ -733,7 +829,7 @@ class FragmentHomePurchase extends StatelessWidget {
                             : '-')),
                 Expanded(
                     child: _detailRow(
-                        'Expected Delivery',
+                        'Expected Delivery'.tr,
                         p.expectedDateUtcMs != null
                             ? DateFormat('dd MMM yyyy').format(
                             DateTime.fromMillisecondsSinceEpoch(
@@ -745,7 +841,7 @@ class FragmentHomePurchase extends StatelessWidget {
 
               // Items table
               if (items.isNotEmpty) ...[
-                Text('Order Items',
+                Text('Order Items'.tr,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -772,7 +868,7 @@ class FragmentHomePurchase extends StatelessWidget {
                           topRight: Radius.circular(8),
                         ),
                       ),
-                      children: ['Item', 'Ordered', 'Received', 'Pending', 'Total']
+                      children: ['Item'.tr, 'Ordered'.tr, 'Received'.tr, 'Pending'.tr, 'Total'.tr]
                           .map((h) => Padding(
                         padding: const EdgeInsets.all(8),
                         child: Text(h,
@@ -812,7 +908,7 @@ class FragmentHomePurchase extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: FilledButton(
                     onPressed: () => Get.back(),
-                    child: const Text('Close')),
+                    child: Text('Close'.tr)),
               ),
             ],
           ),

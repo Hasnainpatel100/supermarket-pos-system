@@ -60,6 +60,7 @@ flutter:
   assets:
     - assets/json/
     - assets/fonts/
+    - assets/translations/
 
   fonts:
     - family: SegoeUI

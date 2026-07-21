@@ -12,9 +12,9 @@ import '../../../../model/stock_txn_type.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../util/snackbar_util.dart';
+import '../bills/controller_home_bills.dart';
+import '../bills/dialog_bill_detail.dart';
 import '../item/controller_home_item.dart';
-import '../report/controller_home_report.dart';
-import '../report/dialog_bill_detail.dart';
 import 'package:flutter/services.dart';
 import '../../../customer/activity_customer_form.dart';
 
@@ -386,7 +386,7 @@ class ControllerHomePos extends GetxController {
       final cartItem = session.rxCartItems[index];
       final ctrl = TextEditingController(text: "${cartItem.qty}");
       Get.dialog(AlertDialog(
-         title: Text("Change Quantity - ${cartItem.itemName}"),
+         title: Text('change_qty'.trParams({'itemName': '${cartItem.itemName}'})),
          content: TextField(
             controller: ctrl,
             keyboardType: TextInputType.number,
@@ -400,13 +400,13 @@ class ControllerHomePos extends GetxController {
             },
          ),
          actions: [
-            TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+            TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
             FilledButton(onPressed: () {
                Get.back();
                int? q = int.tryParse(ctrl.text);
                if (q != null) setQty(index, q);
                searchFocusNode.requestFocus();
-            }, child: const Text("Save")),
+            }, child: Text('save'.tr)),
          ],
       ));
   }
@@ -416,7 +416,7 @@ class ControllerHomePos extends GetxController {
       final cartItem = session.rxCartItems[index];
       final ctrl = TextEditingController(text: "${cartItem.discount ?? 0}");
       Get.dialog(AlertDialog(
-         title: Text("Set Item Discount - ${cartItem.itemName}"),
+         title: Text('set_item_discount'.trParams({'itemName': '${cartItem.itemName}'})),
          content: TextField(
             controller: ctrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -430,13 +430,13 @@ class ControllerHomePos extends GetxController {
             },
          ),
          actions: [
-            TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+            TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
             FilledButton(onPressed: () {
                Get.back();
                double? d = double.tryParse(ctrl.text);
                if (d != null) setItemDiscount(index, d);
                searchFocusNode.requestFocus();
-            }, child: const Text("Save")),
+            }, child: Text('save'.tr)),
          ],
       ));
   }
@@ -445,7 +445,7 @@ class ControllerHomePos extends GetxController {
       final session = activeSession;
       final ctrl = TextEditingController(text: "${session.rxDiscountAmount.value}");
       Get.dialog(AlertDialog(
-         title: const Text("Set Bill Discount"),
+         title: Text('set_bill_discount'.tr),
          content: TextField(
             controller: ctrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -459,13 +459,13 @@ class ControllerHomePos extends GetxController {
             },
          ),
          actions: [
-            TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+            TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
             FilledButton(onPressed: () {
                Get.back();
                double? d = double.tryParse(ctrl.text);
                if (d != null) setBillDiscount(d);
                searchFocusNode.requestFocus();
-            }, child: const Text("Save")),
+            }, child: Text('save'.tr)),
          ],
       ));
   }
@@ -474,7 +474,7 @@ class ControllerHomePos extends GetxController {
       final session = activeSession;
       final ctrl = TextEditingController(text: session.rxRemark.value);
       Get.dialog(AlertDialog(
-         title: const Text("Bill Remarks"),
+         title: Text('bill_remarks'.tr),
          content: TextField(
             controller: ctrl,
             autofocus: true,
@@ -487,12 +487,12 @@ class ControllerHomePos extends GetxController {
             },
          ),
          actions: [
-            TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
+            TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
             FilledButton(onPressed: () {
                Get.back();
                session.rxRemark.value = ctrl.text;
                searchFocusNode.requestFocus();
-            }, child: const Text("Save")),
+            }, child: Text('save'.tr)),
          ],
       ));
   }
@@ -608,8 +608,8 @@ class ControllerHomePos extends GetxController {
     if (Get.isRegistered<ControllerHomeItem>()) {
       Get.find<ControllerHomeItem>().loadItems();
     }
-    if (Get.isRegistered<ControllerHomeReport>()) {
-      Get.find<ControllerHomeReport>().loadData();
+    if (Get.isRegistered<ControllerHomeBills>()) {
+      Get.find<ControllerHomeBills>().loadData();
     }
 
     Get.dialog(DialogBillDetail(bill: savedBill), barrierDismissible: false);
@@ -695,8 +695,8 @@ class ControllerHomePos extends GetxController {
     if (Get.isRegistered<ControllerHomeItem>()) {
       Get.find<ControllerHomeItem>().loadItems();
     }
-    if (Get.isRegistered<ControllerHomeReport>()) {
-      Get.find<ControllerHomeReport>().loadData();
+    if (Get.isRegistered<ControllerHomeBills>()) {
+      Get.find<ControllerHomeBills>().loadData();
     }
 
     SnackbarUtil.showSuccess('Bill ${bill.billNo} has been cancelled');

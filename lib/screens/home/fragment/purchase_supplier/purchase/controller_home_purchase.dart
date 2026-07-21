@@ -300,6 +300,63 @@ class ControllerHomePurchase extends GetxController {
   }
 
   // ─────────────────────────────────────────────
+  //  DELETE PURCHASE  (today's POs only)
+  // ─────────────────────────────────────────────
+
+  /// Permanently deletes a purchase and all its items/schedules.
+  /// Only allowed if the PO was created on today's local date.
+  /// Returns an error string, or null on success.
+  String? deletePurchase(EntityPurchase purchase) {
+    if (!canDeletePurchase(purchase)) {
+      return 'Only purchases created today can be deleted';
+    }
+
+    final ob = Get.find<ServiceObjectBox>();
+    ob.store.runInTransaction(TxMode.write, () {
+      // 1. Remove all purchase items
+      final items = _boxPurchaseItem
+          .query(EntityPurchaseItem_.purchaseId.equals(purchase.id))
+          .build()
+          .find();
+      _boxPurchaseItem.removeMany(items.map((i) => i.id).toList());
+
+      // 2. Remove any payment schedules
+      final schedules = _boxSchedule
+          .query(EntityPaymentSchedule_.purchaseId.equals(purchase.id))
+          .build()
+          .find();
+      _boxSchedule.removeMany(schedules.map((s) => s.id).toList());
+
+      // 3. Remove the purchase itself
+      _boxPurchase.remove(purchase.id);
+    });
+
+    // Recalculate supplier outstanding after deletion
+    if (purchase.supplierId != null) {
+      _recalcSupplierOutstanding(purchase.supplierId!);
+    }
+
+    loadPurchases();
+    return null;
+  }
+
+  /// Returns true if the purchase was created on today's local date.
+  bool _isCreatedToday(EntityPurchase purchase) {
+    if (purchase.createdAtUtcMs == null) return false;
+    final created = DateTime.fromMillisecondsSinceEpoch(
+      purchase.createdAtUtcMs!,
+      isUtc: true,
+    ).toLocal();
+    final now = DateTime.now();
+    return created.year == now.year &&
+        created.month == now.month &&
+        created.day == now.day;
+  }
+
+  /// Exposed to the UI so the delete menu item can be shown/hidden.
+  bool canDeletePurchase(EntityPurchase purchase) => _isCreatedToday(purchase);
+
+  // ─────────────────────────────────────────────
   //  PAYMENT TRACKING
   // ─────────────────────────────────────────────
 
@@ -460,6 +517,7 @@ class ControllerHomePurchase extends GetxController {
     searchController.dispose();
     super.onClose();
   }
+
 // ─────────────────────────────────────────────
 // PAYMENT SCHEDULE
 // ─────────────────────────────────────────────
@@ -511,6 +569,7 @@ class ControllerHomePurchase extends GetxController {
     final removed = _boxSchedule.remove(scheduleId);
     return removed ? null : 'Could not remove schedule';
   }
+
   List<EntityPurchase> getPurchasesForSupplier(int supplierId) {
     return _boxPurchase
         .query(

@@ -115,7 +115,7 @@ class PosItemCard extends StatelessWidget {
                             ],
                           ),
                           child: Text(
-                            isOutOfStock ? "No Stock" : "$stock",
+                            isOutOfStock ? 'no_stock'.tr : "$stock",
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,

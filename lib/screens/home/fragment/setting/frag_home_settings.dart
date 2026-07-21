@@ -44,14 +44,14 @@ class FragHomeSettings extends StatelessWidget {
             ),
             unselectedLabelStyle: const TextStyle(fontSize: 13),
             indicatorSize: TabBarIndicatorSize.tab,
-            tabs: const [
+            tabs: [
               Tab(
-                icon: Icon(Icons.person_outline_rounded, size: 20),
-                text: 'Profile',
+                icon: const Icon(Icons.person_outline_rounded, size: 20),
+                text: 'profile'.tr,
               ),
               Tab(
-                icon: Icon(Icons.print_outlined, size: 20),
-                text: 'Printer',
+                icon: const Icon(Icons.print_outlined, size: 20),
+                text: 'printer'.tr,
               ),
             ],
           ),
@@ -101,7 +101,7 @@ class _ProfileTab extends StatelessWidget {
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               // ── Appearance & Locale ──────────────────────────────────────
-              _buildSectionHeader(context, "Appearance & Locale"),
+              _buildSectionHeader(context, 'appearance_locale'.tr),
               const SizedBox(height: 4),
               MyCard(
                 child: Column(
@@ -110,8 +110,8 @@ class _ProfileTab extends StatelessWidget {
                     Obx(() {
                       return ListTileToggle(
                         leading: const IconBox(icon: Icons.dark_mode_outlined),
-                        title: 'Dark Mode',
-                        subtitle: 'Enable dark theme',
+                        title: 'dark_mode'.tr,
+                        subtitle: 'enable_dark_theme'.tr,
                         value: themeService.rxIsDarkMode.value,
                         onChanged: (_) => themeService.switchTheme(),
                       );
@@ -126,25 +126,25 @@ class _ProfileTab extends StatelessWidget {
                     Obx(() {
                       return ListTileDropdown<Locale>(
                         leading: const IconBox(icon: Icons.language_outlined),
-                        title: 'Language',
-                        subtitle: 'Change app language',
+                        title: 'language'.tr,
+                        subtitle: 'change_app_language'.tr,
                         value: localeService.rxLocale.value,
                         onChanged: (locale) {
                           if (locale != null) localeService.update(locale);
                         },
-                        items: const [
+                        items: [
                           DropdownMenuItem(
-                              value: Locale('en', 'US'),
-                              child: Text('English')),
+                              value: const Locale('en', 'US'),
+                              child: Text('lang_english'.tr)),
                           DropdownMenuItem(
-                              value: Locale('hi', 'IN'),
-                              child: Text('Hindi')),
+                              value: const Locale('hi', 'IN'),
+                              child: Text('lang_hindi'.tr)),
                           DropdownMenuItem(
-                              value: Locale('mr', 'IN'),
-                              child: Text('Marathi')),
+                              value: const Locale('mr', 'IN'),
+                              child: Text('lang_marathi'.tr)),
                           DropdownMenuItem(
-                              value: Locale('ur', 'PK'),
-                              child: Text('Urdu')),
+                              value: const Locale('ur', 'PK'),
+                              child: Text('lang_urdu'.tr)),
                         ],
                       );
                     }),
@@ -160,28 +160,28 @@ class _ProfileTab extends StatelessWidget {
                       return ListTileDropdown<String>(
                         leading:
                             const IconBox(icon: Icons.attach_money_outlined),
-                        title: 'Currency',
-                        subtitle: 'Selected: $symbol',
+                        title: 'currency'.tr,
+                        subtitle: '${'selected'.tr}: $symbol',
                         value: symbol,
                         onChanged: (value) {
                           if (value != null) currencyService.update(value);
                         },
-                        items: const [
-                          DropdownMenuItem(value: '₹', child: Text('Rupees')),
+                        items: [
+                          DropdownMenuItem(value: '₹', child: Text('currency_rupees'.tr)),
                           DropdownMenuItem(
-                              value: '\$', child: Text('Dollars')),
-                          DropdownMenuItem(value: '€', child: Text('Euro')),
-                          DropdownMenuItem(value: '£', child: Text('Pounds')),
+                              value: '\$', child: Text('currency_dollars'.tr)),
+                          DropdownMenuItem(value: '€', child: Text('currency_euro'.tr)),
+                          DropdownMenuItem(value: '£', child: Text('currency_pounds'.tr)),
                           DropdownMenuItem(
-                              value: '﷼', child: Text('Saudi Riyal')),
+                              value: '﷼', child: Text('currency_saudi_riyal'.tr)),
                           DropdownMenuItem(
-                              value: 'د.إ', child: Text('UAE Dirham')),
+                              value: 'د.إ', child: Text('currency_uae_dirham'.tr)),
                           DropdownMenuItem(
-                              value: 'د.ك', child: Text('Kuwaiti Dinar')),
+                              value: 'د.ك', child: Text('currency_kuwaiti_dinar'.tr)),
                           DropdownMenuItem(
-                              value: '.د.ب', child: Text('Bahraini Dinar')),
+                              value: '.د.ب', child: Text('currency_bahraini_dinar'.tr)),
                           DropdownMenuItem(
-                              value: 'ر.ق', child: Text('Qatari Riyal')),
+                              value: 'ر.ق', child: Text('currency_qatari_riyal'.tr)),
                         ],
                       );
                     }),
@@ -191,7 +191,7 @@ class _ProfileTab extends StatelessWidget {
               const SizedBox(height: 28),
 
               // ── Store Information ─────────────────────────────────────────
-              _buildSectionHeader(context, "Store Information"),
+              _buildSectionHeader(context, 'store_information'.tr),
               const SizedBox(height: 4),
               MyCard(
                 padding: const EdgeInsets.all(24),
@@ -217,7 +217,7 @@ class _ProfileTab extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Business Details',
+                                'business_details'.tr,
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleMedium
@@ -225,7 +225,7 @@ class _ProfileTab extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'This information appears on invoices & receipts',
+                                'business_details_subtitle'.tr,
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -242,7 +242,7 @@ class _ProfileTab extends StatelessWidget {
                     _buildTextField(
                       context: context,
                       controller: controllerSettings.storeNameController,
-                      label: "Company Name",
+                      label: 'company_name'.tr,
                       icon: Icons.business_outlined,
                       isDark: isDark,
                       colorScheme: colorScheme,
@@ -252,7 +252,7 @@ class _ProfileTab extends StatelessWidget {
                     _buildTextField(
                       context: context,
                       controller: controllerSettings.storeAddressController,
-                      label: "Address",
+                      label: 'address'.tr,
                       icon: Icons.location_on_outlined,
                       maxLines: 2,
                       isDark: isDark,
@@ -267,7 +267,7 @@ class _ProfileTab extends StatelessWidget {
                             context: context,
                             controller:
                                 controllerSettings.storePhoneController,
-                            label: "Phone",
+                            label: 'phone'.tr,
                             icon: Icons.phone_outlined,
                             isDark: isDark,
                             colorScheme: colorScheme,
@@ -280,7 +280,7 @@ class _ProfileTab extends StatelessWidget {
                             context: context,
                             controller:
                                 controllerSettings.storeGstinController,
-                            label: "GSTIN",
+                            label: 'gstin'.tr,
                             icon: Icons.receipt_outlined,
                             isDark: isDark,
                             colorScheme: colorScheme,
@@ -292,7 +292,7 @@ class _ProfileTab extends StatelessWidget {
                     _buildTextField(
                       context: context,
                       controller: controllerSettings.storeEmailController,
-                      label: "Email",
+                      label: 'email'.tr,
                       icon: Icons.email_outlined,
                       isDark: isDark,
                       colorScheme: colorScheme,
@@ -305,9 +305,9 @@ class _ProfileTab extends StatelessWidget {
                       child: FilledButton.icon(
                         onPressed: controllerSettings.saveStoreDetails,
                         icon: const Icon(Icons.save_outlined, size: 18),
-                        label: const Text(
-                          "Save Store Details",
-                          style: TextStyle(
+                        label: Text(
+                          'save_store_details'.tr,
+                          style: const TextStyle(
                               fontWeight: FontWeight.w600, fontSize: 14),
                         ),
                         style: FilledButton.styleFrom(
@@ -326,7 +326,7 @@ class _ProfileTab extends StatelessWidget {
 
 
               // ── Support & About ───────────────────────────────────────────
-              _buildSectionHeader(context, "Support & About"),
+              _buildSectionHeader(context, 'support_about'.tr),
               const SizedBox(height: 4),
               MyCard(
                 child: Column(
@@ -334,9 +334,9 @@ class _ProfileTab extends StatelessWidget {
                     ListTile(
                       leading:
                           const IconBox(icon: Icons.help_outline_rounded),
-                      title: Text('Help & Support'.tr),
+                      title: Text('help_support'.tr),
                       subtitle:
-                          const Text("Click here to raise a ticket"),
+                          Text('help_support_subtitle'.tr),
                       trailing: Icon(Icons.arrow_forward_ios_rounded,
                           size: 16,
                           color: colorScheme.onSurface.withValues(alpha: 0.4)),
@@ -350,8 +350,8 @@ class _ProfileTab extends StatelessWidget {
                     ListTile(
                       leading:
                           const IconBox(icon: Icons.info_outline_rounded),
-                      title: const Text('About'),
-                      subtitle: const Text("Supermarket POS System"),
+                      title: Text('about'.tr),
+                      subtitle: Text('pos_system_name'.tr),
                       trailing: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
@@ -375,7 +375,7 @@ class _ProfileTab extends StatelessWidget {
 
               // ── Danger Zone ───────────────────────────────────────────────
               const SizedBox(height: 28),
-              _buildSectionHeader(context, "Danger Zone"),
+              _buildSectionHeader(context, 'danger_zone'.tr),
               const SizedBox(height: 4),
               MyCard(
                 child: ListTile(
@@ -389,13 +389,13 @@ class _ProfileTab extends StatelessWidget {
                         size: 20, color: colorScheme.error),
                   ),
                   title: Text(
-                    'Reset Settings',
+                    'reset_settings'.tr,
                     style: TextStyle(
                         color: colorScheme.error,
                         fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(
-                    'Restore all settings to default',
+                    'restore_settings_to_default'.tr,
                     style: TextStyle(
                         color: colorScheme.error.withValues(alpha: 0.6),
                         fontSize: 13),
@@ -472,7 +472,7 @@ class _ProfileTab extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              'Reset Settings'.tr,
+              'reset_settings'.tr,
               style: Theme.of(Get.context!)
                   .textTheme
                   .titleLarge
@@ -481,8 +481,7 @@ class _ProfileTab extends StatelessWidget {
           ],
         ),
         content: Text(
-          'Are you sure you want to reset all settings to default? This action cannot be undone.'
-              .tr,
+          'reset_confirmation_message'.tr,
           style: Theme.of(Get.context!)
               .textTheme
               .bodyMedium
@@ -497,7 +496,7 @@ class _ProfileTab extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: Text('Cancel'.tr),
+            child: Text('cancel'.tr),
           ),
           const SizedBox(width: 8),
           FilledButton.icon(
@@ -506,8 +505,8 @@ class _ProfileTab extends StatelessWidget {
               currencyService.update('INR');
               Get.back();
               Get.snackbar(
-                'Success'.tr,
-                'Settings reset to default'.tr,
+                'success'.tr,
+                'settings_reset_success'.tr,
                 snackPosition: SnackPosition.BOTTOM,
                 backgroundColor: colorScheme.primary,
                 colorText: Colors.white,
@@ -516,7 +515,7 @@ class _ProfileTab extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.restart_alt_rounded, size: 18),
-            label: Text('Reset'.tr),
+            label: Text('reset'.tr),
             style: FilledButton.styleFrom(
               backgroundColor: colorScheme.error,
               foregroundColor: Colors.white,
@@ -551,7 +550,7 @@ class _PrinterTab extends StatelessWidget {
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               // ── Default Printer ───────────────────────────────────────────
-              _sectionHeader(context, 'Default Printer'),
+              _sectionHeader(context, 'default_printer'.tr),
               const SizedBox(height: 4),
               MyCard(
                 padding: const EdgeInsets.all(20),
@@ -576,14 +575,14 @@ class _PrinterTab extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Select Printer',
+                                'select_printer'.tr,
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleSmall
                                     ?.copyWith(fontWeight: FontWeight.w600),
                               ),
                               Text(
-                                'Choose a printer for barcode labels',
+                                'choose_printer_for_barcode'.tr,
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -604,7 +603,7 @@ class _PrinterTab extends StatelessWidget {
                               )
                             : IconButton(
                                 icon: const Icon(Icons.refresh_rounded),
-                                tooltip: 'Refresh printers',
+                                tooltip: 'refresh_printers'.tr,
                                 onPressed: controller.fetchPrinters,
                                 color: colorScheme.primary,
                               )),
@@ -648,15 +647,15 @@ class _PrinterTab extends StatelessWidget {
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
                           hintText: printers.isEmpty
-                              ? 'No printers found'
-                              : 'Select a printer',
+                              ? 'no_printers_found'.tr
+                              : 'select_a_printer'.tr,
                         ),
                         isExpanded: true,
                         value: safeValue,
                         hint: Text(
                           printers.isEmpty
-                              ? 'No printers found — tap refresh'
-                              : 'System default',
+                              ? 'no_printers_tap_refresh'.tr
+                              : 'system_default'.tr,
                           style: TextStyle(
                               color: colorScheme.onSurface
                                   .withValues(alpha: 0.5),
@@ -673,7 +672,7 @@ class _PrinterTab extends StatelessWidget {
                                     color: colorScheme.onSurface
                                         .withValues(alpha: 0.5)),
                                 const SizedBox(width: 8),
-                                const Text('System Default'),
+                                Text('system_default'.tr),
                               ],
                             ),
                           ),
@@ -722,7 +721,7 @@ class _PrinterTab extends StatelessWidget {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'No printers detected. The system default printer will be used.',
+                                      'no_printers_detected'.tr,
                                       style: TextStyle(
                                           fontSize: 12,
                                           color: Colors.amber.shade800),
@@ -739,7 +738,7 @@ class _PrinterTab extends StatelessWidget {
               const SizedBox(height: 24),
 
               // ── Barcode & Paper ──────────────────────────────────────────
-              _sectionHeader(context, 'Barcode & Paper'),
+              _sectionHeader(context, 'barcode_paper'.tr),
               const SizedBox(height: 4),
               MyCard(
                 padding: const EdgeInsets.all(20),
@@ -748,7 +747,7 @@ class _PrinterTab extends StatelessWidget {
                   children: [
                     // Barcode Type
                     Text(
-                      'Barcode Type',
+                      'barcode_type'.tr,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: colorScheme.onSurface
@@ -799,7 +798,7 @@ class _PrinterTab extends StatelessWidget {
 
                     // Paper Size
                     Text(
-                      'Paper Size',
+                      'paper_size'.tr,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: colorScheme.onSurface
@@ -816,7 +815,7 @@ class _PrinterTab extends StatelessWidget {
                           ),
                           isExpanded: true,
                           value: controller.rxPaperSize.value,
-                          items: const [
+                          items: [
                             DropdownMenuItem(
                               value: '58mm',
                               child: Row(
@@ -824,7 +823,7 @@ class _PrinterTab extends StatelessWidget {
                                   Icon(Icons.receipt_long_outlined,
                                       size: 18, color: Colors.teal),
                                   SizedBox(width: 10),
-                                  Text('58mm (Narrow thermal)'),
+                                  Text('paper_size_58mm'.tr),
                                 ],
                               ),
                             ),
@@ -835,11 +834,11 @@ class _PrinterTab extends StatelessWidget {
                                   Icon(Icons.receipt_long_outlined,
                                       size: 18, color: Colors.green),
                                   SizedBox(width: 10),
-                                  Text('80mm (Wide thermal)'),
+                                  Text('paper_size_80mm'.tr),
                                 ],
                               ),
                             ),
-                            DropdownMenuItem(
+                            const DropdownMenuItem(
                               value: 'A4',
                               child: Row(
                                 children: [
@@ -857,7 +856,7 @@ class _PrinterTab extends StatelessWidget {
                                   Icon(Icons.tune_rounded,
                                       size: 18, color: Colors.orange),
                                   SizedBox(width: 10),
-                                  Text('Custom'),
+                                  Text('custom'.tr),
                                 ],
                               ),
                             ),
@@ -874,7 +873,7 @@ class _PrinterTab extends StatelessWidget {
               const SizedBox(height: 24),
 
               // ── Label Details ─────────────────────────────────────────────
-              _sectionHeader(context, 'Label Details'),
+              _sectionHeader(context, 'label_details'.tr),
               const SizedBox(height: 4),
               MyCard(
                 padding: const EdgeInsets.all(8),
@@ -887,13 +886,13 @@ class _PrinterTab extends StatelessWidget {
                           value: controller.rxShowName.value,
                           onChanged: (v) =>
                               controller.rxShowName.value = v ?? true,
-                          title: const Text(
-                            'Show Item Name',
-                            style: TextStyle(fontSize: 14),
+                          title: Text(
+                            'show_item_name'.tr,
+                            style: const TextStyle(fontSize: 14),
                           ),
-                          subtitle: const Text(
-                            'Print item name above the barcode',
-                            style: TextStyle(fontSize: 12),
+                          subtitle: Text(
+                            'show_item_name_subtitle'.tr,
+                            style: const TextStyle(fontSize: 12),
                           ),
                           secondary: Container(
                             padding: const EdgeInsets.all(7),
@@ -921,13 +920,13 @@ class _PrinterTab extends StatelessWidget {
                           value: controller.rxShowPrice.value,
                           onChanged: (v) =>
                               controller.rxShowPrice.value = v ?? false,
-                          title: const Text(
-                            'Show Price',
-                            style: TextStyle(fontSize: 14),
+                          title: Text(
+                            'show_price'.tr,
+                            style: const TextStyle(fontSize: 14),
                           ),
-                          subtitle: const Text(
-                            'Print selling price below the barcode',
-                            style: TextStyle(fontSize: 12),
+                          subtitle: Text(
+                            'show_price_subtitle'.tr,
+                            style: const TextStyle(fontSize: 12),
                           ),
                           secondary: Container(
                             padding: const EdgeInsets.all(7),
@@ -972,14 +971,14 @@ class _PrinterTab extends StatelessWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Extra Information',
-                                    style: TextStyle(
+                                  Text(
+                                    'extra_information'.tr,
+                                    style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500),
                                   ),
                                   Text(
-                                    'Optional text printed on the label',
+                                    'extra_information_subtitle'.tr,
                                     style: TextStyle(
                                         fontSize: 12,
                                         color: colorScheme.onSurface
@@ -994,8 +993,7 @@ class _PrinterTab extends StatelessWidget {
                             controller: controller.extraInfoController,
                             maxLines: 2,
                             decoration: InputDecoration(
-                              hintText:
-                                  'e.g. "Best before 30 days" or store tagline',
+                              hintText: 'extra_info_hint'.tr,
                               hintStyle: TextStyle(
                                   fontSize: 12,
                                   color: colorScheme.onSurface
@@ -1060,14 +1058,14 @@ class _PrinterTab extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'A4 Layout',
+                                  'a4_layout'.tr,
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleSmall
                                       ?.copyWith(fontWeight: FontWeight.w600),
                                 ),
                                 Text(
-                                  'Configure barcode grid for A4 paper',
+                                  'a4_layout_subtitle'.tr,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -1083,7 +1081,7 @@ class _PrinterTab extends StatelessWidget {
                       const SizedBox(height: 16),
                       // Columns (barcodes per line)
                       Text(
-                        'Barcodes per Line',
+                        'barcodes_per_line'.tr,
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color:
@@ -1102,7 +1100,7 @@ class _PrinterTab extends StatelessWidget {
                                     controller.rxA4Columns.value - 1;
                               }
                             },
-                            tooltip: 'Decrease',
+                            tooltip: 'decrease'.tr,
                           ),
                           Expanded(
                             child: Container(
@@ -1115,7 +1113,7 @@ class _PrinterTab extends StatelessWidget {
                               ),
                               alignment: Alignment.center,
                               child: Obx(() => Text(
-                                    '${controller.rxA4Columns.value} column${controller.rxA4Columns.value > 1 ? 's' : ''}',
+                                    '${controller.rxA4Columns.value} ${'columns'.tr}',
                                     style: const TextStyle(
                                         fontSize: 16, fontWeight: FontWeight.bold),
                                   )),
@@ -1129,14 +1127,14 @@ class _PrinterTab extends StatelessWidget {
                                     controller.rxA4Columns.value + 1;
                               }
                             },
-                            tooltip: 'Increase',
+                            tooltip: 'increase'.tr,
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
                       // Rows (lines per page)
                       Text(
-                        'Lines per Page',
+                        'lines_per_page'.tr,
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color:
@@ -1155,7 +1153,7 @@ class _PrinterTab extends StatelessWidget {
                                     controller.rxA4Rows.value - 1;
                               }
                             },
-                            tooltip: 'Decrease',
+                            tooltip: 'decrease'.tr,
                           ),
                           Expanded(
                             child: Container(
@@ -1168,7 +1166,7 @@ class _PrinterTab extends StatelessWidget {
                               ),
                               alignment: Alignment.center,
                               child: Obx(() => Text(
-                                    '${controller.rxA4Rows.value} line${controller.rxA4Rows.value > 1 ? 's' : ''}',
+                                    '${controller.rxA4Rows.value} ${'lines'.tr}',
                                     style: const TextStyle(
                                         fontSize: 16, fontWeight: FontWeight.bold),
                                   )),
@@ -1182,7 +1180,7 @@ class _PrinterTab extends StatelessWidget {
                                     controller.rxA4Rows.value + 1;
                               }
                             },
-                            tooltip: 'Increase',
+                            tooltip: 'increase'.tr,
                           ),
                         ],
                       ),
@@ -1215,7 +1213,7 @@ class _PrinterTab extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Page Capacity',
+                                      'page_capacity'.tr,
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: Colors.teal.shade700,
@@ -1233,9 +1231,8 @@ class _PrinterTab extends StatelessWidget {
                                         children: [
                                           TextSpan(text: '$total '),
                                           TextSpan(
-                                            text:
-                                                'barcode${total > 1 ? 's' : ''}',
-                                            style: TextStyle(
+                                            text: 'barcodes'.tr,
+                                            style: const TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.normal),
                                           ),
@@ -1279,10 +1276,10 @@ class _PrinterTab extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: controller.savePrinterSettings,
                   icon: const Icon(Icons.save_outlined, size: 18),
-                  label: const Text(
-                    'Save Printer Settings',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  label: Text(
+                    'save_printer_settings'.tr,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 14),
                   ),
                   style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
@@ -1308,8 +1305,7 @@ class _PrinterTab extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'These settings are global defaults. You can still override '
-                        'them individually when printing from the Items screen.',
+                        'printer_settings_info'.tr,
                         style: TextStyle(
                           fontSize: 12,
                           color:

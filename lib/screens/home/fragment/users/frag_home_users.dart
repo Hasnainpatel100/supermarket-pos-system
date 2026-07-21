@@ -49,7 +49,7 @@ class FragHomeUsers extends StatelessWidget {
                 controller.loadUsers();
               },
               icon: const Icon(Icons.person_add_rounded, size: 18),
-              label: Text('Create User'),
+              label: Text('create_user'.tr),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -69,7 +69,7 @@ class FragHomeUsers extends StatelessWidget {
             child: TextField(
               controller: controller.searchController,
               decoration: InputDecoration(
-                hintText: 'Search by name or username...',
+                hintText: 'search_users_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey.shade400),
                 prefixIcon: Icon(
                   Icons.search_rounded,
@@ -137,7 +137,7 @@ class FragHomeUsers extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No users found',
+                      'no_users_found'.tr,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -164,13 +164,13 @@ class FragHomeUsers extends StatelessWidget {
                         color: colorScheme.onSurface,
                       ),
                       dividerThickness: 0.5,
-                      columns: const [
-                        DataColumn(label: Text('Username')),
-                        DataColumn(label: Text('Name')),
-                        DataColumn(label: Text('Role')),
-                        DataColumn(label: Text('Status')),
-                        DataColumn(label: Text('Last Login')),
-                        DataColumn(label: Text('Actions')),
+                      columns: [
+                        DataColumn(label: Text('username'.tr)),
+                        DataColumn(label: Text('name'.tr)),
+                        DataColumn(label: Text('role'.tr)),
+                        DataColumn(label: Text('status'.tr)),
+                        DataColumn(label: Text('last_login'.tr)),
+                        DataColumn(label: Text('actions'.tr)),
                       ],
                       rows: controller.rxListUser.map((u) {
                         final isActive = u.isActive ?? true;
@@ -272,7 +272,7 @@ class FragHomeUsers extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      isActive ? 'Active' : 'Disabled',
+                                      isActive ? 'active'.tr : 'disabled'.tr,
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -306,7 +306,7 @@ class FragHomeUsers extends StatelessWidget {
                                   Icons.more_vert_rounded,
                                   color: Colors.grey.shade500,
                                 ),
-                                tooltip: 'Actions',
+                                tooltip: 'actions'.tr,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -314,46 +314,46 @@ class FragHomeUsers extends StatelessWidget {
                                     _handleUserAction(action, u, controller),
                                 itemBuilder: (_) => [
                                   if (canUpdate)
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: EnumUserAction.edit,
                                       child: Row(
                                         children: [
-                                          Icon(
+                                          const Icon(
                                             Icons.edit_outlined,
                                             size: 20,
                                             color: Colors.blue,
                                           ),
-                                          SizedBox(width: 12),
-                                          Text("Edit"),
+                                          const SizedBox(width: 12),
+                                          Text('edit'.tr),
                                         ],
                                       ),
                                     ),
                                   if (canAssign)
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: EnumUserAction.assignRole,
                                       child: Row(
                                         children: [
-                                          Icon(
+                                          const Icon(
                                             Icons.admin_panel_settings_outlined,
                                             size: 20,
                                             color: Colors.orange,
                                           ),
-                                          SizedBox(width: 12),
-                                          Text("Assign Role"),
+                                          const SizedBox(width: 12),
+                                          Text('assign_role'.tr),
                                         ],
                                       ),
                                     ),
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: EnumUserAction.details,
                                     child: Row(
                                       children: [
-                                        Icon(
+                                        const Icon(
                                           Icons.visibility_outlined,
                                           size: 20,
                                           color: Colors.deepPurple,
                                         ),
-                                        SizedBox(width: 12),
-                                        Text("Details"),
+                                        const SizedBox(width: 12),
+                                        Text('details'.tr),
                                       ],
                                     ),
                                   ),
@@ -372,7 +372,7 @@ class FragHomeUsers extends StatelessWidget {
                                                 : Colors.green,
                                           ),
                                           const SizedBox(width: 12),
-                                          Text(isActive ? "Disable" : "Enable"),
+                                          Text(isActive ? 'disable'.tr : 'enable'.tr),
                                         ],
                                       ),
                                     ),
@@ -415,13 +415,13 @@ class FragHomeUsers extends StatelessWidget {
 
       case EnumUserAction.toggle:
         Get.defaultDialog(
-          title: (user.isActive ?? true) ? "Disable User?" : "Enable User?",
+          title: (user.isActive ?? true) ? 'disable_user_title'.tr : 'enable_user_title'.tr,
           titleStyle: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
           middleText:
-              "Are you sure you want to ${(user.isActive ?? true) ? "disable" : "enable"} ${user.username}?",
+              'toggle_user_confirm'.tr.replaceFirst('%s', (user.isActive ?? true) ? 'disable'.tr : 'enable'.tr).replaceFirst('%u', user.username ?? ''),
           confirm: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: (user.isActive ?? true)
@@ -432,13 +432,13 @@ class FragHomeUsers extends StatelessWidget {
             onPressed: () {
               controller.toggleActive(user);
               Get.back();
-              SnackbarUtil.showSuccess("User updated successfully");
+              SnackbarUtil.showSuccess('user_updated_success'.tr);
             },
-            child: Text((user.isActive ?? true) ? "Disable" : "Enable"),
+            child: Text((user.isActive ?? true) ? 'disable'.tr : 'enable'.tr),
           ),
           cancel: OutlinedButton(
             onPressed: () => Get.back(),
-            child: const Text("Cancel"),
+            child: Text('cancel'.tr),
           ),
         );
         break;
@@ -598,7 +598,7 @@ void _showRoleAssignDialog(EntityUser user) {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  "Assign Permissions",
+                  'assign_permissions'.tr,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -608,7 +608,7 @@ void _showRoleAssignDialog(EntityUser user) {
             ),
             const SizedBox(height: 8),
             Text(
-              "User: ${user.username} (${user.role})",
+              '${'user'.tr}: ${user.username} (${user.role})',
               style: TextStyle(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 24),
@@ -616,14 +616,14 @@ void _showRoleAssignDialog(EntityUser user) {
               child: Row(
                 children: [
                   _permissionList(
-                    "Available Permissions",
+                    'available_permissions'.tr,
                     available,
                     assigned,
                     selA,
                   ),
                   _buttons(available, assigned, selA, selB),
                   _permissionList(
-                    "Assigned Permissions",
+                    'assigned_permissions'.tr,
                     assigned,
                     available,
                     selB,
@@ -637,7 +637,7 @@ void _showRoleAssignDialog(EntityUser user) {
               children: [
                 OutlinedButton(
                   onPressed: () => Get.back(),
-                  child: const Text("Cancel"),
+                  child: Text('cancel'.tr),
                 ),
                 const SizedBox(width: 12),
                 FilledButton.icon(
@@ -645,10 +645,10 @@ void _showRoleAssignDialog(EntityUser user) {
                     user.permissions = assigned.toList();
                     Get.find<ControllerHomeUsers>().saveUser(user);
                     Get.back();
-                    SnackbarUtil.showSuccess("Permissions updated");
+                    SnackbarUtil.showSuccess('permissions_updated'.tr);
                   },
                   icon: const Icon(Icons.save_rounded, size: 18),
-                  label: const Text("Save Changes"),
+                  label: Text('save_changes'.tr),
                 ),
               ],
             ),
@@ -715,7 +715,7 @@ void _showUserDetails(EntityUser u) {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    (u.isActive ?? true) ? "Active" : "Disabled",
+                    (u.isActive ?? true) ? 'active'.tr : 'disabled'.tr,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: (u.isActive ?? true) ? Colors.green : Colors.red,
@@ -726,18 +726,18 @@ void _showUserDetails(EntityUser u) {
               ],
             ),
             const Divider(height: 32),
-            _info("Name", "${u.first} ${u.last}"),
-            _info("Mobile", u.mobileNumber),
-            _info("Alt Mobile", u.alternateMobile),
-            _info("ID Proof", "${u.idProofType} : ${u.idProofNumber}"),
-            _info("Address", u.address),
-            _info("Last Login", u.lastLoginAt?.toString()),
+            _info('name'.tr, '${u.first} ${u.last}'),
+            _info('mobile'.tr, u.mobileNumber),
+            _info('alt_mobile'.tr, u.alternateMobile),
+            _info('id_proof'.tr, '${u.idProofType} : ${u.idProofNumber}'),
+            _info('address'.tr, u.address),
+            _info('last_login'.tr, u.lastLoginAt?.toString()),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: () => Get.back(),
-                child: const Text("Close"),
+                child: Text('close'.tr),
               ),
             ),
           ],

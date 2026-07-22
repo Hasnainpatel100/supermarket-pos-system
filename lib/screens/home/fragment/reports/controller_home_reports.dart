@@ -13,7 +13,9 @@ import 'package:printing/printing.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_report_pdf.dart';
 
 /// All available report types the user can select.
 enum ReportType {
@@ -570,159 +572,85 @@ class ControllerHomeReports extends GetxController {
   // ── Export PDF ──
 
   Future<void> exportPdf() async {
-    if (rxRows.isEmpty) {
-      Get.snackbar('No Data', 'Generate a report first',
-          backgroundColor: Colors.orange, colorText: Colors.white);
-      return;
-    }
+    final type = rxReportType.value;
+    final reportTitle = 'Report - ${type.label}';
 
-    final pdf = pw.Document();
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': formatDateRange(),
+    };
+
+    final summary = <String, dynamic>{
+      'Total Bills': rxTotalBills.value,
+      'Total Qty': rxTotalQty.value,
+      'Gross Amount': rxGrossAmount.value,
+      'Discount': rxDiscount.value,
+      'Tax': rxTax.value,
+      'Net Amount': rxNetAmount.value,
+    };
+
     final cols = columns;
-    final currFmt = NumberFormat.simpleCurrency(locale: 'en_IN');
+    final headers = cols.map((c) => c.value).toList();
+    final exportRows = <List<dynamic>>[];
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4.landscape,
-        margin: const pw.EdgeInsets.all(24),
-        header: (ctx) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text('${rxReportType.value.label} Sales Report',
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 4),
-            pw.Text('Period: ${formatDateRange()}',
-                style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
-            pw.SizedBox(height: 12),
-          ],
-        ),
-        footer: (ctx) => pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text('Generated: ${DateFormat('dd MMM yyyy HH:mm').format(DateTime.now())}',
-                style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-            pw.Text('Page ${ctx.pageNumber} / ${ctx.pagesCount}',
-                style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-          ],
-        ),
-        build: (ctx) => [
-          pw.TableHelper.fromTextArray(
-            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
-            cellStyle: const pw.TextStyle(fontSize: 8),
-            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
-            cellAlignments: {
-              for (int i = 0; i < cols.length; i++)
-                i: i == 0 ? pw.Alignment.centerLeft : pw.Alignment.centerRight,
-            },
-            headers: cols.map((c) => c.value).toList(),
-            data: rxRows.map((row) {
-              return cols.map((c) {
-                final val = row[c.key];
-                if (val is double) return currFmt.format(val);
-                return val?.toString() ?? '-';
-              }).toList();
-            }).toList(),
-          ),
-          pw.SizedBox(height: 16),
-          pw.Container(
-            padding: const pw.EdgeInsets.all(8),
-            decoration: pw.BoxDecoration(
-              color: PdfColors.blueGrey50,
-              borderRadius: pw.BorderRadius.circular(4),
-            ),
-            child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-              children: [
-                _pdfSummaryItem('Bills', '${rxTotalBills.value}'),
-                _pdfSummaryItem('Qty', '${rxTotalQty.value}'),
-                _pdfSummaryItem('Gross', currFmt.format(rxGrossAmount.value)),
-                _pdfSummaryItem('Discount', currFmt.format(rxDiscount.value)),
-                _pdfSummaryItem('Tax', currFmt.format(rxTax.value)),
-                _pdfSummaryItem('Net', currFmt.format(rxNetAmount.value)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-
-    final bytes = await pdf.save();
-
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final file = File('${dir.path}/report_$timestamp.pdf');
-      await file.writeAsBytes(bytes);
-      Get.snackbar('PDF Exported', 'Saved to ${file.path}',
-          backgroundColor: Colors.green, colorText: Colors.white,
-          duration: const Duration(seconds: 4));
-    } catch (e) {
-      // Fallback: offer to print / share
-      await Printing.sharePdf(bytes: Uint8List.fromList(bytes), filename: 'sales_report.pdf');
+    for (final row in rxRows) {
+      final formattedRow = <dynamic>[];
+      for (final col in cols) {
+        formattedRow.add(row[col.key] ?? '-');
+      }
+      exportRows.add(formattedRow);
     }
-  }
 
-  pw.Widget _pdfSummaryItem(String label, String value) {
-    return pw.Column(
-      children: [
-        pw.Text(label, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
-        pw.SizedBox(height: 2),
-        pw.Text(value, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
-      ],
+    final pdfService = ServiceReportPdf();
+    await pdfService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 
   // ── Export Excel ──
 
   Future<void> exportExcel() async {
-    if (rxRows.isEmpty) {
-      Get.snackbar('No Data', 'Generate a report first',
-          backgroundColor: Colors.orange, colorText: Colors.white);
-      return;
-    }
+    final type = rxReportType.value;
+    final reportTitle = 'Report - ${type.label}';
 
-    final excel = xl.Excel.createExcel();
-    final sheetName = rxReportType.value.label;
-    final sheet = excel[sheetName];
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': formatDateRange(),
+    };
 
-    // Remove default Sheet1 if different
-    if (sheetName != 'Sheet1') {
-      excel.delete('Sheet1');
-    }
+    final summary = <String, dynamic>{
+      'Total Bills': rxTotalBills.value,
+      'Total Qty': rxTotalQty.value,
+      'Gross Amount': rxGrossAmount.value,
+      'Discount': rxDiscount.value,
+      'Tax': rxTax.value,
+      'Net Amount': rxNetAmount.value,
+    };
 
     final cols = columns;
+    final headers = cols.map((c) => c.value).toList();
+    final exportRows = <List<dynamic>>[];
 
-    // Header row
-    for (int i = 0; i < cols.length; i++) {
-      sheet.cell(xl.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0)).value =
-          cols[i].value;
-    }
-
-    // Data rows
-    for (int r = 0; r < rxRows.length; r++) {
-      final row = rxRows[r];
-      for (int c = 0; c < cols.length; c++) {
-        final val = row[cols[c].key];
-        final cell = sheet.cell(xl.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r + 1));
-        cell.value = val ?? '-';
+    for (final row in rxRows) {
+      final formattedRow = <dynamic>[];
+      for (final col in cols) {
+        formattedRow.add(row[col.key] ?? '-');
       }
+      exportRows.add(formattedRow);
     }
 
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final filePath = '${dir.path}/report_$timestamp.xlsx';
-      final bytes = excel.encode();
-      if (bytes != null) {
-        final file = File(filePath);
-        await file.writeAsBytes(bytes);
-        Get.snackbar('Excel Exported', 'Saved to $filePath',
-            backgroundColor: Colors.green, colorText: Colors.white,
-            duration: const Duration(seconds: 4));
-      }
-    } catch (e) {
-      Get.snackbar('Export Error', e.toString(),
-          backgroundColor: Colors.red, colorText: Colors.white);
-    }
+    final excelService = ServiceItemExcel();
+    await excelService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
+    );
   }
 
   // ── Print ──

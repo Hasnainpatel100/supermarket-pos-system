@@ -6,7 +6,9 @@ import '../../../../model/entity_item_batch.dart';
 import '../../../../model/entity_stock_transaction.dart';
 import '../../../../model/stock_txn_type.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_report_pdf.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Inventory Report Types
@@ -1027,29 +1029,213 @@ class ControllerInventoryReport extends GetxController {
   // Export Stubs
   // ═════════════════════════════════════════════════════════════════════════
 
-  void exportExcel() {
-    Get.snackbar(
-      'Export Excel',
-      'Inventory Excel export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportExcel() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Inventory Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Warehouse/Branch': rxBranch.value,
+    };
+    if (type == InventoryReportType.stockMovement ||
+        type == InventoryReportType.stockAdjustment ||
+        type == InventoryReportType.expiry ||
+        type == InventoryReportType.nearExpiry) {
+      final fmt = DateFormat('dd MMM yyyy');
+      filters['Date Range'] = '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}';
+    }
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case InventoryReportType.currentStock:
+        headers = ['SKU/Barcode', 'Name', 'Category', 'Unit', 'Quantity', 'Cost Price', 'Selling Price', 'Stock Value'];
+        for (final r in allRows) {
+          if (r is CurrentStockRow) {
+            exportRows.add([r.sku, r.name, r.category, r.unit, r.quantity, r.costPrice, r.sellingPrice, r.stockValue]);
+          }
+        }
+        break;
+      case InventoryReportType.lowStock:
+        headers = ['SKU/Barcode', 'Name', 'Category', 'Current Qty', 'Reorder Level', 'Shortage'];
+        for (final r in allRows) {
+          if (r is LowStockRow) {
+            exportRows.add([r.sku, r.name, r.category, r.quantity, r.reorderLevel, r.shortage]);
+          }
+        }
+        break;
+      case InventoryReportType.outOfStock:
+        headers = ['SKU/Barcode', 'Name', 'Category', 'Cost Price', 'Last Purchase', 'Last Sale'];
+        for (final r in allRows) {
+          if (r is OutOfStockRow) {
+            exportRows.add([r.sku, r.name, r.category, r.costPrice, r.lastPurchaseInfo, r.lastSaleInfo]);
+          }
+        }
+        break;
+      case InventoryReportType.stockMovement:
+        headers = ['Date & Time', 'Item Name', 'Type', 'Quantity', 'Performed By', 'Reference/Remarks'];
+        for (final r in allRows) {
+          if (r is StockMovementRow) {
+            exportRows.add([r.dateTime, r.itemName, r.txnType, r.quantity, r.performedBy, r.reference]);
+          }
+        }
+        break;
+      case InventoryReportType.stockAdjustment:
+        headers = ['Date & Time', 'Item Name', 'Prev Qty', 'New Qty', 'Difference', 'Reason', 'User'];
+        for (final r in allRows) {
+          if (r is StockAdjustmentRow) {
+            exportRows.add([r.dateTime, r.itemName, r.previousQty, r.newQty, r.difference, r.reason, r.user]);
+          }
+        }
+        break;
+      case InventoryReportType.stockValuation:
+        headers = ['SKU/Barcode', 'Name', 'Quantity', 'Cost Price', 'Selling Price', 'Cost Value', 'Selling Value', 'Expected Profit'];
+        for (final r in allRows) {
+          if (r is StockValuationRow) {
+            exportRows.add([r.sku, r.name, r.quantity, r.costPrice, r.sellingPrice, r.costValue, r.sellingValue, r.expectedProfit]);
+          }
+        }
+        break;
+      case InventoryReportType.expiry:
+        headers = ['Item Name', 'Batch No', 'Expiry Date', 'Quantity', 'Days Expired'];
+        for (final r in allRows) {
+          if (r is ExpiryRow) {
+            exportRows.add([r.itemName, r.batchNo, r.expiryDate, r.quantity, r.daysExpired]);
+          }
+        }
+        break;
+      case InventoryReportType.nearExpiry:
+        headers = ['Item Name', 'Batch No', 'Expiry Date', 'Quantity', 'Days Remaining'];
+        for (final r in allRows) {
+          if (r is NearExpiryRow) {
+            exportRows.add([r.itemName, r.batchNo, r.expiryDate, r.quantity, r.daysRemaining]);
+          }
+        }
+        break;
+    }
+
+    final excelService = ServiceItemExcel();
+    await excelService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 
-  void exportPdf() {
-    Get.snackbar(
-      'Export PDF',
-      'Inventory PDF export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportPdf() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Inventory Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Warehouse/Branch': rxBranch.value,
+    };
+    if (type == InventoryReportType.stockMovement ||
+        type == InventoryReportType.stockAdjustment ||
+        type == InventoryReportType.expiry ||
+        type == InventoryReportType.nearExpiry) {
+      final fmt = DateFormat('dd MMM yyyy');
+      filters['Date Range'] = '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}';
+    }
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case InventoryReportType.currentStock:
+        headers = ['SKU/Barcode', 'Name', 'Category', 'Unit', 'Quantity', 'Cost Price', 'Selling Price', 'Stock Value'];
+        for (final r in allRows) {
+          if (r is CurrentStockRow) {
+            exportRows.add([r.sku, r.name, r.category, r.unit, r.quantity, r.costPrice, r.sellingPrice, r.stockValue]);
+          }
+        }
+        break;
+      case InventoryReportType.lowStock:
+        headers = ['SKU/Barcode', 'Name', 'Category', 'Current Qty', 'Reorder Level', 'Shortage'];
+        for (final r in allRows) {
+          if (r is LowStockRow) {
+            exportRows.add([r.sku, r.name, r.category, r.quantity, r.reorderLevel, r.shortage]);
+          }
+        }
+        break;
+      case InventoryReportType.outOfStock:
+        headers = ['SKU/Barcode', 'Name', 'Category', 'Cost Price', 'Last Purchase', 'Last Sale'];
+        for (final r in allRows) {
+          if (r is OutOfStockRow) {
+            exportRows.add([r.sku, r.name, r.category, r.costPrice, r.lastPurchaseInfo, r.lastSaleInfo]);
+          }
+        }
+        break;
+      case InventoryReportType.stockMovement:
+        headers = ['Date & Time', 'Item Name', 'Type', 'Quantity', 'Performed By', 'Reference/Remarks'];
+        for (final r in allRows) {
+          if (r is StockMovementRow) {
+            exportRows.add([r.dateTime, r.itemName, r.txnType, r.quantity, r.performedBy, r.reference]);
+          }
+        }
+        break;
+      case InventoryReportType.stockAdjustment:
+        headers = ['Date & Time', 'Item Name', 'Prev Qty', 'New Qty', 'Difference', 'Reason', 'User'];
+        for (final r in allRows) {
+          if (r is StockAdjustmentRow) {
+            exportRows.add([r.dateTime, r.itemName, r.previousQty, r.newQty, r.difference, r.reason, r.user]);
+          }
+        }
+        break;
+      case InventoryReportType.stockValuation:
+        headers = ['SKU/Barcode', 'Name', 'Quantity', 'Cost Price', 'Selling Price', 'Cost Value', 'Selling Value', 'Expected Profit'];
+        for (final r in allRows) {
+          if (r is StockValuationRow) {
+            exportRows.add([r.sku, r.name, r.quantity, r.costPrice, r.sellingPrice, r.costValue, r.sellingValue, r.expectedProfit]);
+          }
+        }
+        break;
+      case InventoryReportType.expiry:
+        headers = ['Item Name', 'Batch No', 'Expiry Date', 'Quantity', 'Days Expired'];
+        for (final r in allRows) {
+          if (r is ExpiryRow) {
+            exportRows.add([r.itemName, r.batchNo, r.expiryDate, r.quantity, r.daysExpired]);
+          }
+        }
+        break;
+      case InventoryReportType.nearExpiry:
+        headers = ['Item Name', 'Batch No', 'Expiry Date', 'Quantity', 'Days Remaining'];
+        for (final r in allRows) {
+          if (r is NearExpiryRow) {
+            exportRows.add([r.itemName, r.batchNo, r.expiryDate, r.quantity, r.daysRemaining]);
+          }
+        }
+        break;
+    }
+
+    final pdfService = ServiceReportPdf();
+    await pdfService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 }

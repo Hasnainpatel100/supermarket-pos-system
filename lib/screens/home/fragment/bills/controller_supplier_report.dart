@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import '../../../../model/entity_purchase.dart';
 import '../../../../model/entity_supplier.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_report_pdf.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Supplier Report Types
@@ -415,31 +417,115 @@ class ControllerSupplierReport extends GetxController {
   // Export Actions
   // ═════════════════════════════════════════════════════════════════════════
 
-  void exportExcel() {
-    final typeName = rxReportType.value.label;
-    Get.snackbar(
-      'Export Excel',
-      '$typeName Supplier Excel export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportExcel() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Supplier Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSelectedSupplierId.value != null) {
+      final supp = rxSuppliersList.firstWhereOrNull((s) => s.id == rxSelectedSupplierId.value);
+      if (supp != null) filters['Supplier'] = supp.name ?? 'Supplier #${supp.id}';
+    }
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case SupplierReportType.purchaseHistory:
+        headers = ['PO Date', 'PO Number', 'Supplier', 'Total Amount', 'Paid Amount', 'Outstanding', 'Status'];
+        for (final r in allRows) {
+          if (r is SupplierPurchaseHistoryRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplierName, r.totalAmount, r.amountPaid, r.amountDue, r.status]);
+          }
+        }
+        break;
+      case SupplierReportType.outstanding:
+        headers = ['Supplier Name', 'Total Purchases', 'Total Paid', 'Outstanding Balance', 'Outstanding Bills'];
+        for (final r in allRows) {
+          if (r is SupplierOutstandingRow) {
+            exportRows.add([r.supplierName, r.totalPurchases, r.totalPaid, r.outstandingBalance, r.outstandingBillsCount]);
+          }
+        }
+        break;
+    }
+
+    final excelService = ServiceItemExcel();
+    await excelService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 
-  void exportPdf() {
-    final typeName = rxReportType.value.label;
-    Get.snackbar(
-      'Export PDF',
-      '$typeName Supplier PDF export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportPdf() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Supplier Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSelectedSupplierId.value != null) {
+      final supp = rxSuppliersList.firstWhereOrNull((s) => s.id == rxSelectedSupplierId.value);
+      if (supp != null) filters['Supplier'] = supp.name ?? 'Supplier #${supp.id}';
+    }
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case SupplierReportType.purchaseHistory:
+        headers = ['PO Date', 'PO Number', 'Supplier', 'Total Amount', 'Paid Amount', 'Outstanding', 'Status'];
+        for (final r in allRows) {
+          if (r is SupplierPurchaseHistoryRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplierName, r.totalAmount, r.amountPaid, r.amountDue, r.status]);
+          }
+        }
+        break;
+      case SupplierReportType.outstanding:
+        headers = ['Supplier Name', 'Total Purchases', 'Total Paid', 'Outstanding Balance', 'Outstanding Bills'];
+        for (final r in allRows) {
+          if (r is SupplierOutstandingRow) {
+            exportRows.add([r.supplierName, r.totalPurchases, r.totalPaid, r.outstandingBalance, r.outstandingBillsCount]);
+          }
+        }
+        break;
+    }
+
+    final pdfService = ServiceReportPdf();
+    await pdfService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 }

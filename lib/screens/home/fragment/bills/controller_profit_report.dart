@@ -5,7 +5,9 @@ import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_item.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_report_pdf.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Profit Report Types
@@ -751,29 +753,171 @@ class ControllerProfitReport extends GetxController {
   // Export Stubs
   // ═════════════════════════════════════════════════════════════════════════
 
-  void exportExcel() {
-    Get.snackbar(
-      'Export Excel',
-      'Profit Excel export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportExcel() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Profit Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case ProfitReportType.profitSummary:
+        headers = ['Metric KPI', 'Value', 'Details / Description'];
+        for (final r in allRows) {
+          if (r is ProfitSummaryRow) {
+            exportRows.add([r.metric, r.metric.contains('Margin') ? '${r.value.toStringAsFixed(1)}%' : r.value, r.details]);
+          }
+        }
+        break;
+      case ProfitReportType.itemProfit:
+        headers = ['Barcode/SKU', 'Item Name', 'Qty Sold', 'Revenue', 'Product Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is ItemProfitRow) {
+            exportRows.add([r.sku, r.itemName, r.quantitySold, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case ProfitReportType.categoryProfit:
+        headers = ['Category Name', 'Qty Sold', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is CategoryProfitRow) {
+            exportRows.add([r.categoryName, r.quantitySold, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case ProfitReportType.brandProfit:
+        headers = ['Brand Name', 'Qty Sold', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is BrandProfitRow) {
+            exportRows.add([r.brandName, r.quantitySold, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case ProfitReportType.dailyProfit:
+        headers = ['Date', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is DailyProfitRow) {
+            exportRows.add([r.date, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case ProfitReportType.monthlyProfit:
+        headers = ['Month', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is MonthlyProfitRow) {
+            exportRows.add([r.month, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+    }
+
+    final excelService = ServiceItemExcel();
+    await excelService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 
-  void exportPdf() {
-    Get.snackbar(
-      'Export PDF',
-      'Profit PDF export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportPdf() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Profit Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case ProfitReportType.profitSummary:
+        headers = ['Metric KPI', 'Value', 'Details / Description'];
+        for (final r in allRows) {
+          if (r is ProfitSummaryRow) {
+            exportRows.add([r.metric, r.metric.contains('Margin') ? '${r.value.toStringAsFixed(1)}%' : r.value, r.details]);
+          }
+        }
+        break;
+      case ProfitReportType.itemProfit:
+        headers = ['Barcode/SKU', 'Item Name', 'Qty Sold', 'Revenue', 'Product Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is ItemProfitRow) {
+            exportRows.add([r.sku, r.itemName, r.quantitySold, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case ProfitReportType.categoryProfit:
+        headers = ['Category Name', 'Qty Sold', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is CategoryProfitRow) {
+            exportRows.add([r.categoryName, r.quantitySold, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case ProfitReportType.brandProfit:
+        headers = ['Brand Name', 'Qty Sold', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is BrandProfitRow) {
+            exportRows.add([r.brandName, r.quantitySold, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case ProfitReportType.dailyProfit:
+        headers = ['Date', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is DailyProfitRow) {
+            exportRows.add([r.date, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case ProfitReportType.monthlyProfit:
+        headers = ['Month', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+        for (final r in allRows) {
+          if (r is MonthlyProfitRow) {
+            exportRows.add([r.month, r.revenue, r.cost, r.grossProfit, '${r.margin.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+    }
+
+    final pdfService = ServiceReportPdf();
+    await pdfService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 }

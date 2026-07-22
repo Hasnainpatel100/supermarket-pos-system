@@ -5,7 +5,9 @@ import '../../../../model/entity_purchase.dart';
 import '../../../../model/entity_purchase_item.dart';
 import '../../../../model/entity_supplier.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_report_pdf.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Purchase Report Types
@@ -754,29 +756,163 @@ class ControllerPurchaseReport extends GetxController {
   }
 
   // ── Export stubs ──
-  void exportExcel() {
-    Get.snackbar(
-      'Export Excel',
-      'Purchase Excel export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportExcel() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Purchase Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSelectedSupplierId.value != null) {
+      final supp = rxSuppliersList.firstWhereOrNull((s) => s.id == rxSelectedSupplierId.value);
+      if (supp != null) filters['Supplier'] = supp.name ?? 'Supplier #${supp.id}';
+    }
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case PurchaseReportType.purchaseSummary:
+        headers = ['Date', 'Purchase No', 'Supplier', 'Total Amount', 'Paid Amount', 'Outstanding Due', 'Status'];
+        for (final r in allRows) {
+          if (r is PurchaseSummaryRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplierName, r.totalAmount, r.paidAmount, r.outstandingAmount, r.status]);
+          }
+        }
+        break;
+      case PurchaseReportType.purchaseDetail:
+        headers = ['Date', 'Purchase No', 'Supplier', 'Item Name', 'Order Qty', 'Cost Price', 'Total Value'];
+        for (final r in allRows) {
+          if (r is PurchaseDetailRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplierName, r.itemName, r.quantity, r.costPrice, r.totalValue]);
+          }
+        }
+        break;
+      case PurchaseReportType.supplierPurchase:
+        headers = ['Supplier Name', 'No. of Bills', 'Qty Purchased', 'Total Purchase', 'Paid Amount', 'Outstanding Balance'];
+        for (final r in allRows) {
+          if (r is SupplierPurchaseRow) {
+            exportRows.add([r.supplierName, r.numBills, r.qtyPurchased, r.totalPurchaseAmount, r.paidAmount, r.outstandingBalance]);
+          }
+        }
+        break;
+      case PurchaseReportType.pendingPurchaseOrders:
+        headers = ['Date', 'PO Number', 'Supplier', 'Expected Date', 'Ordered Qty', 'Received Qty', 'Pending Qty', 'Status'];
+        for (final r in allRows) {
+          if (r is PendingPurchaseOrderRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplierName, r.expectedDate, r.orderedQty, r.receivedQty, r.pendingQty, r.status]);
+          }
+        }
+        break;
+      case PurchaseReportType.purchaseReturn:
+        headers = ['Return No', 'Date', 'Supplier', 'Item Name', 'Qty Returned', 'Return Amount', 'Return Reason'];
+        for (final r in allRows) {
+          if (r is PurchaseReturnRow) {
+            exportRows.add([r.returnNo, r.date, r.supplierName, r.itemName, r.quantityReturned, r.returnAmount, r.returnReason]);
+          }
+        }
+        break;
+    }
+
+    final excelService = ServiceItemExcel();
+    await excelService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 
-  void exportPdf() {
-    Get.snackbar(
-      'Export PDF',
-      'Purchase PDF export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportPdf() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Purchase Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSelectedSupplierId.value != null) {
+      final supp = rxSuppliersList.firstWhereOrNull((s) => s.id == rxSelectedSupplierId.value);
+      if (supp != null) filters['Supplier'] = supp.name ?? 'Supplier #${supp.id}';
+    }
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case PurchaseReportType.purchaseSummary:
+        headers = ['Date', 'Purchase No', 'Supplier', 'Total Amount', 'Paid Amount', 'Outstanding Due', 'Status'];
+        for (final r in allRows) {
+          if (r is PurchaseSummaryRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplierName, r.totalAmount, r.paidAmount, r.outstandingAmount, r.status]);
+          }
+        }
+        break;
+      case PurchaseReportType.purchaseDetail:
+        headers = ['Date', 'Purchase No', 'Supplier', 'Item Name', 'Order Qty', 'Cost Price', 'Total Value'];
+        for (final r in allRows) {
+          if (r is PurchaseDetailRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplierName, r.itemName, r.quantity, r.costPrice, r.totalValue]);
+          }
+        }
+        break;
+      case PurchaseReportType.supplierPurchase:
+        headers = ['Supplier Name', 'No. of Bills', 'Qty Purchased', 'Total Purchase', 'Paid Amount', 'Outstanding Balance'];
+        for (final r in allRows) {
+          if (r is SupplierPurchaseRow) {
+            exportRows.add([r.supplierName, r.numBills, r.qtyPurchased, r.totalPurchaseAmount, r.paidAmount, r.outstandingBalance]);
+          }
+        }
+        break;
+      case PurchaseReportType.pendingPurchaseOrders:
+        headers = ['Date', 'PO Number', 'Supplier', 'Expected Date', 'Ordered Qty', 'Received Qty', 'Pending Qty', 'Status'];
+        for (final r in allRows) {
+          if (r is PendingPurchaseOrderRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplierName, r.expectedDate, r.orderedQty, r.receivedQty, r.pendingQty, r.status]);
+          }
+        }
+        break;
+      case PurchaseReportType.purchaseReturn:
+        headers = ['Return No', 'Date', 'Supplier', 'Item Name', 'Qty Returned', 'Return Amount', 'Return Reason'];
+        for (final r in allRows) {
+          if (r is PurchaseReturnRow) {
+            exportRows.add([r.returnNo, r.date, r.supplierName, r.itemName, r.quantityReturned, r.returnAmount, r.returnReason]);
+          }
+        }
+        break;
+    }
+
+    final pdfService = ServiceReportPdf();
+    await pdfService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 }

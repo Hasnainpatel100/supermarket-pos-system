@@ -20,16 +20,18 @@ class SideMenuItem extends StatelessWidget {
     required this.titleKey,
     required this.menu,
   }) : modelMenu = null,
-       permissions = null;
+        permissions = null;
 
-  /// PERMISSION / EXPANDABLE MENU (System)
+  /// PERMISSION / EXPANDABLE MENU (System, Purchase & Supplier, Reports,
+  /// and any nested report category underneath Reports). Recurses to
+  /// support any depth of nesting.
   SideMenuItem.menu({
     super.key,
     required this.modelMenu,
     required this.permissions,
   }) : icon = modelMenu!.icon,
-       titleKey = modelMenu.titleKey,
-       menu = modelMenu.menu;
+        titleKey = modelMenu.titleKey,
+        menu = modelMenu.menu;
 
   @override
   Widget build(BuildContext context) {
@@ -59,14 +61,12 @@ class SideMenuItem extends StatelessWidget {
       final ModelDrawerMenu menuModel = modelMenu!;
       final List<String> perms = permissions!;
 
-      // FILTER VISIBLE CHILDREN BY PERMISSION
-      final visibleChildren = menuModel.children
-          ?.where((c) => c.permissions.any((p) => perms.contains(p.name)))
-          .toList();
+      // FILTER VISIBLE CHILDREN BY PERMISSION (recursive: a child that is
+      // itself a category is visible if any of ITS children are visible)
+      final visibleChildren = menuModel.visibleChildrenFor(perms);
 
       // If no children visible, hide the entire menu
-      if (menuModel.children != null &&
-          (visibleChildren == null || visibleChildren.isEmpty)) {
+      if (menuModel.children != null && visibleChildren.isEmpty) {
         return const SizedBox.shrink();
       }
 
@@ -83,12 +83,10 @@ class SideMenuItem extends StatelessWidget {
           title: null,
           selected: selected,
           onTap: () {
-            // Default behavior: open first visible child
-            if (visibleChildren != null && visibleChildren.isNotEmpty) {
-              controller.selectedMainMenu.value = visibleChildren.first.menu;
-            } else {
-              controller.selectedMainMenu.value = menuModel.menu;
-            }
+            // Default behavior: open the first visible leaf report/screen,
+            // drilling through any nested categories.
+            final leaf = menuModel.firstVisibleLeaf(perms);
+            controller.selectedMainMenu.value = leaf?.menu ?? menuModel.menu;
           },
         );
 
@@ -100,7 +98,17 @@ class SideMenuItem extends StatelessWidget {
         return ExpansionTile(
           leading: Icon(menuModel.icon),
           title: Text(menuModel.titleKey.tr),
-          children: visibleChildren!.map((child) {
+          children: visibleChildren.map((child) {
+            // A child that itself has children (e.g. "Sales Reports"
+            // nested under "Reports") renders as its own nested
+            // expandable menu instead of a flat, tappable ListTile.
+            if (child.children != null && child.children!.isNotEmpty) {
+              return Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: SideMenuItem.menu(modelMenu: child, permissions: perms),
+              );
+            }
+
             final bool selected =
                 controller.selectedMainMenu.value == child.menu;
 

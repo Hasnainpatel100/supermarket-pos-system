@@ -38,11 +38,17 @@ enum EnumPermission {
 
 
   // Reports
-
+  // Report category permissions (gate an entire report category + its pages)
+  // Reports
   reportSalesView,
   reportStockView,
+  reportPurchaseView,
   reportProfitView,
-  reportTaxView,
+  reportReturnView,
+  reportCustomerView,
+  reportSupplierView,
+  reportCashierView,
+  reportFinancialView,
   reportExport,
 
   // System / Admin

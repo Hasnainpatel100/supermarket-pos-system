@@ -1,8 +1,28 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class AppTranslation extends Translations {
+  static final Map<String, Map<String, String>> _translations = {};
+
   @override
-  Map<String, Map<String, String>> get keys => {
+  Map<String, Map<String, String>> get keys => _translations.isEmpty ? _fallbackKeys : _translations;
+
+  static Future<void> loadTranslations() async {
+    final languages = ['en_US', 'hi_IN', 'mr_IN', 'ur_PK'];
+    for (var lang in languages) {
+      try {
+        final String jsonString = await rootBundle.loadString('assets/translations/$lang.json');
+        final Map<String, dynamic> jsonMap = json.decode(jsonString);
+        _translations[lang] = jsonMap.map((key, value) => MapEntry(key, value.toString()));
+      } catch (e) {
+        debugPrint('Failed to load translations for $lang: $e');
+      }
+    }
+  }
+
+  static final Map<String, Map<String, String>> _fallbackKeys = {
     'en_US': {
       'app_title': 'RH Supermarket',
       'home_title': 'Home',

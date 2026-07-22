@@ -1,0 +1,158 @@
+﻿Analyzing super_market-main...                                  
+
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\customer\fragment_home_customer.dart:36:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\customer\fragment_home_customer.dart:81:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\customer\fragment_home_customer.dart:131:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\customer\fragment_home_customer.dart:196:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\customer\fragment_home_customer.dart:621:62 - deprecated_member_use
+   info - Missing type annotation - lib\screens\home\fragment\expenses\controller_home_expenses.dart:106:30 - strict_top_level_inference
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\expenses\fragment_home_expenses.dart:560:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\expenses\fragment_home_expenses.dart:720:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\expenses\fragment_home_expenses.dart:731:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\expenses\fragment_home_expenses.dart:754:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\expenses\fragment_home_expenses.dart:800:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\expenses\fragment_home_expenses.dart:807:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:313:78 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:315:97 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:352:74 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:354:93 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:383:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:383:97 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:386:81 - deprecated_member_use
+   info - Unnecessary braces in a string interpolation - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:431:50 - unnecessary_brace_in_string_interps
+   info - Unnecessary braces in a string interpolation - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:431:58 - unnecessary_brace_in_string_interps
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:540:71 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:631:72 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:1004:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:1004:67 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialogs\dialog_print_barcode.dart:1035:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:37:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:65:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:94:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:125:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:163:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:512:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:631:49 - deprecated_member_use
+   info - Statements in a for should be enclosed in a block - lib\screens\home\fragment\pos\controller_home_pos.dart:45:37 - curly_braces_in_flow_control_structures
+   info - Statements in a for should be enclosed in a block - lib\screens\home\fragment\pos\controller_home_pos.dart:77:37 - curly_braces_in_flow_control_structures
+   info - Unnecessary use of multiple underscores - lib\screens\home\fragment\pos\fragment_home_pos.dart:259:47 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\screens\home\fragment\pos\fragment_home_pos.dart:699:45 - unnecessary_underscores
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\home\fragment\pos\fragment_home_pos.dart:1191:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\pos\pos_item_card.dart:111:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:163:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:265:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:361:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:456:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:523:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:589:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:591:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:592:27 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:695:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\activity_receive_goods.dart:710:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\activity_purchase_form.dart:150:48 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\home\fragment\purchase_supplier\purchase\activity_purchase_form.dart:184:27 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\activity_purchase_form.dart:413:52 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\home\fragment\purchase_supplier\purchase\activity_purchase_form.dart:465:17 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\activity_purchase_form.dart:541:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\activity_purchase_form.dart:543:63 - deprecated_member_use
+   info - Invalid use of a private type in a public API - lib\screens\home\fragment\purchase_supplier\purchase\controller_home_purchase.dart:150:19 - library_private_types_in_public_api
+   info - Invalid use of a private type in a public API - lib\screens\home\fragment\purchase_supplier\purchase\controller_home_purchase.dart:211:19 - library_private_types_in_public_api
+warning - A value for optional parameter 'itemUnit' isn't ever given - lib\screens\home\fragment\purchase_supplier\purchase\controller_home_purchase.dart:362:10 - unused_element_parameter
+warning - A value for optional parameter 'batchNo' isn't ever given - lib\screens\home\fragment\purchase_supplier\purchase\controller_home_purchase.dart:377:10 - unused_element_parameter
+warning - A value for optional parameter 'expiryDateUtcMs' isn't ever given - lib\screens\home\fragment\purchase_supplier\purchase\controller_home_purchase.dart:378:10 - unused_element_parameter
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:38:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:81:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:123:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:265:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:266:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:285:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:288:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:326:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:417:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:465:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\purchase\frag_home_purchase.dart:509:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\activity_supplier_form.dart:107:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\activity_supplier_form.dart:253:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\frag_home_supplier.dart:35:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\frag_home_supplier.dart:79:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\frag_home_supplier.dart:124:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\frag_home_supplier.dart:233:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\frag_home_supplier.dart:236:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\frag_home_supplier.dart:267:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\frag_home_supplier.dart:441:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\purchase_supplier\supplier\frag_home_supplier.dart:488:40 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\home\fragment\report\controller_home_report.dart:242:15 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:41:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:106:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:139:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:203:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:204:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:350:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:387:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:418:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:421:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:490:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:492:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:527:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:528:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:528:76 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:532:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:533:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\report\frag_home_report.dart:533:78 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\home\fragment\setting\frag_home_settings.dart:662:25 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\home\fragment\setting\frag_home_settings.dart:774:27 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\home\fragment\setting\frag_home_settings.dart:825:27 - deprecated_member_use
+   info - Unnecessary braces in a string interpolation - lib\screens\home\fragment\setting\frag_home_settings.dart:1264:36 - unnecessary_brace_in_string_interps
+   info - Unnecessary braces in a string interpolation - lib\screens\home\fragment\setting\frag_home_settings.dart:1264:44 - unnecessary_brace_in_string_interps
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\stocks\fragment_home_stock.dart:32:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\stocks\fragment_home_stock.dart:73:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\stocks\fragment_home_stock.dart:173:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\stocks\fragment_home_stock.dart:363:64 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\stocks\fragment_home_stock.dart:471:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\stocks\fragment_home_stock.dart:478:41 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\screens\home\fragment\users\frag_home_users.dart:517:39 - unnecessary_underscores
+warning - Unused import: '../../model/entity_tax.dart' - lib\screens\item_form\activity_item_form.dart:7:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:51:70 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\item_form\activity_item_form.dart:128:31 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\screens\item_form\activity_item_form.dart:137:51 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\item_form\activity_item_form.dart:138:55 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\item_form\activity_item_form.dart:139:54 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\item_form\activity_item_form.dart:140:54 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\item_form\activity_item_form.dart:141:55 - curly_braces_in_flow_control_structures
+   info - Unnecessary use of 'toList' in a spread - lib\screens\item_form\activity_item_form.dart:143:36 - unnecessary_to_list_in_spreads
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:344:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:346:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:357:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:359:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:410:82 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\item_form\activity_item_form.dart:462:9 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\item_form\activity_item_form.dart:566:13 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:720:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:722:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:752:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:754:70 - deprecated_member_use
+warning - The value of the field '_todoBox' isn't used - lib\screens\sample\controller_sample.dart:11:24 - unused_field
+  error - The name 'TextCellValue' isn't a class - lib\service\service_item_excel.dart:19:15 - creation_with_non_type
+  error - The name 'TextCellValue' isn't a class - lib\service\service_item_excel.dart:20:15 - creation_with_non_type
+  error - The name 'TextCellValue' isn't a class - lib\service\service_item_excel.dart:21:15 - creation_with_non_type
+  error - The name 'TextCellValue' isn't a class - lib\service\service_item_excel.dart:22:15 - creation_with_non_type
+  error - The name 'TextCellValue' isn't a class - lib\service\service_item_excel.dart:23:15 - creation_with_non_type
+  error - The name 'TextCellValue' isn't a class - lib\service\service_item_excel.dart:24:15 - creation_with_non_type
+  error - The name 'TextCellValue' isn't a class - lib\service\service_item_excel.dart:25:15 - creation_with_non_type
+  error - The method 'TextCellValue' isn't defined for the type 'ServiceItemExcel' - lib\service\service_item_excel.dart:31:11 - undefined_method
+  error - The method 'TextCellValue' isn't defined for the type 'ServiceItemExcel' - lib\service\service_item_excel.dart:32:11 - undefined_method
+  error - The method 'TextCellValue' isn't defined for the type 'ServiceItemExcel' - lib\service\service_item_excel.dart:33:11 - undefined_method
+  error - The method 'TextCellValue' isn't defined for the type 'ServiceItemExcel' - lib\service\service_item_excel.dart:34:11 - undefined_method
+  error - The method 'TextCellValue' isn't defined for the type 'ServiceItemExcel' - lib\service\service_item_excel.dart:35:11 - undefined_method
+  error - The method 'DoubleCellValue' isn't defined for the type 'ServiceItemExcel' - lib\service\service_item_excel.dart:36:11 - undefined_method
+  error - The method 'DoubleCellValue' isn't defined for the type 'ServiceItemExcel' - lib\service\service_item_excel.dart:37:11 - undefined_method
+   info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\service\service_item_excel.dart:48:13 - deprecated_member_use
+   info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\service\service_item_excel.dart:48:19 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\service\service_item_excel.dart:51:7 - avoid_print
+   info - Use 'isNotEmpty' instead of 'length' to test whether the collection is empty - lib\service\service_item_excel.dart:87:24 - prefer_is_empty
+   info - Don't invoke 'print' in production code - lib\service\service_item_excel.dart:111:7 - avoid_print
+  error - Undefined class 'await1' - test\widget_test.dart:16:5 - undefined_class
+  error - Expected to find ';' - test\widget_test.dart:16:12 - expected_token
+  error - This requires the 'dot-shorthands' language feature to be enabled - test\widget_test.dart:16:18 - experiment_not_enabled
+  error - The static method or constructor 'pumpWidget' isn't defined for the context type '_' - test\widget_test.dart:16:19 - dot_shorthand_undefined_member
+

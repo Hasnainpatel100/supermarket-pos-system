@@ -355,39 +355,98 @@ class ServiceItemExcel {
       // ════════════════════════════════════════════════════════════════════
       // Column widths
       // ════════════════════════════════════════════════════════════════════
-      // Helper: gather data-table content samples for auto-sizing
+      // Helper: gather all samples (including headers, data table, and filters/summaries) for a specific column c
       List<String> colSamples(int c) {
         final s = <String>[];
+        // 1. Add headers and data table content
         if (c < headers.length) s.add(headers[c]);
         for (int ri = 0; ri < rows.length && ri < 80; ri++) {
           if (c < rows[ri].length) s.add(_formatValue(rows[ri][c]));
         }
+
+        // 2. Add filter & summary text if it's placed in this column
+        if (c == 0) {
+          s.add('  APPLIED FILTERS');
+          s.add('  REPORT SUMMARY');
+          if (appliedFilters != null) {
+            s.addAll(appliedFilters.keys.map((k) => '  $k'));
+          }
+          if (summaryData != null) {
+            s.addAll(summaryData.keys.map((k) => '  $k'));
+          }
+        } else if (c == 1) {
+          if (appliedFilters != null) {
+            s.addAll(appliedFilters.values.map((v) => '  $v'));
+          }
+          if (summaryData != null) {
+            s.addAll(summaryData.values.map((v) => '  ${_formatValue(v)}'));
+          }
+        } else if (c == 3) {
+          if (appliedFilters != null) {
+            final keys = appliedFilters.keys.toList();
+            for (int i = 1; i < keys.length; i += 2) {
+              s.add('  ${keys[i]}');
+            }
+          }
+          if (summaryData != null) {
+            final keys = summaryData.keys.toList();
+            for (int i = 1; i < keys.length; i += 2) {
+              s.add('  ${keys[i]}');
+            }
+          }
+        } else if (c == 4) {
+          if (appliedFilters != null) {
+            final values = appliedFilters.values.toList();
+            for (int i = 1; i < values.length; i += 2) {
+              s.add('  ${values[i]}');
+            }
+          }
+          if (summaryData != null) {
+            final values = summaryData.values.toList();
+            for (int i = 1; i < values.length; i += 2) {
+              s.add('  ${_formatValue(values[i])}');
+            }
+          }
+        }
         return s;
       }
 
-      // Col 0: label col for pairs AND first data column
-      sheet.setColumnWidth(0,
-          _autoWidth(['  APPLIED FILTERS', '  REPORT SUMMARY', ...colSamples(0)],
-              min: 22, max: 38));
-      // Col 1: value col for pair-1 AND second data column
-      sheet.setColumnWidth(1,
-          _autoWidth(colSamples(1), min: 14, max: 28));
-      // Col 2: narrow gap between pairs
-      sheet.setColumnWidth(2, 2.5);
-      // Col 3: label col for pair-2 AND third data column
-      if (headers.length > 2) {
-        sheet.setColumnWidth(3,
-            _autoWidth([...colSamples(2), ...colSamples(3)], min: 18, max: 35));
-      }
-      // Col 4: value col for pair-2 AND fourth data column
-      if (headers.length > 3) {
-        sheet.setColumnWidth(4,
-            _autoWidth(colSamples(4), min: 14, max: 28));
-      }
-      // Col 5+: remaining data columns
-      for (int c = 5; c < headers.length; c++) {
-        sheet.setColumnWidth(c,
-            _autoWidth(colSamples(c), min: 10, max: 28));
+      // Apply dynamic widths to all columns
+      for (int c = 0; c < colSpan; c++) {
+        // Col 2 is a narrow spacer ONLY if there is no data in column 2 (meaning headers.length <= 2)
+        if (c == 2 && headers.length <= 2) {
+          sheet.setColumnWidth(2, 2.5);
+          continue;
+        }
+
+        // Determine column min and max widths
+        double minW = 10;
+        double maxW = 28;
+
+        // Auto-detect category column
+        bool isCategory = false;
+        if (c < headers.length) {
+          final h = headers[c].toLowerCase();
+          if (h.contains('category')) {
+            isCategory = true;
+          }
+        }
+
+        if (isCategory) {
+          minW = 22;
+          maxW = 38;
+        } else if (c == 0) {
+          minW = 22;
+          maxW = 38;
+        } else if (c == 1) {
+          minW = 16;
+          maxW = 30; // Name column is usually col 1, can be wider
+        } else if (c == 3 || c == 4) {
+          minW = 14;
+          maxW = 28;
+        }
+
+        sheet.setColumnWidth(c, _autoWidth(colSamples(c), min: minW, max: maxW));
       }
 
       // ════════════════════════════════════════════════════════════════════

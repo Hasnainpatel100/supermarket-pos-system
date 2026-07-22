@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_report_pdf.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Report-type enum
@@ -272,29 +274,172 @@ class ControllerSalesReport extends GetxController {
   }
 
   // ── Export stubs ────────────────────────────────────────────────────────
-  void exportExcel() {
-    Get.snackbar(
-      'Export Excel',
-      'Excel export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  // ── Export ───────────────────────────────────────────────────────────────
+  void exportExcel() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Sales Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': formatDateRange(),
+      'Date Filter': rxDateFilter.value.name,
+      'Branch': rxBranch.value,
+    };
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case SalesReportType.salesSummary:
+        headers = ['Date', 'Orders', 'Total Sales', 'Discount', 'Tax', 'Net Sales'];
+        for (final r in allRows) {
+          if (r is SalesSummaryRow) {
+            exportRows.add([r.date, r.orders, r.totalSales, r.discount, r.tax, r.netSales]);
+          }
+        }
+        break;
+      case SalesReportType.salesDetail:
+        headers = ['Date & Time', 'Bill No', 'Customer', 'Payment', 'Items', 'Total', 'Status'];
+        for (final r in allRows) {
+          if (r is SalesDetailRow) {
+            exportRows.add([r.dateTime, r.billNo, r.customer, r.payment, r.items, r.total, r.status]);
+          }
+        }
+        break;
+      case SalesReportType.itemSales:
+        headers = ['Item Name', 'Barcode', 'Unit', 'Qty Sold', 'Revenue', 'Avg Price'];
+        for (final r in allRows) {
+          if (r is ItemSalesRow) {
+            exportRows.add([r.itemName, r.barcode, r.unit, r.qtySold, r.revenue, r.avgPrice]);
+          }
+        }
+        break;
+      case SalesReportType.categorySales:
+        headers = ['Category', 'Items', 'Qty Sold', 'Revenue', '% of Total'];
+        for (final r in allRows) {
+          if (r is CategorySalesRow) {
+            exportRows.add([r.category, r.itemCount, r.qtySold, r.revenue, '${r.percentOfTotal.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case SalesReportType.paymentReport:
+        headers = ['Payment Mode', 'Transactions', 'Total Amount', '% Share'];
+        for (final r in allRows) {
+          if (r is PaymentReportRow) {
+            exportRows.add([r.paymentMode, r.transactions, r.totalAmount, '${r.percentShare.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case SalesReportType.hourWiseSales:
+        headers = ['Hour Slot', 'Orders', 'Total Sales', 'Avg Bill', 'Peak'];
+        for (final r in allRows) {
+          if (r is HourWiseSalesRow) {
+            exportRows.add([r.hourSlot, r.orders, r.totalSales, r.avgBill, r.isPeak ? 'Yes' : 'No']);
+          }
+        }
+        break;
+    }
+
+    final excelService = ServiceItemExcel();
+    await excelService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 
-  void exportPdf() {
-    Get.snackbar(
-      'Export PDF',
-      'PDF export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportPdf() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Sales Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': formatDateRange(),
+      'Date Filter': rxDateFilter.value.name,
+      'Branch': rxBranch.value,
+    };
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case SalesReportType.salesSummary:
+        headers = ['Date', 'Orders', 'Total Sales', 'Discount', 'Tax', 'Net Sales'];
+        for (final r in allRows) {
+          if (r is SalesSummaryRow) {
+            exportRows.add([r.date, r.orders, r.totalSales, r.discount, r.tax, r.netSales]);
+          }
+        }
+        break;
+      case SalesReportType.salesDetail:
+        headers = ['Date & Time', 'Bill No', 'Customer', 'Payment', 'Items', 'Total', 'Status'];
+        for (final r in allRows) {
+          if (r is SalesDetailRow) {
+            exportRows.add([r.dateTime, r.billNo, r.customer, r.payment, r.items, r.total, r.status]);
+          }
+        }
+        break;
+      case SalesReportType.itemSales:
+        headers = ['Item Name', 'Barcode', 'Unit', 'Qty Sold', 'Revenue', 'Avg Price'];
+        for (final r in allRows) {
+          if (r is ItemSalesRow) {
+            exportRows.add([r.itemName, r.barcode, r.unit, r.qtySold, r.revenue, r.avgPrice]);
+          }
+        }
+        break;
+      case SalesReportType.categorySales:
+        headers = ['Category', 'Items', 'Qty Sold', 'Revenue', '% of Total'];
+        for (final r in allRows) {
+          if (r is CategorySalesRow) {
+            exportRows.add([r.category, r.itemCount, r.qtySold, r.revenue, '${r.percentOfTotal.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case SalesReportType.paymentReport:
+        headers = ['Payment Mode', 'Transactions', 'Total Amount', '% Share'];
+        for (final r in allRows) {
+          if (r is PaymentReportRow) {
+            exportRows.add([r.paymentMode, r.transactions, r.totalAmount, '${r.percentShare.toStringAsFixed(1)}%']);
+          }
+        }
+        break;
+      case SalesReportType.hourWiseSales:
+        headers = ['Hour Slot', 'Orders', 'Total Sales', 'Avg Bill', 'Peak'];
+        for (final r in allRows) {
+          if (r is HourWiseSalesRow) {
+            exportRows.add([r.hourSlot, r.orders, r.totalSales, r.avgBill, r.isPeak ? 'Yes' : 'No']);
+          }
+        }
+        break;
+    }
+
+    final pdfService = ServiceReportPdf();
+    await pdfService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 

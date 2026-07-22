@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_user.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_report_pdf.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Cashier Report Types
@@ -475,31 +477,125 @@ class ControllerCashierReport extends GetxController {
   // Export Actions
   // ═════════════════════════════════════════════════════════════════════════
 
-  void exportExcel() {
-    final typeName = rxReportType.value.label;
-    Get.snackbar(
-      'Export Excel',
-      '$typeName Cashier Excel export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportExcel() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Cashier Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSelectedCashierId.value != null) {
+      final user = rxCashiersList.firstWhereOrNull((u) => u.id == rxSelectedCashierId.value);
+      if (user != null) {
+        final userName = (user.username != null && user.username!.isNotEmpty)
+            ? user.username!
+            : '${user.first ?? ''} ${user.last ?? ''}'.trim();
+        filters['Cashier'] = userName.isNotEmpty ? userName : 'User #${user.id}';
+      }
+    }
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case CashierReportType.cashierSales:
+        headers = ['Cashier Name', 'System Role', 'Bills Generated', 'Sales Revenue', 'Tax Collected', 'Discount Given', 'Avg Ticket'];
+        for (final r in allRows) {
+          if (r is CashierSalesRow) {
+            exportRows.add([r.cashierName, r.role, r.billsCount, r.totalSales, r.taxCollected, r.discountGiven, r.avgTicket]);
+          }
+        }
+        break;
+      case CashierReportType.cashierShift:
+        headers = ['Shift Date', 'Cashier Name', 'Shift Status', 'Cash Sales', 'Online Sales', 'Total Drawer'];
+        for (final r in allRows) {
+          if (r is CashierShiftRow) {
+            exportRows.add([r.date, r.cashierName, r.status, r.cashSales, r.onlineSales, r.totalCollected]);
+          }
+        }
+        break;
+    }
+
+    final excelService = ServiceItemExcel();
+    await excelService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 
-  void exportPdf() {
-    final typeName = rxReportType.value.label;
-    Get.snackbar(
-      'Export PDF',
-      '$typeName Cashier PDF export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportPdf() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Cashier Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSelectedCashierId.value != null) {
+      final user = rxCashiersList.firstWhereOrNull((u) => u.id == rxSelectedCashierId.value);
+      if (user != null) {
+        final userName = (user.username != null && user.username!.isNotEmpty)
+            ? user.username!
+            : '${user.first ?? ''} ${user.last ?? ''}'.trim();
+        filters['Cashier'] = userName.isNotEmpty ? userName : 'User #${user.id}';
+      }
+    }
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case CashierReportType.cashierSales:
+        headers = ['Cashier Name', 'System Role', 'Bills Generated', 'Sales Revenue', 'Tax Collected', 'Discount Given', 'Avg Ticket'];
+        for (final r in allRows) {
+          if (r is CashierSalesRow) {
+            exportRows.add([r.cashierName, r.role, r.billsCount, r.totalSales, r.taxCollected, r.discountGiven, r.avgTicket]);
+          }
+        }
+        break;
+      case CashierReportType.cashierShift:
+        headers = ['Shift Date', 'Cashier Name', 'Shift Status', 'Cash Sales', 'Online Sales', 'Total Drawer'];
+        for (final r in allRows) {
+          if (r is CashierShiftRow) {
+            exportRows.add([r.date, r.cashierName, r.status, r.cashSales, r.onlineSales, r.totalCollected]);
+          }
+        }
+        break;
+    }
+
+    final pdfService = ServiceReportPdf();
+    await pdfService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 }

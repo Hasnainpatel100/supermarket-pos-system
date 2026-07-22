@@ -6,7 +6,9 @@ import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_purchase.dart';
 import '../../../../model/entity_purchase_item.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_report_pdf.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Return Report Types
@@ -403,31 +405,107 @@ class ControllerReturnReport extends GetxController {
   // Export Actions
   // ═════════════════════════════════════════════════════════════════════════
 
-  void exportExcel() {
-    final typeName = rxReportType.value.label;
-    Get.snackbar(
-      'Export Excel',
-      '$typeName Return Excel export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportExcel() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Return Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case ReturnReportType.salesReturn:
+        headers = ['Return Date', 'Invoice No', 'Customer Name', 'Total Items', 'Refunded Amount', 'Reason / Notes'];
+        for (final r in allRows) {
+          if (r is SalesReturnRow) {
+            exportRows.add([r.date, r.billNo, r.customer, r.itemsCount, r.refundAmount, r.reason]);
+          }
+        }
+        break;
+      case ReturnReportType.purchaseReturn:
+        headers = ['Return Date', 'PO Number', 'Supplier Name', 'Total Items', 'Refund Value', 'Remarks / Notes'];
+        for (final r in allRows) {
+          if (r is PurchaseReturnRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplier, r.itemsCount, r.refundAmount, r.notes]);
+          }
+        }
+        break;
+    }
+
+    final excelService = ServiceItemExcel();
+    await excelService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 
-  void exportPdf() {
-    final typeName = rxReportType.value.label;
-    Get.snackbar(
-      'Export PDF',
-      '$typeName Return PDF export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportPdf() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Return Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case ReturnReportType.salesReturn:
+        headers = ['Return Date', 'Invoice No', 'Customer Name', 'Total Items', 'Refunded Amount', 'Reason / Notes'];
+        for (final r in allRows) {
+          if (r is SalesReturnRow) {
+            exportRows.add([r.date, r.billNo, r.customer, r.itemsCount, r.refundAmount, r.reason]);
+          }
+        }
+        break;
+      case ReturnReportType.purchaseReturn:
+        headers = ['Return Date', 'PO Number', 'Supplier Name', 'Total Items', 'Refund Value', 'Remarks / Notes'];
+        for (final r in allRows) {
+          if (r is PurchaseReturnRow) {
+            exportRows.add([r.date, r.purchaseNo, r.supplier, r.itemsCount, r.refundAmount, r.notes]);
+          }
+        }
+        break;
+    }
+
+    final pdfService = ServiceReportPdf();
+    await pdfService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 }

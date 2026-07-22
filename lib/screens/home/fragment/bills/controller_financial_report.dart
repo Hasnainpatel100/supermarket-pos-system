@@ -9,7 +9,9 @@ import '../../../../model/entity_finance_transaction.dart';
 import '../../../../model/entity_user.dart';
 import '../../../../model/entity_item.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_report_pdf.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Financial Report Types
@@ -640,31 +642,123 @@ class ControllerFinancialReport extends GetxController {
   // Export Actions
   // ═════════════════════════════════════════════════════════════════════════
 
-  void exportExcel() {
-    final typeName = rxReportType.value.label;
-    Get.snackbar(
-      'Export Excel',
-      '$typeName Financial Excel export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportExcel() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Financial Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case FinancialReportType.paymentCollection:
+        headers = ['Collection Date', 'Payment Method', 'Document Bill', 'Customer Name', 'Amount Collected', 'Cashier Duty'];
+        for (final r in allRows) {
+          if (r is PaymentCollectionRow) {
+            exportRows.add([r.date, r.paymentMethod, r.billNo, r.customerName, r.amount, r.cashier]);
+          }
+        }
+        break;
+      case FinancialReportType.dailyCashClosing:
+        headers = ['Reconcile Date', 'Cashier on Duty', 'Opening Cash', 'Cash Sales (+)', 'Cash Returns (-)', 'Cash Expenses (-)', 'Closing Drawer'];
+        for (final r in allRows) {
+          if (r is DailyCashClosingRow) {
+            exportRows.add([r.date, r.cashierName, r.openingCash, r.cashSales, r.cashReturns, r.cashExpenses, r.closingCash]);
+          }
+        }
+        break;
+      case FinancialReportType.taxGST:
+        headers = ['Transaction Date', 'Doc Number', 'Transaction Type', 'Taxable Amount', 'GST Rate', 'GST Amount', 'Total Invoice'];
+        for (final r in allRows) {
+          if (r is TaxGstRow) {
+            exportRows.add([r.date, r.docNo, r.txnType, r.taxableAmount, '${r.gstRate}%', r.gstAmount, r.totalAmount]);
+          }
+        }
+        break;
+    }
+
+    final excelService = ServiceItemExcel();
+    await excelService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 
-  void exportPdf() {
-    final typeName = rxReportType.value.label;
-    Get.snackbar(
-      'Export PDF',
-      '$typeName Financial PDF export coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      duration: const Duration(seconds: 2),
+  void exportPdf() async {
+    final type = rxReportType.value;
+    final reportTitle = 'Financial Report - ${type.label}';
+    final allRows = _fullRows.isNotEmpty ? _fullRows : rxRows;
+
+    final fmt = DateFormat('dd MMM yyyy');
+    final filters = <String, String>{
+      'Report Type': type.label,
+      'Date Range': '${fmt.format(rxStartDate.value)} → ${fmt.format(rxEndDate.value)}',
+      'Branch': rxBranch.value,
+    };
+    if (rxSearchQuery.value.isNotEmpty) {
+      filters['Search Query'] = rxSearchQuery.value;
+    }
+
+    final summary = <String, dynamic>{};
+    for (final card in rxSummaryCards) {
+      summary[card.label] = card.value;
+    }
+
+    List<String> headers = [];
+    List<List<dynamic>> exportRows = [];
+
+    switch (type) {
+      case FinancialReportType.paymentCollection:
+        headers = ['Collection Date', 'Payment Method', 'Document Bill', 'Customer Name', 'Amount Collected', 'Cashier Duty'];
+        for (final r in allRows) {
+          if (r is PaymentCollectionRow) {
+            exportRows.add([r.date, r.paymentMethod, r.billNo, r.customerName, r.amount, r.cashier]);
+          }
+        }
+        break;
+      case FinancialReportType.dailyCashClosing:
+        headers = ['Reconcile Date', 'Cashier on Duty', 'Opening Cash', 'Cash Sales (+)', 'Cash Returns (-)', 'Cash Expenses (-)', 'Closing Drawer'];
+        for (final r in allRows) {
+          if (r is DailyCashClosingRow) {
+            exportRows.add([r.date, r.cashierName, r.openingCash, r.cashSales, r.cashReturns, r.cashExpenses, r.closingCash]);
+          }
+        }
+        break;
+      case FinancialReportType.taxGST:
+        headers = ['Transaction Date', 'Doc Number', 'Transaction Type', 'Taxable Amount', 'GST Rate', 'GST Amount', 'Total Invoice'];
+        for (final r in allRows) {
+          if (r is TaxGstRow) {
+            exportRows.add([r.date, r.docNo, r.txnType, r.taxableAmount, '${r.gstRate}%', r.gstAmount, r.totalAmount]);
+          }
+        }
+        break;
+    }
+
+    final pdfService = ServiceReportPdf();
+    await pdfService.exportReport(
+      title: reportTitle,
+      headers: headers,
+      rows: exportRows,
+      appliedFilters: filters,
+      summaryData: summary,
     );
   }
 }

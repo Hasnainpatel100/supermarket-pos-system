@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -199,6 +200,18 @@ class FragSupplierReport extends StatelessWidget {
             borderColor: Colors.green.shade200,
             onTap: controller.exportExcel,
           ),
+
+          if (kDebugMode) ...[
+            const SizedBox(width: 6),
+            _exportButton(
+              icon: Icons.file_upload_rounded,
+              label: 'Import Excel',
+              color: Colors.amber.shade900,
+              bgColor: Colors.amber.shade50,
+              borderColor: Colors.amber.shade200,
+              onTap: controller.importTestExcel,
+            ),
+          ],
 
           const SizedBox(width: 6),
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -242,6 +243,15 @@ class FragHomeReport extends StatelessWidget {
                   color: Colors.green.shade700,
                   onTap: controller.exportExcel,
                 ),
+                if (kDebugMode) ...[
+                  const SizedBox(width: 8),
+                  _ActionChip(
+                    icon: Icons.file_upload_rounded,
+                    label: 'Import Excel (Test)',
+                    color: Colors.amber.shade900,
+                    onTap: controller.importTestExcel,
+                  ),
+                ],
                 const SizedBox(width: 8),
                 _ActionChip(
                   icon: Icons.print_rounded,

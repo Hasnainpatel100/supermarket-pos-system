@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
-import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_purchase.dart';
 import '../../../../model/entity_purchase_item.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
+import '../../../../service/service_report_excel_import.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Return Report Types
@@ -455,6 +455,126 @@ class ControllerReturnReport extends GetxController {
       appliedFilters: filters,
       summaryData: summary,
     );
+  }
+
+  // ── Import Excel (Development/Test Only) ──
+
+  List<String> getHeadersForCurrentReport() {
+    switch (rxReportType.value) {
+      case ReturnReportType.salesReturn:
+        return ['Return Date', 'Invoice No', 'Customer Name', 'Total Items', 'Refunded Amount', 'Reason / Notes'];
+      case ReturnReportType.purchaseReturn:
+        return ['Return Date', 'PO Number', 'Supplier Name', 'Total Items', 'Refund Value', 'Remarks / Notes'];
+    }
+  }
+
+  Future<void> importTestExcel() async {
+    final type = rxReportType.value;
+    final expectedHeaders = getHeadersForCurrentReport();
+
+    final rawRows = await ServiceReportExcelImport.importAndValidate(
+      expectedHeaders: expectedHeaders,
+    );
+    if (rawRows == null) return;
+
+    final testRows = <dynamic>[];
+    switch (type) {
+      case ReturnReportType.salesReturn:
+        for (final raw in rawRows) {
+          testRows.add(SalesReturnRow(
+            date: raw['Return Date']?.toString() ?? '-',
+            billNo: raw['Invoice No']?.toString() ?? '-',
+            customer: raw['Customer Name']?.toString() ?? '-',
+            itemsCount: int.tryParse(raw['Total Items']?.toString() ?? '0') ?? 0,
+            refundAmount: double.tryParse(raw['Refunded Amount']?.toString() ?? '0') ?? 0.0,
+            reason: raw['Reason / Notes']?.toString() ?? '-',
+            bill: EntityBill(),
+          ));
+        }
+        break;
+      case ReturnReportType.purchaseReturn:
+        for (final raw in rawRows) {
+          testRows.add(PurchaseReturnRow(
+            date: raw['Return Date']?.toString() ?? '-',
+            purchaseNo: raw['PO Number']?.toString() ?? '-',
+            supplier: raw['Supplier Name']?.toString() ?? '-',
+            itemsCount: double.tryParse(raw['Total Items']?.toString() ?? '0') ?? 0.0,
+            refundAmount: double.tryParse(raw['Refund Value']?.toString() ?? '0') ?? 0.0,
+            notes: raw['Remarks / Notes']?.toString() ?? '-',
+            purchase: EntityPurchase(),
+          ));
+        }
+        break;
+    }
+
+    _fullRows = testRows;
+    currentPage.value = 0;
+    _recomputeSummaryCardsForTestRows();
+    _applyPagination();
+  }
+
+  final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+
+  void _recomputeSummaryCardsForTestRows() {
+    final type = rxReportType.value;
+    switch (type) {
+      case ReturnReportType.salesReturn:
+        double totalRefund = 0;
+        int totalItems = 0;
+        for (final r in _fullRows.cast<SalesReturnRow>()) {
+          totalRefund += r.refundAmount;
+          totalItems += r.itemsCount;
+        }
+        rxSummaryCards.assignAll([
+          ReturnSummaryCardData(
+            label: 'Sales Returns',
+            value: _fullRows.length.toString(),
+            icon: Icons.assignment_return_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.red.shade500],
+          ),
+          ReturnSummaryCardData(
+            label: 'Total Refunded',
+            value: _currFmt.format(totalRefund),
+            icon: Icons.money_off_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+          ReturnSummaryCardData(
+            label: 'Items Returned',
+            value: totalItems.toString(),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.blue.shade500],
+          ),
+        ]);
+        break;
+      case ReturnReportType.purchaseReturn:
+        double totalRefund = 0;
+        double totalItems = 0;
+        for (final r in _fullRows.cast<PurchaseReturnRow>()) {
+          totalRefund += r.refundAmount;
+          totalItems += r.itemsCount;
+        }
+        rxSummaryCards.assignAll([
+          ReturnSummaryCardData(
+            label: 'Purchase Returns',
+            value: _fullRows.length.toString(),
+            icon: Icons.assignment_return_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ReturnSummaryCardData(
+            label: 'Refund Received',
+            value: _currFmt.format(totalRefund),
+            icon: Icons.account_balance_wallet_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          ReturnSummaryCardData(
+            label: 'Items Returned',
+            value: totalItems.toStringAsFixed(0),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
+        break;
+    }
   }
 
   void exportPdf() async {

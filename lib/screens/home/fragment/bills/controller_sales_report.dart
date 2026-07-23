@@ -7,6 +7,7 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
+import '../../../../service/service_report_excel_import.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Report-type enum
@@ -172,7 +173,6 @@ class SummaryCardData {
 
 class ControllerSalesReport extends GetxController {
   late final Box<EntityBill> _boxBill;
-  late final Box<EntityBillItem> _boxBillItem;
 
   // ── Report type ─────────────────────────────────────────────────────────
   final Rx<SalesReportType> rxReportType = SalesReportType.salesSummary.obs;
@@ -215,7 +215,6 @@ class ControllerSalesReport extends GetxController {
     super.onInit();
     final ob = Get.find<ServiceObjectBox>();
     _boxBill = ob.box<EntityBill>();
-    _boxBillItem = ob.box<EntityBillItem>();
     _setDateFilter(SalesDateFilter.today);
 
     _searchWorker = debounce(
@@ -357,6 +356,302 @@ class ControllerSalesReport extends GetxController {
       appliedFilters: filters,
       summaryData: summary,
     );
+  }
+
+  // ── Import Excel (Development/Test Only) ──
+
+  List<String> getHeadersForCurrentReport() {
+    switch (rxReportType.value) {
+      case SalesReportType.salesSummary:
+        return ['Date', 'Orders', 'Total Sales', 'Discount', 'Tax', 'Net Sales'];
+      case SalesReportType.salesDetail:
+        return ['Date & Time', 'Bill No', 'Customer', 'Payment', 'Items', 'Total', 'Status'];
+      case SalesReportType.itemSales:
+        return ['Item Name', 'Barcode', 'Unit', 'Qty Sold', 'Revenue', 'Avg Price'];
+      case SalesReportType.categorySales:
+        return ['Category', 'Items', 'Qty Sold', 'Revenue', '% of Total'];
+      case SalesReportType.paymentReport:
+        return ['Payment Mode', 'Transactions', 'Total Amount', '% Share'];
+      case SalesReportType.hourWiseSales:
+        return ['Hour Slot', 'Orders', 'Total Sales', 'Avg Bill', 'Peak'];
+    }
+  }
+
+  Future<void> importTestExcel() async {
+    final type = rxReportType.value;
+    final expectedHeaders = getHeadersForCurrentReport();
+
+    final rawRows = await ServiceReportExcelImport.importAndValidate(
+      expectedHeaders: expectedHeaders,
+    );
+    if (rawRows == null) return;
+
+    final testRows = <dynamic>[];
+    switch (type) {
+      case SalesReportType.salesSummary:
+        for (final raw in rawRows) {
+          testRows.add(SalesSummaryRow(
+            date: raw['Date']?.toString() ?? '-',
+            orders: int.tryParse(raw['Orders']?.toString() ?? '0') ?? 0,
+            totalSales: double.tryParse(raw['Total Sales']?.toString() ?? '0') ?? 0.0,
+            discount: double.tryParse(raw['Discount']?.toString() ?? '0') ?? 0.0,
+            tax: double.tryParse(raw['Tax']?.toString() ?? '0') ?? 0.0,
+            netSales: double.tryParse(raw['Net Sales']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+      case SalesReportType.salesDetail:
+        for (final raw in rawRows) {
+          testRows.add(SalesDetailRow(
+            dateTime: raw['Date & Time']?.toString() ?? '-',
+            billNo: raw['Bill No']?.toString() ?? '-',
+            customer: raw['Customer']?.toString() ?? '-',
+            payment: raw['Payment']?.toString() ?? '-',
+            items: int.tryParse(raw['Items']?.toString() ?? '0') ?? 0,
+            total: double.tryParse(raw['Total']?.toString() ?? '0') ?? 0.0,
+            status: raw['Status']?.toString() ?? 'COMPLETED',
+            bill: EntityBill(),
+          ));
+        }
+        break;
+      case SalesReportType.itemSales:
+        for (final raw in rawRows) {
+          testRows.add(ItemSalesRow(
+            itemName: raw['Item Name']?.toString() ?? '-',
+            barcode: raw['Barcode']?.toString() ?? '-',
+            unit: raw['Unit']?.toString() ?? '-',
+            qtySold: int.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0,
+            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
+            avgPrice: double.tryParse(raw['Avg Price']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+      case SalesReportType.categorySales:
+        for (final raw in rawRows) {
+          final pctStr = raw['% of Total']?.toString().replaceAll('%', '').trim() ?? '0';
+          testRows.add(CategorySalesRow(
+            category: raw['Category']?.toString() ?? '-',
+            itemCount: int.tryParse(raw['Items']?.toString() ?? '0') ?? 0,
+            qtySold: int.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0,
+            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
+            percentOfTotal: double.tryParse(pctStr) ?? 0.0,
+          ));
+        }
+        break;
+      case SalesReportType.paymentReport:
+        for (final raw in rawRows) {
+          final pctStr = raw['% Share']?.toString().replaceAll('%', '').trim() ?? '0';
+          testRows.add(PaymentReportRow(
+            paymentMode: raw['Payment Mode']?.toString() ?? '-',
+            transactions: int.tryParse(raw['Transactions']?.toString() ?? '0') ?? 0,
+            totalAmount: double.tryParse(raw['Total Amount']?.toString() ?? '0') ?? 0.0,
+            percentShare: double.tryParse(pctStr) ?? 0.0,
+          ));
+        }
+        break;
+      case SalesReportType.hourWiseSales:
+        for (final raw in rawRows) {
+          final isPeakStr = raw['Peak']?.toString().toLowerCase() ?? '';
+          testRows.add(HourWiseSalesRow(
+            hourSlot: raw['Hour Slot']?.toString() ?? '-',
+            orders: int.tryParse(raw['Orders']?.toString() ?? '0') ?? 0,
+            totalSales: double.tryParse(raw['Total Sales']?.toString() ?? '0') ?? 0.0,
+            avgBill: double.tryParse(raw['Avg Bill']?.toString() ?? '0') ?? 0.0,
+            isPeak: isPeakStr == 'yes' || isPeakStr == 'true',
+          ));
+        }
+        break;
+    }
+
+    _fullRows = testRows;
+    currentPage.value = 0;
+    _recomputeSummaryCardsForTestRows();
+    _applyPagination();
+  }
+
+  void _recomputeSummaryCardsForTestRows() {
+    final type = rxReportType.value;
+    switch (type) {
+      case SalesReportType.salesSummary:
+        double totalSales = 0, totalTax = 0;
+        int totalOrders = 0;
+        for (final r in _fullRows.cast<SalesSummaryRow>()) {
+          totalSales += r.totalSales;
+          totalTax += r.tax;
+          totalOrders += r.orders;
+        }
+        rxSummaryCards.assignAll([
+          SummaryCardData(
+            label: 'Total Sales',
+            value: _currFmt.format(totalSales),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SummaryCardData(
+            label: 'Total Orders',
+            value: totalOrders.toString(),
+            icon: Icons.receipt_long_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          SummaryCardData(
+            label: 'Avg Bill',
+            value: _currFmt.format(totalOrders > 0 ? totalSales / totalOrders : 0),
+            icon: Icons.analytics_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+          SummaryCardData(
+            label: 'Total Tax',
+            value: _currFmt.format(totalTax),
+            icon: Icons.account_balance_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
+        break;
+      case SalesReportType.salesDetail:
+        double totalSales = 0;
+        int paidCount = 0, dueCount = 0;
+        for (final r in _fullRows.cast<SalesDetailRow>()) {
+          totalSales += r.total;
+          if (r.status.toUpperCase() == 'PAID' || r.status.toUpperCase() == 'COMPLETED') {
+            paidCount++;
+          } else {
+            dueCount++;
+          }
+        }
+        rxSummaryCards.assignAll([
+          SummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalSales),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SummaryCardData(
+            label: 'Total Bills',
+            value: _fullRows.length.toString(),
+            icon: Icons.receipt_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          SummaryCardData(
+            label: 'Paid / Completed',
+            value: paidCount.toString(),
+            icon: Icons.check_circle_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+          SummaryCardData(
+            label: 'Pending / Due',
+            value: dueCount.toString(),
+            icon: Icons.pending_actions_rounded,
+            gradientColors: [Colors.amber.shade600, Colors.orange.shade500],
+          ),
+        ]);
+        break;
+      case SalesReportType.itemSales:
+        int totalQty = 0;
+        double totalRev = 0;
+        for (final r in _fullRows.cast<ItemSalesRow>()) {
+          totalQty += r.qtySold;
+          totalRev += r.revenue;
+        }
+        rxSummaryCards.assignAll([
+          SummaryCardData(
+            label: 'Items Sold Qty',
+            value: totalQty.toString(),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SummaryCardData(
+            label: 'Unique Items',
+            value: _fullRows.length.toString(),
+            icon: Icons.category_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          SummaryCardData(
+            label: 'Total Item Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.monetization_on_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
+        break;
+      case SalesReportType.categorySales:
+        double totalRev = 0;
+        int totalQty = 0;
+        for (final r in _fullRows.cast<CategorySalesRow>()) {
+          totalRev += r.revenue;
+          totalQty += r.qtySold;
+        }
+        rxSummaryCards.assignAll([
+          SummaryCardData(
+            label: 'Categories',
+            value: _fullRows.length.toString(),
+            icon: Icons.category_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SummaryCardData(
+            label: 'Total Category Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          SummaryCardData(
+            label: 'Total Qty Sold',
+            value: totalQty.toString(),
+            icon: Icons.shopping_bag_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+        ]);
+        break;
+      case SalesReportType.paymentReport:
+        double totalAmt = 0;
+        int totalTxns = 0;
+        for (final r in _fullRows.cast<PaymentReportRow>()) {
+          totalAmt += r.totalAmount;
+          totalTxns += r.transactions;
+        }
+        rxSummaryCards.assignAll([
+          SummaryCardData(
+            label: 'Total Collections',
+            value: _currFmt.format(totalAmt),
+            icon: Icons.account_balance_wallet_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SummaryCardData(
+            label: 'Transactions',
+            value: totalTxns.toString(),
+            icon: Icons.swap_horiz_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          SummaryCardData(
+            label: 'Payment Methods',
+            value: _fullRows.length.toString(),
+            icon: Icons.credit_card_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
+        break;
+      case SalesReportType.hourWiseSales:
+        double totalSales = 0;
+        int totalOrders = 0;
+        for (final r in _fullRows.cast<HourWiseSalesRow>()) {
+          totalSales += r.totalSales;
+          totalOrders += r.orders;
+        }
+        rxSummaryCards.assignAll([
+          SummaryCardData(
+            label: 'Total Hourly Sales',
+            value: _currFmt.format(totalSales),
+            icon: Icons.schedule_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SummaryCardData(
+            label: 'Total Orders',
+            value: totalOrders.toString(),
+            icon: Icons.receipt_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
+        break;
+    }
   }
 
   void exportPdf() async {

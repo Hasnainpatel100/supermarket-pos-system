@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
-import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_item.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
+import '../../../../service/service_report_excel_import.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Profit Report Types
@@ -835,6 +835,240 @@ class ControllerProfitReport extends GetxController {
       appliedFilters: filters,
       summaryData: summary,
     );
+  }
+
+  // ── Import Excel (Development/Test Only) ──
+
+  List<String> getHeadersForCurrentReport() {
+    switch (rxReportType.value) {
+      case ProfitReportType.profitSummary:
+        return ['Metric KPI', 'Value', 'Details / Description'];
+      case ProfitReportType.itemProfit:
+        return ['Barcode/SKU', 'Item Name', 'Qty Sold', 'Revenue', 'Product Cost', 'Gross Profit', 'Margin %'];
+      case ProfitReportType.categoryProfit:
+        return ['Category Name', 'Qty Sold', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+      case ProfitReportType.brandProfit:
+        return ['Brand Name', 'Qty Sold', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+      case ProfitReportType.dailyProfit:
+        return ['Date', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+      case ProfitReportType.monthlyProfit:
+        return ['Month', 'Revenue', 'Cost', 'Gross Profit', 'Margin %'];
+    }
+  }
+
+  Future<void> importTestExcel() async {
+    final type = rxReportType.value;
+    final expectedHeaders = getHeadersForCurrentReport();
+
+    final rawRows = await ServiceReportExcelImport.importAndValidate(
+      expectedHeaders: expectedHeaders,
+    );
+    if (rawRows == null) return;
+
+    final testRows = <dynamic>[];
+    switch (type) {
+      case ProfitReportType.profitSummary:
+        for (final raw in rawRows) {
+          testRows.add(ProfitSummaryRow(
+            metric: raw['Metric KPI']?.toString() ?? '-',
+            value: double.tryParse(raw['Value']?.toString().replaceAll('%', '').trim() ?? '0') ?? 0.0,
+            details: raw['Details / Description']?.toString() ?? '-',
+          ));
+        }
+        break;
+      case ProfitReportType.itemProfit:
+        for (final raw in rawRows) {
+          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
+          testRows.add(ItemProfitRow(
+            sku: raw['Barcode/SKU']?.toString() ?? '-',
+            itemName: raw['Item Name']?.toString() ?? '-',
+            quantitySold: double.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0.0,
+            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
+            cost: double.tryParse(raw['Product Cost']?.toString() ?? '0') ?? 0.0,
+            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
+            margin: double.tryParse(mStr) ?? 0.0,
+          ));
+        }
+        break;
+      case ProfitReportType.categoryProfit:
+        for (final raw in rawRows) {
+          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
+          testRows.add(CategoryProfitRow(
+            categoryName: raw['Category Name']?.toString() ?? '-',
+            quantitySold: double.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0.0,
+            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
+            cost: double.tryParse(raw['Cost']?.toString() ?? '0') ?? 0.0,
+            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
+            margin: double.tryParse(mStr) ?? 0.0,
+          ));
+        }
+        break;
+      case ProfitReportType.brandProfit:
+        for (final raw in rawRows) {
+          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
+          testRows.add(BrandProfitRow(
+            brandName: raw['Brand Name']?.toString() ?? '-',
+            quantitySold: double.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0.0,
+            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
+            cost: double.tryParse(raw['Cost']?.toString() ?? '0') ?? 0.0,
+            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
+            margin: double.tryParse(mStr) ?? 0.0,
+          ));
+        }
+        break;
+      case ProfitReportType.dailyProfit:
+        for (final raw in rawRows) {
+          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
+          testRows.add(DailyProfitRow(
+            date: raw['Date']?.toString() ?? '-',
+            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
+            cost: double.tryParse(raw['Cost']?.toString() ?? '0') ?? 0.0,
+            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
+            margin: double.tryParse(mStr) ?? 0.0,
+          ));
+        }
+        break;
+      case ProfitReportType.monthlyProfit:
+        for (final raw in rawRows) {
+          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
+          testRows.add(MonthlyProfitRow(
+            month: raw['Month']?.toString() ?? '-',
+            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
+            cost: double.tryParse(raw['Cost']?.toString() ?? '0') ?? 0.0,
+            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
+            margin: double.tryParse(mStr) ?? 0.0,
+          ));
+        }
+        break;
+    }
+
+    _fullRows = testRows;
+    currentPage.value = 0;
+    _recomputeSummaryCardsForTestRows();
+    _applyPagination();
+  }
+
+  final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+
+  void _recomputeSummaryCardsForTestRows() {
+    final type = rxReportType.value;
+    switch (type) {
+      case ProfitReportType.profitSummary:
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Metrics',
+            value: _fullRows.length.toString(),
+            icon: Icons.analytics_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+        ]);
+        break;
+      case ProfitReportType.itemProfit:
+        double totalRev = 0, totalProfit = 0;
+        for (final r in _fullRows.cast<ItemProfitRow>()) {
+          totalRev += r.revenue;
+          totalProfit += r.grossProfit;
+        }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
+        break;
+      case ProfitReportType.categoryProfit:
+        double totalRev = 0, totalProfit = 0;
+        for (final r in _fullRows.cast<CategoryProfitRow>()) {
+          totalRev += r.revenue;
+          totalProfit += r.grossProfit;
+        }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
+        break;
+      case ProfitReportType.brandProfit:
+        double totalRev = 0, totalProfit = 0;
+        for (final r in _fullRows.cast<BrandProfitRow>()) {
+          totalRev += r.revenue;
+          totalProfit += r.grossProfit;
+        }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
+        break;
+      case ProfitReportType.dailyProfit:
+        double totalRev = 0, totalProfit = 0;
+        for (final r in _fullRows.cast<DailyProfitRow>()) {
+          totalRev += r.revenue;
+          totalProfit += r.grossProfit;
+        }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
+        break;
+      case ProfitReportType.monthlyProfit:
+        double totalRev = 0, totalProfit = 0;
+        for (final r in _fullRows.cast<MonthlyProfitRow>()) {
+          totalRev += r.revenue;
+          totalProfit += r.grossProfit;
+        }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
+        break;
+    }
   }
 
   void exportPdf() async {

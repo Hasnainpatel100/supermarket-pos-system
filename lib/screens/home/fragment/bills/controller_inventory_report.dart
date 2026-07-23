@@ -9,6 +9,7 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
+import '../../../../service/service_report_excel_import.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Inventory Report Types
@@ -1132,6 +1133,323 @@ class ControllerInventoryReport extends GetxController {
       appliedFilters: filters,
       summaryData: summary,
     );
+  }
+
+  // ── Import Excel (Development/Test Only) ──
+
+  List<String> getHeadersForCurrentReport() {
+    switch (rxReportType.value) {
+      case InventoryReportType.currentStock:
+        return ['SKU/Barcode', 'Name', 'Category', 'Unit', 'Quantity', 'Cost Price', 'Selling Price', 'Stock Value'];
+      case InventoryReportType.lowStock:
+        return ['SKU/Barcode', 'Name', 'Category', 'Current Qty', 'Reorder Level', 'Shortage'];
+      case InventoryReportType.outOfStock:
+        return ['SKU/Barcode', 'Name', 'Category', 'Cost Price', 'Last Purchase', 'Last Sale'];
+      case InventoryReportType.stockMovement:
+        return ['Date & Time', 'Item Name', 'Type', 'Quantity', 'Performed By', 'Reference/Remarks'];
+      case InventoryReportType.stockAdjustment:
+        return ['Date & Time', 'Item Name', 'Prev Qty', 'New Qty', 'Difference', 'Reason', 'User'];
+      case InventoryReportType.stockValuation:
+        return ['SKU/Barcode', 'Name', 'Quantity', 'Cost Price', 'Selling Price', 'Cost Value', 'Selling Value', 'Expected Profit'];
+      case InventoryReportType.expiry:
+        return ['Item Name', 'Batch No', 'Expiry Date', 'Quantity', 'Days Expired'];
+      case InventoryReportType.nearExpiry:
+        return ['Item Name', 'Batch No', 'Expiry Date', 'Quantity', 'Days Remaining'];
+    }
+  }
+
+  Future<void> importTestExcel() async {
+    final type = rxReportType.value;
+    final expectedHeaders = getHeadersForCurrentReport();
+
+    final rawRows = await ServiceReportExcelImport.importAndValidate(
+      expectedHeaders: expectedHeaders,
+    );
+    if (rawRows == null) return;
+
+    final testRows = <dynamic>[];
+    switch (type) {
+      case InventoryReportType.currentStock:
+        for (final raw in rawRows) {
+          testRows.add(CurrentStockRow(
+            sku: raw['SKU/Barcode']?.toString() ?? '-',
+            name: raw['Name']?.toString() ?? '-',
+            category: raw['Category']?.toString() ?? '-',
+            unit: raw['Unit']?.toString() ?? '-',
+            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
+            costPrice: double.tryParse(raw['Cost Price']?.toString() ?? '0') ?? 0.0,
+            sellingPrice: double.tryParse(raw['Selling Price']?.toString() ?? '0') ?? 0.0,
+            stockValue: double.tryParse(raw['Stock Value']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+      case InventoryReportType.lowStock:
+        for (final raw in rawRows) {
+          testRows.add(LowStockRow(
+            sku: raw['SKU/Barcode']?.toString() ?? '-',
+            name: raw['Name']?.toString() ?? '-',
+            category: raw['Category']?.toString() ?? '-',
+            quantity: int.tryParse(raw['Current Qty']?.toString() ?? '0') ?? 0,
+            reorderLevel: int.tryParse(raw['Reorder Level']?.toString() ?? '0') ?? 0,
+            shortage: int.tryParse(raw['Shortage']?.toString() ?? '0') ?? 0,
+          ));
+        }
+        break;
+      case InventoryReportType.outOfStock:
+        for (final raw in rawRows) {
+          testRows.add(OutOfStockRow(
+            sku: raw['SKU/Barcode']?.toString() ?? '-',
+            name: raw['Name']?.toString() ?? '-',
+            category: raw['Category']?.toString() ?? '-',
+            costPrice: double.tryParse(raw['Cost Price']?.toString() ?? '0') ?? 0.0,
+            sellingPrice: double.tryParse(raw['Selling Price']?.toString() ?? '0') ?? 0.0,
+            lastPurchaseInfo: raw['Last Purchase']?.toString() ?? '-',
+            lastSaleInfo: raw['Last Sale']?.toString() ?? '-',
+          ));
+        }
+        break;
+      case InventoryReportType.stockMovement:
+        for (final raw in rawRows) {
+          testRows.add(StockMovementRow(
+            dateTime: raw['Date & Time']?.toString() ?? '-',
+            itemName: raw['Item Name']?.toString() ?? '-',
+            txnType: raw['Type']?.toString() ?? '-',
+            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
+            performedBy: raw['Performed By']?.toString() ?? '-',
+            reference: raw['Reference/Remarks']?.toString() ?? '-',
+          ));
+        }
+        break;
+      case InventoryReportType.stockAdjustment:
+        for (final raw in rawRows) {
+          testRows.add(StockAdjustmentRow(
+            dateTime: raw['Date & Time']?.toString() ?? '-',
+            itemName: raw['Item Name']?.toString() ?? '-',
+            previousQty: int.tryParse(raw['Prev Qty']?.toString() ?? '0') ?? 0,
+            newQty: int.tryParse(raw['New Qty']?.toString() ?? '0') ?? 0,
+            difference: int.tryParse(raw['Difference']?.toString() ?? '0') ?? 0,
+            reason: raw['Reason']?.toString() ?? '-',
+            user: raw['User']?.toString() ?? '-',
+          ));
+        }
+        break;
+      case InventoryReportType.stockValuation:
+        for (final raw in rawRows) {
+          testRows.add(StockValuationRow(
+            sku: raw['SKU/Barcode']?.toString() ?? '-',
+            name: raw['Name']?.toString() ?? '-',
+            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
+            costPrice: double.tryParse(raw['Cost Price']?.toString() ?? '0') ?? 0.0,
+            sellingPrice: double.tryParse(raw['Selling Price']?.toString() ?? '0') ?? 0.0,
+            costValue: double.tryParse(raw['Cost Value']?.toString() ?? '0') ?? 0.0,
+            sellingValue: double.tryParse(raw['Selling Value']?.toString() ?? '0') ?? 0.0,
+            expectedProfit: double.tryParse(raw['Expected Profit']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+      case InventoryReportType.expiry:
+        for (final raw in rawRows) {
+          testRows.add(ExpiryRow(
+            itemName: raw['Item Name']?.toString() ?? '-',
+            batchNo: raw['Batch No']?.toString() ?? '-',
+            expiryDate: raw['Expiry Date']?.toString() ?? '-',
+            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
+            daysExpired: int.tryParse(raw['Days Expired']?.toString() ?? '0') ?? 0,
+          ));
+        }
+        break;
+      case InventoryReportType.nearExpiry:
+        for (final raw in rawRows) {
+          testRows.add(NearExpiryRow(
+            itemName: raw['Item Name']?.toString() ?? '-',
+            batchNo: raw['Batch No']?.toString() ?? '-',
+            expiryDate: raw['Expiry Date']?.toString() ?? '-',
+            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
+            daysRemaining: int.tryParse(raw['Days Remaining']?.toString() ?? '0') ?? 0,
+          ));
+        }
+        break;
+    }
+
+    _fullRows = testRows;
+    currentPage.value = 0;
+    _recomputeSummaryCardsForTestRows();
+    _applyPagination();
+  }
+
+  final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+
+  void _recomputeSummaryCardsForTestRows() {
+    final type = rxReportType.value;
+    switch (type) {
+      case InventoryReportType.currentStock:
+        int totalItems = _fullRows.length;
+        int totalQty = 0;
+        double totalVal = 0;
+        for (final r in _fullRows.cast<CurrentStockRow>()) {
+          totalQty += r.quantity;
+          totalVal += r.stockValue;
+        }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Total Unique Items',
+            value: totalItems.toString(),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Quantity',
+            value: totalQty.toString(),
+            icon: Icons.format_list_numbered_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Stock Value',
+            value: _currFmt.format(totalVal),
+            icon: Icons.account_balance_wallet_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+        ]);
+        break;
+      case InventoryReportType.lowStock:
+        int totalShortage = 0;
+        for (final r in _fullRows.cast<LowStockRow>()) {
+          totalShortage += r.shortage;
+        }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Low Stock Items',
+            value: _fullRows.length.toString(),
+            icon: Icons.warning_amber_rounded,
+            gradientColors: [Colors.orange.shade600, Colors.red.shade400],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Shortage Qty',
+            value: totalShortage.toString(),
+            icon: Icons.trending_down_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+        ]);
+        break;
+      case InventoryReportType.outOfStock:
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Out of Stock Items',
+            value: _fullRows.length.toString(),
+            icon: Icons.production_quantity_limits_rounded,
+            gradientColors: [Colors.red.shade600, Colors.pink.shade600],
+          ),
+        ]);
+        break;
+      case InventoryReportType.stockMovement:
+        int totalMovement = 0;
+        for (final r in _fullRows.cast<StockMovementRow>()) {
+          totalMovement += r.quantity.abs();
+        }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Total Txns',
+            value: _fullRows.length.toString(),
+            icon: Icons.swap_vert_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Qty Moved',
+            value: totalMovement.toString(),
+            icon: Icons.move_to_inbox_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
+        break;
+      case InventoryReportType.stockAdjustment:
+        int totalDiff = 0;
+        for (final r in _fullRows.cast<StockAdjustmentRow>()) {
+          totalDiff += r.difference;
+        }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Total Adjustments',
+            value: _fullRows.length.toString(),
+            icon: Icons.edit_note_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.indigo.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Net Qty Diff',
+            value: totalDiff.toString(),
+            icon: Icons.tune_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.blue.shade500],
+          ),
+        ]);
+        break;
+      case InventoryReportType.stockValuation:
+        double totalCost = 0, totalRetail = 0, totalProfit = 0;
+        for (final r in _fullRows.cast<StockValuationRow>()) {
+          totalCost += r.costValue;
+          totalRetail += r.sellingValue;
+          totalProfit += r.expectedProfit;
+        }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Total Cost Value',
+            value: _currFmt.format(totalCost),
+            icon: Icons.payments_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Retail Value',
+            value: _currFmt.format(totalRetail),
+            icon: Icons.storefront_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Expected Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
+        break;
+      case InventoryReportType.expiry:
+        int totalExpired = 0;
+        for (final r in _fullRows.cast<ExpiryRow>()) {
+          totalExpired += r.quantity;
+        }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Expired Batches',
+            value: _fullRows.length.toString(),
+            icon: Icons.event_busy_rounded,
+            gradientColors: [Colors.red.shade600, Colors.orange.shade600],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Expired Qty',
+            value: totalExpired.toString(),
+            icon: Icons.delete_sweep_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+        ]);
+        break;
+      case InventoryReportType.nearExpiry:
+        int totalNearExpiry = 0;
+        for (final r in _fullRows.cast<NearExpiryRow>()) {
+          totalNearExpiry += r.quantity;
+        }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Near Expiry Batches',
+            value: _fullRows.length.toString(),
+            icon: Icons.notification_important_rounded,
+            gradientColors: [Colors.amber.shade600, Colors.orange.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Near Expiry Qty',
+            value: totalNearExpiry.toString(),
+            icon: Icons.inventory_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.red.shade400],
+          ),
+        ]);
+        break;
+    }
   }
 
   void exportPdf() async {

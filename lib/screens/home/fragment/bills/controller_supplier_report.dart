@@ -7,6 +7,7 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
+import '../../../../service/service_report_excel_import.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Supplier Report Types
@@ -471,6 +472,117 @@ class ControllerSupplierReport extends GetxController {
       appliedFilters: filters,
       summaryData: summary,
     );
+  }
+
+  // ── Import Excel (Development/Test Only) ──
+
+  List<String> getHeadersForCurrentReport() {
+    switch (rxReportType.value) {
+      case SupplierReportType.purchaseHistory:
+        return ['PO Date', 'PO Number', 'Supplier', 'Total Amount', 'Paid Amount', 'Outstanding', 'Status'];
+      case SupplierReportType.outstanding:
+        return ['Supplier Name', 'Total Purchases', 'Total Paid', 'Outstanding Balance', 'Outstanding Bills'];
+    }
+  }
+
+  Future<void> importTestExcel() async {
+    final type = rxReportType.value;
+    final expectedHeaders = getHeadersForCurrentReport();
+
+    final rawRows = await ServiceReportExcelImport.importAndValidate(
+      expectedHeaders: expectedHeaders,
+    );
+    if (rawRows == null) return;
+
+    final testRows = <dynamic>[];
+    switch (type) {
+      case SupplierReportType.purchaseHistory:
+        for (final raw in rawRows) {
+          testRows.add(SupplierPurchaseHistoryRow(
+            date: raw['PO Date']?.toString() ?? '-',
+            purchaseNo: raw['PO Number']?.toString() ?? '-',
+            supplierName: raw['Supplier']?.toString() ?? '-',
+            totalAmount: double.tryParse(raw['Total Amount']?.toString() ?? '0') ?? 0.0,
+            amountPaid: double.tryParse(raw['Paid Amount']?.toString() ?? '0') ?? 0.0,
+            amountDue: double.tryParse(raw['Outstanding']?.toString() ?? '0') ?? 0.0,
+            status: int.tryParse(raw['Status']?.toString() ?? '0') ?? 0,
+            purchase: EntityPurchase(),
+          ));
+        }
+        break;
+      case SupplierReportType.outstanding:
+        for (final raw in rawRows) {
+          testRows.add(SupplierOutstandingRow(
+            supplierName: raw['Supplier Name']?.toString() ?? '-',
+            totalPurchases: double.tryParse(raw['Total Purchases']?.toString() ?? '0') ?? 0.0,
+            totalPaid: double.tryParse(raw['Total Paid']?.toString() ?? '0') ?? 0.0,
+            outstandingBalance: double.tryParse(raw['Outstanding Balance']?.toString() ?? '0') ?? 0.0,
+            outstandingBillsCount: int.tryParse(raw['Outstanding Bills']?.toString() ?? '0') ?? 0,
+          ));
+        }
+        break;
+    }
+
+    _fullRows = testRows;
+    currentPage.value = 0;
+    _recomputeSummaryCardsForTestRows();
+    _applyPagination();
+  }
+
+  final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+
+  void _recomputeSummaryCardsForTestRows() {
+    final type = rxReportType.value;
+    switch (type) {
+      case SupplierReportType.purchaseHistory:
+        double totalAmt = 0, totalPaid = 0, totalDue = 0;
+        for (final r in _fullRows.cast<SupplierPurchaseHistoryRow>()) {
+          totalAmt += r.totalAmount;
+          totalPaid += r.amountPaid;
+          totalDue += r.amountDue;
+        }
+        rxSummaryCards.assignAll([
+          SupplierSummaryCardData(
+            label: 'Total Purchases',
+            value: _currFmt.format(totalAmt),
+            icon: Icons.shopping_bag_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SupplierSummaryCardData(
+            label: 'Total Paid',
+            value: _currFmt.format(totalPaid),
+            icon: Icons.check_circle_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          SupplierSummaryCardData(
+            label: 'Outstanding Due',
+            value: _currFmt.format(totalDue),
+            icon: Icons.pending_actions_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+        ]);
+        break;
+      case SupplierReportType.outstanding:
+        double totalBal = 0;
+        for (final r in _fullRows.cast<SupplierOutstandingRow>()) {
+          totalBal += r.outstandingBalance;
+        }
+        rxSummaryCards.assignAll([
+          SupplierSummaryCardData(
+            label: 'Total Suppliers',
+            value: _fullRows.length.toString(),
+            icon: Icons.group_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SupplierSummaryCardData(
+            label: 'Total Outstanding',
+            value: _currFmt.format(totalBal),
+            icon: Icons.warning_amber_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+        ]);
+        break;
+    }
   }
 
   void exportPdf() async {

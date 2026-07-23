@@ -16,6 +16,7 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
+import '../../../../service/service_report_excel_import.dart';
 
 /// All available report types the user can select.
 enum ReportType {
@@ -651,6 +652,44 @@ class ControllerHomeReports extends GetxController {
       appliedFilters: filters,
       summaryData: summary,
     );
+  }
+
+  // ── Import Excel (Development/Test Only) ──
+
+  Future<void> importTestExcel() async {
+    final cols = columns;
+    final expectedHeaders = cols.map((c) => c.value).toList();
+
+    final rawRows = await ServiceReportExcelImport.importAndValidate(
+      expectedHeaders: expectedHeaders,
+    );
+    if (rawRows == null) return;
+
+    final labelToKey = <String, String>{
+      for (final c in cols) c.value.trim().toLowerCase(): c.key,
+    };
+
+    final convertedRows = <Map<String, dynamic>>[];
+    for (final raw in rawRows) {
+      final rowMap = <String, dynamic>{};
+      raw.forEach((header, val) {
+        final key = labelToKey[header.toString().trim().toLowerCase()];
+        if (key != null) {
+          final strVal = val.toString().trim();
+          if (key == 'bills' || key == 'qty' || key == 'itemsSold') {
+            rowMap[key] = int.tryParse(strVal) ?? (double.tryParse(strVal)?.toInt() ?? 0);
+          } else if (key == 'gross' || key == 'discount' || key == 'tax' || key == 'net') {
+            rowMap[key] = double.tryParse(strVal) ?? 0.0;
+          } else {
+            rowMap[key] = strVal;
+          }
+        }
+      });
+      convertedRows.add(rowMap);
+    }
+
+    rxRows.assignAll(convertedRows);
+    _computeSummary();
   }
 
   // ── Print ──

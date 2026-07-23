@@ -7,6 +7,7 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
+import '../../../../service/service_report_excel_import.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Cashier Report Types
@@ -280,7 +281,7 @@ class ControllerCashierReport extends GetxController {
         continue;
       }
 
-      final uid = cashier.id ?? 0;
+      final uid = cashier.id;
       final existing = agg[uid];
 
       final total = bill.grandTotal ?? 0.0;
@@ -536,6 +537,111 @@ class ControllerCashierReport extends GetxController {
       appliedFilters: filters,
       summaryData: summary,
     );
+  }
+
+  // ── Import Excel (Development/Test Only) ──
+
+  List<String> getHeadersForCurrentReport() {
+    switch (rxReportType.value) {
+      case CashierReportType.cashierSales:
+        return ['Cashier Name', 'System Role', 'Bills Generated', 'Sales Revenue', 'Tax Collected', 'Discount Given', 'Avg Ticket'];
+      case CashierReportType.cashierShift:
+        return ['Shift Date', 'Cashier Name', 'Shift Status', 'Cash Sales', 'Online Sales', 'Total Drawer'];
+    }
+  }
+
+  Future<void> importTestExcel() async {
+    final type = rxReportType.value;
+    final expectedHeaders = getHeadersForCurrentReport();
+
+    final rawRows = await ServiceReportExcelImport.importAndValidate(
+      expectedHeaders: expectedHeaders,
+    );
+    if (rawRows == null) return;
+
+    final testRows = <dynamic>[];
+    switch (type) {
+      case CashierReportType.cashierSales:
+        for (final raw in rawRows) {
+          testRows.add(CashierSalesRow(
+            cashierName: raw['Cashier Name']?.toString() ?? '-',
+            role: raw['System Role']?.toString() ?? '-',
+            billsCount: int.tryParse(raw['Bills Generated']?.toString() ?? '0') ?? 0,
+            totalSales: double.tryParse(raw['Sales Revenue']?.toString() ?? '0') ?? 0.0,
+            taxCollected: double.tryParse(raw['Tax Collected']?.toString() ?? '0') ?? 0.0,
+            discountGiven: double.tryParse(raw['Discount Given']?.toString() ?? '0') ?? 0.0,
+            avgTicket: double.tryParse(raw['Avg Ticket']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+      case CashierReportType.cashierShift:
+        for (final raw in rawRows) {
+          testRows.add(CashierShiftRow(
+            date: raw['Shift Date']?.toString() ?? '-',
+            cashierName: raw['Cashier Name']?.toString() ?? '-',
+            status: raw['Shift Status']?.toString() ?? '-',
+            cashSales: double.tryParse(raw['Cash Sales']?.toString() ?? '0') ?? 0.0,
+            onlineSales: double.tryParse(raw['Online Sales']?.toString() ?? '0') ?? 0.0,
+            totalCollected: double.tryParse(raw['Total Drawer']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+    }
+
+    _fullRows = testRows;
+    currentPage.value = 0;
+    _recomputeSummaryCardsForTestRows();
+    _applyPagination();
+  }
+
+  final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+
+  void _recomputeSummaryCardsForTestRows() {
+    final type = rxReportType.value;
+    switch (type) {
+      case CashierReportType.cashierSales:
+        double totalSales = 0;
+        int totalBills = 0;
+        for (final r in _fullRows.cast<CashierSalesRow>()) {
+          totalSales += r.totalSales;
+          totalBills += r.billsCount;
+        }
+        rxSummaryCards.assignAll([
+          CashierSummaryCardData(
+            label: 'Total Cashier Sales',
+            value: _currFmt.format(totalSales),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          CashierSummaryCardData(
+            label: 'Total Bills',
+            value: totalBills.toString(),
+            icon: Icons.receipt_long_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
+        break;
+      case CashierReportType.cashierShift:
+        double totalDrawer = 0;
+        for (final r in _fullRows.cast<CashierShiftRow>()) {
+          totalDrawer += r.totalCollected;
+        }
+        rxSummaryCards.assignAll([
+          CashierSummaryCardData(
+            label: 'Total Shifts',
+            value: _fullRows.length.toString(),
+            icon: Icons.badge_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          CashierSummaryCardData(
+            label: 'Total Drawer Collection',
+            value: _currFmt.format(totalDrawer),
+            icon: Icons.point_of_sale_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
+        break;
+    }
   }
 
   void exportPdf() async {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
-import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_purchase.dart';
 import '../../../../model/entity_purchase_item.dart';
 import '../../../../model/entity_finance_transaction.dart';
@@ -12,6 +11,7 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
+import '../../../../service/service_report_excel_import.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Financial Report Types
@@ -700,6 +700,147 @@ class ControllerFinancialReport extends GetxController {
       appliedFilters: filters,
       summaryData: summary,
     );
+  }
+
+  // ── Import Excel (Development/Test Only) ──
+
+  List<String> getHeadersForCurrentReport() {
+    switch (rxReportType.value) {
+      case FinancialReportType.paymentCollection:
+        return ['Collection Date', 'Payment Method', 'Document Bill', 'Customer Name', 'Amount Collected', 'Cashier Duty'];
+      case FinancialReportType.dailyCashClosing:
+        return ['Reconcile Date', 'Cashier on Duty', 'Opening Cash', 'Cash Sales (+)', 'Cash Returns (-)', 'Cash Expenses (-)', 'Closing Drawer'];
+      case FinancialReportType.taxGST:
+        return ['Transaction Date', 'Doc Number', 'Transaction Type', 'Taxable Amount', 'GST Rate', 'GST Amount', 'Total Invoice'];
+    }
+  }
+
+  Future<void> importTestExcel() async {
+    final type = rxReportType.value;
+    final expectedHeaders = getHeadersForCurrentReport();
+
+    final rawRows = await ServiceReportExcelImport.importAndValidate(
+      expectedHeaders: expectedHeaders,
+    );
+    if (rawRows == null) return;
+
+    final testRows = <dynamic>[];
+    switch (type) {
+      case FinancialReportType.paymentCollection:
+        for (final raw in rawRows) {
+          testRows.add(PaymentCollectionRow(
+            date: raw['Collection Date']?.toString() ?? '-',
+            paymentMethod: raw['Payment Method']?.toString() ?? '-',
+            billNo: raw['Document Bill']?.toString() ?? '-',
+            customerName: raw['Customer Name']?.toString() ?? '-',
+            amount: double.tryParse(raw['Amount Collected']?.toString() ?? '0') ?? 0.0,
+            cashier: raw['Cashier Duty']?.toString() ?? '-',
+            bill: EntityBill(),
+          ));
+        }
+        break;
+      case FinancialReportType.dailyCashClosing:
+        for (final raw in rawRows) {
+          testRows.add(DailyCashClosingRow(
+            date: raw['Reconcile Date']?.toString() ?? '-',
+            cashierName: raw['Cashier on Duty']?.toString() ?? '-',
+            openingCash: double.tryParse(raw['Opening Cash']?.toString() ?? '0') ?? 0.0,
+            cashSales: double.tryParse(raw['Cash Sales (+)']?.toString() ?? '0') ?? 0.0,
+            cashReturns: double.tryParse(raw['Cash Returns (-)']?.toString() ?? '0') ?? 0.0,
+            cashExpenses: double.tryParse(raw['Cash Expenses (-)']?.toString() ?? '0') ?? 0.0,
+            closingCash: double.tryParse(raw['Closing Drawer']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+      case FinancialReportType.taxGST:
+        for (final raw in rawRows) {
+          final gstRateStr = raw['GST Rate']?.toString().replaceAll('%', '').trim() ?? '0';
+          testRows.add(TaxGstRow(
+            date: raw['Transaction Date']?.toString() ?? '-',
+            docNo: raw['Doc Number']?.toString() ?? '-',
+            txnType: raw['Transaction Type']?.toString() ?? '-',
+            taxableAmount: double.tryParse(raw['Taxable Amount']?.toString() ?? '0') ?? 0.0,
+            gstRate: double.tryParse(gstRateStr) ?? 0.0,
+            gstAmount: double.tryParse(raw['GST Amount']?.toString() ?? '0') ?? 0.0,
+            totalAmount: double.tryParse(raw['Total Invoice']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+    }
+
+    _fullRows = testRows;
+    currentPage.value = 0;
+    _recomputeSummaryCardsForTestRows();
+    _applyPagination();
+  }
+
+  final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+
+  void _recomputeSummaryCardsForTestRows() {
+    final type = rxReportType.value;
+    switch (type) {
+      case FinancialReportType.paymentCollection:
+        double totalAmt = 0;
+        for (final r in _fullRows.cast<PaymentCollectionRow>()) {
+          totalAmt += r.amount;
+        }
+        rxSummaryCards.assignAll([
+          FinancialSummaryCardData(
+            label: 'Total Collections',
+            value: _currFmt.format(totalAmt),
+            icon: Icons.account_balance_wallet_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          FinancialSummaryCardData(
+            label: 'Total Records',
+            value: _fullRows.length.toString(),
+            icon: Icons.receipt_long_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
+        break;
+      case FinancialReportType.dailyCashClosing:
+        double totalClosing = 0;
+        for (final r in _fullRows.cast<DailyCashClosingRow>()) {
+          totalClosing += r.closingCash;
+        }
+        rxSummaryCards.assignAll([
+          FinancialSummaryCardData(
+            label: 'Closing Cash Reconciled',
+            value: _currFmt.format(totalClosing),
+            icon: Icons.point_of_sale_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          FinancialSummaryCardData(
+            label: 'Days Reconciled',
+            value: _fullRows.length.toString(),
+            icon: Icons.calendar_month_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+        ]);
+        break;
+      case FinancialReportType.taxGST:
+        double totalTaxable = 0, totalGst = 0;
+        for (final r in _fullRows.cast<TaxGstRow>()) {
+          totalTaxable += r.taxableAmount;
+          totalGst += r.gstAmount;
+        }
+        rxSummaryCards.assignAll([
+          FinancialSummaryCardData(
+            label: 'Total Taxable Value',
+            value: _currFmt.format(totalTaxable),
+            icon: Icons.request_quote_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          FinancialSummaryCardData(
+            label: 'Total GST Collected',
+            value: _currFmt.format(totalGst),
+            icon: Icons.account_balance_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
+        break;
+    }
   }
 
   void exportPdf() async {

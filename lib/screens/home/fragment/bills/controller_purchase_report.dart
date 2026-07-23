@@ -8,6 +8,7 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
+import '../../../../service/service_report_excel_import.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Purchase Report Types
@@ -834,6 +835,240 @@ class ControllerPurchaseReport extends GetxController {
       appliedFilters: filters,
       summaryData: summary,
     );
+  }
+
+  // ── Import Excel (Development/Test Only) ──
+
+  List<String> getHeadersForCurrentReport() {
+    switch (rxReportType.value) {
+      case PurchaseReportType.purchaseSummary:
+        return ['Date', 'Purchase No', 'Supplier', 'Total Amount', 'Paid Amount', 'Outstanding Due', 'Status'];
+      case PurchaseReportType.purchaseDetail:
+        return ['Date', 'Purchase No', 'Supplier', 'Item Name', 'Order Qty', 'Cost Price', 'Total Value'];
+      case PurchaseReportType.supplierPurchase:
+        return ['Supplier Name', 'No. of Bills', 'Qty Purchased', 'Total Purchase', 'Paid Amount', 'Outstanding Balance'];
+      case PurchaseReportType.pendingPurchaseOrders:
+        return ['Date', 'PO Number', 'Supplier', 'Expected Date', 'Ordered Qty', 'Received Qty', 'Pending Qty', 'Status'];
+      case PurchaseReportType.purchaseReturn:
+        return ['Return No', 'Date', 'Supplier', 'Item Name', 'Qty Returned', 'Return Amount', 'Return Reason'];
+    }
+  }
+
+  Future<void> importTestExcel() async {
+    final type = rxReportType.value;
+    final expectedHeaders = getHeadersForCurrentReport();
+
+    final rawRows = await ServiceReportExcelImport.importAndValidate(
+      expectedHeaders: expectedHeaders,
+    );
+    if (rawRows == null) return;
+
+    final testRows = <dynamic>[];
+    switch (type) {
+      case PurchaseReportType.purchaseSummary:
+        for (final raw in rawRows) {
+          testRows.add(PurchaseSummaryRow(
+            date: raw['Date']?.toString() ?? '-',
+            purchaseNo: raw['Purchase No']?.toString() ?? '-',
+            supplierName: raw['Supplier']?.toString() ?? '-',
+            totalAmount: double.tryParse(raw['Total Amount']?.toString() ?? '0') ?? 0.0,
+            paidAmount: double.tryParse(raw['Paid Amount']?.toString() ?? '0') ?? 0.0,
+            outstandingAmount: double.tryParse(raw['Outstanding Due']?.toString() ?? '0') ?? 0.0,
+            status: raw['Status']?.toString() ?? '-',
+          ));
+        }
+        break;
+      case PurchaseReportType.purchaseDetail:
+        for (final raw in rawRows) {
+          testRows.add(PurchaseDetailRow(
+            date: raw['Date']?.toString() ?? '-',
+            purchaseNo: raw['Purchase No']?.toString() ?? '-',
+            supplierName: raw['Supplier']?.toString() ?? '-',
+            itemName: raw['Item Name']?.toString() ?? '-',
+            quantity: double.tryParse(raw['Order Qty']?.toString() ?? '0') ?? 0.0,
+            costPrice: double.tryParse(raw['Cost Price']?.toString() ?? '0') ?? 0.0,
+            totalValue: double.tryParse(raw['Total Value']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+      case PurchaseReportType.supplierPurchase:
+        for (final raw in rawRows) {
+          testRows.add(SupplierPurchaseRow(
+            supplierName: raw['Supplier Name']?.toString() ?? '-',
+            numBills: int.tryParse(raw['No. of Bills']?.toString() ?? '0') ?? 0,
+            qtyPurchased: double.tryParse(raw['Qty Purchased']?.toString() ?? '0') ?? 0.0,
+            totalPurchaseAmount: double.tryParse(raw['Total Purchase']?.toString() ?? '0') ?? 0.0,
+            paidAmount: double.tryParse(raw['Paid Amount']?.toString() ?? '0') ?? 0.0,
+            outstandingBalance: double.tryParse(raw['Outstanding Balance']?.toString() ?? '0') ?? 0.0,
+          ));
+        }
+        break;
+      case PurchaseReportType.pendingPurchaseOrders:
+        for (final raw in rawRows) {
+          testRows.add(PendingPurchaseOrderRow(
+            date: raw['Date']?.toString() ?? '-',
+            purchaseNo: raw['PO Number']?.toString() ?? '-',
+            supplierName: raw['Supplier']?.toString() ?? '-',
+            expectedDate: raw['Expected Date']?.toString() ?? '-',
+            orderedQty: double.tryParse(raw['Ordered Qty']?.toString() ?? '0') ?? 0.0,
+            receivedQty: double.tryParse(raw['Received Qty']?.toString() ?? '0') ?? 0.0,
+            pendingQty: double.tryParse(raw['Pending Qty']?.toString() ?? '0') ?? 0.0,
+            status: raw['Status']?.toString() ?? '-',
+          ));
+        }
+        break;
+      case PurchaseReportType.purchaseReturn:
+        for (final raw in rawRows) {
+          testRows.add(PurchaseReturnRow(
+            returnNo: raw['Return No']?.toString() ?? '-',
+            date: raw['Date']?.toString() ?? '-',
+            supplierName: raw['Supplier']?.toString() ?? '-',
+            itemName: raw['Item Name']?.toString() ?? '-',
+            quantityReturned: double.tryParse(raw['Qty Returned']?.toString() ?? '0') ?? 0.0,
+            returnAmount: double.tryParse(raw['Return Amount']?.toString() ?? '0') ?? 0.0,
+            returnReason: raw['Return Reason']?.toString() ?? '-',
+          ));
+        }
+        break;
+    }
+
+    _fullRows = testRows;
+    currentPage.value = 0;
+    _recomputeSummaryCardsForTestRows();
+    _applyPagination();
+  }
+
+  final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+
+  void _recomputeSummaryCardsForTestRows() {
+    final type = rxReportType.value;
+    switch (type) {
+      case PurchaseReportType.purchaseSummary:
+        double totalAmt = 0, totalPaid = 0, totalDue = 0;
+        for (final r in _fullRows.cast<PurchaseSummaryRow>()) {
+          totalAmt += r.totalAmount;
+          totalPaid += r.paidAmount;
+          totalDue += r.outstandingAmount;
+        }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Total Purchases',
+            value: _currFmt.format(totalAmt),
+            icon: Icons.shopping_cart_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Total Paid',
+            value: _currFmt.format(totalPaid),
+            icon: Icons.check_circle_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Outstanding Due',
+            value: _currFmt.format(totalDue),
+            icon: Icons.pending_actions_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+        ]);
+        break;
+      case PurchaseReportType.purchaseDetail:
+        double totalVal = 0;
+        double totalQty = 0;
+        for (final r in _fullRows.cast<PurchaseDetailRow>()) {
+          totalVal += r.totalValue;
+          totalQty += r.quantity;
+        }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Total Items Value',
+            value: _currFmt.format(totalVal),
+            icon: Icons.monetization_on_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Total Qty Ordered',
+            value: totalQty.toStringAsFixed(0),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
+        break;
+      case PurchaseReportType.supplierPurchase:
+        double totalAmt = 0, totalDue = 0;
+        for (final r in _fullRows.cast<SupplierPurchaseRow>()) {
+          totalAmt += r.totalPurchaseAmount;
+          totalDue += r.outstandingBalance;
+        }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Total Suppliers',
+            value: _fullRows.length.toString(),
+            icon: Icons.local_shipping_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Total Purchase Value',
+            value: _currFmt.format(totalAmt),
+            icon: Icons.account_balance_wallet_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Outstanding Balance',
+            value: _currFmt.format(totalDue),
+            icon: Icons.warning_amber_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.red.shade400],
+          ),
+        ]);
+        break;
+      case PurchaseReportType.pendingPurchaseOrders:
+        double totalPending = 0;
+        for (final r in _fullRows.cast<PendingPurchaseOrderRow>()) {
+          totalPending += r.pendingQty;
+        }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Pending POs',
+            value: _fullRows.length.toString(),
+            icon: Icons.pending_actions_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Total Pending Qty',
+            value: totalPending.toStringAsFixed(0),
+            icon: Icons.hourglass_top_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
+        break;
+      case PurchaseReportType.purchaseReturn:
+        double totalRet = 0;
+        double totalQty = 0;
+        for (final r in _fullRows.cast<PurchaseReturnRow>()) {
+          totalRet += r.returnAmount;
+          totalQty += r.quantityReturned;
+        }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Total Returns',
+            value: _fullRows.length.toString(),
+            icon: Icons.assignment_return_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Return Value',
+            value: _currFmt.format(totalRet),
+            icon: Icons.money_off_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Qty Returned',
+            value: totalQty.toStringAsFixed(0),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.blue.shade500],
+          ),
+        ]);
+        break;
+    }
   }
 
   void exportPdf() async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../enums/enum_main_menu.dart';
 import '../../../../enums/enum_permission.dart';
 import '../../../../widget/section_tile.dart';
 import '../../controller_home.dart';
@@ -28,35 +29,20 @@ class FragHomeSystem extends StatelessWidget {
                   icon: Icons.people,
                   visible: permissions.any((p) => p.startsWith('user')),
                   selected: true,
-                  //controller.section == SystemSection.users,
                   onTap: () {
-                    //controller.openUsers();
+                    controllerHome.selectedMainMenu.value = EnumMainMenu.systemUsers;
                   },
                 ),
 
                 SectionTile(
-                  title: 'System Settings',
-                  icon: Icons.settings,
+                  title: 'Backup & Recovery',
+                  icon: Icons.backup_outlined,
                   visible: permissions.contains(
-                    EnumPermission.systemSettingsUpdate.name,
+                    EnumPermission.backupRestore.name,
                   ),
                   selected: false,
-                  //controller.section == SystemSection.settings,
                   onTap: () {
-                    //controller.openSettings();
-                  },
-                ),
-
-                SectionTile(
-                  title: 'Audit Logs',
-                  icon: Icons.history,
-                  visible: permissions.contains(
-                    EnumPermission.auditLogView.name,
-                  ),
-                  selected: false,
-                  //controller.section == SystemSection.audit,
-                  onTap: () {
-                    // controller.openAudit();
+                    controllerHome.selectedMainMenu.value = EnumMainMenu.backup;
                   },
                 ),
 

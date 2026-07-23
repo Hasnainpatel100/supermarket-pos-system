@@ -330,18 +330,34 @@ class AppTextField extends StatelessWidget {
           }
 
           // 3. Cost/Price/Amount validation (must not exceed 99,999,999 or 8 digits before decimal)
-          final isNumeric = keyboardType == TextInputType.number || 
-                            keyboardType.toString().contains('number') || 
-                            inputFormatters?.isNotEmpty == true ||
-                            cleanLabel.contains('cost') ||
-                            cleanLabel.contains('price') ||
-                            cleanLabel.contains('amount') ||
-                            cleanLabel.contains('mrp') ||
-                            cleanLabel.contains('rate') ||
-                            cleanLabel.contains('tax') ||
-                            cleanLabel.contains('discount');
+          final isNonMonetary = cleanLabel.contains('phone') ||
+                                cleanLabel.contains('mobile') ||
+                                cleanLabel.contains('proof') ||
+                                cleanLabel.contains('id') ||
+                                cleanLabel.contains('aadhaar') ||
+                                cleanLabel.contains('pan') ||
+                                cleanLabel.contains('pincode') ||
+                                cleanLabel.contains('zip') ||
+                                cleanLabel.contains('barcode') ||
+                                cleanLabel.contains('sku') ||
+                                cleanLabel.contains('serial') ||
+                                keyboardType == TextInputType.phone;
 
-          if (isNumeric) {
+          final isMonetary = !isNonMonetary && (
+                             cleanLabel.contains('cost') ||
+                             cleanLabel.contains('price') ||
+                             cleanLabel.contains('amount') ||
+                             cleanLabel.contains('mrp') ||
+                             cleanLabel.contains('rate') ||
+                             cleanLabel.contains('tax') ||
+                             cleanLabel.contains('discount') ||
+                             cleanLabel.contains('total') ||
+                             cleanLabel.contains('subtotal') ||
+                             cleanLabel.contains('balance') ||
+                             cleanLabel.contains('paid')
+                             );
+
+          if (isMonetary) {
             final numVal = double.tryParse(trimmed);
             if (numVal != null) {
               if (numVal > 99999999.99) {

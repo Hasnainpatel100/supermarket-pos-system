@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../enums/enum_main_menu.dart';
 import '../enums/enum_permission.dart';
@@ -170,12 +169,6 @@ class RepoDrawer {
       permissions: [EnumPermission.expenses],
     ),
     ModelDrawerMenu(
-      menu: EnumMainMenu.backup,
-      titleKey: 'Backup & Recovery',
-      icon: Icons.backup_outlined,
-      permissions: [EnumPermission.backupRestore],
-    ),
-    ModelDrawerMenu(
       menu: EnumMainMenu.system,
       titleKey: 'system',
       icon: Icons.admin_panel_settings_outlined,
@@ -184,9 +177,7 @@ class RepoDrawer {
         EnumPermission.userUpdate,
         EnumPermission.userDisable,
         EnumPermission.roleAssign,
-        EnumPermission.systemSettingsUpdate,
-        EnumPermission.dataSyncManual,
-        EnumPermission.auditLogView,
+        EnumPermission.backupRestore,
       ],
 
       children: [
@@ -202,16 +193,10 @@ class RepoDrawer {
           ],
         ),
         ModelDrawerMenu(
-          menu: EnumMainMenu.systemSettings,
-          titleKey: 'system_settings',
-          icon: Icons.settings_outlined,
-          permissions: [EnumPermission.systemSettingsUpdate],
-        ),
-        ModelDrawerMenu(
-          menu: EnumMainMenu.auditLogs,
-          titleKey: 'audit_logs',
-          icon: Icons.history,
-          permissions: [EnumPermission.auditLogView],
+          menu: EnumMainMenu.backup,
+          titleKey: 'Backup & Recovery',
+          icon: Icons.backup_outlined,
+          permissions: [EnumPermission.backupRestore],
         ),
       ],
     ),

@@ -20,6 +20,8 @@ enum EnumMainMenu {
 
   expenses,
 
+  backup,
+
   settings,
   logout,
 

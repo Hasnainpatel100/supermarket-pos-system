@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import '../objectbox.g.dart';
 
 class ServiceObjectBox extends GetxService {
-  late final Store store;
+  late Store store;
 
   Future<ServiceObjectBox> init() async {
     if (kDebugMode) {
@@ -23,11 +23,36 @@ class ServiceObjectBox extends GetxService {
     return this;
   }
 
+  /// Re-opens the ObjectBox store after a restore.
+  ///
+  /// Call this after the database files on disk have been replaced.
+  /// Closes the old store (if still open) and opens a fresh one.
+  Future<void> reopen() async {
+    if (!store.isClosed()) {
+      store.close();
+    }
+
+    if (kDebugMode) {
+      store = Store(
+        getObjectBoxModel(),
+        directory: "market",
+      );
+    } else {
+      final appSupportDir = await getApplicationSupportDirectory();
+      store = Store(
+        getObjectBoxModel(),
+        directory: '${appSupportDir.path}/market',
+      );
+    }
+  }
+
   Box<T> box<T>() => store.box<T>();
 
   @override
   void onClose() {
-    store.close();
+    if (!store.isClosed()) {
+      store.close();
+    }
     super.onClose();
   }
 }

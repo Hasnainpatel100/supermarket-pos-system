@@ -170,6 +170,12 @@ class RepoDrawer {
       permissions: [EnumPermission.expenses],
     ),
     ModelDrawerMenu(
+      menu: EnumMainMenu.backup,
+      titleKey: 'Backup & Recovery',
+      icon: Icons.backup_outlined,
+      permissions: [EnumPermission.backupRestore],
+    ),
+    ModelDrawerMenu(
       menu: EnumMainMenu.system,
       titleKey: 'system',
       icon: Icons.admin_panel_settings_outlined,

@@ -68,6 +68,12 @@ class ServiceStorage {
 
   bool containsKey(String key) => _cache.containsKey(key);
 
+  Future<void> reload() async {
+    _cache.clear();
+    _loaded = false;
+    await _load();
+  }
+
   Future<void> _load() async {
     if (_loaded) return;
 

@@ -63,6 +63,9 @@ enum EnumPermission {
   //Expenses
   expenses,
 
+  // Backup & Recovery
+  backupRestore,
+
   // for app purpose only
   dashboard,
   logout,

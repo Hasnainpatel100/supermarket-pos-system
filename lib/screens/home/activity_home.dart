@@ -33,6 +33,7 @@ import 'fragment/bills/controller_financial_report.dart';
 import 'fragment/setting/frag_home_settings.dart';
 import 'fragment/setting/controller_home_settings.dart';
 import 'fragment/users/frag_home_users.dart';
+import 'fragment/system/frag_home_backup.dart';
 
 class ActivityHome extends StatelessWidget {
   const ActivityHome({super.key});
@@ -99,6 +100,10 @@ class ActivityHome extends StatelessWidget {
               }
               if(controller.selectedMainMenu.value == EnumMainMenu.expenses){
                 return FragmentHomeExpenses();
+              }
+
+              if (controller.selectedMainMenu.value == EnumMainMenu.backup) {
+                return const FragHomeBackup();
               }
 
               // ── Sales Reports (single entry under Reports → Sales Reports) ──

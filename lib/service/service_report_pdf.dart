@@ -292,6 +292,7 @@ class ServiceReportPdf {
 
       pdf.addPage(pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        maxPages:   10000,
         margin:     const pw.EdgeInsets.symmetric(horizontal: 28, vertical: 24),
         theme: pw.ThemeData.withFont(
           base:       font,

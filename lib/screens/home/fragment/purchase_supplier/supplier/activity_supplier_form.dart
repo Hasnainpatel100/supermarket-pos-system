@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../util/snackbar_util.dart';
 import '../../../../../widget/my_card.dart';
+import '../../../../../widget/app_dialog_components.dart';
 import 'controller_home_supplier.dart';
 
 /// Used for both CREATE and EDIT.
@@ -88,209 +89,113 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.indigo.shade400, Colors.indigo.shade700],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.indigo.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+    return AppDialog(
+      maxWidth: 600,
+      maxHeight: 700,
+      header: DialogHeader(
+        title: _isEdit ? 'Edit Supplier'.tr : 'New Supplier'.tr,
+        icon: _isEdit ? Icons.edit_rounded : Icons.add_business_rounded,
+        iconColor: Colors.indigo.shade700,
+      ),
+      body: DialogBody(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header ──
+              Row(
+                children: [
+                  Icon(Icons.local_shipping_rounded,
+                      color: Colors.indigo.shade500),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Supplier Information'.tr,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo.shade700,
+                    ),
                   ),
                 ],
               ),
-              child: Icon(
+              const SizedBox(height: 4),
+              Text(
                 _isEdit
-                    ? Icons.edit_rounded
-                    : Icons.add_business_rounded,
-                color: Colors.white,
-                size: 20,
+                    ? 'Update supplier details below'.tr
+                    : 'Fill in supplier details below'.tr,
+                style: TextStyle(
+                    fontSize: 12, color: Colors.grey.shade500),
               ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              _isEdit ? 'Edit Supplier'.tr : 'New Supplier'.tr,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-          ],
-        ),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Form(
-              key: _formKey,
-              child: MyCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Header ──
-                    Row(
-                      children: [
-                        Icon(Icons.local_shipping_rounded,
-                            color: Colors.indigo.shade500),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Supplier Information'.tr,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.indigo.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _isEdit
-                          ? 'Update supplier details below'.tr
-                          : 'Fill in supplier details below'.tr,
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade500),
-                    ),
-                    const Divider(height: 28),
+              const Divider(height: 28),
 
-                    // ── Name (required) ──
-                    _buildField(
-                      controller: _nameCtrl,
-                      label: 'Supplier Name *'.tr,
-                      hint: 'e.g. Fresh Farms Pvt Ltd'.tr,
-                      icon: Icons.business_rounded,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Name is required'.tr
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Contact Person ──
-                    _buildField(
-                      controller: _contactCtrl,
-                      label: 'Contact Person'.tr,
-                      hint: 'e.g. Ramesh Kumar'.tr,
-                      icon: Icons.person_outline_rounded,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Phone ──
-                    _buildField(
-                      controller: _phoneCtrl,
-                      label: 'Phone'.tr,
-                      hint: 'e.g. 9876543210'.tr,
-                      icon: Icons.phone_rounded,
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Email ──
-                    _buildField(
-                      controller: _emailCtrl,
-                      label: 'Email'.tr,
-                      hint: 'e.g. supplier@example.com'.tr,
-                      icon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── GST ──
-                    _buildField(
-                      controller: _gstCtrl,
-                      label: 'GST Number'.tr,
-                      hint: 'e.g. 27AAPFU0939F1ZV'.tr,
-                      icon: Icons.receipt_long_rounded,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── Address ──
-                    _buildField(
-                      controller: _addressCtrl,
-                      label: 'Address'.tr,
-                      hint: 'Street, City, State'.tr,
-                      icon: Icons.location_on_outlined,
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 28),
-
-                    // ── Action Buttons ──
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 14),
-                          ),
-                          onPressed: () => Get.back(),
-                          child: Text('Cancel'.tr),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.indigo.shade400,
-                                Colors.indigo.shade700
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.indigo.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: _save,
-                              borderRadius: BorderRadius.circular(10),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 14),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.save_rounded,
-                                        color: Colors.white, size: 18),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _isEdit
-                                          ? 'Update Supplier'.tr
-                                          : 'Save Supplier'.tr,
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              // ── Name (required) ──
+              _buildField(
+                controller: _nameCtrl,
+                label: 'Supplier Name *'.tr,
+                hint: 'e.g. Fresh Farms Pvt Ltd'.tr,
+                icon: Icons.business_rounded,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Name is required'.tr
+                    : null,
               ),
-            ),
+              const SizedBox(height: 16),
+
+              // ── Contact Person ──
+              _buildField(
+                controller: _contactCtrl,
+                label: 'Contact Person'.tr,
+                hint: 'e.g. Ramesh Kumar'.tr,
+                icon: Icons.person_outline_rounded,
+              ),
+              const SizedBox(height: 16),
+
+              // ── Phone ──
+              _buildField(
+                controller: _phoneCtrl,
+                label: 'Phone'.tr,
+                hint: 'e.g. 9876543210'.tr,
+                icon: Icons.phone_rounded,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+
+              // ── Email ──
+              _buildField(
+                controller: _emailCtrl,
+                label: 'Email'.tr,
+                hint: 'e.g. supplier@example.com'.tr,
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+
+              // ── GST ──
+              _buildField(
+                controller: _gstCtrl,
+                label: 'GST Number'.tr,
+                hint: 'e.g. 27AAPFU0939F1ZV'.tr,
+                icon: Icons.receipt_long_rounded,
+              ),
+              const SizedBox(height: 16),
+
+              // ── Address ──
+              _buildField(
+                controller: _addressCtrl,
+                label: 'Address'.tr,
+                hint: 'Street, City, State'.tr,
+                icon: Icons.location_on_outlined,
+                maxLines: 3,
+              ),
+            ],
           ),
         ),
+      ),
+      footer: DialogFooter(
+        onCancel: () => Get.back(),
+        onSave: _save,
+        saveLabel: _isEdit ? 'Update Supplier'.tr : 'Save Supplier'.tr,
+        saveButtonColor: Colors.indigo.shade700,
       ),
     );
   }

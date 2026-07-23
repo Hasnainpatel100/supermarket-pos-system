@@ -669,6 +669,7 @@ class ControllerHomeReports extends GetxController {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
+        maxPages: 10000,
         margin: const pw.EdgeInsets.all(24),
         header: (ctx) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,

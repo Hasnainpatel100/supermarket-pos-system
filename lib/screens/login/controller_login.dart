@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../enums/enum_audit_action.dart';
+import '../../enums/enum_audit_module.dart';
 import '../../enums/enum_permission.dart';
 import '../../commons/loader.dart';
 import '../../model/entity_user.dart';
 import '../../objectbox.g.dart';
 import '../../repository/repo_storage.dart';
+import '../../service/service_audit_log.dart';
 import '../../service/service_object_box.dart';
 import '../../util/app_route.dart';
 import '../../util/my_date_time.dart';
@@ -79,6 +82,17 @@ class ControllerLogin extends GetxController {
     var deviceIp = await UtilDevice.getIpAddress();
     user.lastLoginIp = deviceIp;
     _boxUser.put(user);
+
+    // Audit log
+    AuditLogService.instance.logAction(
+      userId: user.id,
+      userName: user.username ?? '${user.first ?? ''} ${user.last ?? ''}'.trim(),
+      module: AuditModule.system,
+      action: AuditAction.login,
+      entityType: 'EntityUser',
+      entityId: '${user.id}',
+      description: 'User "${user.username}" logged in successfully.',
+    );
 
     // store users details in storage
     await _repoStorage.setUser(json.encode(user.toMap()));

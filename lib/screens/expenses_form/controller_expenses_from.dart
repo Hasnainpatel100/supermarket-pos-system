@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../../enums/enum_audit_module.dart';
 import '../../model/entity_finance_transaction.dart';
+import '../../service/service_audit_log.dart';
 import '../../service/service_finance.dart';
 import '../../service/service_object_box.dart';
 
@@ -126,7 +128,14 @@ class ControllerExpensesFrom extends GetxController {
       ..dateUtcMs = dateOnly.millisecondsSinceEpoch
       ..createdDate = _storedDate;
 
-    _service.save(tx);
+    final txId = _service.save(tx);
+
+    AuditLogService.instance.logCreate(
+      module: AuditModule.finance,
+      entityType: 'EntityFinanceTransaction',
+      entityId: '$txId',
+      description: 'Recorded ${tx.type} transaction of ₹${tx.amount} (Category: ${tx.category}).',
+    );
 
     Get.back(result: true);
 

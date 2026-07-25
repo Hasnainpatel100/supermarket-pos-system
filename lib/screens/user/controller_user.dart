@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../enums/enum_audit_module.dart';
 import '../../model/entity_user.dart';
 import '../../objectbox.g.dart';
+import '../../service/service_audit_log.dart';
 import '../../service/service_object_box.dart';
 
 class ControllerUser extends GetxController {
@@ -63,9 +66,22 @@ class ControllerUser extends GetxController {
         ..permissions = []
         ..isSync = false;
 
-      _boxUser.put(user);
+      final id = _boxUser.put(user);
+      user.id = id;
+
+      AuditLogService.instance.logCreate(
+        module: AuditModule.system,
+        entityType: 'EntityUser',
+        entityId: '$id',
+        newData: jsonEncode(user.toMap()),
+        description: 'Created user "${user.username}" with role "${user.role}".',
+      );
+
       Get.back(result: user);
     } else {
+      final oldData = jsonEncode(entityUser!.toMap());
+      final oldRole = entityUser!.role;
+
       entityUser!.username = textEditingControllerUserName.text.trim();
       entityUser!.password = textEditingControllerPassword.text;
       entityUser!.first = textEditingControllerFirstName.text.trim();
@@ -83,6 +99,22 @@ class ControllerUser extends GetxController {
           .trim();
 
       _boxUser.put(entityUser!);
+
+      final roleChanged = oldRole != entityUser!.role;
+      final desc = roleChanged
+          ? 'Updated user "${entityUser!.username}". Role changed from "$oldRole" to "${entityUser!.role}".'
+          : 'Updated user details for "${entityUser!.username}".';
+
+      AuditLogService.instance.logUpdate(
+        module: AuditModule.system,
+        entityType: 'EntityUser',
+        entityId: '${entityUser!.id}',
+        oldData: oldData,
+        newData: jsonEncode(entityUser!.toMap()),
+        description: desc,
+        reason: roleChanged ? 'Role updated' : null,
+      );
+
       Get.back(result: entityUser!);
     }
   }

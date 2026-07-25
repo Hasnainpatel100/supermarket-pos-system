@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../commons/loader.dart';
+import '../../../enums/enum_audit_action.dart';
+import '../../../enums/enum_audit_module.dart';
 import '../../../enums/enum_main_menu.dart';
 import '../../../repository/repo_storage.dart';
+import '../../../service/service_audit_log.dart';
 import '../../../util/app_route.dart';
 import '../../../util/static_methods.dart';
 import '../controller_home.dart';
@@ -42,6 +45,14 @@ class FragHomeLogout extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               Loader.showLoader();
+
+              // Audit log
+              AuditLogService.instance.logAction(
+                module: AuditModule.system,
+                action: AuditAction.logout,
+                entityType: 'EntityUser',
+                description: 'User logged out.',
+              );
 
               final RepoStorage repoStorage = Get.find();
               repoStorage.logout();

@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:super_market/service/service_currency.dart';
+import '../../../../enums/enum_audit_action.dart';
+import '../../../../enums/enum_audit_module.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_customer.dart';
@@ -10,6 +13,7 @@ import '../../../../model/entity_item_batch.dart';
 import '../../../../model/entity_stock_transaction.dart';
 import '../../../../model/stock_txn_type.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_audit_log.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../util/snackbar_util.dart';
 import '../bills/controller_home_bills.dart';
@@ -560,6 +564,20 @@ class ControllerHomePos extends GetxController {
     final billId = _boxBill.put(bill);
     final savedBill = _boxBill.get(billId)!;
 
+    AuditLogService.instance.logCreate(
+      module: AuditModule.pos,
+      entityType: 'EntityBill',
+      entityId: '$billId',
+      newData: jsonEncode({
+        'billNo': savedBill.billNo,
+        'customerName': savedBill.customerName,
+        'grandTotal': savedBill.grandTotal,
+        'paymentMode': savedBill.paymentMode,
+        'itemCount': session.rxCartItems.length,
+      }),
+      description: 'Created bill ${savedBill.billNo} for ${savedBill.customerName} (Total: ₹${savedBill.grandTotal}, Mode: ${savedBill.paymentMode}).',
+    );
+
     // Save Bill Items & Deduct Stock
     for (var cartItem in session.rxCartItems) {
       final billItem = EntityBillItem(
@@ -689,6 +707,15 @@ class ControllerHomePos extends GetxController {
     bill.status = 'CANCELLED';
     bill.updatedAtUtcMs = now;
     _boxBill.put(bill);
+
+    AuditLogService.instance.logAction(
+      module: AuditModule.pos,
+      action: AuditAction.update,
+      entityType: 'EntityBill',
+      entityId: '${bill.id}',
+      description: 'Cancelled bill ${bill.billNo} (Status set to CANCELLED, stock returned).',
+      reason: 'Bill Cancellation',
+    );
 
     // Refresh dependent controllers
     loadItems();

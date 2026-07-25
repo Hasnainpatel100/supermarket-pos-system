@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../enums/enum_audit_action.dart';
+import '../../../../enums/enum_audit_module.dart';
 import '../../../../model/entity_user.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_audit_log.dart';
 import '../../../../service/service_object_box.dart';
 
 class ControllerHomeUsers extends GetxController {
@@ -102,6 +105,15 @@ class ControllerHomeUsers extends GetxController {
   void toggleActive(EntityUser user) {
     user.isActive = !(user.isActive ?? true);
     _boxUser.put(user);
+
+    AuditLogService.instance.logAction(
+      module: AuditModule.system,
+      action: user.isActive == true ? AuditAction.enable : AuditAction.disable,
+      entityType: 'EntityUser',
+      entityId: '${user.id}',
+      description: '${user.isActive == true ? "Enabled" : "Disabled"} user "${user.username}".',
+    );
+
     loadUsers();
   }
 

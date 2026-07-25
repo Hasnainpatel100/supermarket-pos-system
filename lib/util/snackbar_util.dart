@@ -23,25 +23,24 @@ class SnackbarUtil {
     required Color backgroundColor,
     required IconData icon,
   }) {
-    final snackBar = SnackBar(
-      content: Row(
-        children: [
-          Icon(icon, color: Colors.white),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(message, style: const TextStyle(color: Colors.white)),
-          ),
-        ],
+    Get.closeCurrentSnackbar();
+    Get.rawSnackbar(
+      messageText: Text(
+        message,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
       ),
+      icon: Icon(icon, color: Colors.white),
       backgroundColor: backgroundColor,
-      behavior: SnackBarBehavior.floating,
+      snackPosition: SnackPosition.BOTTOM,
       margin: const EdgeInsets.all(12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      duration: const Duration(seconds: 2),
+      borderRadius: 8,
+      duration: const Duration(seconds: 3),
+      isDismissible: true,
+      forwardAnimationCurve: Curves.easeOut,
     );
-
-    ScaffoldMessenger.of(Get.context!)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(snackBar);
   }
 }

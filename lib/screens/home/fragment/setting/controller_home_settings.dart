@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:printing/printing.dart';
 
+import '../../../../enums/enum_audit_action.dart';
+import '../../../../enums/enum_audit_module.dart';
+import '../../../../service/service_audit_log.dart';
 import '../../../../service/service_storage.dart';
 
 class ControllerHomeSettings extends GetxController {
@@ -110,6 +113,13 @@ class ControllerHomeSettings extends GetxController {
     await _storage.writeString('store_email',   rxStoreEmail.value);
     await _storage.writeString('store_gstin',   rxStoreGstin.value);
 
+    AuditLogService.instance.logAction(
+      module: AuditModule.system,
+      action: AuditAction.update,
+      entityType: 'StoreSettings',
+      description: 'Updated store profile details (Name: "${rxStoreName.value}").',
+    );
+
     Get.snackbar(
       'Success',
       'Store details updated successfully',
@@ -125,6 +135,13 @@ class ControllerHomeSettings extends GetxController {
 
     await _storage.writeString('wa_token',    rxWhatsAppToken.value);
     await _storage.writeString('wa_phone_id', rxWhatsAppPhoneId.value);
+
+    AuditLogService.instance.logAction(
+      module: AuditModule.system,
+      action: AuditAction.update,
+      entityType: 'WhatsAppSettings',
+      description: 'Updated WhatsApp API credentials.',
+    );
 
     Get.snackbar(
       'Saved',
@@ -184,6 +201,13 @@ class ControllerHomeSettings extends GetxController {
     await _storage.writeString('printer_extra_info',   rxExtraInfo.value);
     await _storage.writeInt('printer_a4_columns',      rxA4Columns.value);
     await _storage.writeInt('printer_a4_rows',         rxA4Rows.value);
+
+    AuditLogService.instance.logAction(
+      module: AuditModule.system,
+      action: AuditAction.update,
+      entityType: 'PrinterSettings',
+      description: 'Updated printer settings (Printer: "${rxDefaultPrinter.value.isEmpty ? "System Default" : rxDefaultPrinter.value}", Size: ${rxPaperSize.value}).',
+    );
 
     Get.snackbar(
       'Saved',

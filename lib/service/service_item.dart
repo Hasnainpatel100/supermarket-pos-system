@@ -1,5 +1,8 @@
+import '../enums/enum_audit_action.dart';
+import '../enums/enum_audit_module.dart';
 import '../model/entity_item.dart';
 import '../objectbox.g.dart';
+import 'service_audit_log.dart';
 
 class ItemService {
   final Box<EntityItem> itemBox;
@@ -12,10 +15,18 @@ class ItemService {
 
     item.createdAtUtcMs = now;
     item.updatedAtUtcMs = now;
-    item.totalQty = 0;
+    item.totalQty = item.totalQty ?? 0;
     item.isActive = true;
 
-    itemBox.put(item);
+    final id = itemBox.put(item);
+    item.id = id;
+
+    AuditLogService.instance.logCreate(
+      module: AuditModule.inventory,
+      entityType: 'EntityItem',
+      entityId: '$id',
+      description: 'Created item "${item.name}" (SKU: ${item.sku ?? item.barcode ?? 'N/A'}).',
+    );
   }
 
   /// UPDATE ITEM
@@ -23,6 +34,13 @@ class ItemService {
     item.updatedAtUtcMs = DateTime.now().toUtc().millisecondsSinceEpoch;
 
     itemBox.put(item);
+
+    AuditLogService.instance.logUpdate(
+      module: AuditModule.inventory,
+      entityType: 'EntityItem',
+      entityId: '${item.id}',
+      description: 'Updated item "${item.name}" (Price: ₹${item.sellingPrice}).',
+    );
   }
 
   /// GET ALL ITEMS
@@ -69,11 +87,34 @@ class ItemService {
     item.totalQty = newQty;
     item.updatedAtUtcMs = DateTime.now().toUtc().millisecondsSinceEpoch;
     itemBox.put(item);
+
+    AuditLogService.instance.logAction(
+      module: AuditModule.inventory,
+      action: AuditAction.update,
+      entityType: 'EntityItem',
+      entityId: '${item.id}',
+      description: 'Adjusted stock for "${item.name}" by ${delta >= 0 ? "+$delta" : delta}. New total: $newQty.',
+      reason: 'Stock Adjustment',
+    );
+
     return true;
   }
 
   /// DELETE ITEM
   bool deleteItem(int id) {
-    return itemBox.remove(id);
+    final item = itemBox.get(id);
+    final name = item?.name ?? 'Item #$id';
+    final result = itemBox.remove(id);
+
+    if (result) {
+      AuditLogService.instance.logDelete(
+        module: AuditModule.inventory,
+        entityType: 'EntityItem',
+        entityId: '$id',
+        description: 'Deleted item "$name".',
+      );
+    }
+
+    return result;
   }
 }

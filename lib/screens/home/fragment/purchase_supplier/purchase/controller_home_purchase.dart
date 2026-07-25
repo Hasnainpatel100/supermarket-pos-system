@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 
+import '../../../../../enums/enum_audit_action.dart';
+import '../../../../../enums/enum_audit_module.dart';
 import '../../../../../enums/enum_payement_mode.dart';
 import '../../../../../enums/enum_purchase_status.dart';
 import '../../../../../enums/enum_stock_txn_type.dart';
@@ -15,6 +17,7 @@ import '../../../../../model/entity_stock_transaction.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../model/entity_payment_schedule.dart';
 import '../../../../../objectbox.g.dart';
+import '../../../../../service/service_audit_log.dart';
 import '../../../../../service/service_object_box.dart';
 
 class ControllerHomePurchase extends GetxController {
@@ -189,6 +192,13 @@ class ControllerHomePurchase extends GetxController {
 
     final purchaseId = _boxPurchase.put(purchase);
 
+    AuditLogService.instance.logCreate(
+      module: AuditModule.purchase,
+      entityType: 'EntityPurchase',
+      entityId: '$purchaseId',
+      description: 'Created purchase order $purchaseNo for "$supplierName" (Total: ₹${totalAmount.toStringAsFixed(2)}).',
+    );
+
     for (final input in items) {
       final pi = EntityPurchaseItem(
         purchaseId: purchaseId,
@@ -278,6 +288,14 @@ class ControllerHomePurchase extends GetxController {
       _updatePurchaseStatus(purchase);
     });
 
+    AuditLogService.instance.logAction(
+      module: AuditModule.purchase,
+      action: AuditAction.update,
+      entityType: 'EntityPurchase',
+      entityId: '${purchase.id}',
+      description: 'Received goods for purchase order ${purchase.purchaseNo}.',
+    );
+
     loadPurchases();
     return null;
   }
@@ -290,6 +308,15 @@ class ControllerHomePurchase extends GetxController {
     purchase.status = PurchaseStatus.cancelled.index;
     purchase.updatedAtUtcMs = DateTime.now().toUtc().millisecondsSinceEpoch;
     _boxPurchase.put(purchase);
+
+    AuditLogService.instance.logAction(
+      module: AuditModule.purchase,
+      action: AuditAction.update,
+      entityType: 'EntityPurchase',
+      entityId: '${purchase.id}',
+      description: 'Cancelled purchase order ${purchase.purchaseNo}.',
+      reason: 'PO Cancelled',
+    );
 
     // Recalculate supplier outstanding (cancelled PO no longer counts)
     if (purchase.supplierId != null) {
@@ -330,6 +357,13 @@ class ControllerHomePurchase extends GetxController {
       // 3. Remove the purchase itself
       _boxPurchase.remove(purchase.id);
     });
+
+    AuditLogService.instance.logDelete(
+      module: AuditModule.purchase,
+      entityType: 'EntityPurchase',
+      entityId: '${purchase.id}',
+      description: 'Deleted purchase order ${purchase.purchaseNo}.',
+    );
 
     // Recalculate supplier outstanding after deletion
     if (purchase.supplierId != null) {
@@ -397,7 +431,14 @@ class ControllerHomePurchase extends GetxController {
       createdByUserId: createdByUserId,
       createdAtUtcMs: now,
     );
-    _boxPayment.put(payment);
+    final paymentId = _boxPayment.put(payment);
+
+    AuditLogService.instance.logCreate(
+      module: AuditModule.purchase,
+      entityType: 'EntityPayment',
+      entityId: '$paymentId',
+      description: 'Recorded payment of ₹${amount.toStringAsFixed(2)} (${paymentMode.name}) for PO ${purchase.purchaseNo}.',
+    );
 
     // ── 2. Update purchase payment cache ──
     purchase.amountPaid = (purchase.amountPaid ?? 0) + amount;

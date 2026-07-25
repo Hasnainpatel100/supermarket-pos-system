@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../enums/enum_audit_module.dart';
 import '../../model/entity_customer.dart';
 import '../../objectbox.g.dart';
+import '../../service/service_audit_log.dart';
 import '../../service/service_object_box.dart';
 import '../home/fragment/customer/controller_home_customer.dart';
 import '../home/fragment/pos/controller_home_pos.dart';
@@ -113,7 +115,25 @@ class ControllerCustomerForm extends GetxController {
     customer.updatedAtUtcMs = now;
 
     try {
-      _boxCustomer.put(customer);
+      final isNew = editingCustomer == null;
+      final id = _boxCustomer.put(customer);
+      customer.id = id;
+
+      if (isNew) {
+        AuditLogService.instance.logCreate(
+          module: AuditModule.customer,
+          entityType: 'EntityCustomer',
+          entityId: '$id',
+          description: 'Created customer "${customer.name}" (${customer.phone}).',
+        );
+      } else {
+        AuditLogService.instance.logUpdate(
+          module: AuditModule.customer,
+          entityType: 'EntityCustomer',
+          entityId: '$id',
+          description: 'Updated customer "${customer.name}".',
+        );
+      }
 
       // Refresh other controllers if they are active
       if (Get.isRegistered<ControllerHomeCustomer>()) {

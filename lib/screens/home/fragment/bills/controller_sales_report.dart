@@ -356,6 +356,7 @@ class ControllerSalesReport extends GetxController {
       rows: exportRows,
       appliedFilters: filters,
       summaryData: summary,
+
     );
   }
 

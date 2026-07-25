@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:super_market/service/service_locale.dart';
 
 import '../repository/repo_storage.dart';
+import '../service/service_audit_log.dart';
 import '../service/service_currency.dart';
 import '../service/service_object_box.dart';
 import '../service/service_storage.dart';
@@ -26,6 +27,12 @@ class StaticMethods {
     // ObjectBox
     await Get.putAsync<ServiceObjectBox>(
       () async => ServiceObjectBox().init(),
+      permanent: true,
+    );
+
+    // Audit log — depends on ServiceObjectBox; register immediately after it
+    Get.put<AuditLogService>(
+      AuditLogService(Get.find<ServiceObjectBox>()),
       permanent: true,
     );
 

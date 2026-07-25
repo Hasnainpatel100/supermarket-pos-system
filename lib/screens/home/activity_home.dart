@@ -14,7 +14,6 @@ import '../../repository/repo_drawer.dart';
 import 'controller_home.dart';
 import 'fragment/dashboard/frag_home_dashboard.dart';
 import 'fragment/frag_home_logout.dart';
-import 'fragment/reports/frag_home_report.dart';
 import 'fragment/bills/frag_sales_report.dart';
 import 'fragment/bills/frag_inventory_report.dart';
 import 'fragment/bills/controller_inventory_report.dart';
@@ -33,6 +32,8 @@ import 'fragment/bills/controller_financial_report.dart';
 import 'fragment/setting/frag_home_settings.dart';
 import 'fragment/setting/controller_home_settings.dart';
 import 'fragment/users/frag_home_users.dart';
+import 'fragment/system/frag_home_backup.dart';
+import 'fragment/system/frag_audit_logs.dart';
 
 class ActivityHome extends StatelessWidget {
   const ActivityHome({super.key});
@@ -99,6 +100,13 @@ class ActivityHome extends StatelessWidget {
               }
               if(controller.selectedMainMenu.value == EnumMainMenu.expenses){
                 return FragmentHomeExpenses();
+              }
+
+              if (controller.selectedMainMenu.value == EnumMainMenu.backup) {
+                return const FragHomeBackup();
+              }
+              if (controller.selectedMainMenu.value == EnumMainMenu.auditLogs) {
+                return const FragAuditLogs();
               }
 
               // ── Sales Reports (single entry under Reports → Sales Reports) ──

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../enums/enum_audit_action.dart';
+import '../../../../../enums/enum_audit_module.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../objectbox.g.dart';
+import '../../../../../service/service_audit_log.dart';
 import '../../../../../service/service_object_box.dart';
 
 
@@ -109,8 +112,9 @@ class ControllerHomeSupplier extends GetxController {
     if (name.isEmpty) return 'Supplier name is required';
 
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final isNew = supplier.id == 0;
 
-    if (supplier.id == 0) {
+    if (isNew) {
       // ── CREATE ──
       supplier.supplierCode = _generateSupplierCode();
       supplier.isActive = true;
@@ -121,7 +125,25 @@ class ControllerHomeSupplier extends GetxController {
       supplier.updatedAtUtcMs = now;
     }
 
-    _box.put(supplier);
+    final id = _box.put(supplier);
+    supplier.id = id;
+
+    if (isNew) {
+      AuditLogService.instance.logCreate(
+        module: AuditModule.supplier,
+        entityType: 'EntitySupplier',
+        entityId: '$id',
+        description: 'Created supplier "${supplier.name}" (${supplier.supplierCode}).',
+      );
+    } else {
+      AuditLogService.instance.logUpdate(
+        module: AuditModule.supplier,
+        entityType: 'EntitySupplier',
+        entityId: '$id',
+        description: 'Updated supplier "${supplier.name}".',
+      );
+    }
+
     loadSuppliers();
     return null;
   }
@@ -150,6 +172,15 @@ class ControllerHomeSupplier extends GetxController {
     supplier.isActive = !(supplier.isActive ?? true);
     supplier.updatedAtUtcMs = DateTime.now().toUtc().millisecondsSinceEpoch;
     _box.put(supplier);
+
+    AuditLogService.instance.logAction(
+      module: AuditModule.supplier,
+      action: supplier.isActive == true ? AuditAction.enable : AuditAction.disable,
+      entityType: 'EntitySupplier',
+      entityId: '${supplier.id}',
+      description: '${supplier.isActive == true ? "Enabled" : "Disabled"} supplier "${supplier.name}".',
+    );
+
     loadSuppliers();
   }
 

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../enums/enum_audit_action.dart';
+import '../../enums/enum_audit_module.dart';
 import '../../model/entity_item.dart';
 import '../../model/entity_tax.dart';
+import '../../service/service_audit_log.dart';
 import '../../service/service_item.dart';
 import '../../service/service_object_box.dart';
 import '../../service/service_item_excel.dart';
@@ -302,6 +305,15 @@ class ControllerItemForm extends GetxController {
       } catch (e) {
         failCount++;
       }
+    }
+    
+    if (successCount > 0) {
+      AuditLogService.instance.logAction(
+        module: AuditModule.inventory,
+        action: AuditAction.create,
+        entityType: 'EntityItem',
+        description: 'Bulk imported $successCount item(s) from Excel file ($failCount skipped).',
+      );
     }
     
     Get.snackbar(

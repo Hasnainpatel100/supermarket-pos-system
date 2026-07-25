@@ -261,7 +261,6 @@ class ControllerSupplierReport extends GetxController {
     double totalVal = 0.0;
     double totalPaid = 0.0;
     double totalDue = 0.0;
-    int outstandingCount = 0;
 
     final rows = <SupplierPurchaseHistoryRow>[];
     final df = DateFormat('dd/MM/yyyy HH:mm');
@@ -271,7 +270,6 @@ class ControllerSupplierReport extends GetxController {
       totalPaid += (po.amountPaid ?? 0.0);
       final due = po.outstandingAmount;
       totalDue += due;
-      if (due > 0) outstandingCount++;
 
       final dateStr = po.purchaseDateUtcMs != null
           ? df.format(DateTime.fromMillisecondsSinceEpoch(po.purchaseDateUtcMs!))
@@ -497,41 +495,83 @@ class ControllerSupplierReport extends GetxController {
     final testRows = <dynamic>[];
     switch (type) {
       case SupplierReportType.purchaseHistory:
+        double totalAmt = 0, totalPaid = 0, totalDue = 0;
         for (final raw in rawRows) {
-          testRows.add(SupplierPurchaseHistoryRow(
-            date: raw['PO Date']?.toString() ?? '-',
-            purchaseNo: raw['PO Number']?.toString() ?? '-',
-            supplierName: raw['Supplier']?.toString() ?? '-',
-            totalAmount: double.tryParse(raw['Total Amount']?.toString() ?? '0') ?? 0.0,
-            amountPaid: double.tryParse(raw['Paid Amount']?.toString() ?? '0') ?? 0.0,
-            amountDue: double.tryParse(raw['Outstanding']?.toString() ?? '0') ?? 0.0,
-            status: int.tryParse(raw['Status']?.toString() ?? '0') ?? 0,
+          final row = SupplierPurchaseHistoryRow(
+            date: ServiceReportExcelImport.parseString(raw['PO Date']),
+            purchaseNo: ServiceReportExcelImport.parseString(raw['PO Number']),
+            supplierName: ServiceReportExcelImport.parseString(raw['Supplier']),
+            totalAmount: ServiceReportExcelImport.parseDouble(raw['Total Amount']),
+            amountPaid: ServiceReportExcelImport.parseDouble(raw['Paid Amount']),
+            amountDue: ServiceReportExcelImport.parseDouble(raw['Outstanding']),
+            status: ServiceReportExcelImport.parseInt(raw['Status']),
             purchase: EntityPurchase(),
-          ));
+          );
+          testRows.add(row);
+          totalAmt += row.totalAmount;
+          totalPaid += row.amountPaid;
+          totalDue += row.amountDue;
         }
+        rxSummaryCards.assignAll([
+          SupplierSummaryCardData(
+            label: 'Total Purchases',
+            value: _currFmt.format(totalAmt),
+            icon: Icons.shopping_bag_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SupplierSummaryCardData(
+            label: 'Total Paid',
+            value: _currFmt.format(totalPaid),
+            icon: Icons.check_circle_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          SupplierSummaryCardData(
+            label: 'Outstanding Due',
+            value: _currFmt.format(totalDue),
+            icon: Icons.pending_actions_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+        ]);
         break;
+
       case SupplierReportType.outstanding:
+        double totalBal = 0;
         for (final raw in rawRows) {
-          testRows.add(SupplierOutstandingRow(
-            supplierName: raw['Supplier Name']?.toString() ?? '-',
-            totalPurchases: double.tryParse(raw['Total Purchases']?.toString() ?? '0') ?? 0.0,
-            totalPaid: double.tryParse(raw['Total Paid']?.toString() ?? '0') ?? 0.0,
-            outstandingBalance: double.tryParse(raw['Outstanding Balance']?.toString() ?? '0') ?? 0.0,
-            outstandingBillsCount: int.tryParse(raw['Outstanding Bills']?.toString() ?? '0') ?? 0,
-          ));
+          final row = SupplierOutstandingRow(
+            supplierName: ServiceReportExcelImport.parseString(raw['Supplier Name']),
+            totalPurchases: ServiceReportExcelImport.parseDouble(raw['Total Purchases']),
+            totalPaid: ServiceReportExcelImport.parseDouble(raw['Total Paid']),
+            outstandingBalance: ServiceReportExcelImport.parseDouble(raw['Outstanding Balance']),
+            outstandingBillsCount: ServiceReportExcelImport.parseInt(raw['Outstanding Bills']),
+          );
+          testRows.add(row);
+          totalBal += row.outstandingBalance;
         }
+        rxSummaryCards.assignAll([
+          SupplierSummaryCardData(
+            label: 'Total Suppliers',
+            value: testRows.length.toString(),
+            icon: Icons.group_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          SupplierSummaryCardData(
+            label: 'Total Outstanding',
+            value: _currFmt.format(totalBal),
+            icon: Icons.warning_amber_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+        ]);
         break;
     }
 
     _fullRows = testRows;
     currentPage.value = 0;
-    _recomputeSummaryCardsForTestRows();
     _applyPagination();
   }
 
   final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
-  void _recomputeSummaryCardsForTestRows() {
+  void recomputeSummaryCardsForTestRows() {
     final type = rxReportType.value;
     switch (type) {
       case SupplierReportType.purchaseHistory:

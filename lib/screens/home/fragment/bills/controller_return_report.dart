@@ -480,42 +480,92 @@ class ControllerReturnReport extends GetxController {
     final testRows = <dynamic>[];
     switch (type) {
       case ReturnReportType.salesReturn:
+        double totalRefund = 0;
+        int totalItems = 0;
         for (final raw in rawRows) {
-          testRows.add(SalesReturnRow(
-            date: raw['Return Date']?.toString() ?? '-',
-            billNo: raw['Invoice No']?.toString() ?? '-',
-            customer: raw['Customer Name']?.toString() ?? '-',
-            itemsCount: int.tryParse(raw['Total Items']?.toString() ?? '0') ?? 0,
-            refundAmount: double.tryParse(raw['Refunded Amount']?.toString() ?? '0') ?? 0.0,
-            reason: raw['Reason / Notes']?.toString() ?? '-',
+          final row = SalesReturnRow(
+            date: ServiceReportExcelImport.parseString(raw['Return Date']),
+            billNo: ServiceReportExcelImport.parseString(raw['Invoice No']),
+            customer: ServiceReportExcelImport.parseString(raw['Customer Name']),
+            itemsCount: ServiceReportExcelImport.parseInt(raw['Total Items']),
+            refundAmount: ServiceReportExcelImport.parseDouble(raw['Refunded Amount']),
+            reason: ServiceReportExcelImport.parseString(raw['Reason / Notes']),
             bill: EntityBill(),
-          ));
+          );
+          testRows.add(row);
+          totalRefund += row.refundAmount;
+          totalItems += row.itemsCount;
         }
+        rxSummaryCards.assignAll([
+          ReturnSummaryCardData(
+            label: 'Sales Returns',
+            value: testRows.length.toString(),
+            icon: Icons.assignment_return_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.red.shade500],
+          ),
+          ReturnSummaryCardData(
+            label: 'Total Refunded',
+            value: _currFmt.format(totalRefund),
+            icon: Icons.money_off_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+          ReturnSummaryCardData(
+            label: 'Items Returned',
+            value: totalItems.toString(),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.blue.shade500],
+          ),
+        ]);
         break;
+
       case ReturnReportType.purchaseReturn:
+        double totalRefund = 0;
+        double totalItems = 0;
         for (final raw in rawRows) {
-          testRows.add(PurchaseReturnRow(
-            date: raw['Return Date']?.toString() ?? '-',
-            purchaseNo: raw['PO Number']?.toString() ?? '-',
-            supplier: raw['Supplier Name']?.toString() ?? '-',
-            itemsCount: double.tryParse(raw['Total Items']?.toString() ?? '0') ?? 0.0,
-            refundAmount: double.tryParse(raw['Refund Value']?.toString() ?? '0') ?? 0.0,
-            notes: raw['Remarks / Notes']?.toString() ?? '-',
+          final row = PurchaseReturnRow(
+            date: ServiceReportExcelImport.parseString(raw['Return Date']),
+            purchaseNo: ServiceReportExcelImport.parseString(raw['PO Number']),
+            supplier: ServiceReportExcelImport.parseString(raw['Supplier Name']),
+            itemsCount: ServiceReportExcelImport.parseDouble(raw['Total Items']),
+            refundAmount: ServiceReportExcelImport.parseDouble(raw['Refund Value']),
+            notes: ServiceReportExcelImport.parseString(raw['Remarks / Notes']),
             purchase: EntityPurchase(),
-          ));
+          );
+          testRows.add(row);
+          totalRefund += row.refundAmount;
+          totalItems += row.itemsCount;
         }
+        rxSummaryCards.assignAll([
+          ReturnSummaryCardData(
+            label: 'Purchase Returns',
+            value: testRows.length.toString(),
+            icon: Icons.assignment_return_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ReturnSummaryCardData(
+            label: 'Refund Received',
+            value: _currFmt.format(totalRefund),
+            icon: Icons.account_balance_wallet_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          ReturnSummaryCardData(
+            label: 'Items Returned',
+            value: totalItems.toStringAsFixed(0),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
         break;
     }
 
     _fullRows = testRows;
     currentPage.value = 0;
-    _recomputeSummaryCardsForTestRows();
     _applyPagination();
   }
 
   final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
-  void _recomputeSummaryCardsForTestRows() {
+  void recomputeSummaryCardsForTestRows() {
     final type = rxReportType.value;
     switch (type) {
       case ReturnReportType.salesReturn:

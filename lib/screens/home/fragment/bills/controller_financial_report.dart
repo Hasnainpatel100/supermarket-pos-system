@@ -727,56 +727,108 @@ class ControllerFinancialReport extends GetxController {
     final testRows = <dynamic>[];
     switch (type) {
       case FinancialReportType.paymentCollection:
+        double totalAmt = 0;
         for (final raw in rawRows) {
-          testRows.add(PaymentCollectionRow(
-            date: raw['Collection Date']?.toString() ?? '-',
-            paymentMethod: raw['Payment Method']?.toString() ?? '-',
-            billNo: raw['Document Bill']?.toString() ?? '-',
-            customerName: raw['Customer Name']?.toString() ?? '-',
-            amount: double.tryParse(raw['Amount Collected']?.toString() ?? '0') ?? 0.0,
-            cashier: raw['Cashier Duty']?.toString() ?? '-',
+          final row = PaymentCollectionRow(
+            date: ServiceReportExcelImport.parseString(raw['Collection Date']),
+            paymentMethod: ServiceReportExcelImport.parseString(raw['Payment Method']),
+            billNo: ServiceReportExcelImport.parseString(raw['Document Bill']),
+            customerName: ServiceReportExcelImport.parseString(raw['Customer Name']),
+            amount: ServiceReportExcelImport.parseDouble(raw['Amount Collected']),
+            cashier: ServiceReportExcelImport.parseString(raw['Cashier Duty']),
             bill: EntityBill(),
-          ));
+          );
+          testRows.add(row);
+          totalAmt += row.amount;
         }
+        rxSummaryCards.assignAll([
+          FinancialSummaryCardData(
+            label: 'Total Collections',
+            value: _currFmt.format(totalAmt),
+            icon: Icons.account_balance_wallet_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          FinancialSummaryCardData(
+            label: 'Total Records',
+            value: testRows.length.toString(),
+            icon: Icons.receipt_long_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
         break;
+
       case FinancialReportType.dailyCashClosing:
+        double totalClosing = 0;
         for (final raw in rawRows) {
-          testRows.add(DailyCashClosingRow(
-            date: raw['Reconcile Date']?.toString() ?? '-',
-            cashierName: raw['Cashier on Duty']?.toString() ?? '-',
-            openingCash: double.tryParse(raw['Opening Cash']?.toString() ?? '0') ?? 0.0,
-            cashSales: double.tryParse(raw['Cash Sales (+)']?.toString() ?? '0') ?? 0.0,
-            cashReturns: double.tryParse(raw['Cash Returns (-)']?.toString() ?? '0') ?? 0.0,
-            cashExpenses: double.tryParse(raw['Cash Expenses (-)']?.toString() ?? '0') ?? 0.0,
-            closingCash: double.tryParse(raw['Closing Drawer']?.toString() ?? '0') ?? 0.0,
-          ));
+          final row = DailyCashClosingRow(
+            date: ServiceReportExcelImport.parseString(raw['Reconcile Date']),
+            cashierName: ServiceReportExcelImport.parseString(raw['Cashier on Duty']),
+            openingCash: ServiceReportExcelImport.parseDouble(raw['Opening Cash']),
+            cashSales: ServiceReportExcelImport.parseDouble(raw['Cash Sales (+)']),
+            cashReturns: ServiceReportExcelImport.parseDouble(raw['Cash Returns (-)']),
+            cashExpenses: ServiceReportExcelImport.parseDouble(raw['Cash Expenses (-)']),
+            closingCash: ServiceReportExcelImport.parseDouble(raw['Closing Drawer']),
+          );
+          testRows.add(row);
+          totalClosing += row.closingCash;
         }
+        rxSummaryCards.assignAll([
+          FinancialSummaryCardData(
+            label: 'Closing Cash Reconciled',
+            value: _currFmt.format(totalClosing),
+            icon: Icons.point_of_sale_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          FinancialSummaryCardData(
+            label: 'Days Reconciled',
+            value: testRows.length.toString(),
+            icon: Icons.calendar_month_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+        ]);
         break;
+
       case FinancialReportType.taxGST:
+        double totalTaxable = 0, totalGst = 0;
         for (final raw in rawRows) {
-          final gstRateStr = raw['GST Rate']?.toString().replaceAll('%', '').trim() ?? '0';
-          testRows.add(TaxGstRow(
-            date: raw['Transaction Date']?.toString() ?? '-',
-            docNo: raw['Doc Number']?.toString() ?? '-',
-            txnType: raw['Transaction Type']?.toString() ?? '-',
-            taxableAmount: double.tryParse(raw['Taxable Amount']?.toString() ?? '0') ?? 0.0,
-            gstRate: double.tryParse(gstRateStr) ?? 0.0,
-            gstAmount: double.tryParse(raw['GST Amount']?.toString() ?? '0') ?? 0.0,
-            totalAmount: double.tryParse(raw['Total Invoice']?.toString() ?? '0') ?? 0.0,
-          ));
+          final row = TaxGstRow(
+            date: ServiceReportExcelImport.parseString(raw['Transaction Date']),
+            docNo: ServiceReportExcelImport.parseString(raw['Doc Number']),
+            txnType: ServiceReportExcelImport.parseString(raw['Transaction Type']),
+            taxableAmount: ServiceReportExcelImport.parseDouble(raw['Taxable Amount']),
+            gstRate: ServiceReportExcelImport.parseDouble(raw['GST Rate']),
+            gstAmount: ServiceReportExcelImport.parseDouble(raw['GST Amount']),
+            totalAmount: ServiceReportExcelImport.parseDouble(raw['Total Invoice']),
+          );
+          testRows.add(row);
+          totalTaxable += row.taxableAmount;
+          totalGst += row.gstAmount;
         }
+        rxSummaryCards.assignAll([
+          FinancialSummaryCardData(
+            label: 'Total Taxable Value',
+            value: _currFmt.format(totalTaxable),
+            icon: Icons.request_quote_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          FinancialSummaryCardData(
+            label: 'Total GST Collected',
+            value: _currFmt.format(totalGst),
+            icon: Icons.account_balance_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
         break;
     }
 
     _fullRows = testRows;
     currentPage.value = 0;
-    _recomputeSummaryCardsForTestRows();
     _applyPagination();
   }
 
   final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
-  void _recomputeSummaryCardsForTestRows() {
+  void recomputeSummaryCardsForTestRows() {
     final type = rxReportType.value;
     switch (type) {
       case FinancialReportType.paymentCollection:

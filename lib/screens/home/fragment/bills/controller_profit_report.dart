@@ -870,87 +870,184 @@ class ControllerProfitReport extends GetxController {
       case ProfitReportType.profitSummary:
         for (final raw in rawRows) {
           testRows.add(ProfitSummaryRow(
-            metric: raw['Metric KPI']?.toString() ?? '-',
-            value: double.tryParse(raw['Value']?.toString().replaceAll('%', '').trim() ?? '0') ?? 0.0,
-            details: raw['Details / Description']?.toString() ?? '-',
+            metric: ServiceReportExcelImport.parseString(raw['Metric KPI']),
+            value: ServiceReportExcelImport.parseDouble(raw['Value']),
+            details: ServiceReportExcelImport.parseString(raw['Details / Description']),
           ));
         }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Metrics',
+            value: testRows.length.toString(),
+            icon: Icons.analytics_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+        ]);
         break;
+
       case ProfitReportType.itemProfit:
+        double totalRev = 0, totalProfit = 0;
         for (final raw in rawRows) {
-          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
-          testRows.add(ItemProfitRow(
-            sku: raw['Barcode/SKU']?.toString() ?? '-',
-            itemName: raw['Item Name']?.toString() ?? '-',
-            quantitySold: double.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0.0,
-            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
-            cost: double.tryParse(raw['Product Cost']?.toString() ?? '0') ?? 0.0,
-            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
-            margin: double.tryParse(mStr) ?? 0.0,
-          ));
+          final row = ItemProfitRow(
+            sku: ServiceReportExcelImport.parseString(raw['Barcode/SKU']),
+            itemName: ServiceReportExcelImport.parseString(raw['Item Name']),
+            quantitySold: ServiceReportExcelImport.parseDouble(raw['Qty Sold']),
+            revenue: ServiceReportExcelImport.parseDouble(raw['Revenue']),
+            cost: ServiceReportExcelImport.parseDouble(raw['Product Cost']),
+            grossProfit: ServiceReportExcelImport.parseDouble(raw['Gross Profit']),
+            margin: ServiceReportExcelImport.parseDouble(raw['Margin %']),
+          );
+          testRows.add(row);
+          totalRev += row.revenue;
+          totalProfit += row.grossProfit;
         }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
         break;
+
       case ProfitReportType.categoryProfit:
+        double totalRev = 0, totalProfit = 0;
         for (final raw in rawRows) {
-          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
-          testRows.add(CategoryProfitRow(
-            categoryName: raw['Category Name']?.toString() ?? '-',
-            quantitySold: double.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0.0,
-            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
-            cost: double.tryParse(raw['Cost']?.toString() ?? '0') ?? 0.0,
-            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
-            margin: double.tryParse(mStr) ?? 0.0,
-          ));
+          final row = CategoryProfitRow(
+            categoryName: ServiceReportExcelImport.parseString(raw['Category Name']),
+            quantitySold: ServiceReportExcelImport.parseDouble(raw['Qty Sold']),
+            revenue: ServiceReportExcelImport.parseDouble(raw['Revenue']),
+            cost: ServiceReportExcelImport.parseDouble(raw['Cost']),
+            grossProfit: ServiceReportExcelImport.parseDouble(raw['Gross Profit']),
+            margin: ServiceReportExcelImport.parseDouble(raw['Margin %']),
+          );
+          testRows.add(row);
+          totalRev += row.revenue;
+          totalProfit += row.grossProfit;
         }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
         break;
+
       case ProfitReportType.brandProfit:
+        double totalRev = 0, totalProfit = 0;
         for (final raw in rawRows) {
-          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
-          testRows.add(BrandProfitRow(
-            brandName: raw['Brand Name']?.toString() ?? '-',
-            quantitySold: double.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0.0,
-            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
-            cost: double.tryParse(raw['Cost']?.toString() ?? '0') ?? 0.0,
-            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
-            margin: double.tryParse(mStr) ?? 0.0,
-          ));
+          final row = BrandProfitRow(
+            brandName: ServiceReportExcelImport.parseString(raw['Brand Name']),
+            quantitySold: ServiceReportExcelImport.parseDouble(raw['Qty Sold']),
+            revenue: ServiceReportExcelImport.parseDouble(raw['Revenue']),
+            cost: ServiceReportExcelImport.parseDouble(raw['Cost']),
+            grossProfit: ServiceReportExcelImport.parseDouble(raw['Gross Profit']),
+            margin: ServiceReportExcelImport.parseDouble(raw['Margin %']),
+          );
+          testRows.add(row);
+          totalRev += row.revenue;
+          totalProfit += row.grossProfit;
         }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
         break;
+
       case ProfitReportType.dailyProfit:
+        double totalRev = 0, totalProfit = 0;
         for (final raw in rawRows) {
-          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
-          testRows.add(DailyProfitRow(
-            date: raw['Date']?.toString() ?? '-',
-            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
-            cost: double.tryParse(raw['Cost']?.toString() ?? '0') ?? 0.0,
-            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
-            margin: double.tryParse(mStr) ?? 0.0,
-          ));
+          final row = DailyProfitRow(
+            date: ServiceReportExcelImport.parseString(raw['Date']),
+            revenue: ServiceReportExcelImport.parseDouble(raw['Revenue']),
+            cost: ServiceReportExcelImport.parseDouble(raw['Cost']),
+            grossProfit: ServiceReportExcelImport.parseDouble(raw['Gross Profit']),
+            margin: ServiceReportExcelImport.parseDouble(raw['Margin %']),
+          );
+          testRows.add(row);
+          totalRev += row.revenue;
+          totalProfit += row.grossProfit;
         }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
         break;
+
       case ProfitReportType.monthlyProfit:
+        double totalRev = 0, totalProfit = 0;
         for (final raw in rawRows) {
-          final mStr = raw['Margin %']?.toString().replaceAll('%', '').trim() ?? '0';
-          testRows.add(MonthlyProfitRow(
-            month: raw['Month']?.toString() ?? '-',
-            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
-            cost: double.tryParse(raw['Cost']?.toString() ?? '0') ?? 0.0,
-            grossProfit: double.tryParse(raw['Gross Profit']?.toString() ?? '0') ?? 0.0,
-            margin: double.tryParse(mStr) ?? 0.0,
-          ));
+          final row = MonthlyProfitRow(
+            month: ServiceReportExcelImport.parseString(raw['Month']),
+            revenue: ServiceReportExcelImport.parseDouble(raw['Revenue']),
+            cost: ServiceReportExcelImport.parseDouble(raw['Cost']),
+            grossProfit: ServiceReportExcelImport.parseDouble(raw['Gross Profit']),
+            margin: ServiceReportExcelImport.parseDouble(raw['Margin %']),
+          );
+          testRows.add(row);
+          totalRev += row.revenue;
+          totalProfit += row.grossProfit;
         }
+        rxSummaryCards.assignAll([
+          ProfitSummaryCardData(
+            label: 'Total Revenue',
+            value: _currFmt.format(totalRev),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          ProfitSummaryCardData(
+            label: 'Gross Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
         break;
     }
 
     _fullRows = testRows;
     currentPage.value = 0;
-    _recomputeSummaryCardsForTestRows();
     _applyPagination();
   }
 
   final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
-  void _recomputeSummaryCardsForTestRows() {
+  void recomputeSummaryCardsForTestRows() {
     final type = rxReportType.value;
     switch (type) {
       case ProfitReportType.profitSummary:

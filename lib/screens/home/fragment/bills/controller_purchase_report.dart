@@ -866,81 +866,192 @@ class ControllerPurchaseReport extends GetxController {
     final testRows = <dynamic>[];
     switch (type) {
       case PurchaseReportType.purchaseSummary:
+        double totalAmt = 0, totalPaid = 0, totalDue = 0;
         for (final raw in rawRows) {
-          testRows.add(PurchaseSummaryRow(
-            date: raw['Date']?.toString() ?? '-',
-            purchaseNo: raw['Purchase No']?.toString() ?? '-',
-            supplierName: raw['Supplier']?.toString() ?? '-',
-            totalAmount: double.tryParse(raw['Total Amount']?.toString() ?? '0') ?? 0.0,
-            paidAmount: double.tryParse(raw['Paid Amount']?.toString() ?? '0') ?? 0.0,
-            outstandingAmount: double.tryParse(raw['Outstanding Due']?.toString() ?? '0') ?? 0.0,
-            status: raw['Status']?.toString() ?? '-',
-          ));
+          final row = PurchaseSummaryRow(
+            date: ServiceReportExcelImport.parseString(raw['Date']),
+            purchaseNo: ServiceReportExcelImport.parseString(raw['Purchase No']),
+            supplierName: ServiceReportExcelImport.parseString(raw['Supplier']),
+            totalAmount: ServiceReportExcelImport.parseDouble(raw['Total Amount']),
+            paidAmount: ServiceReportExcelImport.parseDouble(raw['Paid Amount']),
+            outstandingAmount: ServiceReportExcelImport.parseDouble(raw['Outstanding Due']),
+            status: ServiceReportExcelImport.parseString(raw['Status']),
+          );
+          testRows.add(row);
+          totalAmt += row.totalAmount;
+          totalPaid += row.paidAmount;
+          totalDue += row.outstandingAmount;
         }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Total Purchases',
+            value: _currFmt.format(totalAmt),
+            icon: Icons.shopping_cart_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Total Paid',
+            value: _currFmt.format(totalPaid),
+            icon: Icons.check_circle_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Outstanding Due',
+            value: _currFmt.format(totalDue),
+            icon: Icons.pending_actions_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+        ]);
         break;
+
       case PurchaseReportType.purchaseDetail:
+        double totalVal = 0, totalQty = 0;
         for (final raw in rawRows) {
-          testRows.add(PurchaseDetailRow(
-            date: raw['Date']?.toString() ?? '-',
-            purchaseNo: raw['Purchase No']?.toString() ?? '-',
-            supplierName: raw['Supplier']?.toString() ?? '-',
-            itemName: raw['Item Name']?.toString() ?? '-',
-            quantity: double.tryParse(raw['Order Qty']?.toString() ?? '0') ?? 0.0,
-            costPrice: double.tryParse(raw['Cost Price']?.toString() ?? '0') ?? 0.0,
-            totalValue: double.tryParse(raw['Total Value']?.toString() ?? '0') ?? 0.0,
-          ));
+          final row = PurchaseDetailRow(
+            date: ServiceReportExcelImport.parseString(raw['Date']),
+            purchaseNo: ServiceReportExcelImport.parseString(raw['Purchase No']),
+            supplierName: ServiceReportExcelImport.parseString(raw['Supplier']),
+            itemName: ServiceReportExcelImport.parseString(raw['Item Name']),
+            quantity: ServiceReportExcelImport.parseDouble(raw['Order Qty']),
+            costPrice: ServiceReportExcelImport.parseDouble(raw['Cost Price']),
+            totalValue: ServiceReportExcelImport.parseDouble(raw['Total Value']),
+          );
+          testRows.add(row);
+          totalVal += row.totalValue;
+          totalQty += row.quantity;
         }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Total Items Value',
+            value: _currFmt.format(totalVal),
+            icon: Icons.monetization_on_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Total Qty Ordered',
+            value: totalQty.toStringAsFixed(0),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
         break;
+
       case PurchaseReportType.supplierPurchase:
+        double totalAmt = 0, totalDue = 0;
         for (final raw in rawRows) {
-          testRows.add(SupplierPurchaseRow(
-            supplierName: raw['Supplier Name']?.toString() ?? '-',
-            numBills: int.tryParse(raw['No. of Bills']?.toString() ?? '0') ?? 0,
-            qtyPurchased: double.tryParse(raw['Qty Purchased']?.toString() ?? '0') ?? 0.0,
-            totalPurchaseAmount: double.tryParse(raw['Total Purchase']?.toString() ?? '0') ?? 0.0,
-            paidAmount: double.tryParse(raw['Paid Amount']?.toString() ?? '0') ?? 0.0,
-            outstandingBalance: double.tryParse(raw['Outstanding Balance']?.toString() ?? '0') ?? 0.0,
-          ));
+          final row = SupplierPurchaseRow(
+            supplierName: ServiceReportExcelImport.parseString(raw['Supplier Name']),
+            numBills: ServiceReportExcelImport.parseInt(raw['No. of Bills']),
+            qtyPurchased: ServiceReportExcelImport.parseDouble(raw['Qty Purchased']),
+            totalPurchaseAmount: ServiceReportExcelImport.parseDouble(raw['Total Purchase']),
+            paidAmount: ServiceReportExcelImport.parseDouble(raw['Paid Amount']),
+            outstandingBalance: ServiceReportExcelImport.parseDouble(raw['Outstanding Balance']),
+          );
+          testRows.add(row);
+          totalAmt += row.totalPurchaseAmount;
+          totalDue += row.outstandingBalance;
         }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Total Suppliers',
+            value: testRows.length.toString(),
+            icon: Icons.local_shipping_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Total Purchase Value',
+            value: _currFmt.format(totalAmt),
+            icon: Icons.account_balance_wallet_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Outstanding Balance',
+            value: _currFmt.format(totalDue),
+            icon: Icons.warning_amber_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.red.shade400],
+          ),
+        ]);
         break;
+
       case PurchaseReportType.pendingPurchaseOrders:
+        double totalPending = 0;
         for (final raw in rawRows) {
-          testRows.add(PendingPurchaseOrderRow(
-            date: raw['Date']?.toString() ?? '-',
-            purchaseNo: raw['PO Number']?.toString() ?? '-',
-            supplierName: raw['Supplier']?.toString() ?? '-',
-            expectedDate: raw['Expected Date']?.toString() ?? '-',
-            orderedQty: double.tryParse(raw['Ordered Qty']?.toString() ?? '0') ?? 0.0,
-            receivedQty: double.tryParse(raw['Received Qty']?.toString() ?? '0') ?? 0.0,
-            pendingQty: double.tryParse(raw['Pending Qty']?.toString() ?? '0') ?? 0.0,
-            status: raw['Status']?.toString() ?? '-',
-          ));
+          final row = PendingPurchaseOrderRow(
+            date: ServiceReportExcelImport.parseString(raw['Date']),
+            purchaseNo: ServiceReportExcelImport.parseString(raw['PO Number']),
+            supplierName: ServiceReportExcelImport.parseString(raw['Supplier']),
+            expectedDate: ServiceReportExcelImport.parseString(raw['Expected Date']),
+            orderedQty: ServiceReportExcelImport.parseDouble(raw['Ordered Qty']),
+            receivedQty: ServiceReportExcelImport.parseDouble(raw['Received Qty']),
+            pendingQty: ServiceReportExcelImport.parseDouble(raw['Pending Qty']),
+            status: ServiceReportExcelImport.parseString(raw['Status']),
+          );
+          testRows.add(row);
+          totalPending += row.pendingQty;
         }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Pending POs',
+            value: testRows.length.toString(),
+            icon: Icons.pending_actions_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Total Pending Qty',
+            value: totalPending.toStringAsFixed(0),
+            icon: Icons.hourglass_top_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
         break;
+
       case PurchaseReportType.purchaseReturn:
+        double totalRet = 0, totalQty = 0;
         for (final raw in rawRows) {
-          testRows.add(PurchaseReturnRow(
-            returnNo: raw['Return No']?.toString() ?? '-',
-            date: raw['Date']?.toString() ?? '-',
-            supplierName: raw['Supplier']?.toString() ?? '-',
-            itemName: raw['Item Name']?.toString() ?? '-',
-            quantityReturned: double.tryParse(raw['Qty Returned']?.toString() ?? '0') ?? 0.0,
-            returnAmount: double.tryParse(raw['Return Amount']?.toString() ?? '0') ?? 0.0,
-            returnReason: raw['Return Reason']?.toString() ?? '-',
-          ));
+          final row = PurchaseReturnRow(
+            returnNo: ServiceReportExcelImport.parseString(raw['Return No']),
+            date: ServiceReportExcelImport.parseString(raw['Date']),
+            supplierName: ServiceReportExcelImport.parseString(raw['Supplier']),
+            itemName: ServiceReportExcelImport.parseString(raw['Item Name']),
+            quantityReturned: ServiceReportExcelImport.parseDouble(raw['Qty Returned']),
+            returnAmount: ServiceReportExcelImport.parseDouble(raw['Return Amount']),
+            returnReason: ServiceReportExcelImport.parseString(raw['Return Reason']),
+          );
+          testRows.add(row);
+          totalRet += row.returnAmount;
+          totalQty += row.quantityReturned;
         }
+        rxSummaryCards.assignAll([
+          PurchaseSummaryCardData(
+            label: 'Total Returns',
+            value: testRows.length.toString(),
+            icon: Icons.assignment_return_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Return Value',
+            value: _currFmt.format(totalRet),
+            icon: Icons.money_off_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+          PurchaseSummaryCardData(
+            label: 'Qty Returned',
+            value: totalQty.toStringAsFixed(0),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
+          ),
+        ]);
         break;
     }
 
     _fullRows = testRows;
     currentPage.value = 0;
-    _recomputeSummaryCardsForTestRows();
     _applyPagination();
   }
 
   final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
-  void _recomputeSummaryCardsForTestRows() {
+  void recomputeSummaryCardsForTestRows() {
     final type = rxReportType.value;
     switch (type) {
       case PurchaseReportType.purchaseSummary:

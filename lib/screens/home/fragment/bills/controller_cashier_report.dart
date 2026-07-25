@@ -562,41 +562,77 @@ class ControllerCashierReport extends GetxController {
     final testRows = <dynamic>[];
     switch (type) {
       case CashierReportType.cashierSales:
+        double totalSales = 0;
+        int totalBills = 0;
         for (final raw in rawRows) {
-          testRows.add(CashierSalesRow(
-            cashierName: raw['Cashier Name']?.toString() ?? '-',
-            role: raw['System Role']?.toString() ?? '-',
-            billsCount: int.tryParse(raw['Bills Generated']?.toString() ?? '0') ?? 0,
-            totalSales: double.tryParse(raw['Sales Revenue']?.toString() ?? '0') ?? 0.0,
-            taxCollected: double.tryParse(raw['Tax Collected']?.toString() ?? '0') ?? 0.0,
-            discountGiven: double.tryParse(raw['Discount Given']?.toString() ?? '0') ?? 0.0,
-            avgTicket: double.tryParse(raw['Avg Ticket']?.toString() ?? '0') ?? 0.0,
-          ));
+          final row = CashierSalesRow(
+            cashierName: ServiceReportExcelImport.parseString(raw['Cashier Name']),
+            role: ServiceReportExcelImport.parseString(raw['System Role']),
+            billsCount: ServiceReportExcelImport.parseInt(raw['Bills Generated']),
+            totalSales: ServiceReportExcelImport.parseDouble(raw['Sales Revenue']),
+            taxCollected: ServiceReportExcelImport.parseDouble(raw['Tax Collected']),
+            discountGiven: ServiceReportExcelImport.parseDouble(raw['Discount Given']),
+            avgTicket: ServiceReportExcelImport.parseDouble(raw['Avg Ticket']),
+          );
+          testRows.add(row);
+          totalSales += row.totalSales;
+          totalBills += row.billsCount;
         }
+        rxSummaryCards.assignAll([
+          CashierSummaryCardData(
+            label: 'Total Cashier Sales',
+            value: _currFmt.format(totalSales),
+            icon: Icons.attach_money_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          CashierSummaryCardData(
+            label: 'Total Bills',
+            value: totalBills.toString(),
+            icon: Icons.receipt_long_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
         break;
+
       case CashierReportType.cashierShift:
+        double totalDrawer = 0;
         for (final raw in rawRows) {
-          testRows.add(CashierShiftRow(
-            date: raw['Shift Date']?.toString() ?? '-',
-            cashierName: raw['Cashier Name']?.toString() ?? '-',
-            status: raw['Shift Status']?.toString() ?? '-',
-            cashSales: double.tryParse(raw['Cash Sales']?.toString() ?? '0') ?? 0.0,
-            onlineSales: double.tryParse(raw['Online Sales']?.toString() ?? '0') ?? 0.0,
-            totalCollected: double.tryParse(raw['Total Drawer']?.toString() ?? '0') ?? 0.0,
-          ));
+          final row = CashierShiftRow(
+            date: ServiceReportExcelImport.parseString(raw['Shift Date']),
+            cashierName: ServiceReportExcelImport.parseString(raw['Cashier Name']),
+            status: ServiceReportExcelImport.parseString(raw['Shift Status']),
+            cashSales: ServiceReportExcelImport.parseDouble(raw['Cash Sales']),
+            onlineSales: ServiceReportExcelImport.parseDouble(raw['Online Sales']),
+            totalCollected: ServiceReportExcelImport.parseDouble(raw['Total Drawer']),
+          );
+          testRows.add(row);
+          totalDrawer += row.totalCollected;
         }
+        rxSummaryCards.assignAll([
+          CashierSummaryCardData(
+            label: 'Total Shifts',
+            value: testRows.length.toString(),
+            icon: Icons.badge_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          CashierSummaryCardData(
+            label: 'Total Drawer Collection',
+            value: _currFmt.format(totalDrawer),
+            icon: Icons.point_of_sale_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
         break;
     }
 
     _fullRows = testRows;
     currentPage.value = 0;
-    _recomputeSummaryCardsForTestRows();
     _applyPagination();
   }
 
   final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
-  void _recomputeSummaryCardsForTestRows() {
+  void recomputeSummaryCardsForTestRows() {
     final type = rxReportType.value;
     switch (type) {
       case CashierReportType.cashierSales:

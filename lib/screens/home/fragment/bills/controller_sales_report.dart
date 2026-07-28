@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
-import '../../../../model/entity_bill_item.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
@@ -209,6 +208,8 @@ class ControllerSalesReport extends GetxController {
   // ── Internal cache ──────────────────────────────────────────────────────
   List<EntityBill> _allFilteredBills = [];
   List<String> _matchingDateStrings = [];
+  bool _isTestImportMode = false;
+  final List<dynamic> _testImportRows = [];
 
   @override
   void onInit() {
@@ -235,6 +236,8 @@ class ControllerSalesReport extends GetxController {
   // ═════════════════════════════════════════════════════════════════════════
 
   void setReportType(SalesReportType type) {
+    _isTestImportMode = false;
+    _testImportRows.clear();
     rxReportType.value = type;
     currentPage.value = 0;
     loadData();
@@ -242,9 +245,15 @@ class ControllerSalesReport extends GetxController {
 
   void setSearchQuery(String q) => rxSearchQuery.value = q;
 
-  void setDateFilter(SalesDateFilter type) => _setDateFilter(type);
+  void setDateFilter(SalesDateFilter type) {
+    _isTestImportMode = false;
+    _testImportRows.clear();
+    _setDateFilter(type);
+  }
 
   void setCustomRange(DateTime start, DateTime end) {
+    _isTestImportMode = false;
+    _testImportRows.clear();
     rxDateFilter.value = SalesDateFilter.custom;
     rxStartDate.value = DateTime(start.year, start.month, start.day);
     rxEndDate.value = DateTime(end.year, end.month, end.day);
@@ -386,90 +395,145 @@ class ControllerSalesReport extends GetxController {
     );
     if (rawRows == null) return;
 
-    final testRows = <dynamic>[];
+    final newTestRows = <dynamic>[];
     switch (type) {
       case SalesReportType.salesSummary:
         for (final raw in rawRows) {
-          testRows.add(SalesSummaryRow(
-            date: raw['Date']?.toString() ?? '-',
-            orders: int.tryParse(raw['Orders']?.toString() ?? '0') ?? 0,
-            totalSales: double.tryParse(raw['Total Sales']?.toString() ?? '0') ?? 0.0,
-            discount: double.tryParse(raw['Discount']?.toString() ?? '0') ?? 0.0,
-            tax: double.tryParse(raw['Tax']?.toString() ?? '0') ?? 0.0,
-            netSales: double.tryParse(raw['Net Sales']?.toString() ?? '0') ?? 0.0,
+          newTestRows.add(SalesSummaryRow(
+            date: ServiceReportExcelImport.parseString(raw['Date']),
+            orders: ServiceReportExcelImport.parseInt(raw['Orders']),
+            totalSales: ServiceReportExcelImport.parseDouble(raw['Total Sales']),
+            discount: ServiceReportExcelImport.parseDouble(raw['Discount']),
+            tax: ServiceReportExcelImport.parseDouble(raw['Tax']),
+            netSales: ServiceReportExcelImport.parseDouble(raw['Net Sales']),
           ));
         }
         break;
+
       case SalesReportType.salesDetail:
         for (final raw in rawRows) {
-          testRows.add(SalesDetailRow(
-            dateTime: raw['Date & Time']?.toString() ?? '-',
-            billNo: raw['Bill No']?.toString() ?? '-',
-            customer: raw['Customer']?.toString() ?? '-',
-            payment: raw['Payment']?.toString() ?? '-',
-            items: int.tryParse(raw['Items']?.toString() ?? '0') ?? 0,
-            total: double.tryParse(raw['Total']?.toString() ?? '0') ?? 0.0,
-            status: raw['Status']?.toString() ?? 'COMPLETED',
+          newTestRows.add(SalesDetailRow(
+            dateTime: ServiceReportExcelImport.parseString(raw['Date & Time']),
+            billNo: ServiceReportExcelImport.parseString(raw['Bill No']),
+            customer: ServiceReportExcelImport.parseString(raw['Customer']),
+            payment: ServiceReportExcelImport.parseString(raw['Payment']),
+            items: ServiceReportExcelImport.parseInt(raw['Items']),
+            total: ServiceReportExcelImport.parseDouble(raw['Total']),
+            status: ServiceReportExcelImport.parseString(raw['Status'], 'COMPLETED'),
             bill: EntityBill(),
           ));
         }
         break;
+
       case SalesReportType.itemSales:
         for (final raw in rawRows) {
-          testRows.add(ItemSalesRow(
-            itemName: raw['Item Name']?.toString() ?? '-',
-            barcode: raw['Barcode']?.toString() ?? '-',
-            unit: raw['Unit']?.toString() ?? '-',
-            qtySold: int.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0,
-            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
-            avgPrice: double.tryParse(raw['Avg Price']?.toString() ?? '0') ?? 0.0,
+          newTestRows.add(ItemSalesRow(
+            itemName: ServiceReportExcelImport.parseString(raw['Item Name']),
+            barcode: ServiceReportExcelImport.parseString(raw['Barcode']),
+            unit: ServiceReportExcelImport.parseString(raw['Unit']),
+            qtySold: ServiceReportExcelImport.parseInt(raw['Qty Sold']),
+            revenue: ServiceReportExcelImport.parseDouble(raw['Revenue']),
+            avgPrice: ServiceReportExcelImport.parseDouble(raw['Avg Price']),
           ));
         }
         break;
+
       case SalesReportType.categorySales:
         for (final raw in rawRows) {
-          final pctStr = raw['% of Total']?.toString().replaceAll('%', '').trim() ?? '0';
-          testRows.add(CategorySalesRow(
-            category: raw['Category']?.toString() ?? '-',
-            itemCount: int.tryParse(raw['Items']?.toString() ?? '0') ?? 0,
-            qtySold: int.tryParse(raw['Qty Sold']?.toString() ?? '0') ?? 0,
-            revenue: double.tryParse(raw['Revenue']?.toString() ?? '0') ?? 0.0,
-            percentOfTotal: double.tryParse(pctStr) ?? 0.0,
+          newTestRows.add(CategorySalesRow(
+            category: ServiceReportExcelImport.parseString(raw['Category']),
+            itemCount: ServiceReportExcelImport.parseInt(raw['Items']),
+            qtySold: ServiceReportExcelImport.parseInt(raw['Qty Sold']),
+            revenue: ServiceReportExcelImport.parseDouble(raw['Revenue']),
+            percentOfTotal: ServiceReportExcelImport.parseDouble(raw['% of Total']),
           ));
         }
         break;
+
       case SalesReportType.paymentReport:
         for (final raw in rawRows) {
-          final pctStr = raw['% Share']?.toString().replaceAll('%', '').trim() ?? '0';
-          testRows.add(PaymentReportRow(
-            paymentMode: raw['Payment Mode']?.toString() ?? '-',
-            transactions: int.tryParse(raw['Transactions']?.toString() ?? '0') ?? 0,
-            totalAmount: double.tryParse(raw['Total Amount']?.toString() ?? '0') ?? 0.0,
-            percentShare: double.tryParse(pctStr) ?? 0.0,
+          newTestRows.add(PaymentReportRow(
+            paymentMode: ServiceReportExcelImport.parseString(raw['Payment Mode']),
+            transactions: ServiceReportExcelImport.parseInt(raw['Transactions']),
+            totalAmount: ServiceReportExcelImport.parseDouble(raw['Total Amount']),
+            percentShare: ServiceReportExcelImport.parseDouble(raw['% Share']),
           ));
         }
         break;
+
       case SalesReportType.hourWiseSales:
         for (final raw in rawRows) {
-          final isPeakStr = raw['Peak']?.toString().toLowerCase() ?? '';
-          testRows.add(HourWiseSalesRow(
-            hourSlot: raw['Hour Slot']?.toString() ?? '-',
-            orders: int.tryParse(raw['Orders']?.toString() ?? '0') ?? 0,
-            totalSales: double.tryParse(raw['Total Sales']?.toString() ?? '0') ?? 0.0,
-            avgBill: double.tryParse(raw['Avg Bill']?.toString() ?? '0') ?? 0.0,
-            isPeak: isPeakStr == 'yes' || isPeakStr == 'true',
+          newTestRows.add(HourWiseSalesRow(
+            hourSlot: ServiceReportExcelImport.parseString(raw['Hour Slot']),
+            orders: ServiceReportExcelImport.parseInt(raw['Orders']),
+            totalSales: ServiceReportExcelImport.parseDouble(raw['Total Sales']),
+            avgBill: ServiceReportExcelImport.parseDouble(raw['Avg Bill']),
+            isPeak: ServiceReportExcelImport.parseBool(raw['Peak']),
           ));
         }
         break;
     }
 
-    _fullRows = testRows;
+    if (!_isTestImportMode) {
+      _isTestImportMode = true;
+      _testImportRows.clear();
+    }
+    _testImportRows.addAll(newTestRows);
+
+    _filterTestImportRows();
+
+    Get.snackbar(
+      'Test Data Appended',
+      'Successfully imported ${rawRows.length} rows (Total in-memory records: ${_testImportRows.length}).',
+      backgroundColor: Colors.teal.shade700,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  void _filterTestImportRows() {
+    final q = rxSearchQuery.value.trim().toLowerCase();
+    if (q.isEmpty) {
+      _fullRows = List.from(_testImportRows);
+    } else {
+      switch (rxReportType.value) {
+        case SalesReportType.salesSummary:
+          _fullRows = _testImportRows.where((r) => (r as SalesSummaryRow).date.toLowerCase().contains(q)).toList();
+          break;
+        case SalesReportType.salesDetail:
+          _fullRows = _testImportRows.where((r) {
+            final row = r as SalesDetailRow;
+            return row.billNo.toLowerCase().contains(q) ||
+                row.customer.toLowerCase().contains(q) ||
+                row.payment.toLowerCase().contains(q) ||
+                row.status.toLowerCase().contains(q);
+          }).toList();
+          break;
+        case SalesReportType.itemSales:
+          _fullRows = _testImportRows.where((r) {
+            final row = r as ItemSalesRow;
+            return row.itemName.toLowerCase().contains(q) ||
+                row.barcode.toLowerCase().contains(q) ||
+                row.unit.toLowerCase().contains(q);
+          }).toList();
+          break;
+        case SalesReportType.categorySales:
+          _fullRows = _testImportRows.where((r) => (r as CategorySalesRow).category.toLowerCase().contains(q)).toList();
+          break;
+        case SalesReportType.paymentReport:
+          _fullRows = _testImportRows.where((r) => (r as PaymentReportRow).paymentMode.toLowerCase().contains(q)).toList();
+          break;
+        case SalesReportType.hourWiseSales:
+          _fullRows = _testImportRows.where((r) => (r as HourWiseSalesRow).hourSlot.toLowerCase().contains(q)).toList();
+          break;
+      }
+    }
+    recomputeSummaryCardsForTestRows();
     currentPage.value = 0;
-    _recomputeSummaryCardsForTestRows();
     _applyPagination();
   }
 
-  void _recomputeSummaryCardsForTestRows() {
+  void recomputeSummaryCardsForTestRows() {
     final type = rxReportType.value;
     switch (type) {
       case SalesReportType.salesSummary:
@@ -788,6 +852,10 @@ class ControllerSalesReport extends GetxController {
   // ═════════════════════════════════════════════════════════════════════════
 
   void loadData() {
+    if (_isTestImportMode) {
+      _filterTestImportRows();
+      return;
+    }
     rxLoading.value = true;
     currentPage.value = 0;
     _matchingDateStrings = _buildDateStrings(rxStartDate.value, rxEndDate.value);
@@ -873,7 +941,7 @@ class ControllerSalesReport extends GetxController {
       grouped.putIfAbsent(key, () => []).add(b);
     }
 
-    double totalSales = 0, totalDiscount = 0, totalTax = 0, totalNet = 0;
+    double totalSales = 0, totalTax = 0;
     int totalOrders = 0;
 
     final rows = <SalesSummaryRow>[];
@@ -895,9 +963,7 @@ class ControllerSalesReport extends GetxController {
         netSales: dayNet,
       ));
       totalSales += daySales;
-      totalDiscount += dayDisc;
       totalTax += dayTax;
-      totalNet += dayNet;
       totalOrders += bills.length;
     }
 

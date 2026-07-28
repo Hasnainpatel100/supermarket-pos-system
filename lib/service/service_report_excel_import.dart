@@ -322,4 +322,39 @@ class ServiceReportExcelImport {
     if (str.isEmpty) return null;
     return str;
   }
+
+  /// Helper utility to safely parse strings from imported cell values.
+  static String parseString(dynamic val, [String fallback = '']) {
+    if (val == null) return fallback;
+    final s = val.toString().trim();
+    return s.isEmpty ? fallback : s;
+  }
+
+  /// Helper utility to safely parse integers from imported cell values.
+  static int parseInt(dynamic val, [int fallback = 0]) {
+    if (val == null) return fallback;
+    if (val is int) return val;
+    if (val is num) return val.toInt();
+    final s = val.toString().trim();
+    return int.tryParse(s) ?? (double.tryParse(s)?.toInt() ?? fallback);
+  }
+
+  /// Helper utility to safely parse doubles from imported cell values.
+  static double parseDouble(dynamic val, [double fallback = 0.0]) {
+    if (val == null) return fallback;
+    if (val is double) return val;
+    if (val is num) return val.toDouble();
+    final s = val.toString().trim();
+    return double.tryParse(s) ?? fallback;
+  }
+
+  /// Helper utility to safely parse booleans from imported cell values.
+  static bool parseBool(dynamic val, [bool fallback = false]) {
+    if (val == null) return fallback;
+    if (val is bool) return val;
+    final s = val.toString().trim().toLowerCase();
+    if (s == 'true' || s == '1' || s == 'yes') return true;
+    if (s == 'false' || s == '0' || s == 'no') return false;
+    return fallback;
+  }
 }

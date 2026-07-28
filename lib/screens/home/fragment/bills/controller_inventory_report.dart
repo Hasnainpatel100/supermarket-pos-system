@@ -1170,116 +1170,265 @@ class ControllerInventoryReport extends GetxController {
     final testRows = <dynamic>[];
     switch (type) {
       case InventoryReportType.currentStock:
+        int totalQty = 0;
+        double totalVal = 0;
         for (final raw in rawRows) {
-          testRows.add(CurrentStockRow(
-            sku: raw['SKU/Barcode']?.toString() ?? '-',
-            name: raw['Name']?.toString() ?? '-',
-            category: raw['Category']?.toString() ?? '-',
-            unit: raw['Unit']?.toString() ?? '-',
-            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
-            costPrice: double.tryParse(raw['Cost Price']?.toString() ?? '0') ?? 0.0,
-            sellingPrice: double.tryParse(raw['Selling Price']?.toString() ?? '0') ?? 0.0,
-            stockValue: double.tryParse(raw['Stock Value']?.toString() ?? '0') ?? 0.0,
-          ));
+          final row = CurrentStockRow(
+            sku: ServiceReportExcelImport.parseString(raw['SKU/Barcode']),
+            name: ServiceReportExcelImport.parseString(raw['Name']),
+            category: ServiceReportExcelImport.parseString(raw['Category']),
+            unit: ServiceReportExcelImport.parseString(raw['Unit']),
+            quantity: ServiceReportExcelImport.parseInt(raw['Quantity']),
+            costPrice: ServiceReportExcelImport.parseDouble(raw['Cost Price']),
+            sellingPrice: ServiceReportExcelImport.parseDouble(raw['Selling Price']),
+            stockValue: ServiceReportExcelImport.parseDouble(raw['Stock Value']),
+          );
+          testRows.add(row);
+          totalQty += row.quantity;
+          totalVal += row.stockValue;
         }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Total Unique Items',
+            value: testRows.length.toString(),
+            icon: Icons.inventory_2_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Quantity',
+            value: totalQty.toString(),
+            icon: Icons.format_list_numbered_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Stock Value',
+            value: _currFmt.format(totalVal),
+            icon: Icons.account_balance_wallet_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.amber.shade500],
+          ),
+        ]);
         break;
+
       case InventoryReportType.lowStock:
+        int totalShortage = 0;
         for (final raw in rawRows) {
-          testRows.add(LowStockRow(
-            sku: raw['SKU/Barcode']?.toString() ?? '-',
-            name: raw['Name']?.toString() ?? '-',
-            category: raw['Category']?.toString() ?? '-',
-            quantity: int.tryParse(raw['Current Qty']?.toString() ?? '0') ?? 0,
-            reorderLevel: int.tryParse(raw['Reorder Level']?.toString() ?? '0') ?? 0,
-            shortage: int.tryParse(raw['Shortage']?.toString() ?? '0') ?? 0,
-          ));
+          final row = LowStockRow(
+            sku: ServiceReportExcelImport.parseString(raw['SKU/Barcode']),
+            name: ServiceReportExcelImport.parseString(raw['Name']),
+            category: ServiceReportExcelImport.parseString(raw['Category']),
+            quantity: ServiceReportExcelImport.parseInt(raw['Current Qty']),
+            reorderLevel: ServiceReportExcelImport.parseInt(raw['Reorder Level']),
+            shortage: ServiceReportExcelImport.parseInt(raw['Shortage']),
+          );
+          testRows.add(row);
+          totalShortage += row.shortage;
         }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Low Stock Items',
+            value: testRows.length.toString(),
+            icon: Icons.warning_amber_rounded,
+            gradientColors: [Colors.orange.shade600, Colors.red.shade400],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Shortage Qty',
+            value: totalShortage.toString(),
+            icon: Icons.trending_down_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+        ]);
         break;
+
       case InventoryReportType.outOfStock:
         for (final raw in rawRows) {
           testRows.add(OutOfStockRow(
-            sku: raw['SKU/Barcode']?.toString() ?? '-',
-            name: raw['Name']?.toString() ?? '-',
-            category: raw['Category']?.toString() ?? '-',
-            costPrice: double.tryParse(raw['Cost Price']?.toString() ?? '0') ?? 0.0,
-            sellingPrice: double.tryParse(raw['Selling Price']?.toString() ?? '0') ?? 0.0,
-            lastPurchaseInfo: raw['Last Purchase']?.toString() ?? '-',
-            lastSaleInfo: raw['Last Sale']?.toString() ?? '-',
+            sku: ServiceReportExcelImport.parseString(raw['SKU/Barcode']),
+            name: ServiceReportExcelImport.parseString(raw['Name']),
+            category: ServiceReportExcelImport.parseString(raw['Category']),
+            costPrice: ServiceReportExcelImport.parseDouble(raw['Cost Price']),
+            sellingPrice: ServiceReportExcelImport.parseDouble(raw['Selling Price']),
+            lastPurchaseInfo: ServiceReportExcelImport.parseString(raw['Last Purchase']),
+            lastSaleInfo: ServiceReportExcelImport.parseString(raw['Last Sale']),
           ));
         }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Out of Stock Items',
+            value: testRows.length.toString(),
+            icon: Icons.production_quantity_limits_rounded,
+            gradientColors: [Colors.red.shade600, Colors.pink.shade600],
+          ),
+        ]);
         break;
+
       case InventoryReportType.stockMovement:
+        int totalMovement = 0;
         for (final raw in rawRows) {
-          testRows.add(StockMovementRow(
-            dateTime: raw['Date & Time']?.toString() ?? '-',
-            itemName: raw['Item Name']?.toString() ?? '-',
-            txnType: raw['Type']?.toString() ?? '-',
-            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
-            performedBy: raw['Performed By']?.toString() ?? '-',
-            reference: raw['Reference/Remarks']?.toString() ?? '-',
-          ));
+          final row = StockMovementRow(
+            dateTime: ServiceReportExcelImport.parseString(raw['Date & Time']),
+            itemName: ServiceReportExcelImport.parseString(raw['Item Name']),
+            txnType: ServiceReportExcelImport.parseString(raw['Type']),
+            quantity: ServiceReportExcelImport.parseInt(raw['Quantity']),
+            performedBy: ServiceReportExcelImport.parseString(raw['Performed By']),
+            reference: ServiceReportExcelImport.parseString(raw['Reference/Remarks']),
+          );
+          testRows.add(row);
+          totalMovement += row.quantity.abs();
         }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Total Txns',
+            value: testRows.length.toString(),
+            icon: Icons.swap_vert_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Qty Moved',
+            value: totalMovement.toString(),
+            icon: Icons.move_to_inbox_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+        ]);
         break;
+
       case InventoryReportType.stockAdjustment:
+        int totalDiff = 0;
         for (final raw in rawRows) {
-          testRows.add(StockAdjustmentRow(
-            dateTime: raw['Date & Time']?.toString() ?? '-',
-            itemName: raw['Item Name']?.toString() ?? '-',
-            previousQty: int.tryParse(raw['Prev Qty']?.toString() ?? '0') ?? 0,
-            newQty: int.tryParse(raw['New Qty']?.toString() ?? '0') ?? 0,
-            difference: int.tryParse(raw['Difference']?.toString() ?? '0') ?? 0,
-            reason: raw['Reason']?.toString() ?? '-',
-            user: raw['User']?.toString() ?? '-',
-          ));
+          final row = StockAdjustmentRow(
+            dateTime: ServiceReportExcelImport.parseString(raw['Date & Time']),
+            itemName: ServiceReportExcelImport.parseString(raw['Item Name']),
+            previousQty: ServiceReportExcelImport.parseInt(raw['Prev Qty']),
+            newQty: ServiceReportExcelImport.parseInt(raw['New Qty']),
+            difference: ServiceReportExcelImport.parseInt(raw['Difference']),
+            reason: ServiceReportExcelImport.parseString(raw['Reason']),
+            user: ServiceReportExcelImport.parseString(raw['User']),
+          );
+          testRows.add(row);
+          totalDiff += row.difference;
         }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Total Adjustments',
+            value: testRows.length.toString(),
+            icon: Icons.edit_note_rounded,
+            gradientColors: [Colors.purple.shade500, Colors.indigo.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Net Qty Diff',
+            value: totalDiff.toString(),
+            icon: Icons.tune_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.blue.shade500],
+          ),
+        ]);
         break;
+
       case InventoryReportType.stockValuation:
+        double totalCost = 0, totalRetail = 0, totalProfit = 0;
         for (final raw in rawRows) {
-          testRows.add(StockValuationRow(
-            sku: raw['SKU/Barcode']?.toString() ?? '-',
-            name: raw['Name']?.toString() ?? '-',
-            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
-            costPrice: double.tryParse(raw['Cost Price']?.toString() ?? '0') ?? 0.0,
-            sellingPrice: double.tryParse(raw['Selling Price']?.toString() ?? '0') ?? 0.0,
-            costValue: double.tryParse(raw['Cost Value']?.toString() ?? '0') ?? 0.0,
-            sellingValue: double.tryParse(raw['Selling Value']?.toString() ?? '0') ?? 0.0,
-            expectedProfit: double.tryParse(raw['Expected Profit']?.toString() ?? '0') ?? 0.0,
-          ));
+          final row = StockValuationRow(
+            sku: ServiceReportExcelImport.parseString(raw['SKU/Barcode']),
+            name: ServiceReportExcelImport.parseString(raw['Name']),
+            quantity: ServiceReportExcelImport.parseInt(raw['Quantity']),
+            costPrice: ServiceReportExcelImport.parseDouble(raw['Cost Price']),
+            sellingPrice: ServiceReportExcelImport.parseDouble(raw['Selling Price']),
+            costValue: ServiceReportExcelImport.parseDouble(raw['Cost Value']),
+            sellingValue: ServiceReportExcelImport.parseDouble(raw['Selling Value']),
+            expectedProfit: ServiceReportExcelImport.parseDouble(raw['Expected Profit']),
+          );
+          testRows.add(row);
+          totalCost += row.costValue;
+          totalRetail += row.sellingValue;
+          totalProfit += row.expectedProfit;
         }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Total Cost Value',
+            value: _currFmt.format(totalCost),
+            icon: Icons.payments_rounded,
+            gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Retail Value',
+            value: _currFmt.format(totalRetail),
+            icon: Icons.storefront_rounded,
+            gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Expected Profit',
+            value: _currFmt.format(totalProfit),
+            icon: Icons.trending_up_rounded,
+            gradientColors: [Colors.green.shade600, Colors.teal.shade400],
+          ),
+        ]);
         break;
+
       case InventoryReportType.expiry:
+        int totalExpired = 0;
         for (final raw in rawRows) {
-          testRows.add(ExpiryRow(
-            itemName: raw['Item Name']?.toString() ?? '-',
-            batchNo: raw['Batch No']?.toString() ?? '-',
-            expiryDate: raw['Expiry Date']?.toString() ?? '-',
-            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
-            daysExpired: int.tryParse(raw['Days Expired']?.toString() ?? '0') ?? 0,
-          ));
+          final row = ExpiryRow(
+            itemName: ServiceReportExcelImport.parseString(raw['Item Name']),
+            batchNo: ServiceReportExcelImport.parseString(raw['Batch No']),
+            expiryDate: ServiceReportExcelImport.parseString(raw['Expiry Date']),
+            quantity: ServiceReportExcelImport.parseInt(raw['Quantity']),
+            daysExpired: ServiceReportExcelImport.parseInt(raw['Days Expired']),
+          );
+          testRows.add(row);
+          totalExpired += row.quantity;
         }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Expired Batches',
+            value: testRows.length.toString(),
+            icon: Icons.event_busy_rounded,
+            gradientColors: [Colors.red.shade600, Colors.orange.shade600],
+          ),
+          InventorySummaryCardData(
+            label: 'Total Expired Qty',
+            value: totalExpired.toString(),
+            icon: Icons.delete_sweep_rounded,
+            gradientColors: [Colors.red.shade500, Colors.pink.shade500],
+          ),
+        ]);
         break;
+
       case InventoryReportType.nearExpiry:
+        int totalNearExpiry = 0;
         for (final raw in rawRows) {
-          testRows.add(NearExpiryRow(
-            itemName: raw['Item Name']?.toString() ?? '-',
-            batchNo: raw['Batch No']?.toString() ?? '-',
-            expiryDate: raw['Expiry Date']?.toString() ?? '-',
-            quantity: int.tryParse(raw['Quantity']?.toString() ?? '0') ?? 0,
-            daysRemaining: int.tryParse(raw['Days Remaining']?.toString() ?? '0') ?? 0,
-          ));
+          final row = NearExpiryRow(
+            itemName: ServiceReportExcelImport.parseString(raw['Item Name']),
+            batchNo: ServiceReportExcelImport.parseString(raw['Batch No']),
+            expiryDate: ServiceReportExcelImport.parseString(raw['Expiry Date']),
+            quantity: ServiceReportExcelImport.parseInt(raw['Quantity']),
+            daysRemaining: ServiceReportExcelImport.parseInt(raw['Days Remaining']),
+          );
+          testRows.add(row);
+          totalNearExpiry += row.quantity;
         }
+        rxSummaryCards.assignAll([
+          InventorySummaryCardData(
+            label: 'Near Expiry Batches',
+            value: testRows.length.toString(),
+            icon: Icons.notification_important_rounded,
+            gradientColors: [Colors.amber.shade600, Colors.orange.shade500],
+          ),
+          InventorySummaryCardData(
+            label: 'Near Expiry Qty',
+            value: totalNearExpiry.toString(),
+            icon: Icons.schedule_rounded,
+            gradientColors: [Colors.orange.shade500, Colors.red.shade400],
+          ),
+        ]);
         break;
     }
 
     _fullRows = testRows;
     currentPage.value = 0;
-    _recomputeSummaryCardsForTestRows();
     _applyPagination();
   }
 
   final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
-  void _recomputeSummaryCardsForTestRows() {
+  void recomputeSummaryCardsForTestRows() {
     final type = rxReportType.value;
     switch (type) {
       case InventoryReportType.currentStock:

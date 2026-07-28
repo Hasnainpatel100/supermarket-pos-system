@@ -1,17 +1,13 @@
-import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:excel/excel.dart' as xl;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../../../model/entity_bill.dart';
-import '../../../../model/entity_bill_item.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
@@ -669,19 +665,33 @@ class ControllerHomeReports extends GetxController {
       for (final c in cols) c.value.trim().toLowerCase(): c.key,
     };
 
+    int totalBills = 0;
+    int totalQty = 0;
+    double gross = 0;
+    double disc = 0;
+    double tax = 0;
+    double net = 0;
+
     final convertedRows = <Map<String, dynamic>>[];
     for (final raw in rawRows) {
       final rowMap = <String, dynamic>{};
       raw.forEach((header, val) {
-        final key = labelToKey[header.toString().trim().toLowerCase()];
+        final key = labelToKey[header.trim().toLowerCase()];
         if (key != null) {
-          final strVal = val.toString().trim();
           if (key == 'bills' || key == 'qty' || key == 'itemsSold') {
-            rowMap[key] = int.tryParse(strVal) ?? (double.tryParse(strVal)?.toInt() ?? 0);
+            final parsedInt = ServiceReportExcelImport.parseInt(val);
+            rowMap[key] = parsedInt;
+            if (key == 'bills') totalBills += parsedInt;
+            if (key == 'qty' || key == 'itemsSold') totalQty += parsedInt;
           } else if (key == 'gross' || key == 'discount' || key == 'tax' || key == 'net') {
-            rowMap[key] = double.tryParse(strVal) ?? 0.0;
+            final parsedDbl = ServiceReportExcelImport.parseDouble(val);
+            rowMap[key] = parsedDbl;
+            if (key == 'gross') gross += parsedDbl;
+            if (key == 'discount') disc += parsedDbl;
+            if (key == 'tax') tax += parsedDbl;
+            if (key == 'net') net += parsedDbl;
           } else {
-            rowMap[key] = strVal;
+            rowMap[key] = ServiceReportExcelImport.parseString(val);
           }
         }
       });
@@ -689,7 +699,12 @@ class ControllerHomeReports extends GetxController {
     }
 
     rxRows.assignAll(convertedRows);
-    _computeSummary();
+    rxTotalBills.value = totalBills;
+    rxTotalQty.value = totalQty;
+    rxGrossAmount.value = gross;
+    rxDiscount.value = disc;
+    rxTax.value = tax;
+    rxNetAmount.value = net;
   }
 
   // ── Print ──

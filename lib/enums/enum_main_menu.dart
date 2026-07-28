@@ -17,6 +17,7 @@ enum EnumMainMenu {
   systemUsers, // 1. system
   systemSettings, // 2. system
   auditLogs, // 3. system
+  backup, // 4. system — data backup/export
 
   expenses,
 

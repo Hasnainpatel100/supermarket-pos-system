@@ -1,0 +1,15 @@
+enum AuditModule {
+  pos,
+  item,
+  inventory,
+  stock,
+  customer,
+  purchase,
+  supplier,
+  user,
+  system,
+  finance,
+  expenses,
+  settings,
+  reports,
+}

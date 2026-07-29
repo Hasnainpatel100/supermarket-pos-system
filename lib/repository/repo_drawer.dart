@@ -178,6 +178,7 @@ class RepoDrawer {
         EnumPermission.userDisable,
         EnumPermission.roleAssign,
         EnumPermission.backupRestore,
+        EnumPermission.auditLogView,
       ],
 
       children: [
@@ -197,6 +198,12 @@ class RepoDrawer {
           titleKey: 'Backup & Recovery',
           icon: Icons.backup_outlined,
           permissions: [EnumPermission.backupRestore],
+        ),
+        ModelDrawerMenu(
+          menu: EnumMainMenu.auditLogs,
+          titleKey: 'audit_logs',
+          icon: Icons.history_rounded,
+          permissions: [EnumPermission.auditLogView],
         ),
       ],
     ),

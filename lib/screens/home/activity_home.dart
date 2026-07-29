@@ -34,6 +34,7 @@ import 'fragment/setting/frag_home_settings.dart';
 import 'fragment/setting/controller_home_settings.dart';
 import 'fragment/users/frag_home_users.dart';
 import 'fragment/system/frag_home_backup.dart';
+import 'fragment/system/frag_audit_logs.dart';
 
 class ActivityHome extends StatelessWidget {
   const ActivityHome({super.key});
@@ -104,6 +105,10 @@ class ActivityHome extends StatelessWidget {
 
               if (controller.selectedMainMenu.value == EnumMainMenu.backup) {
                 return const FragHomeBackup();
+              }
+
+              if (controller.selectedMainMenu.value == EnumMainMenu.auditLogs) {
+                return const FragAuditLogs();
               }
 
               // ── Sales Reports (single entry under Reports → Sales Reports) ──

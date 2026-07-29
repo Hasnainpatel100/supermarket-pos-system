@@ -46,6 +46,18 @@ class FragHomeSystem extends StatelessWidget {
                   },
                 ),
 
+                SectionTile(
+                  title: 'Audit Logs',
+                  icon: Icons.history_rounded,
+                  visible: permissions.contains(
+                    EnumPermission.auditLogView.name,
+                  ),
+                  selected: false,
+                  onTap: () {
+                    controllerHome.selectedMainMenu.value = EnumMainMenu.auditLogs;
+                  },
+                ),
+
                 /*ButtonPermission(
                   permission: EnumPermission.userCreate.name,
                   permissions: permissions,

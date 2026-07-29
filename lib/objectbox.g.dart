@@ -15,6 +15,7 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
+import 'model/entity_audit_log.dart';
 import 'model/entity_bill.dart';
 import 'model/entity_bill_item.dart';
 import 'model/entity_customer.dart';
@@ -1531,6 +1532,91 @@ final _entities = <obx_int.ModelEntity>[
             indexId: const obx_int.IdUid(35, 1708092360859876599))
       ],
       relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(21, 4972311659241473103),
+      name: 'EntityAuditLog',
+      lastPropertyId: const obx_int.IdUid(14, 6701543858583759206),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 7183632940289748825),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 8075444401851696047),
+            name: 'objectId',
+            type: 9,
+            flags: 2080,
+            indexId: const obx_int.IdUid(45, 7798218759044674894)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 2442301574993557716),
+            name: 'userId',
+            type: 6,
+            flags: 8,
+            indexId: const obx_int.IdUid(46, 1345361949509151323)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 7409084267181334565),
+            name: 'userName',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 718427379588539322),
+            name: 'module',
+            type: 9,
+            flags: 2048,
+            indexId: const obx_int.IdUid(47, 1478532182972195720)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 1304513757178497921),
+            name: 'action',
+            type: 9,
+            flags: 2048,
+            indexId: const obx_int.IdUid(48, 4125960273578945456)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(7, 8611891517757479091),
+            name: 'entityType',
+            type: 9,
+            flags: 2048,
+            indexId: const obx_int.IdUid(49, 831855244798703963)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(8, 5838458967356899861),
+            name: 'entityId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(9, 3543905056133604053),
+            name: 'description',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(10, 6756406023809040551),
+            name: 'oldData',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 4977386531867144529),
+            name: 'newData',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(12, 6680255525902880497),
+            name: 'reason',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(13, 7363111149516053888),
+            name: 'branchId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 6701543858583759206),
+            name: 'createdAtUtcMs',
+            type: 6,
+            flags: 8,
+            indexId: const obx_int.IdUid(50, 6531342150979188821))
+      ],
+      relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[])
 ];
 
@@ -1569,8 +1655,8 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(20, 5990908327355788466),
-      lastIndexId: const obx_int.IdUid(44, 451981533829852869),
+      lastEntityId: const obx_int.IdUid(21, 4972311659241473103),
+      lastIndexId: const obx_int.IdUid(50, 6531342150979188821),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [],
@@ -3216,6 +3302,108 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 .vTableGet(buffer, rootOffset, 28, '');
 
           return object;
+        }),
+    EntityAuditLog: obx_int.EntityDefinition<EntityAuditLog>(
+        model: _entities[20],
+        toOneRelations: (EntityAuditLog object) => [],
+        toManyRelations: (EntityAuditLog object) => {},
+        getId: (EntityAuditLog object) => object.id,
+        setId: (EntityAuditLog object, int id) {
+          object.id = id;
+        },
+        objectToFB: (EntityAuditLog object, fb.Builder fbb) {
+          final objectIdOffset = fbb.writeString(object.objectId);
+          final userNameOffset = object.userName == null
+              ? null
+              : fbb.writeString(object.userName!);
+          final moduleOffset =
+              object.module == null ? null : fbb.writeString(object.module!);
+          final actionOffset =
+              object.action == null ? null : fbb.writeString(object.action!);
+          final entityTypeOffset = object.entityType == null
+              ? null
+              : fbb.writeString(object.entityType!);
+          final entityIdOffset = object.entityId == null
+              ? null
+              : fbb.writeString(object.entityId!);
+          final descriptionOffset = object.description == null
+              ? null
+              : fbb.writeString(object.description!);
+          final oldDataOffset =
+              object.oldData == null ? null : fbb.writeString(object.oldData!);
+          final newDataOffset =
+              object.newData == null ? null : fbb.writeString(object.newData!);
+          final reasonOffset =
+              object.reason == null ? null : fbb.writeString(object.reason!);
+          final branchIdOffset = object.branchId == null
+              ? null
+              : fbb.writeString(object.branchId!);
+          fbb.startTable(15);
+          fbb.addInt64(0, object.id);
+          fbb.addOffset(1, objectIdOffset);
+          fbb.addInt64(2, object.userId);
+          fbb.addOffset(3, userNameOffset);
+          fbb.addOffset(4, moduleOffset);
+          fbb.addOffset(5, actionOffset);
+          fbb.addOffset(6, entityTypeOffset);
+          fbb.addOffset(7, entityIdOffset);
+          fbb.addOffset(8, descriptionOffset);
+          fbb.addOffset(9, oldDataOffset);
+          fbb.addOffset(10, newDataOffset);
+          fbb.addOffset(11, reasonOffset);
+          fbb.addOffset(12, branchIdOffset);
+          fbb.addInt64(13, object.createdAtUtcMs);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final idParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          final userIdParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 8);
+          final userNameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 10);
+          final moduleParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 12);
+          final actionParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 14);
+          final entityTypeParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 16);
+          final entityIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 18);
+          final descriptionParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 20);
+          final oldDataParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 22);
+          final newDataParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 24);
+          final reasonParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 26);
+          final branchIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 28);
+          final createdAtUtcMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30);
+          final object = EntityAuditLog(
+              id: idParam,
+              userId: userIdParam,
+              userName: userNameParam,
+              module: moduleParam,
+              action: actionParam,
+              entityType: entityTypeParam,
+              entityId: entityIdParam,
+              description: descriptionParam,
+              oldData: oldDataParam,
+              newData: newDataParam,
+              reason: reasonParam,
+              branchId: branchIdParam,
+              createdAtUtcMs: createdAtUtcMsParam)
+            ..objectId = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 6, '');
+
+          return object;
         })
   };
 
@@ -4303,4 +4491,63 @@ class EntityPurchaseReceiptItem_ {
   /// see [EntityPurchaseReceiptItem.objectId]
   static final objectId = obx.QueryStringProperty<EntityPurchaseReceiptItem>(
       _entities[19].properties[12]);
+}
+
+/// [EntityAuditLog] entity fields to define ObjectBox queries.
+class EntityAuditLog_ {
+  /// see [EntityAuditLog.id]
+  static final id =
+      obx.QueryIntegerProperty<EntityAuditLog>(_entities[20].properties[0]);
+
+  /// see [EntityAuditLog.objectId]
+  static final objectId =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[1]);
+
+  /// see [EntityAuditLog.userId]
+  static final userId =
+      obx.QueryIntegerProperty<EntityAuditLog>(_entities[20].properties[2]);
+
+  /// see [EntityAuditLog.userName]
+  static final userName =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[3]);
+
+  /// see [EntityAuditLog.module]
+  static final module =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[4]);
+
+  /// see [EntityAuditLog.action]
+  static final action =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[5]);
+
+  /// see [EntityAuditLog.entityType]
+  static final entityType =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[6]);
+
+  /// see [EntityAuditLog.entityId]
+  static final entityId =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[7]);
+
+  /// see [EntityAuditLog.description]
+  static final description =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[8]);
+
+  /// see [EntityAuditLog.oldData]
+  static final oldData =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[9]);
+
+  /// see [EntityAuditLog.newData]
+  static final newData =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[10]);
+
+  /// see [EntityAuditLog.reason]
+  static final reason =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[11]);
+
+  /// see [EntityAuditLog.branchId]
+  static final branchId =
+      obx.QueryStringProperty<EntityAuditLog>(_entities[20].properties[12]);
+
+  /// see [EntityAuditLog.createdAtUtcMs]
+  static final createdAtUtcMs =
+      obx.QueryIntegerProperty<EntityAuditLog>(_entities[20].properties[13]);
 }

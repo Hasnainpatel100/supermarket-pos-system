@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../widget/my_card.dart';
+import '../../../../widget/report_date_filter_dropdown.dart';
 import 'controller_supplier_report.dart';
 
 class FragSupplierReport extends StatelessWidget {
@@ -39,9 +40,9 @@ class FragSupplierReport extends StatelessWidget {
           const SizedBox(height: 10),
 
           // ═══════════════════════════════════════════════════════════════
-          // 2. CONTEXTUAL FILTERS (Date Range & Supplier Dropdown)
+          // 2. REPORT TYPE BAR (Horizontal Pills)
           // ═══════════════════════════════════════════════════════════════
-          _buildFilterBar(context, controller),
+          _buildReportTypeBar(context, controller),
 
           const SizedBox(height: 10),
 
@@ -135,48 +136,36 @@ class FragSupplierReport extends StatelessWidget {
                   color: Colors.grey.shade800,
                 ),
               ),
-              Obx(() => Text(
-                controller.rxReportType.value.label,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade500),
+              Obx(() => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.indigo.shade100),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.calendar_today_rounded, size: 10, color: Colors.indigo.shade400),
+                    const SizedBox(width: 4),
+                    Text(
+                      controller.formatDateRange(),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.indigo.shade700),
+                    ),
+                  ],
+                ),
               )),
             ],
           ),
 
           const Spacer(),
 
-          // Report Type Dropdown
-          Obx(() => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-              ],
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<SupplierReportType>(
-                value: controller.rxReportType.value,
-                isDense: true,
-                icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.indigo.shade600),
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
-                items: SupplierReportType.values.map((t) => DropdownMenuItem(
-                  value: t,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(t.icon, size: 16, color: Colors.indigo.shade600),
-                      const SizedBox(width: 8),
-                      Text(t.label),
-                    ],
-                  ),
-                )).toList(),
-                onChanged: (v) {
-                  if (v != null) controller.setReportType(v);
-                },
-              ),
-            ),
+          // Date Filter Dropdown
+          Obx(() => ReportDateFilterDropdown(
+            selectedFilter: controller.rxDateFilter.value,
+            onFilterChanged: (filter) => controller.setDateFilter(filter),
+            onPickCustomRange: () => _pickDateRange(context, controller),
+            themeColor: Colors.indigo.shade600,
           )),
 
           const SizedBox(width: 10),
@@ -286,78 +275,85 @@ class FragSupplierReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Filter Bar Component
+  // REPORT TYPE NAVIGATION BAR
   // ═════════════════════════════════════════════════════════════════════════
 
-  Widget _buildFilterBar(BuildContext context, ControllerSupplierReport controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => _pickDateRange(context, controller),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.indigo.shade400, Colors.indigo.shade600],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: Colors.indigo.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.date_range_rounded, size: 14, color: Colors.white),
-                  const SizedBox(width: 6),
-                  Obx(() => Text(
-                    controller.formatDateRange(),
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
-                  )),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Supplier Selector Dropdown
-          Obx(() {
-            final list = controller.rxSuppliersList;
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
-                ],
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int?>(
-                  value: controller.rxSelectedSupplierId.value,
-                  hint: const Text('All Suppliers', style: TextStyle(fontSize: 12)),
-                  isDense: true,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
-                  items: [
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text('All Suppliers', style: TextStyle(fontSize: 12)),
-                    ),
-                    ...list.map((s) => DropdownMenuItem<int?>(
-                      value: s.id,
-                      child: Text(s.name ?? 'Unknown', style: const TextStyle(fontSize: 12)),
-                    )),
-                  ],
-                  onChanged: controller.setSelectedSupplier,
-                ),
+  Widget _buildReportTypeBar(BuildContext context, ControllerSupplierReport controller) {
+    return Obx(() {
+      final selected = controller.rxReportType.value;
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: SupplierReportType.values.map((type) {
+            final isSelected = selected == type;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _reportTypeChip(
+                label: type.label,
+                icon: type.icon,
+                isSelected: isSelected,
+                primaryColor: Colors.indigo.shade600,
+                onTap: () => controller.setReportType(type),
               ),
             );
-          }),
-        ],
+          }).toList(),
+        ),
+      );
+    });
+  }
+
+  Widget _reportTypeChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required Color primaryColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? primaryColor : Colors.grey.shade200,
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isSelected ? Colors.white : primaryColor),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade800,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -421,6 +417,43 @@ class FragSupplierReport extends StatelessWidget {
               ),
             ),
           ),
+          Obx(() {
+            final list = controller.rxSuppliersList;
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.local_shipping_outlined, size: 16, color: Colors.indigo.shade600),
+                  const SizedBox(width: 6),
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton<int?>(
+                      value: controller.rxSelectedSupplierId.value,
+                      hint: const Text('All Suppliers', style: TextStyle(fontSize: 12)),
+                      isDense: true,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text('All Suppliers', style: TextStyle(fontSize: 12)),
+                        ),
+                        ...list.map((s) => DropdownMenuItem<int?>(
+                          value: s.id,
+                          child: Text(s.name ?? 'Unknown', style: const TextStyle(fontSize: 12)),
+                        )),
+                      ],
+                      onChanged: controller.setSelectedSupplier,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
           const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

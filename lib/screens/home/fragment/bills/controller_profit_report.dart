@@ -8,6 +8,7 @@ import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
 import '../../../../service/service_report_excel_import.dart';
+import '../../../../enums/enum_report_date_filter.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Profit Report Types
@@ -179,6 +180,7 @@ class ControllerProfitReport extends GetxController {
   final RxString rxBranch = 'All Branches'.obs;
 
   // Date Range Filters
+  final Rx<ReportDateFilter> rxDateFilter = ReportDateFilter.thisMonth.obs;
   final Rx<DateTime> rxStartDate = DateTime.now().subtract(const Duration(days: 30)).obs;
   final Rx<DateTime> rxEndDate = DateTime.now().obs;
 
@@ -228,9 +230,20 @@ class ControllerProfitReport extends GetxController {
 
   void setSearchQuery(String q) => rxSearchQuery.value = q;
 
+  void setDateFilter(ReportDateFilter type) {
+    rxDateFilter.value = type;
+    final range = type.getDateRange();
+    if (range != null) {
+      rxStartDate.value = range.$1;
+      rxEndDate.value = range.$2;
+    }
+    loadData();
+  }
+
   void setDateRange(DateTime start, DateTime end) {
+    rxDateFilter.value = ReportDateFilter.custom;
     rxStartDate.value = DateTime(start.year, start.month, start.day);
-    rxEndDate.value = DateTime(end.year, end.month, end.day, 23, 59, 59);
+    rxEndDate.value = DateTime(end.year, end.month, end.day, 23, 59, 59, 999);
     loadData();
   }
 

@@ -7,6 +7,7 @@ import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_report_pdf.dart';
 import '../../../../service/service_report_excel_import.dart';
+import '../../../../enums/enum_report_date_filter.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Report-type enum
@@ -41,11 +42,7 @@ extension SalesReportTypeLabel on SalesReportType {
   };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Date filter enum (reused from existing report)
-// ═══════════════════════════════════════════════════════════════════════════
-
-enum SalesDateFilter { today, yesterday, thisWeek, thisMonth, custom }
+typedef SalesDateFilter = ReportDateFilter;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Lightweight row models for each report type
@@ -806,31 +803,12 @@ class ControllerSalesReport extends GetxController {
   // Internal — date filter logic
   // ═════════════════════════════════════════════════════════════════════════
 
-  void _setDateFilter(SalesDateFilter type) {
+  void _setDateFilter(ReportDateFilter type) {
     rxDateFilter.value = type;
-    final now = DateTime.now();
-
-    switch (type) {
-      case SalesDateFilter.today:
-        rxStartDate.value = DateTime(now.year, now.month, now.day);
-        rxEndDate.value = DateTime(now.year, now.month, now.day);
-        break;
-      case SalesDateFilter.yesterday:
-        final y = now.subtract(const Duration(days: 1));
-        rxStartDate.value = DateTime(y.year, y.month, y.day);
-        rxEndDate.value = DateTime(y.year, y.month, y.day);
-        break;
-      case SalesDateFilter.thisWeek:
-        final ws = now.subtract(Duration(days: now.weekday - 1));
-        rxStartDate.value = DateTime(ws.year, ws.month, ws.day);
-        rxEndDate.value = DateTime(now.year, now.month, now.day);
-        break;
-      case SalesDateFilter.thisMonth:
-        rxStartDate.value = DateTime(now.year, now.month, 1);
-        rxEndDate.value = DateTime(now.year, now.month, now.day);
-        break;
-      case SalesDateFilter.custom:
-        break; // keep existing
+    final range = type.getDateRange();
+    if (range != null) {
+      rxStartDate.value = range.$1;
+      rxEndDate.value = range.$2;
     }
     loadData();
   }

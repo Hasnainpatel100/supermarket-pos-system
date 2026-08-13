@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../widget/my_card.dart';
+import '../../../../widget/report_date_filter_dropdown.dart';
 import 'controller_financial_report.dart';
 
 class FragFinancialReport extends StatelessWidget {
@@ -39,9 +40,9 @@ class FragFinancialReport extends StatelessWidget {
           const SizedBox(height: 10),
 
           // ═══════════════════════════════════════════════════════════════
-          // 2. CONTEXTUAL FILTERS (Date Range)
+          // 2. REPORT TYPE BAR (Horizontal Pills)
           // ═══════════════════════════════════════════════════════════════
-          _buildFilterBar(context, controller),
+          _buildReportTypeBar(context, controller),
 
           const SizedBox(height: 10),
 
@@ -135,48 +136,36 @@ class FragFinancialReport extends StatelessWidget {
                   color: Colors.grey.shade800,
                 ),
               ),
-              Obx(() => Text(
-                controller.rxReportType.value.label,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade500),
+              Obx(() => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.teal.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.teal.shade100),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.calendar_today_rounded, size: 10, color: Colors.teal.shade400),
+                    const SizedBox(width: 4),
+                    Text(
+                      controller.formatDateRange(),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.teal.shade700),
+                    ),
+                  ],
+                ),
               )),
             ],
           ),
 
           const Spacer(),
 
-          // Report Type Dropdown
-          Obx(() => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-              ],
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<FinancialReportType>(
-                value: controller.rxReportType.value,
-                isDense: true,
-                icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.teal.shade600),
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
-                items: FinancialReportType.values.map((t) => DropdownMenuItem(
-                  value: t,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(t.icon, size: 16, color: Colors.teal.shade600),
-                      const SizedBox(width: 8),
-                      Text(t.label),
-                    ],
-                  ),
-                )).toList(),
-                onChanged: (v) {
-                  if (v != null) controller.setReportType(v);
-                },
-              ),
-            ),
+          // Date Filter Dropdown
+          Obx(() => ReportDateFilterDropdown(
+            selectedFilter: controller.rxDateFilter.value,
+            onFilterChanged: (filter) => controller.setDateFilter(filter),
+            onPickCustomRange: () => _pickDateRange(context, controller),
+            themeColor: Colors.teal.shade600,
           )),
 
           const SizedBox(width: 10),
@@ -286,42 +275,85 @@ class FragFinancialReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Filter Bar Component
+  // REPORT TYPE NAVIGATION BAR
   // ═════════════════════════════════════════════════════════════════════════
 
-  Widget _buildFilterBar(BuildContext context, ControllerFinancialReport controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => _pickDateRange(context, controller),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.teal.shade400, Colors.teal.shade600],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
-                ],
+  Widget _buildReportTypeBar(BuildContext context, ControllerFinancialReport controller) {
+    return Obx(() {
+      final selected = controller.rxReportType.value;
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: FinancialReportType.values.map((type) {
+            final isSelected = selected == type;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _reportTypeChip(
+                label: type.label,
+                icon: type.icon,
+                isSelected: isSelected,
+                primaryColor: Colors.teal.shade600,
+                onTap: () => controller.setReportType(type),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.date_range_rounded, size: 14, color: Colors.white),
-                  const SizedBox(width: 6),
-                  Obx(() => Text(
-                    controller.formatDateRange(),
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
-                  )),
+            );
+          }).toList(),
+        ),
+      );
+    });
+  }
+
+  Widget _reportTypeChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required Color primaryColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? primaryColor : Colors.grey.shade200,
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isSelected ? Colors.white : primaryColor),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade800,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

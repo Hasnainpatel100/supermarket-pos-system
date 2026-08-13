@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../widget/my_card.dart';
+import '../../../../widget/report_date_filter_dropdown.dart';
 import 'controller_sales_report.dart';
 
 class FragSalesReport extends StatelessWidget {
@@ -41,9 +42,9 @@ class FragSalesReport extends StatelessWidget {
           const SizedBox(height: 10),
 
           // ═══════════════════════════════════════════════════════════════
-          // 2. DATE FILTER CHIP BAR
+          // 2. REPORT TYPE BAR (Horizontal Pills)
           // ═══════════════════════════════════════════════════════════════
-          _buildDateChips(context, controller),
+          _buildReportTypeBar(context, controller),
 
           const SizedBox(height: 10),
 
@@ -163,39 +164,12 @@ class FragSalesReport extends StatelessWidget {
 
           const Spacer(),
 
-          // Report Type Dropdown
-          Obx(() => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-              ],
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<SalesReportType>(
-                value: controller.rxReportType.value,
-                isDense: true,
-                icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.indigo.shade400),
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
-                items: SalesReportType.values.map((t) => DropdownMenuItem(
-                  value: t,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(t.icon, size: 16, color: Colors.indigo.shade400),
-                      const SizedBox(width: 8),
-                      Text(t.label),
-                    ],
-                  ),
-                )).toList(),
-                onChanged: (v) {
-                  if (v != null) controller.setReportType(v);
-                },
-              ),
-            ),
+          // Date Filter Dropdown
+          Obx(() => ReportDateFilterDropdown(
+            selectedFilter: controller.rxDateFilter.value,
+            onFilterChanged: (filter) => controller.setDateFilter(filter),
+            onPickCustomRange: () => _pickDateRange(context, controller),
+            themeColor: Colors.indigo.shade600,
           )),
 
           const SizedBox(width: 10),
@@ -305,95 +279,81 @@ class FragSalesReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // DATE FILTER CHIPS
+  // REPORT TYPE NAVIGATION BAR
   // ═════════════════════════════════════════════════════════════════════════
 
-  Widget _buildDateChips(BuildContext context, ControllerSalesReport controller) {
+  Widget _buildReportTypeBar(BuildContext context, ControllerSalesReport controller) {
     return Obx(() {
-      final selected = controller.rxDateFilter.value;
-      return Padding(
+      final selected = controller.rxReportType.value;
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
-          children: [
-            _dateChip(
-              label: 'Today',
-              icon: Icons.today_rounded,
-              isSelected: selected == SalesDateFilter.today,
-              onTap: () => controller.setDateFilter(SalesDateFilter.today),
-            ),
-            const SizedBox(width: 8),
-            _dateChip(
-              label: 'Yesterday',
-              icon: Icons.event_rounded,
-              isSelected: selected == SalesDateFilter.yesterday,
-              onTap: () => controller.setDateFilter(SalesDateFilter.yesterday),
-            ),
-            const SizedBox(width: 8),
-            _dateChip(
-              label: 'This Week',
-              icon: Icons.date_range_rounded,
-              isSelected: selected == SalesDateFilter.thisWeek,
-              onTap: () => controller.setDateFilter(SalesDateFilter.thisWeek),
-            ),
-            const SizedBox(width: 8),
-            _dateChip(
-              label: 'This Month',
-              icon: Icons.calendar_month_rounded,
-              isSelected: selected == SalesDateFilter.thisMonth,
-              onTap: () => controller.setDateFilter(SalesDateFilter.thisMonth),
-            ),
-            const SizedBox(width: 8),
-            _dateChip(
-              label: 'Custom',
-              icon: Icons.edit_calendar_rounded,
-              isSelected: selected == SalesDateFilter.custom,
-              onTap: () => _pickDateRange(context, controller),
-            ),
-          ],
+          children: SalesReportType.values.map((type) {
+            final isSelected = selected == type;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _reportTypeChip(
+                label: type.label,
+                icon: type.icon,
+                isSelected: isSelected,
+                primaryColor: Colors.indigo.shade600,
+                onTap: () => controller.setReportType(type),
+              ),
+            );
+          }).toList(),
         ),
       );
     });
   }
 
-  Widget _dateChip({
+  Widget _reportTypeChip({
     required String label,
     required IconData icon,
     required bool isSelected,
+    required Color primaryColor,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [Colors.indigo.shade400, Colors.purple.shade400],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isSelected ? null : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+            color: isSelected ? primaryColor : Colors.grey.shade200,
+            width: 1.5,
           ),
           boxShadow: isSelected
-              ? [BoxShadow(color: Colors.indigo.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))]
-              : [],
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: isSelected ? Colors.white : Colors.grey.shade600),
-            const SizedBox(width: 6),
+            Icon(icon, size: 16, color: isSelected ? Colors.white : primaryColor),
+            const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey.shade700,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade800,
               ),
             ),
           ],

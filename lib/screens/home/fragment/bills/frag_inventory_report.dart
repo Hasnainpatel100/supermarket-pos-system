@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../widget/my_card.dart';
+import '../../../../widget/report_date_filter_dropdown.dart';
 import 'controller_inventory_report.dart';
 
 class FragInventoryReport extends StatelessWidget {
@@ -39,9 +40,9 @@ class FragInventoryReport extends StatelessWidget {
           const SizedBox(height: 10),
 
           // ═══════════════════════════════════════════════════════════════
-          // 2. CONTEXTUAL FILTERS (Date Range or Expiry/Low Stock Thresholds)
+          // 2. REPORT TYPE BAR (Horizontal Pills)
           // ═══════════════════════════════════════════════════════════════
-          _buildFilterBar(context, controller),
+          _buildReportTypeBar(context, controller),
 
           const SizedBox(height: 10),
 
@@ -135,48 +136,36 @@ class FragInventoryReport extends StatelessWidget {
                   color: Colors.grey.shade800,
                 ),
               ),
-              Obx(() => Text(
-                controller.rxReportType.value.label,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade500),
+              Obx(() => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.orange.shade100),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.calendar_today_rounded, size: 10, color: Colors.orange.shade400),
+                    const SizedBox(width: 4),
+                    Text(
+                      controller.formatDateRange(),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.deepOrange.shade700),
+                    ),
+                  ],
+                ),
               )),
             ],
           ),
 
           const Spacer(),
 
-          // Report Type Dropdown
-          Obx(() => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-              ],
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<InventoryReportType>(
-                value: controller.rxReportType.value,
-                isDense: true,
-                icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.orange.shade600),
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
-                items: InventoryReportType.values.map((t) => DropdownMenuItem(
-                  value: t,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(t.icon, size: 16, color: Colors.orange.shade600),
-                      const SizedBox(width: 8),
-                      Text(t.label),
-                    ],
-                  ),
-                )).toList(),
-                onChanged: (v) {
-                  if (v != null) controller.setReportType(v);
-                },
-              ),
-            ),
+          // Date Filter Dropdown
+          Obx(() => ReportDateFilterDropdown(
+            selectedFilter: controller.rxDateFilter.value,
+            onFilterChanged: (filter) => controller.setDateFilter(filter),
+            onPickCustomRange: () => _pickDateRange(context, controller),
+            themeColor: Colors.deepOrange.shade600,
           )),
 
           const SizedBox(width: 10),
@@ -286,141 +275,87 @@ class FragInventoryReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Contextual Filter Bar
+  // REPORT TYPE NAVIGATION BAR
   // ═════════════════════════════════════════════════════════════════════════
 
-  Widget _buildFilterBar(BuildContext context, ControllerInventoryReport controller) {
+  Widget _buildReportTypeBar(BuildContext context, ControllerInventoryReport controller) {
     return Obx(() {
-      final type = controller.rxReportType.value;
-
-      // Render date picker range only for movement and adjustments
-      final isDateReport = type == InventoryReportType.stockMovement ||
-          type == InventoryReportType.stockAdjustment;
-
-      return Padding(
+      final selected = controller.rxReportType.value;
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
-          children: [
-            if (isDateReport) ...[
-              GestureDetector(
-                onTap: () => _pickDateRange(context, controller),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.orange.shade400, Colors.deepOrange.shade400],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.date_range_rounded, size: 14, color: Colors.white),
-                      const SizedBox(width: 6),
-                      Text(
-                        controller.formatDateRange(),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
+          children: InventoryReportType.values.map((type) {
+            final isSelected = selected == type;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _reportTypeChip(
+                label: type.label,
+                icon: type.icon,
+                isSelected: isSelected,
+                primaryColor: Colors.deepOrange.shade600,
+                onTap: () => controller.setReportType(type),
               ),
-            ] else ...[
-              // Placeholder when date range is not required
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey.shade500),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Snapshot Report (Realtime)',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
-            const Spacer(),
-
-            // Context-specific threshold filter for Near Expiry
-            if (type == InventoryReportType.nearExpiry) ...[
-              Text(
-                'Days Remaining: ',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: controller.rxExpiryThresholdDays.value,
-                    isDense: true,
-                    items: const [
-                      DropdownMenuItem(value: 15, child: Text('15 Days')),
-                      DropdownMenuItem(value: 30, child: Text('30 Days')),
-                      DropdownMenuItem(value: 60, child: Text('60 Days')),
-                      DropdownMenuItem(value: 90, child: Text('90 Days')),
-                      DropdownMenuItem(value: 180, child: Text('180 Days')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) controller.setExpiryThresholdDays(val);
-                    },
-                  ),
-                ),
-              ),
-            ],
-
-            // Context-specific threshold filter for Low Stock
-            if (type == InventoryReportType.lowStock) ...[
-              Text(
-                'Reorder Threshold: ',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: controller.rxLowStockThreshold.value,
-                    isDense: true,
-                    items: const [
-                      DropdownMenuItem(value: 5, child: Text('< 5 units')),
-                      DropdownMenuItem(value: 10, child: Text('< 10 units')),
-                      DropdownMenuItem(value: 20, child: Text('< 20 units')),
-                      DropdownMenuItem(value: 50, child: Text('< 50 units')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) controller.setLowStockThreshold(val);
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ],
+            );
+          }).toList(),
         ),
       );
     });
+  }
+
+  Widget _reportTypeChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required Color primaryColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? primaryColor : Colors.grey.shade200,
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isSelected ? Colors.white : primaryColor),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ═════════════════════════════════════════════════════════════════════════
@@ -472,7 +407,7 @@ class FragInventoryReport extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Search items by name, SKU or barcode...',
                   hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: Colors.orange.shade600),
+                  prefixIcon: Icon(Icons.search_rounded, size: 20, color: Colors.deepOrange.shade600),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                   filled: true,
@@ -482,6 +417,67 @@ class FragInventoryReport extends StatelessWidget {
               ),
             ),
           ),
+          Obx(() {
+            final type = controller.rxReportType.value;
+            if (type == InventoryReportType.nearExpiry) {
+              return Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: controller.rxExpiryThresholdDays.value,
+                      isDense: true,
+                      items: const [
+                        DropdownMenuItem(value: 15, child: Text('15 Days Expiry')),
+                        DropdownMenuItem(value: 30, child: Text('30 Days Expiry')),
+                        DropdownMenuItem(value: 60, child: Text('60 Days Expiry')),
+                        DropdownMenuItem(value: 90, child: Text('90 Days Expiry')),
+                        DropdownMenuItem(value: 180, child: Text('180 Days Expiry')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) controller.setExpiryThresholdDays(val);
+                      },
+                    ),
+                  ),
+                ),
+              );
+            }
+            if (type == InventoryReportType.lowStock) {
+              return Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: controller.rxLowStockThreshold.value,
+                      isDense: true,
+                      items: const [
+                        DropdownMenuItem(value: 5, child: Text('< 5 units')),
+                        DropdownMenuItem(value: 10, child: Text('< 10 units')),
+                        DropdownMenuItem(value: 20, child: Text('< 20 units')),
+                        DropdownMenuItem(value: 50, child: Text('< 50 units')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) controller.setLowStockThreshold(val);
+                      },
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
           const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -496,7 +492,7 @@ class FragInventoryReport extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.warehouse_outlined, size: 16, color: Colors.orange.shade600),
+                Icon(Icons.warehouse_outlined, size: 16, color: Colors.deepOrange.shade600),
                 const SizedBox(width: 8),
                 Obx(() => Text(
                   controller.rxBranch.value,

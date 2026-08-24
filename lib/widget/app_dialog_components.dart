@@ -293,8 +293,7 @@ class AppTextField extends StatelessWidget {
       onTap: onTap,
       validator: (value) {
         if (validator != null) {
-          final customErr = validator!(value);
-          if (customErr != null) return customErr;
+          return validator!(value);
         }
 
         final trimmed = value?.trim() ?? '';
@@ -307,14 +306,14 @@ class AppTextField extends StatelessWidget {
         if (trimmed.isNotEmpty) {
           final cleanLabel = label.toLowerCase();
           
-          // 1. Phone number validation (exactly 10 digits)
+          // 1. Phone number validation (supports local 10 digits and international E.164 with +)
           if (cleanLabel.contains('phone') || cleanLabel.contains('mobile')) {
             final digitsOnly = trimmed.replaceAll(RegExp(r'\D'), '');
-            if (digitsOnly.length != 10 || trimmed.length != 10) {
-              return "Phone number must be exactly 10 digits";
+            if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+              return "Please enter a valid phone number (7-15 digits)";
             }
-            if (digitsOnly != trimmed) {
-              return "Phone number must contain only digits";
+            if (!RegExp(r'^\+?[0-9\-\s]+$').hasMatch(trimmed)) {
+              return "Phone number contains invalid characters";
             }
           }
           

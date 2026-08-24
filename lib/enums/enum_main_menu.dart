@@ -15,8 +15,11 @@ enum EnumMainMenu {
 
   system,
   systemUsers, // 1. system
+  apiUser, // API User management
   systemSettings, // 2. system
   auditLogs, // 3. system
+  brand, // 4. brand management
+  branch, // 5. branch management
 
   expenses,
 

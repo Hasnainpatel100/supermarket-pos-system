@@ -18,6 +18,22 @@ class SnackbarUtil {
     );
   }
 
+  static void showWarning(String message) {
+    _showSnackbar(
+      message,
+      backgroundColor: Colors.orange.shade800,
+      icon: Icons.warning_amber_rounded,
+    );
+  }
+
+  static void showInfo(String message) {
+    _showSnackbar(
+      message,
+      backgroundColor: Colors.blue.shade700,
+      icon: Icons.info_outline_rounded,
+    );
+  }
+
   static void _showSnackbar(
     String message, {
     required Color backgroundColor,

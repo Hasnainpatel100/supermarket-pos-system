@@ -56,9 +56,16 @@ enum EnumPermission {
   userUpdate,
   userDisable,
   roleAssign,
+  apiUserManage,
   systemSettingsUpdate,
   dataSyncManual,
   auditLogView,
+  brandManage,
+  brandCreate,
+  brandView,
+  branchManage,
+  branchCreate,
+  branchView,
 
   //Expenses
   expenses,

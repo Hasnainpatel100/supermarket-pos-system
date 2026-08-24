@@ -70,7 +70,12 @@ class AppTranslation extends Translations {
       'purchase_supplier': 'Purchase & Supplier',
       'reports': 'Reports',
       'system': 'System',
+      'api_user': 'API Users',
       'settings': 'Settings',
+      'brand': 'Brands',
+      'brand_management': 'Brand Management',
+      'create_brand': 'Create Brand',
+      'edit_brand': 'Edit Brand',
 
       // POS / Billing
       'bill_create': 'Create Bill',
@@ -128,6 +133,16 @@ class AppTranslation extends Translations {
       'supplier reports': 'Supplier Reports',
       'cashier reports': 'Cashier Reports',
       'financial reports': 'Financial Reports',
+
+      // Brand & Branch management
+      'Brands': 'Branches',
+      'branch_management': 'Branch Management',
+      'create_branch': 'Create Branch',
+      'branch_code': 'Branch Code',
+      'service_types': 'Service Types',
+      'branch_not_found': 'No Branches Found',
+      'select_brand': 'Select Brand',
+      'set_active_branch': 'Set as Active Branch',
     },
     'hi_IN': {
       'app_title': 'RH Hotel',

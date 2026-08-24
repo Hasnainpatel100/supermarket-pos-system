@@ -12,6 +12,8 @@ enum AuditModule {
   reports,
   backup,
   finance,
+  brand,
+  branch,
 }
 
 extension AuditModuleExtension on AuditModule {
@@ -36,6 +38,10 @@ extension AuditModuleExtension on AuditModule {
         return 'Backup';
       case AuditModule.finance:
         return 'Finance';
+      case AuditModule.brand:
+        return 'Brand';
+      case AuditModule.branch:
+        return 'Branch';
     }
   }
 

@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../../enums/enum_permission.dart';
 import '../../commons/loader.dart';
+import '../../enums/enum_permission.dart';
+import '../../features/authentication/data/auth_repository.dart';
 import '../../model/entity_user.dart';
 import '../../objectbox.g.dart';
 import '../../repository/repo_storage.dart';
@@ -45,7 +47,49 @@ class ControllerLogin extends GetxController {
       SnackbarUtil.showError('field_empty'.tr);
       return;
     }
-    debugPrint('email: $email, password: $password');
+
+    // 1. Attempt HTTP API login via Dio & AuthRepository
+    if (Get.isRegistered<AuthRepository>()) {
+      final authRepo = Get.find<AuthRepository>();
+      final result = await authRepo.login(username: email, pin: password);
+
+      if (result.success && result.user != null) {
+        if (kDebugMode) {
+          debugPrint('LOGIN SUCCESS');
+        }
+
+        final user = result.user!;
+
+        // Update login details in Entity User
+        user.lastLoginAt = MyDateTime.getCurrentDateTimeUtc();
+        var deviceName = await UtilDevice.getDeviceName();
+        user.lastLoginDevice = deviceName;
+        var deviceIp = await UtilDevice.getIpAddress();
+        user.lastLoginIp = deviceIp;
+
+        // Upsert user into local ObjectBox box
+        try {
+          final existing = _boxUser
+              .query(EntityUser_.username.equals(email))
+              .build()
+              .findFirst();
+          if (existing != null) {
+            user.id = existing.id;
+          }
+          _boxUser.put(user);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Notice: Local ObjectBox cache skipped: $e');
+          }
+        }
+
+        Loader.hideLoader();
+        Get.offAllNamed(AppRoute.home);
+        return;
+      }
+    }
+
+    // 2. Local ObjectBox fallback authentication for offline dev/testing
     final query = _boxUser
         .query(
           EntityUser_.username.equals(email) &
@@ -58,9 +102,8 @@ class ControllerLogin extends GetxController {
       SnackbarUtil.showError('invalid_credentials'.tr);
       return;
     }
-    // reassign theme, local, currency after logout
 
-    // ✅ PATCH: Ensure superAdmin has all permissions (including new ones)
+    // Ensure superAdmin permissions
     if (user.role == 'superAdmin') {
       final allPermissions = EnumPermission.values.map((e) => e.name).toList();
       user.permissions ??= [];
@@ -72,7 +115,7 @@ class ControllerLogin extends GetxController {
       debugPrint("superAdmin permissions updated: ${user.permissions?.length}");
     }
 
-    // update login details in Entity User
+    // Update login details in Entity User
     user.lastLoginAt = MyDateTime.getCurrentDateTimeUtc();
     var deviceName = await UtilDevice.getDeviceName();
     user.lastLoginDevice = deviceName;
@@ -80,9 +123,8 @@ class ControllerLogin extends GetxController {
     user.lastLoginIp = deviceIp;
     _boxUser.put(user);
 
-    // store users details in storage
+    // Store users details in storage
     await _repoStorage.setUser(json.encode(user.toMap()));
-    // update last login time in Entity User
     Loader.hideLoader();
     Get.offAllNamed(AppRoute.home);
   }

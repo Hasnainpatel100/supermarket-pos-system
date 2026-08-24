@@ -5,17 +5,28 @@ import 'package:path_provider/path_provider.dart';
 import '../objectbox.g.dart';
 
 class ServiceObjectBox extends GetxService {
-  late Store store;
+  Store? _store;
+
+  Store get store {
+    if (_store == null || _store!.isClosed()) {
+      throw StateError('ServiceObjectBox Store is not initialized or has been closed.');
+    }
+    return _store!;
+  }
 
   Future<ServiceObjectBox> init() async {
+    if (_store != null && !_store!.isClosed()) {
+      return this;
+    }
+
     if (kDebugMode) {
-      store = Store(
+      _store = Store(
         getObjectBoxModel(),
         directory: "market", // db name
       );
     } else {
       final appSupportDir = await getApplicationSupportDirectory();
-      store = Store(
+      _store = Store(
         getObjectBoxModel(),
         directory: '${appSupportDir.path}/market',
       );
@@ -23,23 +34,20 @@ class ServiceObjectBox extends GetxService {
     return this;
   }
 
-  /// Re-opens the ObjectBox store after a restore.
-  ///
-  /// Call this after the database files on disk have been replaced.
-  /// Closes the old store (if still open) and opens a fresh one.
+  /// Re-opens the ObjectBox store after a restore or logout reset.
   Future<void> reopen() async {
-    if (!store.isClosed()) {
-      store.close();
+    if (_store != null && !_store!.isClosed()) {
+      _store!.close();
     }
 
     if (kDebugMode) {
-      store = Store(
+      _store = Store(
         getObjectBoxModel(),
         directory: "market",
       );
     } else {
       final appSupportDir = await getApplicationSupportDirectory();
-      store = Store(
+      _store = Store(
         getObjectBoxModel(),
         directory: '${appSupportDir.path}/market',
       );
@@ -50,8 +58,8 @@ class ServiceObjectBox extends GetxService {
 
   @override
   void onClose() {
-    if (!store.isClosed()) {
-      store.close();
+    if (_store != null && !_store!.isClosed()) {
+      _store!.close();
     }
     super.onClose();
   }

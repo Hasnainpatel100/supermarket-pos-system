@@ -1,0 +1,446 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../model/model_branch.dart';
+import '../../widget/app_dialog_components.dart';
+import 'controller_branch_form.dart';
+
+class ActivityBranchForm extends StatelessWidget {
+  final ModelBranch? editingBranch;
+  const ActivityBranchForm({super.key, this.editingBranch});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.put(ControllerBranchForm(editingBranch: editingBranch));
+    final isEditing = editingBranch != null && editingBranch!.id != null;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return AppDialog(
+      maxWidth: 960,
+      maxHeight: 780,
+      header: DialogHeader(
+        title: isEditing ? 'Edit Branch' : 'Create New Branch',
+        icon: isEditing ? Icons.edit_location_alt_rounded : Icons.add_business_rounded,
+        iconColor: Colors.deepPurple.shade400,
+      ),
+      body: DialogBody(
+        child: Form(
+          key: controller.formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ─── Section 1: Branch Identity ───────────────────────────
+                _buildSectionHeader(context, Icons.business_rounded, 'Branch Identity', Colors.deepPurple.shade400),
+                const SizedBox(height: 12),
+                _buildBrandDropdown(controller, colorScheme),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: _buildTextField(
+                        controller: controller.tcBranchCode,
+                        label: 'Branch Code *',
+                        hint: 'e.g. BR001',
+                        icon: Icons.tag_rounded,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Branch code is required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 3,
+                      child: _buildTextField(
+                        controller: controller.tcName,
+                        label: 'Branch Name (EN) *',
+                        hint: 'e.g. Mumkin Main Branch',
+                        icon: Icons.storefront_rounded,
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Branch name is required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: Obx(() => _buildDropdown(
+                            label: 'App Type',
+                            value: controller.rxAppType.value,
+                            items: ControllerBranchForm.appTypeOptions,
+                            onChanged: (v) => controller.rxAppType.value = v!,
+                            colorScheme: colorScheme,
+                          )),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child: Obx(() => _buildDropdown(
+                            label: 'Status',
+                            value: controller.rxStatus.value,
+                            items: ControllerBranchForm.statusOptions,
+                            onChanged: (v) => controller.rxStatus.value = v!,
+                            colorScheme: colorScheme,
+                            activeColor: controller.rxStatus.value == 'ACTIVE' ? Colors.green.shade700 : Colors.red.shade700,
+                          )),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // ─── Section 2: Address ───────────────────────────────────
+                _buildSectionHeader(context, Icons.location_on_rounded, 'Address', Colors.blue.shade400),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: controller.tcFullAddress,
+                  label: 'Full Address',
+                  hint: 'Street address, building, floor...',
+                  icon: Icons.home_rounded,
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcCity,
+                        label: 'City',
+                        hint: 'e.g. Dubai',
+                        icon: Icons.location_city_rounded,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcState,
+                        label: 'State / Emirate',
+                        hint: 'e.g. Dubai',
+                        icon: Icons.map_rounded,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcCountry,
+                        label: 'Country',
+                        hint: 'e.g. UAE',
+                        icon: Icons.flag_rounded,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcZipCode,
+                        label: 'ZIP / Postal Code',
+                        hint: 'e.g. 00000',
+                        icon: Icons.markunread_mailbox_rounded,
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcLatitude,
+                        label: 'Latitude',
+                        hint: 'e.g. 25.2048',
+                        icon: Icons.gps_fixed_rounded,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcLongitude,
+                        label: 'Longitude',
+                        hint: 'e.g. 55.2708',
+                        icon: Icons.gps_fixed_rounded,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: _buildTextField(
+                        controller: controller.tcGMapUrl,
+                        label: 'Google Maps URL',
+                        hint: 'https://maps.google.com/...',
+                        icon: Icons.directions_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildTextField(
+                  controller: controller.tcGMapPlaceId,
+                  label: 'Google Maps Place ID',
+                  hint: 'e.g. ChIJN1t_tDeuEmsRUs...',
+                  icon: Icons.place_rounded,
+                ),
+
+                const SizedBox(height: 24),
+
+                // ─── Section 3: Contact ───────────────────────────────────
+                _buildSectionHeader(context, Icons.contact_phone_rounded, 'Contact Info', Colors.teal.shade400),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcPrimaryPhone,
+                        label: 'Primary Phone *',
+                        hint: '+971504847006',
+                        icon: Icons.phone_rounded,
+                        keyboardType: TextInputType.phone,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Primary phone is required';
+                          if (!RegExp(r'^\+?[0-9\-\s]{7,15}$').hasMatch(v.trim())) {
+                            return 'Invalid phone number';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcAlternatePhone,
+                        label: 'Alternate Phone',
+                        hint: '+971504847007',
+                        icon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcWhatsapp,
+                        label: 'WhatsApp',
+                        hint: '+971504847006',
+                        icon: Icons.chat_rounded,
+                        keyboardType: TextInputType.phone,
+                        suffix: IconButton(
+                          tooltip: 'Copy Primary to WhatsApp',
+                          icon: Icon(Icons.copy_rounded, size: 16, color: Colors.teal.shade600),
+                          onPressed: controller.copyPrimaryToWhatsapp,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        controller: controller.tcEmail,
+                        label: 'Email',
+                        hint: 'branch@example.com',
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // ─── Section 4: Service Types ─────────────────────────────
+                _buildSectionHeader(context, Icons.room_service_rounded, 'Service Types', Colors.orange.shade600),
+                const SizedBox(height: 12),
+                Obx(() => Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: ModelBranch.allServiceTypes.map((type) {
+                        final isSelected = controller.rxSelectedServiceTypes.contains(type);
+                        return FilterChip(
+                          label: Text(
+                            type.replaceAll('_', ' '),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              color: isSelected ? Colors.white : colorScheme.onSurface,
+                            ),
+                          ),
+                          selected: isSelected,
+                          onSelected: (_) => controller.toggleServiceType(type),
+                          selectedColor: Colors.deepPurple.shade500,
+                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          checkmarkColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        );
+                      }).toList(),
+                    )),
+
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ),
+      ),
+      footer: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          border: Border(top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1))),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            OutlinedButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel'),
+            ),
+            const SizedBox(width: 12),
+            Obx(() => FilledButton.icon(
+                  onPressed: controller.rxIsSubmitting.value ? null : controller.submitForm,
+                  icon: controller.rxIsSubmitting.value
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : Icon(isEditing ? Icons.save_rounded : Icons.add_circle_rounded, size: 18),
+                  label: Text(
+                    controller.rxIsSubmitting.value
+                        ? (isEditing ? 'Saving...' : 'Creating...')
+                        : (isEditing ? 'Save Changes' : 'Create Branch'),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.deepPurple.shade600,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Widget Helpers ─────────────────────────────────────────────────────────
+
+  Widget _buildSectionHeader(BuildContext context, IconData icon, String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(width: 8),
+        Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color)),
+        const SizedBox(width: 12),
+        Expanded(child: Divider(color: color.withValues(alpha: 0.2))),
+      ],
+    );
+  }
+
+  Widget _buildBrandDropdown(ControllerBranchForm controller, ColorScheme colorScheme) {
+    return Obx(() {
+      if (controller.rxIsLoadingBrands.value) {
+        return const SizedBox(
+          height: 56,
+          child: Center(child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+              SizedBox(width: 12),
+              Text('Loading brands...', style: TextStyle(fontSize: 13)),
+            ],
+          )),
+        );
+      }
+
+      return DropdownButtonFormField(
+        value: controller.rxSelectedBrand.value,
+        decoration: InputDecoration(
+          labelText: 'Brand *',
+          hintText: 'Select a Brand',
+          prefixIcon: const Icon(Icons.branding_watermark_rounded, size: 20),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        ),
+        validator: (v) => v == null ? 'Please select a Brand' : null,
+        items: controller.rxBrandList.map((brand) {
+          return DropdownMenuItem(
+            value: brand,
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: brand.isActive ? Colors.green : Colors.red,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(brand.name.en, style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(brand.appType, style: TextStyle(fontSize: 10, color: colorScheme.onSecondaryContainer, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+        onChanged: (brand) => controller.rxSelectedBrand.value = brand,
+      );
+    });
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? hint,
+    IconData? icon,
+    String? Function(String?)? validator,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    Widget? suffix,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        hintStyle: const TextStyle(fontSize: 12),
+        prefixIcon: icon != null ? Icon(icon, size: 18) : null,
+        suffixIcon: suffix,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    required ColorScheme colorScheme,
+    Color? activeColor,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      ),
+      items: items
+          .map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))))
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+}

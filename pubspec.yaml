@@ -33,6 +33,7 @@ dependencies:
 
   # ✅ IMPORTANT (compatible with mongo_dart)
   http: ^0.13.6
+  dio: ^5.7.0
 
   share_plus: ^12.0.1
   dropdown_search: ^5.0.6

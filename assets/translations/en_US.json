@@ -21,6 +21,7 @@
   "required": "Required",
   "active": "Active",
   "inactive": "Inactive",
+  "api_user": "API Users",
   "success": "Success",
   "error": "Error",
   "loading": "Loading...",
@@ -85,8 +86,10 @@
   "per_order": "per order",
   "in_system": "in system",
   "limit_5": "Limit: 5",
-  "home_title": "Home",
-
+  "brand": "Brands",
+  "brand_management": "Brand Management",
+  "create_brand": "Create Brand",
+  "edit_brand": "Edit Brand",
   "customers": "Customers",
   "manage_customer_base": "Manage your customer base",
   "new_customer": "New Customer",
@@ -686,5 +689,21 @@
   "note_optional": "Note (optional)",
   "save_expense": "Save Expense",
   "save_borrow": "Save Borrow",
-  "save_lend": "Save Lend"
+  "save_lend": "Save Lend",
+
+  "Brands": "Brands",
+  "brand_management": "Brand Management",
+  "create_brand": "Create Brand",
+  "brand_not_found": "No Brands Found",
+  "Branches": "Branches",
+  "branch_management": "Branch Management",
+  "create_branch": "Create Branch",
+  "branch_code": "Branch Code",
+  "service_types": "Service Types",
+  "branch_not_found": "No Branches Found",
+  "select_brand": "Select Brand",
+  "set_active_branch": "Set as Active Branch",
+  "branch_address": "Branch Address",
+  "branch_contact": "Branch Contact",
+  "branch_identity": "Branch Identity"
 }

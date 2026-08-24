@@ -169,6 +169,36 @@ class RepoDrawer {
       permissions: [EnumPermission.expenses],
     ),
     ModelDrawerMenu(
+      menu: EnumMainMenu.apiUser,
+      titleKey: 'api_user',
+      icon: Icons.cloud_sync_outlined,
+      permissions: [
+        EnumPermission.userCreate,
+        EnumPermission.userUpdate,
+        EnumPermission.apiUserManage,
+      ],
+    ),
+    ModelDrawerMenu(
+      menu: EnumMainMenu.brand,
+      titleKey: 'Brands',
+      icon: Icons.branding_watermark_outlined,
+      permissions: [
+        EnumPermission.brandManage,
+        EnumPermission.brandCreate,
+        EnumPermission.brandView,
+      ],
+    ),
+    ModelDrawerMenu(
+      menu: EnumMainMenu.branch,
+      titleKey: 'Branches',
+      icon: Icons.add_business_outlined,
+      permissions: [
+        EnumPermission.branchManage,
+        EnumPermission.branchCreate,
+        EnumPermission.branchView,
+      ],
+    ),
+    ModelDrawerMenu(
       menu: EnumMainMenu.system,
       titleKey: 'system',
       icon: Icons.admin_panel_settings_outlined,

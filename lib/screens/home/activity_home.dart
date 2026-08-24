@@ -14,7 +14,6 @@ import '../../repository/repo_drawer.dart';
 import 'controller_home.dart';
 import 'fragment/dashboard/frag_home_dashboard.dart';
 import 'fragment/frag_home_logout.dart';
-import 'fragment/reports/frag_home_report.dart';
 import 'fragment/bills/frag_sales_report.dart';
 import 'fragment/bills/frag_inventory_report.dart';
 import 'fragment/bills/controller_inventory_report.dart';
@@ -33,8 +32,11 @@ import 'fragment/bills/controller_financial_report.dart';
 import 'fragment/setting/frag_home_settings.dart';
 import 'fragment/setting/controller_home_settings.dart';
 import 'fragment/users/frag_home_users.dart';
+import 'fragment/api_user/frag_home_api_users.dart';
 import 'fragment/system/frag_home_backup.dart';
 import 'fragment/system/frag_audit_logs.dart';
+import 'fragment/brand/fragment_home_brand.dart';
+import 'fragment/branch/fragment_home_branch.dart';
 
 class ActivityHome extends StatelessWidget {
   const ActivityHome({super.key});
@@ -93,6 +95,9 @@ class ActivityHome extends StatelessWidget {
                   EnumMainMenu.systemUsers) {
                 return FragHomeUsers(entityUser: controller.rxUser.value);
               }
+              if (controller.selectedMainMenu.value == EnumMainMenu.apiUser) {
+                return const FragHomeApiUsers();
+              }
               if (controller.selectedMainMenu.value == EnumMainMenu.settings) {
                 return FragHomeSettings();
               }
@@ -109,6 +114,14 @@ class ActivityHome extends StatelessWidget {
 
               if (controller.selectedMainMenu.value == EnumMainMenu.auditLogs) {
                 return const FragAuditLogs();
+              }
+
+              if (controller.selectedMainMenu.value == EnumMainMenu.brand) {
+                return const FragmentHomeBrand();
+              }
+
+              if (controller.selectedMainMenu.value == EnumMainMenu.branch) {
+                return const FragmentHomeBranch();
               }
 
               // ── Sales Reports (single entry under Reports → Sales Reports) ──

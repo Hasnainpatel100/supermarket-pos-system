@@ -56,7 +56,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                   'Manage your vendor base'.tr,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey.shade500,
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -169,7 +169,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           Expanded(
             child: Obx(
                   () => controller.rxListSupplier.isEmpty
-                  ? _buildEmpty()
+                  ? _buildEmpty(context)
                   : MyCard(
                 margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: SizedBox(
@@ -216,7 +216,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           ),
 
           // ── Pagination Footer ──
-          Obx(() => _buildPagination(controller)),
+          Obx(() => _buildPagination(context, controller)),
         ],
       ),
     );
@@ -228,6 +228,8 @@ class FragmentHomeSupplier extends StatelessWidget {
 
   DataColumn _col(
       BuildContext context, String label, IconData icon, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DataColumn(
       label: Row(
         mainAxisSize: MainAxisSize.min,
@@ -235,15 +237,14 @@ class FragmentHomeSupplier extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: isDark ? 0.2 : 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Icon(icon, size: 16, color: color.withOpacity(0.8)),
+            child: Icon(icon, size: 16, color: color.withValues(alpha: 0.8)),
           ),
           const SizedBox(width: 8),
           Text(label,
-              style: TextStyle(
-                  color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+              style: TextStyle(color: isDark ? Colors.white : colorScheme.onSurface, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -256,6 +257,7 @@ class FragmentHomeSupplier extends StatelessWidget {
       ColorScheme colorScheme,
       ) {
     final isActive = s.isActive ?? true;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DataRow(
       color: WidgetStateProperty.resolveWith<Color?>((_) {
@@ -269,15 +271,16 @@ class FragmentHomeSupplier extends StatelessWidget {
             padding:
             const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.indigo.withOpacity(0.08),
+              color: isDark ? colorScheme.surfaceContainerHighest : Colors.indigo.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.indigo.withValues(alpha: 0.2)),
             ),
             child: Text(
               s.supplierCode ?? '-',
-              style: const TextStyle(
+              style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
-                  color: Colors.indigo),
+                  color: isDark ? Colors.indigo.shade200 : Colors.indigo),
             ),
           ),
         ),
@@ -287,7 +290,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           s.name ?? '-',
           style: TextStyle(
             fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            color: isActive ? null : Colors.grey,
+            color: isActive ? (isDark ? Colors.white : null) : Colors.grey,
           ),
         )),
 
@@ -296,7 +299,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           s.phone ?? '-',
           style: TextStyle(
               fontSize: 13,
-              color: isActive ? Colors.grey.shade800 : Colors.grey),
+              color: isActive ? (isDark ? Colors.white : Colors.grey.shade800) : Colors.grey),
         )),
 
         // GST
@@ -304,11 +307,11 @@ class FragmentHomeSupplier extends StatelessWidget {
           s.gstNumber ?? '-',
           style: TextStyle(
               fontSize: 13,
-              color: isActive ? Colors.grey.shade700 : Colors.grey),
+              color: isActive ? (isDark ? Colors.white : Colors.grey.shade700) : Colors.grey),
         )),
 
         // Outstanding balance
-        DataCell(_buildOutstandingCell(s)),
+        DataCell(_buildOutstandingCell(s, isDark)),
 
         // Status badge
         DataCell(_statusBadge(isActive)),
@@ -381,24 +384,25 @@ class FragmentHomeSupplier extends StatelessWidget {
     );
   }
 
-  Widget _buildOutstandingCell(EntitySupplier s) {
+  Widget _buildOutstandingCell(EntitySupplier s, [bool isDark = false]) {
     final amount = s.totalOutstanding ?? 0;
     if (amount <= 0.001) {
       return Text('—',
-          style: TextStyle(color: Colors.grey.shade400, fontSize: 13));
+          style: TextStyle(color: isDark ? Colors.white60 : Colors.grey.shade400, fontSize: 13));
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.08),
+        color: Colors.red.withValues(alpha: isDark ? 0.2 : 0.08),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.withValues(alpha: isDark ? 0.4 : 0.2)),
       ),
       child: Text(
         '₹ ${amount.toStringAsFixed(2)}',
         style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.red.shade700),
+            color: isDark ? Colors.redAccent.shade100 : Colors.red.shade700),
       ),
     );
   }
@@ -441,7 +445,8 @@ class FragmentHomeSupplier extends StatelessWidget {
   //  PAGINATION
   // ─────────────────────────────────────────────
 
-  Widget _buildPagination(ControllerHomeSupplier controller) {
+  Widget _buildPagination(BuildContext context, ControllerHomeSupplier controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -449,7 +454,7 @@ class FragmentHomeSupplier extends StatelessWidget {
         children: [
           Text(
             'Total: ${controller.totalCount.value} suppliers',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           Row(
             children: [
@@ -499,7 +504,8 @@ class FragmentHomeSupplier extends StatelessWidget {
   //  EMPTY STATE
   // ─────────────────────────────────────────────
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -530,7 +536,7 @@ class FragmentHomeSupplier extends StatelessWidget {
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600),
+                color: colorScheme.onSurface),
           ),
           const SizedBox(height: 6),
           Text(
@@ -607,6 +613,7 @@ class FragmentHomeSupplier extends StatelessWidget {
   }
 
   void _showDetails(BuildContext context, EntitySupplier s) {
+    final colorScheme = Theme.of(context).colorScheme;
     Get.dialog(
       Dialog(
         shape:
@@ -638,13 +645,13 @@ class FragmentHomeSupplier extends StatelessWidget {
               ),
               const Divider(),
               const SizedBox(height: 12),
-              _detailRow('Code'.tr, s.supplierCode),
-              _detailRow('Name'.tr, s.name),
-              _detailRow('Contact Person'.tr, s.contactPerson),
-              _detailRow('Phone'.tr, s.phone),
-              _detailRow('Email'.tr, s.email),
-              _detailRow('GST Number'.tr, s.gstNumber),
-              _detailRow('Address'.tr, s.address),
+              _detailRow(context, 'Code'.tr, s.supplierCode),
+              _detailRow(context, 'Name'.tr, s.name),
+              _detailRow(context, 'Contact Person'.tr, s.contactPerson),
+              _detailRow(context, 'Phone'.tr, s.phone),
+              _detailRow(context, 'Email'.tr, s.email),
+              _detailRow(context, 'GST Number'.tr, s.gstNumber),
+              _detailRow(context, 'Address'.tr, s.address),
               const SizedBox(height: 16),
 
               // ── Outstanding Balance ──
@@ -679,7 +686,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                       Text('Total Outstanding'.tr,
                           style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey.shade500,
+                              color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500)),
                       Text(
                         (s.totalOutstanding ?? 0) > 0.001
@@ -713,7 +720,8 @@ class FragmentHomeSupplier extends StatelessWidget {
     );
   }
 
-  Widget _detailRow(String label, String? value) {
+  Widget _detailRow(BuildContext context, String label, String? value) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -724,7 +732,7 @@ class FragmentHomeSupplier extends StatelessWidget {
             child: Text(label,
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600)),
+                    color: colorScheme.onSurface)),
           ),
           Expanded(
             child: Text(

@@ -497,6 +497,48 @@ class AppThemes {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       
+      popupMenuTheme: PopupMenuThemeData(
+        color: brightness == Brightness.light ? Colors.white : baseColorScheme.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: baseColorScheme.outline.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+        textStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: baseColorScheme.onSurface,
+        ),
+      ),
+      
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(
+            brightness == Brightness.light ? Colors.white : baseColorScheme.surfaceContainerHigh,
+          ),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          elevation: const WidgetStatePropertyAll(6),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: baseColorScheme.outline.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+          ),
+        ),
+        textStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: baseColorScheme.onSurface,
+        ),
+      ),
+
       chipTheme: ChipThemeData(
         backgroundColor: baseColorScheme.surfaceContainerHighest,
         disabledColor: baseColorScheme.surfaceContainerHighest.withValues(alpha: 0.5),

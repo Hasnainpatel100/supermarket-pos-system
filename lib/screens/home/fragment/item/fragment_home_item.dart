@@ -46,7 +46,7 @@ class FragmentHomeItem extends StatelessWidget {
                 Text('item_list_title'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 Text(
                   'manage_inventory'.tr,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -177,7 +177,7 @@ class FragmentHomeItem extends StatelessWidget {
                 child: Icon(Icons.inventory_2_outlined, size: 64, color: Colors.blue.shade400),
               ),
               const SizedBox(height: 16),
-              Text('No items found'.tr, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+              Text('No items found'.tr, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
               const SizedBox(height: 6),
               Text('Add a new item to get started'.tr, style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
             ],
@@ -210,7 +210,7 @@ class FragmentHomeItem extends StatelessWidget {
                           ),
                         ),
                         DataColumn(
-                          label: Text('SKU'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                          label: Text('SKU'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                         ),
                         DataColumn(
                           label: Row(
@@ -222,16 +222,16 @@ class FragmentHomeItem extends StatelessWidget {
                                 child: Icon(Icons.qr_code_2_rounded, size: 16, color: Colors.deepPurple.shade400),
                               ),
                               const SizedBox(width: 8),
-                              Text('barcode'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                              Text('barcode'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
                         DataColumn(
-                          label: Text('unit'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                          label: Text('unit'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                         ),
                         DataColumn(
                           numeric: true,
-                          label: Text('cost'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                          label: Text('cost'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                         ),
                         // ── PRICE (sortable) ──
                         DataColumn(
@@ -267,7 +267,7 @@ class FragmentHomeItem extends StatelessWidget {
                                 child: Icon(Icons.toggle_on_rounded, size: 16, color: Colors.purple.shade600),
                               ),
                               const SizedBox(width: 8),
-                              Text('status'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                              Text('status'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -281,7 +281,7 @@ class FragmentHomeItem extends StatelessWidget {
                                 child: Icon(Icons.settings_rounded, size: 16, color: Colors.grey.shade700),
                               ),
                               const SizedBox(width: 8),
-                              Text('actions'.tr, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                              Text('actions'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -327,19 +327,19 @@ class FragmentHomeItem extends StatelessWidget {
                                 color: isActive ? Colors.blueGrey.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text(item.unit ?? '-', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isActive ? Colors.blueGrey.shade700 : Colors.grey)),
+                              child: Text(item.unit ?? '-', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isActive ? colorScheme.onSurface : Colors.grey)),
                             )),
 
                             // Cost
                             DataCell(Text(
                               item.costPrice != null ? '${controller.serviceCurrency.rxCurrency.value}${item.costPrice!.toStringAsFixed(2)}' : '-',
-                              style: TextStyle(fontSize: 13, color: isActive ? Colors.orange.shade700 : Colors.grey),
+                              style: TextStyle(fontSize: 13, color: isActive ? (Theme.of(context).brightness == Brightness.dark ? Colors.amber.shade300 : Colors.orange.shade800) : Colors.grey),
                             )),
 
                             // Price
                             DataCell(Text(
                               item.sellingPrice != null ? '${controller.serviceCurrency.rxCurrency.value}${item.sellingPrice!.toStringAsFixed(2)}' : '-',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isActive ? Colors.teal.shade700 : Colors.grey),
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isActive ? (Theme.of(context).brightness == Brightness.dark ? Colors.teal.shade300 : Colors.teal.shade700) : Colors.grey),
                             )),
 
                             // Stock
@@ -356,7 +356,7 @@ class FragmentHomeItem extends StatelessWidget {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
-                                  color: isActive ? ((item.totalQty ?? 0) <= 0 ? Colors.red.shade700 : Colors.green.shade700) : Colors.grey,
+                                  color: isActive ? ((item.totalQty ?? 0) <= 0 ? (Theme.of(context).brightness == Brightness.dark ? Colors.red.shade300 : Colors.red.shade700) : (Theme.of(context).brightness == Brightness.dark ? Colors.green.shade300 : Colors.green.shade700)) : Colors.grey,
                                 ),
                               ),
                             )),
@@ -491,14 +491,15 @@ class FragmentHomeItem extends StatelessWidget {
               ),
             ),
             // ── Pagination Footer ──
-            Obx(() => _buildPagination(controller)),
+            Obx(() => _buildPagination(context, controller)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPagination(ControllerHomeItem controller) {
+  Widget _buildPagination(BuildContext context, ControllerHomeItem controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -506,7 +507,7 @@ class FragmentHomeItem extends StatelessWidget {
         children: [
           Text(
             'total_items_count'.trParams({'count': '${controller.totalCount.value}'}),
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           Row(
             children: [
@@ -622,6 +623,7 @@ class _SortableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Obx(() {
       final isSelected = controller.rxSortField.value == field;
       final asc = controller.rxSortAsc.value;
@@ -653,7 +655,7 @@ class _SortableHeader extends StatelessWidget {
                 child: Icon(icon, size: 16, color: iconColor),
               ),
               const SizedBox(width: 6),
-              Text(label, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(label, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(width: 4),
               Icon(
                 sortIcon,

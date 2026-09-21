@@ -46,7 +46,7 @@ class FragmentHomeBranch extends StatelessWidget {
                 const Text('Branch Management', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 Text(
                   'Manage branches linked to your brands',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -597,7 +597,7 @@ class FragmentHomeBranch extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Create a branch linked to a Brand, or sync with the backend.',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(

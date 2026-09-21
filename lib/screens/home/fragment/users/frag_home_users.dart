@@ -80,7 +80,7 @@ class FragHomeUsers extends StatelessWidget {
                       ? IconButton(
                           icon: Icon(
                             Icons.close_rounded,
-                            color: Colors.grey.shade500,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                           onPressed: () {
                             controller.searchController.clear();
@@ -304,7 +304,7 @@ class FragHomeUsers extends StatelessWidget {
                               PopupMenuButton<EnumUserAction>(
                                 icon: Icon(
                                   Icons.more_vert_rounded,
-                                  color: Colors.grey.shade500,
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                                 tooltip: 'actions'.tr,
                                 shape: RoundedRectangleBorder(
@@ -569,6 +569,7 @@ Widget _buttons(
 }
 
 void _showRoleAssignDialog(EntityUser user) {
+  final colorScheme = Theme.of(Get.context!).colorScheme;
   final all = EnumPermission.values.map((e) => e.name).toList();
   final RxList<String> assigned = RxList.from(
     _sortPermissions(user.permissions ?? []),
@@ -609,7 +610,7 @@ void _showRoleAssignDialog(EntityUser user) {
             const SizedBox(height: 8),
             Text(
               '${'user'.tr}: ${user.username} (${user.role})',
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: colorScheme.onSurface),
             ),
             const SizedBox(height: 24),
             Expanded(

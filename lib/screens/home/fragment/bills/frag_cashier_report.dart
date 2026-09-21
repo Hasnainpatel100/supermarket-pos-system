@@ -69,7 +69,7 @@ class FragCashierReport extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               if (controller.rxRows.isEmpty) {
-                return _buildEmpty();
+                return _buildEmpty(context);
               }
               return MyCard(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -87,7 +87,7 @@ class FragCashierReport extends StatelessWidget {
           // 6. PAGINATION FOOTER
           // ═══════════════════════════════════════════════════════════════
           Obx(() => controller.rxRows.isNotEmpty
-              ? _buildPagination(controller)
+              ? _buildPagination(context, controller)
               : const SizedBox.shrink()),
 
           const SizedBox(height: 8),
@@ -101,6 +101,9 @@ class FragCashierReport extends StatelessWidget {
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildHeader(BuildContext context, ControllerCashierReport controller) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 16, 0),
       child: Row(
@@ -116,7 +119,7 @@ class FragCashierReport extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.indigo.withOpacity(0.3),
+                  color: Colors.indigo.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -133,15 +136,15 @@ class FragCashierReport extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
-                  color: Colors.grey.shade800,
+                  color: colorScheme.onSurface,
                 ),
               ),
               Obx(() => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.shade50,
+                  color: isDark ? Colors.indigo.withValues(alpha: 0.18) : Colors.indigo.shade50,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.indigo.shade100),
+                  border: Border.all(color: isDark ? Colors.indigo.withValues(alpha: 0.35) : Colors.indigo.shade100),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -150,7 +153,7 @@ class FragCashierReport extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       controller.formatDateRange(),
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.indigo.shade700),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? Colors.indigo.shade200 : Colors.indigo.shade700),
                     ),
                   ],
                 ),
@@ -172,6 +175,7 @@ class FragCashierReport extends StatelessWidget {
 
           // Refresh
           _headerAction(
+            context,
             icon: Icons.refresh_rounded,
             tooltip: 'Refresh',
             color: Colors.indigo.shade600,
@@ -182,6 +186,7 @@ class FragCashierReport extends StatelessWidget {
 
           // Excel
           _exportButton(
+            context,
             icon: Icons.table_chart_rounded,
             label: 'Excel',
             color: Colors.green.shade600,
@@ -193,6 +198,7 @@ class FragCashierReport extends StatelessWidget {
           if (kDebugMode) ...[
             const SizedBox(width: 6),
             _exportButton(
+              context,
               icon: Icons.file_upload_rounded,
               label: 'Import Excel',
               color: Colors.amber.shade900,
@@ -206,6 +212,7 @@ class FragCashierReport extends StatelessWidget {
 
           // PDF
           _exportButton(
+            context,
             icon: Icons.picture_as_pdf_rounded,
             label: 'PDF',
             color: Colors.red.shade600,
@@ -218,24 +225,28 @@ class FragCashierReport extends StatelessWidget {
     );
   }
 
-  Widget _headerAction({
+  Widget _headerAction(
+    BuildContext context, {
     required IconData icon,
     required String tooltip,
     required Color color,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
         borderRadius: BorderRadius.circular(12),
+        border: isDark ? Border.all(color: colorScheme.outlineVariant) : null,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: IconButton(
         onPressed: onTap,
         tooltip: tooltip,
-        icon: Icon(icon, color: color),
+        icon: Icon(icon, color: isDark && color is MaterialColor ? color.shade300 : color),
         iconSize: 20,
         splashRadius: 20,
         padding: const EdgeInsets.all(10),
@@ -244,7 +255,8 @@ class FragCashierReport extends StatelessWidget {
     );
   }
 
-  Widget _exportButton({
+  Widget _exportButton(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required Color color,
@@ -252,22 +264,27 @@ class FragCashierReport extends StatelessWidget {
     required Color borderColor,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveColor = isDark && color is MaterialColor ? color.shade300 : color;
+    final effectiveBg = isDark ? color.withValues(alpha: 0.18) : bgColor;
+    final effectiveBorder = isDark ? color.withValues(alpha: 0.35) : borderColor;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: bgColor,
+          color: effectiveBg,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor),
+          border: Border.all(color: effectiveBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
+            Icon(icon, size: 16, color: effectiveColor),
             const SizedBox(width: 6),
-            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: effectiveColor)),
           ],
         ),
       ),
@@ -275,7 +292,7 @@ class FragCashierReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // REPORT TYPE NAVIGATION BAR
+  // 2. Report Type Navigation Bar
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildReportTypeBar(BuildContext context, ControllerCashierReport controller) {
@@ -290,6 +307,7 @@ class FragCashierReport extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: _reportTypeChip(
+                context,
                 label: type.label,
                 icon: type.icon,
                 isSelected: isSelected,
@@ -303,13 +321,17 @@ class FragCashierReport extends StatelessWidget {
     });
   }
 
-  Widget _reportTypeChip({
+  Widget _reportTypeChip(
+    BuildContext context, {
     required String label,
     required IconData icon,
     required bool isSelected,
     required Color primaryColor,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -317,23 +339,23 @@ class FragCashierReport extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? primaryColor : Colors.white,
+          color: isSelected ? primaryColor : (isDark ? colorScheme.surfaceContainerHigh : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? primaryColor : Colors.grey.shade200,
+            color: isSelected ? primaryColor : (isDark ? colorScheme.outlineVariant : Colors.grey.shade200),
             width: 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.3),
+                    color: primaryColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -342,14 +364,14 @@ class FragCashierReport extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isSelected ? Colors.white : primaryColor),
+            Icon(icon, size: 16, color: isSelected ? Colors.white : (isDark ? colorScheme.primary : primaryColor)),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey.shade800,
+                color: isSelected ? Colors.white : colorScheme.onSurface,
               ),
             ),
           ],
@@ -359,7 +381,7 @@ class FragCashierReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Summary Stats row
+  // 3. Summary Stats Cards
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildSummaryCards(ControllerCashierReport controller) {
@@ -385,10 +407,13 @@ class FragCashierReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Search and Location
+  // 4. Search and Location
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildSearchRow(BuildContext context, ControllerCashierReport controller) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -399,7 +424,7 @@ class FragCashierReport extends StatelessWidget {
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
               ),
               child: TextField(
@@ -422,9 +447,9 @@ class FragCashierReport extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.grey.shade200),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -436,7 +461,7 @@ class FragCashierReport extends StatelessWidget {
                       value: controller.rxSelectedCashierId.value,
                       hint: const Text('All Staff', style: TextStyle(fontSize: 12)),
                       isDense: true,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                       items: [
                         const DropdownMenuItem<int?>(
                           value: null,
@@ -458,11 +483,11 @@ class FragCashierReport extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.grey.shade200),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
             child: Row(
@@ -472,7 +497,7 @@ class FragCashierReport extends StatelessWidget {
                 const SizedBox(width: 8),
                 Obx(() => Text(
                   controller.rxBranch.value,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                 )),
                 const SizedBox(width: 4),
                 Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey.shade400),
@@ -485,7 +510,7 @@ class FragCashierReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // DataTable layout
+  // 5. DataTable layout
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildDataTable(
@@ -499,7 +524,7 @@ class FragCashierReport extends StatelessWidget {
     return DataTable(
       columnSpacing: 16,
       horizontalMargin: 16,
-      headingRowColor: WidgetStateProperty.all(colorScheme.primary.withOpacity(0.04)),
+      headingRowColor: WidgetStateProperty.all(colorScheme.primary.withValues(alpha: 0.04)),
       headingTextStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: colorScheme.onSurface),
       dividerThickness: 0.5,
       dataRowMaxHeight: 52,
@@ -538,29 +563,30 @@ class FragCashierReport extends StatelessWidget {
     ColorScheme colorScheme,
   ) {
     final rows = controller.rxRows;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return switch (type) {
       CashierReportType.cashierSales => rows.map((r) {
         final row = r as CashierSalesRow;
         return DataRow(cells: [
-          DataCell(Text(row.cashierName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
-          DataCell(_roleBadge(row.role)),
-          DataCell(_badge(row.billsCount.toString(), Colors.orange)),
-          DataCell(Text(currFmt.format(row.totalSales), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.teal.shade700))),
-          DataCell(Text(currFmt.format(row.taxCollected), style: const TextStyle(fontSize: 13))),
-          DataCell(Text(currFmt.format(row.discountGiven), style: const TextStyle(fontSize: 13))),
-          DataCell(Text(currFmt.format(row.avgTicket), style: const TextStyle(fontSize: 13))),
+          DataCell(Text(row.cashierName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : colorScheme.onSurface))),
+          DataCell(_roleBadge(context, row.role)),
+          DataCell(_badge(context, row.billsCount.toString(), Colors.orange)),
+          DataCell(Text(currFmt.format(row.totalSales), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.tealAccent.shade200 : Colors.teal.shade700))),
+          DataCell(Text(currFmt.format(row.taxCollected), style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withValues(alpha: 0.9) : null))),
+          DataCell(Text(currFmt.format(row.discountGiven), style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withValues(alpha: 0.9) : null))),
+          DataCell(Text(currFmt.format(row.avgTicket), style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withValues(alpha: 0.9) : null))),
         ]);
       }).toList(),
 
       CashierReportType.cashierShift => rows.map((r) {
         final row = r as CashierShiftRow;
         return DataRow(cells: [
-          DataCell(Text(row.date, style: const TextStyle(fontSize: 13))),
-          DataCell(Text(row.cashierName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
-          DataCell(_statusBadge(row.status)),
-          DataCell(Text(currFmt.format(row.cashSales), style: const TextStyle(fontSize: 13))),
-          DataCell(Text(currFmt.format(row.onlineSales), style: const TextStyle(fontSize: 13))),
-          DataCell(Text(currFmt.format(row.totalCollected), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.teal.shade700))),
+          DataCell(Text(row.date, style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withValues(alpha: 0.9) : Colors.indigo.shade600))),
+          DataCell(Text(row.cashierName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : colorScheme.onSurface))),
+          DataCell(_statusBadge(context, row.status)),
+          DataCell(Text(currFmt.format(row.cashSales), style: TextStyle(fontSize: 13, color: isDark ? Colors.white : null))),
+          DataCell(Text(currFmt.format(row.onlineSales), style: TextStyle(fontSize: 13, color: isDark ? Colors.white : null))),
+          DataCell(Text(currFmt.format(row.totalCollected), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.tealAccent.shade200 : Colors.teal.shade700))),
         ]);
       }).toList(),
     };
@@ -571,65 +597,71 @@ class FragCashierReport extends StatelessWidget {
   // ═════════════════════════════════════════════════════════════════════════
 
   DataColumn _col(BuildContext context, String label, IconData icon, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DataColumn(
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-            child: Icon(icon, size: 14, color: color.withOpacity(0.8)),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+            child: Icon(icon, size: 14, color: color.withValues(alpha: 0.8)),
           ),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(label, style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _badge(String text, MaterialColor color) {
+  Widget _badge(BuildContext context, String text, MaterialColor color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: isDark ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.4 : 0.25)),
       ),
-      child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color.shade700)),
+      child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? color.shade300 : color.shade700)),
     );
   }
 
-  Widget _roleBadge(String role) {
+  Widget _roleBadge(BuildContext context, String role) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = role.toLowerCase().contains('admin') ? Colors.indigo : Colors.blue;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: isDark ? 0.25 : 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.5 : 0.3)),
       ),
-      child: Text(role.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color.shade700)),
+      child: Text(role.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isDark ? color.shade200 : color.shade700)),
     );
   }
 
-  Widget _statusBadge(String status) {
+  Widget _statusBadge(BuildContext context, String status) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = status == 'ACTIVE' ? Colors.green : Colors.grey;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: isDark ? 0.25 : 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.5 : 0.3)),
       ),
-      child: Text(status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color.shade700)),
+      child: Text(status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isDark ? color.shade200 : color.shade700)),
     );
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Empty State and Pagination
+  // 6. Empty State and Pagination
   // ═════════════════════════════════════════════════════════════════════════
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -644,21 +676,21 @@ class FragCashierReport extends StatelessWidget {
               ),
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: Colors.indigo.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
+                BoxShadow(color: Colors.indigo.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 10)),
               ],
             ),
             child: Icon(Icons.badge_outlined, size: 64, color: Colors.indigo.shade400),
           ),
           const SizedBox(height: 16),
-          Text('No cashier records found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          Text('No cashier records found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
           const SizedBox(height: 6),
-          Text('Try adjusting the date range or filters', style: TextStyle(fontSize: 14, color: Colors.grey.shade400)),
+          Text('Try adjusting the date range or filters', style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
         ],
       ),
     );
   }
 
-  Widget _buildPagination(ControllerCashierReport controller) {
+  Widget _buildPagination(BuildContext context, ControllerCashierReport controller) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -666,7 +698,7 @@ class FragCashierReport extends StatelessWidget {
         children: [
           Obx(() => Text(
             'Total: ${controller.totalCount.value} records',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
           )),
           Row(
             children: [
@@ -682,12 +714,12 @@ class FragCashierReport extends StatelessWidget {
               Obx(() => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.withOpacity(0.1),
+                  color: Colors.indigo.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   'Page ${controller.currentPage.value + 1}',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo.shade700),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.shade300 : Colors.indigo.shade700),
                 ),
               )),
               const SizedBox(width: 12),
@@ -757,7 +789,7 @@ class _CashierSummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: data.gradientColors.first.withOpacity(0.3),
+            color: data.gradientColors.first.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -768,7 +800,7 @@ class _CashierSummaryCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(data.icon, color: Colors.white, size: 18),
@@ -785,7 +817,7 @@ class _CashierSummaryCard extends StatelessWidget {
                 ),
                 Text(
                   data.label,
-                  style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.8)),
+                  style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.8)),
                 ),
               ],
             ),

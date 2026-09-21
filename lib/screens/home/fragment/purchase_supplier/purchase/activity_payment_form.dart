@@ -782,13 +782,14 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
 
   Widget _summaryTile(String label, String value, Color valueColor,
       {bool isBold = false}) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
             style: TextStyle(
                 fontSize: 11,
-                color: Colors.grey.shade500,
+                color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500)),
         const SizedBox(height: 4),
         Text(value,

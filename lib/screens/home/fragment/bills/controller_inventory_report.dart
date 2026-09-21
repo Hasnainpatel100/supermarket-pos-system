@@ -1439,6 +1439,119 @@ class ControllerInventoryReport extends GetxController {
     _applyPagination();
   }
 
+  /// Adds 30,000 realistic inventory items directly into ObjectBox database.
+  /// Can be clicked repeatedly to add 30k, 60k, 90k+ items for scale testing.
+  Future<void> seed30kTestItems() async {
+    rxLoading.value = true;
+    try {
+      final q = _boxItem.query(EntityItem_.sku.startsWith('TEST-SKU-')).build();
+      final existingCount = q.count();
+      q.close();
+
+      Get.snackbar(
+        'Generating Test Data',
+        'Adding 30,000 more inventory items (current: $existingCount)...',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
+
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      final categories = [
+        'Beverages',
+        'Snacks & Confectionery',
+        'Dairy & Eggs',
+        'Bakery',
+        'Fresh Produce',
+        'Meat & Seafood',
+        'Canned & Packaged',
+        'Grains & Pasta',
+        'Household Essentials',
+        'Personal Care',
+      ];
+      final units = ['pcs', 'kg', 'ltr', 'pack', 'box', 'bottle'];
+
+      final newItems = List<EntityItem>.generate(30000, (i) {
+        final index = existingCount + i + 1;
+        final cat = categories[i % categories.length];
+        final unit = units[i % units.length];
+
+        int qty;
+        if (i % 20 == 0) {
+          qty = 0; // Out of stock (5%)
+        } else if (i % 10 == 0) {
+          qty = (i % 9) + 1; // Low stock (10%)
+        } else {
+          qty = ((i * 7) % 240) + 10; // Normal stock (85%)
+        }
+
+        final cost = (((i * 13) % 450) + 10).toDouble();
+        final selling = (cost * 1.25).roundToDouble();
+
+        final item = EntityItem();
+        item.sku = 'TEST-SKU-${index.toString().padLeft(6, '0')}';
+        item.barcode = 'TEST-BAR-${index.toString().padLeft(6, '0')}';
+        item.name = '$cat Item #$index';
+        item.category = cat;
+        item.unit = unit;
+        item.costPrice = cost;
+        item.sellingPrice = selling;
+        item.totalQty = qty;
+        item.taxRate = 18.0;
+        item.taxType = 'exclusive';
+        item.isActive = true;
+        item.createdAtUtcMs = DateTime.now().millisecondsSinceEpoch;
+        return item;
+      });
+
+      _boxItem.putMany(newItems);
+      loadData();
+
+      final totalNow = _boxItem.count();
+      Get.snackbar(
+        'Success',
+        'Added 30,000 items! Total inventory count: $totalNow items',
+        backgroundColor: Colors.green.shade700,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 4),
+      );
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to seed test items: $e');
+    } finally {
+      rxLoading.value = false;
+    }
+  }
+
+  /// Clears all seeded test items (tagged with TEST-SKU-) from database.
+  Future<void> clearSeededItems() async {
+    rxLoading.value = true;
+    try {
+      final q = _boxItem.query(EntityItem_.sku.startsWith('TEST-SKU-')).build();
+      final testIds = q.findIds();
+      q.close();
+
+      if (testIds.isNotEmpty) {
+        _boxItem.removeMany(testIds);
+      }
+
+      loadData();
+
+      Get.snackbar(
+        'Cleared',
+        'Removed ${testIds.length} test items from database. Remaining: ${_boxItem.count()}',
+        backgroundColor: Colors.blueGrey.shade700,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to clear test items: $e');
+    } finally {
+      rxLoading.value = false;
+    }
+  }
+
   final _currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
 
   void recomputeSummaryCardsForTestRows() {

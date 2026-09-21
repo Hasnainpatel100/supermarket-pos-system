@@ -69,7 +69,7 @@ class FragSupplierReport extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               if (controller.rxRows.isEmpty) {
-                return _buildEmpty();
+                return _buildEmpty(context);
               }
               return MyCard(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -87,7 +87,7 @@ class FragSupplierReport extends StatelessWidget {
           // 6. PAGINATION FOOTER
           // ═══════════════════════════════════════════════════════════════
           Obx(() => controller.rxRows.isNotEmpty
-              ? _buildPagination(controller)
+              ? _buildPagination(context, controller)
               : const SizedBox.shrink()),
 
           const SizedBox(height: 8),
@@ -101,6 +101,7 @@ class FragSupplierReport extends StatelessWidget {
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildHeader(BuildContext context, ControllerSupplierReport controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 16, 0),
       child: Row(
@@ -133,15 +134,15 @@ class FragSupplierReport extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
-                  color: Colors.grey.shade800,
+                  color: colorScheme.onSurface,
                 ),
               ),
               Obx(() => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.shade50,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withOpacity(0.18) : Colors.indigo.shade50,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.indigo.shade100),
+                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withOpacity(0.35) : Colors.indigo.shade100),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -150,7 +151,7 @@ class FragSupplierReport extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       controller.formatDateRange(),
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.indigo.shade700),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.shade200 : Colors.indigo.shade700),
                     ),
                   ],
                 ),
@@ -172,6 +173,7 @@ class FragSupplierReport extends StatelessWidget {
 
           // Refresh
           _headerAction(
+            context,
             icon: Icons.refresh_rounded,
             tooltip: 'Refresh',
             color: Colors.indigo.shade600,
@@ -182,6 +184,7 @@ class FragSupplierReport extends StatelessWidget {
 
           // Excel
           _exportButton(
+            context,
             icon: Icons.table_chart_rounded,
             label: 'Excel',
             color: Colors.green.shade600,
@@ -193,6 +196,7 @@ class FragSupplierReport extends StatelessWidget {
           if (kDebugMode) ...[
             const SizedBox(width: 6),
             _exportButton(
+              context,
               icon: Icons.file_upload_rounded,
               label: 'Import Excel',
               color: Colors.amber.shade900,
@@ -206,6 +210,7 @@ class FragSupplierReport extends StatelessWidget {
 
           // PDF
           _exportButton(
+            context,
             icon: Icons.picture_as_pdf_rounded,
             label: 'PDF',
             color: Colors.red.shade600,
@@ -218,83 +223,55 @@ class FragSupplierReport extends StatelessWidget {
     );
   }
 
-  Widget _headerAction({
-    required IconData icon,
-    required String tooltip,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: IconButton(
-        onPressed: onTap,
-        tooltip: tooltip,
-        icon: Icon(icon, color: color),
-        iconSize: 20,
-        splashRadius: 20,
-        padding: const EdgeInsets.all(10),
-        constraints: const BoxConstraints(),
-      ),
-    );
-  }
-
-  Widget _exportButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required Color bgColor,
-    required Color borderColor,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
-          ],
-        ),
-      ),
-    );
-  }
-
   // ═════════════════════════════════════════════════════════════════════════
-  // REPORT TYPE NAVIGATION BAR
+  // REPORT TYPE BAR
   // ═════════════════════════════════════════════════════════════════════════
 
-  Widget _buildReportTypeBar(BuildContext context, ControllerSupplierReport controller) {
-    return Obx(() {
-      final selected = controller.rxReportType.value;
-      return SingleChildScrollView(
+  Widget _buildReportTypeBar(
+    BuildContext context,
+    ControllerSupplierReport controller,
+  ) {
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
+        itemCount: SupplierReportType.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final type = SupplierReportType.values[index];
+          return Obx(() {
+            final isSelected = controller.rxReportType.value == type;
+            return _reportTypeChip(
+              context,
+              label: type.label,
+              icon: type.icon,
+              isSelected: isSelected,
+              primaryColor: Colors.indigo.shade600,
+              onTap: () => controller.setReportType(type),
+            );
+          });
+        },
+      ),
+    );
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // SUMMARY CARDS
+  // ═════════════════════════════════════════════════════════════════════════
+
+  Widget _buildSummaryCards(ControllerSupplierReport controller) {
+    return Obx(() {
+      final cards = controller.rxSummaryCards;
+      if (cards.isEmpty) return const SizedBox.shrink();
+      return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
-          children: SupplierReportType.values.map((type) {
-            final isSelected = selected == type;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: _reportTypeChip(
-                label: type.label,
-                icon: type.icon,
-                isSelected: isSelected,
-                primaryColor: Colors.indigo.shade600,
-                onTap: () => controller.setReportType(type),
+          children: cards.map((card) {
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: _SupplierSummaryCard(data: card),
               ),
             );
           }).toList(),
@@ -303,13 +280,83 @@ class FragSupplierReport extends StatelessWidget {
     });
   }
 
-  Widget _reportTypeChip({
+  Widget _headerAction(
+    BuildContext context, {
+    required IconData icon,
+    required String tooltip,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: isDark ? Border.all(color: colorScheme.outlineVariant) : null,
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        tooltip: tooltip,
+        icon: Icon(icon, color: isDark && color is MaterialColor ? color.shade300 : color),
+        iconSize: 20,
+        splashRadius: 20,
+        padding: const EdgeInsets.all(10),
+        constraints: const BoxConstraints(),
+      ),
+    );
+  }
+
+  Widget _exportButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color bgColor,
+    required Color borderColor,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveColor = isDark && color is MaterialColor ? color.shade300 : color;
+    final effectiveBg = isDark ? color.withOpacity(0.18) : bgColor;
+    final effectiveBorder = isDark ? color.withOpacity(0.35) : borderColor;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: effectiveBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: effectiveBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: effectiveColor),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: effectiveColor)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _reportTypeChip(
+    BuildContext context, {
     required String label,
     required IconData icon,
     required bool isSelected,
     required Color primaryColor,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -317,10 +364,10 @@ class FragSupplierReport extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? primaryColor : Colors.white,
+          color: isSelected ? primaryColor : (isDark ? colorScheme.surfaceContainerHigh : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? primaryColor : Colors.grey.shade200,
+            color: isSelected ? primaryColor : (isDark ? colorScheme.outlineVariant : Colors.grey.shade200),
             width: 1.5,
           ),
           boxShadow: isSelected
@@ -333,7 +380,7 @@ class FragSupplierReport extends StatelessWidget {
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -342,14 +389,14 @@ class FragSupplierReport extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isSelected ? Colors.white : primaryColor),
+            Icon(icon, size: 16, color: isSelected ? Colors.white : (isDark ? colorScheme.primary : primaryColor)),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey.shade800,
+                color: isSelected ? Colors.white : colorScheme.onSurface,
               ),
             ),
           ],
@@ -359,36 +406,11 @@ class FragSupplierReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Summary Stats row
-  // ═════════════════════════════════════════════════════════════════════════
-
-  Widget _buildSummaryCards(ControllerSupplierReport controller) {
-    return Obx(() {
-      final cards = controller.rxSummaryCards;
-      if (cards.isEmpty) return const SizedBox.shrink();
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: cards.map((c) {
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: cards.last == c ? 0 : 10,
-                ),
-                child: _SupplierSummaryCard(data: c),
-              ),
-            );
-          }).toList(),
-        ),
-      );
-    });
-  }
-
-  // ═════════════════════════════════════════════════════════════════════════
   // Search and Location
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildSearchRow(BuildContext context, ControllerSupplierReport controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -422,9 +444,9 @@ class FragSupplierReport extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.grey.shade200),
+              color: Theme.of(context).brightness == Brightness.dark ? colorScheme.surfaceContainerHigh : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? colorScheme.outlineVariant : Colors.grey.shade200),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -434,17 +456,18 @@ class FragSupplierReport extends StatelessWidget {
                   DropdownButtonHideUnderline(
                     child: DropdownButton<int?>(
                       value: controller.rxSelectedSupplierId.value,
-                      hint: const Text('All Suppliers', style: TextStyle(fontSize: 12)),
+                      dropdownColor: Theme.of(context).brightness == Brightness.dark ? colorScheme.surfaceContainerHigh : Colors.white,
+                      hint: Text('All Suppliers', style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.grey.shade700)),
                       isDense: true,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey.shade800),
                       items: [
-                        const DropdownMenuItem<int?>(
+                        DropdownMenuItem<int?>(
                           value: null,
-                          child: Text('All Suppliers', style: TextStyle(fontSize: 12)),
+                          child: Text('All Suppliers', style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey.shade800)),
                         ),
                         ...list.map((s) => DropdownMenuItem<int?>(
                           value: s.id,
-                          child: Text(s.name ?? 'Unknown', style: const TextStyle(fontSize: 12)),
+                          child: Text(s.name ?? 'Unknown', style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.grey.shade800)),
                         )),
                       ],
                       onChanged: controller.setSelectedSupplier,
@@ -458,9 +481,9 @@ class FragSupplierReport extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark ? colorScheme.surfaceContainerHigh : Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? colorScheme.outlineVariant : Colors.grey.shade200),
               boxShadow: [
                 BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
               ],
@@ -472,7 +495,7 @@ class FragSupplierReport extends StatelessWidget {
                 const SizedBox(width: 8),
                 Obx(() => Text(
                   controller.rxBranch.value,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                 )),
                 const SizedBox(width: 4),
                 Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey.shade400),
@@ -537,28 +560,30 @@ class FragSupplierReport extends StatelessWidget {
     ColorScheme colorScheme,
   ) {
     final rows = controller.rxRows;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return switch (type) {
       SupplierReportType.purchaseHistory => rows.map((r) {
         final row = r as SupplierPurchaseHistoryRow;
         return DataRow(cells: [
-          DataCell(Text(row.date, style: const TextStyle(fontSize: 13))),
-          DataCell(_skuBadge(row.purchaseNo)),
-          DataCell(Text(row.supplierName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
-          DataCell(Text(currFmt.format(row.totalAmount), style: const TextStyle(fontSize: 13))),
-          DataCell(Text(currFmt.format(row.amountPaid), style: const TextStyle(fontSize: 13))),
-          DataCell(Text(currFmt.format(row.amountDue), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: row.amountDue > 0 ? Colors.red.shade700 : Colors.teal.shade700))),
-          DataCell(_statusBadge(row.status)),
+          DataCell(Text(row.date, style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withValues(alpha: 0.9) : null))),
+          DataCell(_skuBadge(context, row.purchaseNo)),
+          DataCell(Text(row.supplierName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : Colors.grey.shade800))),
+          DataCell(Text(currFmt.format(row.totalAmount), style: TextStyle(fontSize: 13, color: isDark ? Colors.white : null))),
+          DataCell(Text(currFmt.format(row.amountPaid), style: TextStyle(fontSize: 13, color: isDark ? Colors.white : null))),
+          DataCell(Text(currFmt.format(row.amountDue), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: row.amountDue > 0 ? (isDark ? Colors.red.shade300 : Colors.red.shade700) : (isDark ? Colors.teal.shade300 : Colors.teal.shade700)))),
+          DataCell(_statusBadge(context, row.status)),
         ]);
       }).toList(),
 
       SupplierReportType.outstanding => rows.map((r) {
         final row = r as SupplierOutstandingRow;
         return DataRow(cells: [
-          DataCell(Text(row.supplierName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
-          DataCell(Text(currFmt.format(row.totalPurchases), style: const TextStyle(fontSize: 13))),
-          DataCell(Text(currFmt.format(row.totalPaid), style: const TextStyle(fontSize: 13))),
-          DataCell(Text(currFmt.format(row.outstandingBalance), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: row.outstandingBalance > 0 ? Colors.red.shade700 : Colors.teal.shade700))),
-          DataCell(_badge(row.outstandingBillsCount.toString(), Colors.orange)),
+          DataCell(Text(row.supplierName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : Colors.grey.shade800))),
+          DataCell(Text(currFmt.format(row.totalPurchases), style: TextStyle(fontSize: 13, color: isDark ? Colors.white : null))),
+          DataCell(Text(currFmt.format(row.totalPaid), style: TextStyle(fontSize: 13, color: isDark ? Colors.white : null))),
+          DataCell(Text(currFmt.format(row.outstandingBalance), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: row.outstandingBalance > 0 ? (isDark ? Colors.red.shade300 : Colors.red.shade700) : (isDark ? Colors.teal.shade300 : Colors.teal.shade700)))),
+          DataCell(_badge(context, row.outstandingBillsCount.toString(), Colors.orange)),
         ]);
       }).toList(),
     };
@@ -569,47 +594,51 @@ class FragSupplierReport extends StatelessWidget {
   // ═════════════════════════════════════════════════════════════════════════
 
   DataColumn _col(BuildContext context, String label, IconData icon, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DataColumn(
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-            child: Icon(icon, size: 14, color: color.withOpacity(0.8)),
+            decoration: BoxDecoration(color: color.withOpacity(isDark ? 0.2 : 0.1), borderRadius: BorderRadius.circular(6)),
+            child: Icon(icon, size: 14, color: isDark && color is MaterialColor ? color.shade300 : color.withOpacity(0.8)),
           ),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(label, style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _badge(String text, MaterialColor color) {
+  Widget _badge(BuildContext context, String text, MaterialColor color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(isDark ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withOpacity(isDark ? 0.4 : 0.25)),
       ),
-      child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color.shade700)),
+      child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? color.shade300 : color.shade700)),
     );
   }
 
-  Widget _skuBadge(String sku) {
+  Widget _skuBadge(BuildContext context, String sku) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.grey.shade300),
       ),
-      child: Text(sku, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+      child: Text(sku, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
     );
   }
 
-  Widget _statusBadge(int status) {
+  Widget _statusBadge(BuildContext context, int status) {
     final (label, color) = switch (status) {
       0 => ('DRAFT', Colors.grey),
       1 => ('ORDERED', Colors.blue),
@@ -634,7 +663,8 @@ class FragSupplierReport extends StatelessWidget {
   // Empty State and Pagination
   // ═════════════════════════════════════════════════════════════════════════
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -655,15 +685,15 @@ class FragSupplierReport extends StatelessWidget {
             child: Icon(Icons.supervisor_account_rounded, size: 64, color: Colors.blue.shade400),
           ),
           const SizedBox(height: 16),
-          Text('No supplier records found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          Text('No supplier records found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
           const SizedBox(height: 6),
-          Text('Try adjusting the date range or filters', style: TextStyle(fontSize: 14, color: Colors.grey.shade400)),
+          Text('Try adjusting the date range or filters', style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
         ],
       ),
     );
   }
 
-  Widget _buildPagination(ControllerSupplierReport controller) {
+  Widget _buildPagination(BuildContext context, ControllerSupplierReport controller) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -671,7 +701,7 @@ class FragSupplierReport extends StatelessWidget {
         children: [
           Obx(() => Text(
             'Total: ${controller.totalCount.value} records',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
           )),
           Row(
             children: [
@@ -692,7 +722,7 @@ class FragSupplierReport extends StatelessWidget {
                 ),
                 child: Text(
                   'Page ${controller.currentPage.value + 1}',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo.shade700),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.shade300 : Colors.indigo.shade700),
                 ),
               )),
               const SizedBox(width: 12),

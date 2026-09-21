@@ -57,7 +57,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                   'manage_customer_base'.tr,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey.shade500,
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -434,9 +434,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                                 customer.phone ?? '-',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: isActive
-                                      ? Colors.grey.shade800
-                                      : Colors.grey,
+                                  color: isActive ? colorScheme.onSurface : Colors.grey,
                                 ),
                               ),
                             ),
@@ -447,9 +445,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                                 customer.city ?? '-',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: isActive
-                                      ? Colors.grey.shade700
-                                      : Colors.grey,
+                                  color: isActive ? colorScheme.onSurfaceVariant : Colors.grey,
                                 ),
                               ),
                             ),
@@ -501,7 +497,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                               PopupMenuButton<String>(
                                 icon: Icon(
                                   Icons.more_vert_rounded,
-                                  color: Colors.grey.shade500,
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                                 tooltip: 'actions'.tr,
                                 shape: RoundedRectangleBorder(
@@ -591,14 +587,15 @@ class FragmentHomeCustomer extends StatelessWidget {
               ),
             ),
             // ── Pagination Footer ──
-            Obx(() => _buildPagination(controller)),
+            Obx(() => _buildPagination(context, controller)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPagination(ControllerHomeCustomer controller) {
+  Widget _buildPagination(BuildContext context, ControllerHomeCustomer controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -606,7 +603,7 @@ class FragmentHomeCustomer extends StatelessWidget {
         children: [
           Text(
             'total_customers_count'.trParams({'count': '${controller.totalCount.value}'}),
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           Row(
             children: [

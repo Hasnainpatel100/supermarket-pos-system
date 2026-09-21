@@ -54,7 +54,7 @@ class FragmentHomeBrand extends StatelessWidget {
                   'Manage brands & REST API integrations',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey.shade500,
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -764,7 +764,7 @@ class FragmentHomeBrand extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Create a brand or sync with the REST API server to get started.',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(

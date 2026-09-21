@@ -1274,6 +1274,237 @@ class ControllerPurchaseReport extends GetxController {
       summaryData: summary,
     );
   }
+
+  /// Adds 30,000 realistic purchase orders with items directly into ObjectBox database.
+  /// Can be clicked repeatedly to add 30k, 60k, 90k+ purchases for scale testing.
+  Future<void> seed30kTestPurchases() async {
+    rxLoading.value = true;
+    try {
+      final q = _boxPurchase.query(EntityPurchase_.purchaseNo.startsWith('TEST-PO-')).build();
+      final existingCount = q.count();
+      q.close();
+
+      Get.snackbar(
+        'Generating Purchase Data',
+        'Adding 30,000 purchase orders (current: $existingCount)...',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
+
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      final now = DateTime.now();
+
+      // Ensure suppliers exist
+      var suppliers = _boxSupplier.getAll();
+      if (suppliers.isEmpty) {
+        final sampleSuppliers = [
+          'Metro Wholesale Hub',
+          'Nestle Supply Chain',
+          'Hindustan Unilever Dist.',
+          'Amul Dairy Logistics',
+          'ITC Distribution India',
+          'Britannia Foods Wholesale',
+          'Parle Agro Suppliers',
+          'P&G FMCG Distribution',
+          'Tata Consumer Products',
+          'Godrej Consumer Goods',
+        ];
+        final newSups = sampleSuppliers.asMap().entries.map((entry) {
+          final s = EntitySupplier();
+          s.supplierCode = 'TEST-SUP-${(entry.key + 1).toString().padLeft(3, '0')}';
+          s.name = entry.value;
+          s.phone = '98${(now.millisecondsSinceEpoch % 90000000 + 10000000)}';
+          s.email = '${entry.value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '')}@distributor.com';
+          s.isActive = true;
+          return s;
+        }).toList();
+        _boxSupplier.putMany(newSups);
+        suppliers = _boxSupplier.getAll();
+        _loadSuppliersDropdown();
+      }
+
+      // Sample product categories for realistic purchase items
+      final sampleItems = [
+        ('Beverages - Premium Soda Pack', 'box', 240.0),
+        ('Dairy - Fresh Milk Crates', 'pack', 450.0),
+        ('Bakery - Whole Wheat Bread Box', 'box', 180.0),
+        ('Snacks - Potato Chips Carton', 'box', 320.0),
+        ('Produce - Organic Apples Crate', 'kg', 650.0),
+        ('Meat & Poultry - Fresh Cuts', 'kg', 850.0),
+        ('Household - Detergent Bulk Pack', 'pcs', 520.0),
+        ('Personal Care - Shampoo Cartons', 'box', 780.0),
+        ('Grains - Basmati Rice 25kg Sack', 'pack', 1250.0),
+        ('Canned Foods - Sweet Corn Trays', 'box', 390.0),
+      ];
+
+      final newPurchases = <EntityPurchase>[];
+
+      for (int i = 0; i < 30000; i++) {
+        final index = existingCount + i + 1;
+        final poNo = 'TEST-PO-${index.toString().padLeft(6, '0')}';
+        final sup = suppliers[i % suppliers.length];
+
+        // Distribution: 5,000 for today; 25,000 distributed over past 29 days
+        DateTime poDateTime;
+        if (i < 5000) {
+          final hour = 8 + (i % 12);
+          final minute = (i * 7) % 60;
+          poDateTime = DateTime(now.year, now.month, now.day, hour, minute);
+        } else {
+          final daysAgo = ((i - 5000) % 29) + 1;
+          final pastDate = now.subtract(Duration(days: daysAgo));
+          final hour = 8 + (i % 12);
+          final minute = (i * 11) % 60;
+          poDateTime = DateTime(pastDate.year, pastDate.month, pastDate.day, hour, minute);
+        }
+
+        final expectedDateTime = poDateTime.add(const Duration(days: 3));
+
+        // Status: 0=draft, 1=ordered, 2=partial, 3=received, 4=cancelled
+        int status;
+        if (i % 10 == 0) {
+          status = 1; // Ordered (pending)
+        } else if (i % 10 == 1) {
+          status = 2; // Partial (pending)
+        } else if (i % 25 == 0) {
+          status = 4; // Cancelled
+        } else {
+          status = 3; // Received (completed)
+        }
+
+        final p = EntityPurchase(
+          purchaseNo: poNo,
+          supplierId: sup.id,
+          supplierName: sup.name,
+          purchaseDateUtcMs: poDateTime.millisecondsSinceEpoch,
+          expectedDateUtcMs: expectedDateTime.millisecondsSinceEpoch,
+          status: status,
+          notes: 'Test PO generated for performance testing',
+          createdAtUtcMs: poDateTime.millisecondsSinceEpoch,
+          updatedAtUtcMs: poDateTime.millisecondsSinceEpoch,
+        );
+
+        newPurchases.add(p);
+      }
+
+      // Put purchases to get generated IDs
+      _boxPurchase.putMany(newPurchases);
+
+      // Create matching purchase line items with correct purchaseId
+      final newPurchaseItems = <EntityPurchaseItem>[];
+
+      for (int i = 0; i < newPurchases.length; i++) {
+        final p = newPurchases[i];
+        final prod = sampleItems[i % sampleItems.length];
+
+        final orderedQty = ((i * 3) % 90 + 10).toDouble();
+        final unitCost = prod.$3;
+        final discountPercent = (i % 5 == 0) ? 5.0 : 0.0;
+        final rawAmount = orderedQty * unitCost;
+        final discountAmount = (rawAmount * (discountPercent / 100.0)).roundToDouble();
+        final lineAmountExcl = rawAmount - discountAmount;
+        final taxAmount = (lineAmountExcl * 0.18).roundToDouble();
+        final lineAmountIncl = lineAmountExcl + taxAmount;
+
+        double receivedQty;
+        if (p.status == 3) {
+          receivedQty = orderedQty; // Fully received
+        } else if (p.status == 2) {
+          receivedQty = (orderedQty * 0.5).roundToDouble(); // Partially received
+        } else {
+          receivedQty = 0.0; // Ordered or draft or cancelled
+        }
+
+        final item = EntityPurchaseItem(
+          purchaseId: p.id,
+          itemName: prod.$1,
+          itemUnit: prod.$2,
+          orderedQty: orderedQty,
+          unitCost: unitCost,
+          discountPercent: discountPercent,
+          discountAmount: discountAmount,
+          taxRate: 18.0,
+          taxType: 'GST',
+          isTaxInclusive: false,
+          lineAmountExcl: lineAmountExcl,
+          taxAmount: taxAmount,
+          lineAmountIncl: lineAmountIncl,
+          receivedQty: receivedQty,
+        );
+
+        // Update purchase amounts
+        p.totalAmount = lineAmountIncl;
+        if (p.status == 3) {
+          p.amountPaid = (i % 5 == 0) ? (lineAmountIncl * 0.7).roundToDouble() : lineAmountIncl;
+        } else if (p.status == 2) {
+          p.amountPaid = (lineAmountIncl * 0.4).roundToDouble();
+        } else {
+          p.amountPaid = 0.0;
+        }
+        p.amountDue = (p.totalAmount ?? 0.0) - (p.amountPaid ?? 0.0);
+
+        newPurchaseItems.add(item);
+      }
+
+      // Update purchases with computed amounts and save items
+      _boxPurchase.putMany(newPurchases);
+      _boxPurchaseItem.putMany(newPurchaseItems);
+
+      loadData();
+
+      final totalPurchasesNow = _boxPurchase.count();
+      Get.snackbar(
+        'Success',
+        'Added 30,000 purchase orders! Total in database: $totalPurchasesNow',
+        backgroundColor: Colors.purple.shade700,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 4),
+      );
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to seed purchases: $e');
+    } finally {
+      rxLoading.value = false;
+    }
+  }
+
+  /// Clears all seeded purchase orders (tagged with TEST-PO-) and their items from database.
+  Future<void> clearSeededPurchases() async {
+    rxLoading.value = true;
+    try {
+      final qPO = _boxPurchase.query(EntityPurchase_.purchaseNo.startsWith('TEST-PO-')).build();
+      final poIds = qPO.findIds();
+      qPO.close();
+
+      if (poIds.isNotEmpty) {
+        _boxPurchase.removeMany(poIds);
+
+        // Clean up corresponding purchase items
+        final qItems = _boxPurchaseItem.query(EntityPurchaseItem_.purchaseId.oneOf(poIds)).build();
+        final itemIds = qItems.findIds();
+        qItems.close();
+        if (itemIds.isNotEmpty) {
+          _boxPurchaseItem.removeMany(itemIds);
+        }
+      }
+
+      loadData();
+
+      Get.snackbar(
+        'Cleared',
+        'Removed ${poIds.length} test purchase orders from database. Remaining: ${_boxPurchase.count()}',
+        backgroundColor: Colors.blueGrey.shade700,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to clear test purchases: $e');
+    } finally {
+      rxLoading.value = false;
+    }
+  }
 }
 
 // ── Aggregation structure ──

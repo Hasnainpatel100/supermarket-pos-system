@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
+import '../../../../model/entity_bill_item.dart';
+import '../../../../model/entity_item.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
@@ -169,6 +171,8 @@ class SummaryCardData {
 
 class ControllerSalesReport extends GetxController {
   late final Box<EntityBill> _boxBill;
+  late final Box<EntityBillItem> _boxBillItem;
+  late final Box<EntityItem> _boxItem;
 
   // ── Report type ─────────────────────────────────────────────────────────
   final Rx<SalesReportType> rxReportType = SalesReportType.salesSummary.obs;
@@ -213,6 +217,8 @@ class ControllerSalesReport extends GetxController {
     super.onInit();
     final ob = Get.find<ServiceObjectBox>();
     _boxBill = ob.box<EntityBill>();
+    _boxBillItem = ob.box<EntityBillItem>();
+    _boxItem = ob.box<EntityItem>();
     _setDateFilter(SalesDateFilter.today);
 
     _searchWorker = debounce(
@@ -1367,6 +1373,208 @@ class ControllerSalesReport extends GetxController {
   // ═════════════════════════════════════════════════════════════════════════
   // Helpers
   // ═════════════════════════════════════════════════════════════════════════
+
+  /// Adds 30,000 realistic sales bills with items directly into ObjectBox database.
+  /// Can be clicked repeatedly to add 30k, 60k, 90k+ bills for scale testing.
+  Future<void> seed30kTestBills() async {
+    rxLoading.value = true;
+    try {
+      final q = _boxBill.query(EntityBill_.billNo.startsWith('TEST-BILL-')).build();
+      final existingCount = q.count();
+      q.close();
+
+      Get.snackbar(
+        'Generating Sales Data',
+        'Adding 30,000 sales bills (current: $existingCount)...',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
+
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      final now = DateTime.now();
+      final dateFmt = DateFormat('d/MM/yyyy');
+      final todayStr = dateFmt.format(now);
+
+      final paymentModes = ['CASH', 'UPI', 'CARD', 'SPLIT'];
+      final customerNames = [
+        'Walk-in Customer',
+        'Rahul Sharma',
+        'Amit Patel',
+        'Priya Singh',
+        'Mohammed Ali',
+        'Sneha Verma',
+        'Vikram Malhotra',
+        'Ananya Iyer',
+        'Rohan Gupta',
+        'Pooja Mehta'
+      ];
+
+      // Fetch or create starter inventory items so bill items link to real categories
+      var catalogItems = _boxItem.getAll();
+      if (catalogItems.isEmpty) {
+        final starterCats = [
+          'Beverages',
+          'Snacks & Confectionery',
+          'Dairy & Eggs',
+          'Bakery',
+          'Fresh Produce',
+          'Meat & Seafood',
+          'Canned & Packaged',
+          'Grains & Pasta',
+          'Household Essentials',
+          'Personal Care'
+        ];
+        final starters = List<EntityItem>.generate(starterCats.length, (idx) {
+          final it = EntityItem();
+          it.sku = 'TEST-CAT-SKU-${(idx + 1).toString().padLeft(4, '0')}';
+          it.barcode = 'TEST-BAR-${(idx + 1).toString().padLeft(6, '0')}';
+          it.name = '${starterCats[idx]} Regular';
+          it.category = starterCats[idx];
+          it.unit = 'pcs';
+          it.costPrice = 40.0;
+          it.sellingPrice = 60.0;
+          it.totalQty = 500;
+          it.isActive = true;
+          it.createdAtUtcMs = now.millisecondsSinceEpoch;
+          return it;
+        });
+        _boxItem.putMany(starters);
+        catalogItems = _boxItem.getAll();
+      }
+
+      final newBills = <EntityBill>[];
+      final newBillItems = <EntityBillItem>[];
+
+      for (int i = 0; i < 30000; i++) {
+        final index = existingCount + i + 1;
+        final billNo = 'TEST-BILL-${index.toString().padLeft(6, '0')}';
+
+        // Distribution: 5,000 for today; 25,000 distributed over past 29 days
+        DateTime billDateTime;
+        String billDateStr;
+        if (i < 5000) {
+          final hour = 8 + (i % 14); // 8 AM to 9 PM
+          final minute = (i * 7) % 60;
+          billDateTime = DateTime(now.year, now.month, now.day, hour, minute);
+          billDateStr = todayStr;
+        } else {
+          final daysAgo = ((i - 5000) % 29) + 1;
+          final pastDate = now.subtract(Duration(days: daysAgo));
+          final hour = 8 + (i % 14);
+          final minute = (i * 11) % 60;
+          billDateTime = DateTime(pastDate.year, pastDate.month, pastDate.day, hour, minute);
+          billDateStr = dateFmt.format(billDateTime);
+        }
+
+        final payMode = paymentModes[i % paymentModes.length];
+        final custName = customerNames[i % customerNames.length];
+        final custPhone = '98${((index * 13) % 90000000 + 10000000)}';
+        final isDue = (i % 25 == 0); // 4% due, 96% paid
+
+        // Item calculation
+        final catItem = catalogItems[i % catalogItems.length];
+        final itemQty = (i % 4) + 1;
+        final unitPrice = catItem.sellingPrice ?? 50.0;
+        final subTotal = unitPrice * itemQty;
+        final discount = (i % 5 == 0) ? (subTotal * 0.05).roundToDouble() : 0.0;
+        final tax = ((subTotal - discount) * 0.18).roundToDouble();
+        final grandTotal = subTotal - discount + tax;
+
+        final bill = EntityBill(
+          billNo: billNo,
+          customerName: custName,
+          customerPhone: custPhone,
+          totalAmount: subTotal,
+          discount: discount,
+          tax: tax,
+          grandTotal: grandTotal,
+          status: isDue ? 'DUE' : 'PAID',
+          paymentMode: payMode,
+          amountReceived: isDue ? 0.0 : grandTotal,
+          changeReturned: 0.0,
+          dueAmount: isDue ? grandTotal : 0.0,
+          billDate: billDateStr,
+          createdAtUtcMs: billDateTime.millisecondsSinceEpoch,
+          updatedAtUtcMs: billDateTime.millisecondsSinceEpoch,
+        );
+
+        final billItem = EntityBillItem(
+          itemName: catItem.name ?? 'Item #$index',
+          itemBarcode: catItem.barcode ?? 'TEST-BAR-${index.toString().padLeft(6, '0')}',
+          unit: catItem.unit ?? 'pcs',
+          price: unitPrice,
+          qty: itemQty,
+          tax: tax,
+          discount: discount,
+          total: grandTotal,
+        );
+        billItem.bill.target = bill;
+        billItem.item.target = catItem;
+        bill.items.add(billItem);
+
+        newBills.add(bill);
+        newBillItems.add(billItem);
+      }
+
+      // Save bills and bill items in bulk
+      _boxBill.putMany(newBills);
+      _boxBillItem.putMany(newBillItems);
+
+      loadData();
+
+      final totalBillsNow = _boxBill.count();
+      Get.snackbar(
+        'Success',
+        'Added 30,000 sales bills! Total bills in database: $totalBillsNow',
+        backgroundColor: Colors.green.shade700,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 4),
+      );
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to seed sales bills: $e');
+    } finally {
+      rxLoading.value = false;
+    }
+  }
+
+  /// Clears all seeded sales bills (tagged with TEST-BILL-) and their items from database.
+  Future<void> clearSeededSales() async {
+    rxLoading.value = true;
+    try {
+      final qBill = _boxBill.query(EntityBill_.billNo.startsWith('TEST-BILL-')).build();
+      final billIds = qBill.findIds();
+      qBill.close();
+
+      if (billIds.isNotEmpty) {
+        _boxBill.removeMany(billIds);
+      }
+
+      final qItem = _boxBillItem.query(EntityBillItem_.itemBarcode.startsWith('TEST-BAR-')).build();
+      final itemIds = qItem.findIds();
+      qItem.close();
+
+      if (itemIds.isNotEmpty) {
+        _boxBillItem.removeMany(itemIds);
+      }
+
+      loadData();
+
+      Get.snackbar(
+        'Cleared',
+        'Removed ${billIds.length} test bills from database. Remaining bills: ${_boxBill.count()}',
+        backgroundColor: Colors.blueGrey.shade700,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to clear test bills: $e');
+    } finally {
+      rxLoading.value = false;
+    }
+  }
 
   List<dynamic> _applySearch(List<dynamic> rows, String Function(dynamic) toSearchable) {
     final q = rxSearchQuery.value.trim().toLowerCase();

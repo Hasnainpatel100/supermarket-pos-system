@@ -17,15 +17,27 @@ class ReportDateFilterDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final effectiveColor = isDark
+        ? (themeColor == Colors.indigo
+            ? colorScheme.primary
+            : Color.lerp(themeColor, Colors.white, 0.3) ?? themeColor)
+        : themeColor;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: isDark ? colorScheme.outlineVariant : Colors.grey.shade200,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -35,11 +47,13 @@ class ReportDateFilterDropdown extends StatelessWidget {
         child: DropdownButton<ReportDateFilter>(
           value: selectedFilter,
           isDense: true,
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: themeColor),
+          dropdownColor: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: effectiveColor),
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade800,
+            color: colorScheme.onSurface,
           ),
           items: ReportDateFilter.values.map((filter) {
             return DropdownMenuItem<ReportDateFilter>(
@@ -47,9 +61,16 @@ class ReportDateFilterDropdown extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(filter.icon, size: 16, color: themeColor),
+                  Icon(filter.icon, size: 16, color: effectiveColor),
                   const SizedBox(width: 8),
-                  Text(filter.label),
+                  Text(
+                    filter.label,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             );

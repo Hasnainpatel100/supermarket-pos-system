@@ -234,7 +234,7 @@ class FragHomeApiUsers extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         'Click "Create API User" to add a new user or adjust filters.',
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                        style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
@@ -411,7 +411,7 @@ class FragHomeApiUsers extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(u.email, style: const TextStyle(fontSize: 12)),
-                        Text(u.phoneNumber, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                        Text(u.phoneNumber, style: TextStyle(fontSize: 11, color: colorScheme.onSurface)),
                       ],
                     ),
                   ),
@@ -459,7 +459,7 @@ class FragHomeApiUsers extends StatelessWidget {
                   // Actions Popup
                   DataCell(
                     PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade600),
+                      icon: Icon(Icons.more_vert_rounded, color: colorScheme.onSurface),
                       onSelected: (action) {
                         if (action == 'details') controller.showUserDetails(u);
                         if (action == 'edit') controller.openEditDialog(u);
@@ -619,7 +619,7 @@ class FragHomeApiUsers extends StatelessWidget {
                     children: [
                       Text(
                         '${u.permissionsCount} permissions',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                        style: TextStyle(fontSize: 11, color: colorScheme.onSurface),
                       ),
                       OutlinedButton(
                         onPressed: () => controller.showUserDetails(u),

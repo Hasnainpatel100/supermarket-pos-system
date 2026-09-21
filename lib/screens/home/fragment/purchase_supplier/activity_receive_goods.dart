@@ -381,6 +381,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
   // ─────────────────────────────────────────────
 
   Widget _buildInvoiceDetailsSection() {
+    final colorScheme = Theme.of(context).colorScheme;
     final bool locked = _confirmed;
 
     return MyCard(
@@ -565,7 +566,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade600)),
+                  color: colorScheme.onSurface)),
           const SizedBox(height: 12),
 
           Row(
@@ -613,6 +614,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
   }
 
   Widget _buildFileUploadWidget(bool locked) {
+    final colorScheme = Theme.of(context).colorScheme;
     final hasFile = _billFilePath != null;
 
     return GestureDetector(
@@ -682,7 +684,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
                     style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
-                        color: Colors.grey.shade600)),
+                        color: colorScheme.onSurface)),
                 Text('PDF, JPG, PNG supported',
                     style: TextStyle(
                         fontSize: 11, color: Colors.grey.shade400)),
@@ -779,6 +781,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
   // ─────────────────────────────────────────────
 
   Widget _buildSummarySection() {
+    final colorScheme = Theme.of(context).colorScheme;
     final diff = _poDifference;
     final diffColor = diff > 0
         ? Colors.red.shade600
@@ -876,7 +879,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
                 children: [
                   Text('PO Total Amount',
                       style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade600)),
+                          fontSize: 12, color: colorScheme.onSurface)),
                   Text('₹${(_purchase.totalAmount ?? 0).toStringAsFixed(2)}',
                       style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.bold)),
@@ -1329,11 +1332,12 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
   }
 
   Widget _summaryChip(String label, String value, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label,
           style: TextStyle(
               fontSize: 11,
-              color: Colors.grey.shade500,
+              color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500)),
       const SizedBox(height: 2),
       Container(
@@ -1364,14 +1368,15 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
   }
 
   Widget _colHeader(String text, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(children: [
-      Icon(icon, size: 13, color: Colors.grey.shade500),
+      Icon(icon, size: 13, color: colorScheme.onSurfaceVariant),
       const SizedBox(width: 4),
       Text(text,
           style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: Colors.grey.shade600)),
+              color: colorScheme.onSurface)),
     ]);
   }
 }

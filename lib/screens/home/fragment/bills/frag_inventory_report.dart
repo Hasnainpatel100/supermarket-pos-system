@@ -69,7 +69,7 @@ class FragInventoryReport extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               if (controller.rxRows.isEmpty) {
-                return _buildEmpty();
+                return _buildEmpty(context);
               }
               return MyCard(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -87,7 +87,7 @@ class FragInventoryReport extends StatelessWidget {
           // 6. PAGINATION FOOTER
           // ═══════════════════════════════════════════════════════════════
           Obx(() => controller.rxRows.isNotEmpty
-              ? _buildPagination(controller)
+              ? _buildPagination(context, controller)
               : const SizedBox.shrink()),
 
           const SizedBox(height: 8),
@@ -101,6 +101,9 @@ class FragInventoryReport extends StatelessWidget {
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildHeader(BuildContext context, ControllerInventoryReport controller) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 16, 0),
       child: Row(
@@ -116,13 +119,13 @@ class FragInventoryReport extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.orange.withOpacity(0.3),
+                  color: Colors.deepOrange.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: const Icon(Icons.inventory_rounded, color: Colors.white, size: 24),
+            child: const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 12),
           Column(
@@ -133,24 +136,24 @@ class FragInventoryReport extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
-                  color: Colors.grey.shade800,
+                  color: colorScheme.onSurface,
                 ),
               ),
               Obx(() => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: isDark ? Colors.orange.withValues(alpha: 0.18) : Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.orange.shade100),
+                  border: Border.all(color: isDark ? Colors.orange.withValues(alpha: 0.35) : Colors.orange.shade100),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.calendar_today_rounded, size: 10, color: Colors.orange.shade400),
+                    Icon(Icons.calendar_today_rounded, size: 10, color: Colors.deepOrange.shade400),
                     const SizedBox(width: 4),
                     Text(
                       controller.formatDateRange(),
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.deepOrange.shade700),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? Colors.orange.shade200 : Colors.orange.shade800),
                     ),
                   ],
                 ),
@@ -172,16 +175,18 @@ class FragInventoryReport extends StatelessWidget {
 
           // Refresh
           _headerAction(
+            context,
             icon: Icons.refresh_rounded,
-            tooltip: 'Refresh Data',
-            color: Colors.orange.shade600,
+            tooltip: 'Refresh',
+            color: Colors.deepOrange.shade600,
             onTap: controller.loadData,
           ),
 
           const SizedBox(width: 6),
 
-          // Excel Export
+          // Excel
           _exportButton(
+            context,
             icon: Icons.table_chart_rounded,
             label: 'Excel',
             color: Colors.green.shade600,
@@ -193,6 +198,7 @@ class FragInventoryReport extends StatelessWidget {
           if (kDebugMode) ...[
             const SizedBox(width: 6),
             _exportButton(
+              context,
               icon: Icons.file_upload_rounded,
               label: 'Import Excel',
               color: Colors.amber.shade900,
@@ -200,12 +206,33 @@ class FragInventoryReport extends StatelessWidget {
               borderColor: Colors.amber.shade200,
               onTap: controller.importTestExcel,
             ),
+            const SizedBox(width: 6),
+            _exportButton(
+              context,
+              icon: Icons.bolt_rounded,
+              label: '+ 30k Items',
+              color: Colors.deepPurple.shade700,
+              bgColor: Colors.deepPurple.shade50,
+              borderColor: Colors.deepPurple.shade200,
+              onTap: controller.seed30kTestItems,
+            ),
+            const SizedBox(width: 6),
+            _exportButton(
+              context,
+              icon: Icons.delete_sweep_rounded,
+              label: 'Clear Seeded',
+              color: Colors.red.shade700,
+              bgColor: Colors.red.shade50,
+              borderColor: Colors.red.shade200,
+              onTap: controller.clearSeededItems,
+            ),
           ],
 
           const SizedBox(width: 6),
 
-          // PDF Export
+          // PDF
           _exportButton(
+            context,
             icon: Icons.picture_as_pdf_rounded,
             label: 'PDF',
             color: Colors.red.shade600,
@@ -218,24 +245,28 @@ class FragInventoryReport extends StatelessWidget {
     );
   }
 
-  Widget _headerAction({
+  Widget _headerAction(
+    BuildContext context, {
     required IconData icon,
     required String tooltip,
     required Color color,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
         borderRadius: BorderRadius.circular(12),
+        border: isDark ? Border.all(color: colorScheme.outlineVariant) : null,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: IconButton(
         onPressed: onTap,
         tooltip: tooltip,
-        icon: Icon(icon, color: color),
+        icon: Icon(icon, color: isDark && color is MaterialColor ? color.shade300 : color),
         iconSize: 20,
         splashRadius: 20,
         padding: const EdgeInsets.all(10),
@@ -244,7 +275,8 @@ class FragInventoryReport extends StatelessWidget {
     );
   }
 
-  Widget _exportButton({
+  Widget _exportButton(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required Color color,
@@ -252,22 +284,27 @@ class FragInventoryReport extends StatelessWidget {
     required Color borderColor,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveColor = isDark && color is MaterialColor ? color.shade300 : color;
+    final effectiveBg = isDark ? color.withValues(alpha: 0.18) : bgColor;
+    final effectiveBorder = isDark ? color.withValues(alpha: 0.35) : borderColor;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: bgColor,
+          color: effectiveBg,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor),
+          border: Border.all(color: effectiveBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
+            Icon(icon, size: 16, color: effectiveColor),
             const SizedBox(width: 6),
-            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: effectiveColor)),
           ],
         ),
       ),
@@ -275,7 +312,7 @@ class FragInventoryReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // REPORT TYPE NAVIGATION BAR
+  // 2. Report Type Navigation Bar
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildReportTypeBar(BuildContext context, ControllerInventoryReport controller) {
@@ -290,6 +327,7 @@ class FragInventoryReport extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: _reportTypeChip(
+                context,
                 label: type.label,
                 icon: type.icon,
                 isSelected: isSelected,
@@ -303,13 +341,17 @@ class FragInventoryReport extends StatelessWidget {
     });
   }
 
-  Widget _reportTypeChip({
+  Widget _reportTypeChip(
+    BuildContext context, {
     required String label,
     required IconData icon,
     required bool isSelected,
     required Color primaryColor,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -317,23 +359,23 @@ class FragInventoryReport extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? primaryColor : Colors.white,
+          color: isSelected ? primaryColor : (isDark ? colorScheme.surfaceContainerHigh : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? primaryColor : Colors.grey.shade200,
+            color: isSelected ? primaryColor : (isDark ? colorScheme.outlineVariant : Colors.grey.shade200),
             width: 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.3),
+                    color: primaryColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -342,14 +384,14 @@ class FragInventoryReport extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isSelected ? Colors.white : primaryColor),
+            Icon(icon, size: 16, color: isSelected ? Colors.white : (isDark ? colorScheme.primary : primaryColor)),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey.shade800,
+                color: isSelected ? Colors.white : colorScheme.onSurface,
               ),
             ),
           ],
@@ -359,7 +401,7 @@ class FragInventoryReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Summary Stats Row
+  // 3. Summary Stats Cards
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildSummaryCards(ControllerInventoryReport controller) {
@@ -385,10 +427,13 @@ class FragInventoryReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Search and Location filter
+  // 4. Search and Location filter
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildSearchRow(BuildContext context, ControllerInventoryReport controller) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -399,7 +444,7 @@ class FragInventoryReport extends StatelessWidget {
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
               ),
               child: TextField(
@@ -425,14 +470,15 @@ class FragInventoryReport extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.grey.shade200),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
                       value: controller.rxExpiryThresholdDays.value,
                       isDense: true,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                       items: const [
                         DropdownMenuItem(value: 15, child: Text('15 Days Expiry')),
                         DropdownMenuItem(value: 30, child: Text('30 Days Expiry')),
@@ -454,14 +500,15 @@ class FragInventoryReport extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.grey.shade200),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
                       value: controller.rxLowStockThreshold.value,
                       isDense: true,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                       items: const [
                         DropdownMenuItem(value: 5, child: Text('< 5 units')),
                         DropdownMenuItem(value: 10, child: Text('< 10 units')),
@@ -482,11 +529,11 @@ class FragInventoryReport extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.grey.shade200),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
             child: Row(
@@ -496,7 +543,7 @@ class FragInventoryReport extends StatelessWidget {
                 const SizedBox(width: 8),
                 Obx(() => Text(
                   controller.rxBranch.value,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                 )),
                 const SizedBox(width: 4),
                 Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey.shade400),
@@ -509,7 +556,7 @@ class FragInventoryReport extends StatelessWidget {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // Dynamic DataTable
+  // 5. Dynamic DataTable
   // ═════════════════════════════════════════════════════════════════════════
 
   Widget _buildDataTable(
@@ -523,7 +570,7 @@ class FragInventoryReport extends StatelessWidget {
     return DataTable(
       columnSpacing: 16,
       horizontalMargin: 16,
-      headingRowColor: WidgetStateProperty.all(colorScheme.primary.withOpacity(0.04)),
+      headingRowColor: WidgetStateProperty.all(colorScheme.primary.withValues(alpha: 0.04)),
       headingTextStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: colorScheme.onSurface),
       dividerThickness: 0.5,
       dataRowMaxHeight: 52,
@@ -612,15 +659,16 @@ class FragInventoryReport extends StatelessWidget {
     ColorScheme colorScheme,
   ) {
     final rows = controller.rxRows;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return switch (type) {
       InventoryReportType.currentStock => rows.map((r) {
         final row = r as CurrentStockRow;
         return DataRow(cells: [
-          DataCell(_skuBadge(row.sku)),
-          DataCell(Text(row.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
+          DataCell(_skuBadge(context, row.sku)),
+          DataCell(Text(row.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface))),
           DataCell(Text(row.category, style: const TextStyle(fontSize: 13))),
-          DataCell(Text(row.unit, style: TextStyle(fontSize: 12, color: Colors.grey.shade500))),
-          DataCell(_badge(row.quantity.toString(), Colors.green)),
+          DataCell(Text(row.unit, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant))),
+          DataCell(_badge(context, row.quantity.toString(), Colors.green)),
           DataCell(Text(currFmt.format(row.costPrice), style: const TextStyle(fontSize: 13))),
           DataCell(Text(currFmt.format(row.sellingPrice), style: const TextStyle(fontSize: 13))),
           DataCell(Text(currFmt.format(row.stockValue), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
@@ -630,20 +678,20 @@ class FragInventoryReport extends StatelessWidget {
       InventoryReportType.lowStock => rows.map((r) {
         final row = r as LowStockRow;
         return DataRow(cells: [
-          DataCell(_skuBadge(row.sku)),
-          DataCell(Text(row.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
+          DataCell(_skuBadge(context, row.sku)),
+          DataCell(Text(row.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface))),
           DataCell(Text(row.category, style: const TextStyle(fontSize: 13))),
-          DataCell(_badge(row.quantity.toString(), Colors.red)),
-          DataCell(_badge(row.reorderLevel.toString(), Colors.teal)),
-          DataCell(_badge(row.shortage.toString(), Colors.pink)),
+          DataCell(_badge(context, row.quantity.toString(), Colors.red)),
+          DataCell(_badge(context, row.reorderLevel.toString(), Colors.teal)),
+          DataCell(_badge(context, row.shortage.toString(), Colors.pink)),
         ]);
       }).toList(),
 
       InventoryReportType.outOfStock => rows.map((r) {
         final row = r as OutOfStockRow;
         return DataRow(cells: [
-          DataCell(_skuBadge(row.sku)),
-          DataCell(Text(row.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
+          DataCell(_skuBadge(context, row.sku)),
+          DataCell(Text(row.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface))),
           DataCell(Text(row.category, style: const TextStyle(fontSize: 13))),
           DataCell(Text(currFmt.format(row.costPrice), style: const TextStyle(fontSize: 13))),
           DataCell(Text(row.lastPurchaseInfo, style: const TextStyle(fontSize: 12, color: Colors.green))),
@@ -655,12 +703,12 @@ class FragInventoryReport extends StatelessWidget {
         final row = r as StockMovementRow;
         final isPositive = row.quantity > 0;
         return DataRow(cells: [
-          DataCell(Text(row.dateTime, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.indigo.shade600))),
-          DataCell(Text(row.itemName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
+          DataCell(Text(row.dateTime, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? Colors.white.withValues(alpha: 0.9) : Colors.indigo.shade600))),
+          DataCell(Text(row.itemName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface))),
           DataCell(_movementTypeBadge(row.txnType)),
-          DataCell(_badge(isPositive ? '+${row.quantity}' : '${row.quantity}', isPositive ? Colors.green : Colors.red)),
+          DataCell(_badge(context, isPositive ? '+${row.quantity}' : '${row.quantity}', isPositive ? Colors.green : Colors.red)),
           DataCell(Text(row.performedBy, style: const TextStyle(fontSize: 13))),
-          DataCell(Text(row.reference, style: TextStyle(fontSize: 12, color: Colors.grey.shade600))),
+          DataCell(Text(row.reference, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant))),
         ]);
       }).toList(),
 
@@ -668,12 +716,12 @@ class FragInventoryReport extends StatelessWidget {
         final row = r as StockAdjustmentRow;
         final isPositive = row.difference > 0;
         return DataRow(cells: [
-          DataCell(Text(row.dateTime, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.indigo.shade600))),
-          DataCell(Text(row.itemName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
+          DataCell(Text(row.dateTime, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? Colors.white.withValues(alpha: 0.9) : Colors.indigo.shade600))),
+          DataCell(Text(row.itemName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface))),
           DataCell(Text(row.previousQty.toString(), style: const TextStyle(fontSize: 13))),
           DataCell(Text(row.newQty.toString(), style: const TextStyle(fontSize: 13))),
-          DataCell(_badge(isPositive ? '+${row.difference}' : '${row.difference}', isPositive ? Colors.green : Colors.red)),
-          DataCell(Text(row.reason, style: TextStyle(fontSize: 12, color: Colors.grey.shade600))),
+          DataCell(_badge(context, isPositive ? '+${row.difference}' : '${row.difference}', isPositive ? Colors.green : Colors.red)),
+          DataCell(Text(row.reason, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant))),
           DataCell(Text(row.user, style: const TextStyle(fontSize: 13))),
         ]);
       }).toList(),
@@ -681,9 +729,9 @@ class FragInventoryReport extends StatelessWidget {
       InventoryReportType.stockValuation => rows.map((r) {
         final row = r as StockValuationRow;
         return DataRow(cells: [
-          DataCell(_skuBadge(row.sku)),
-          DataCell(Text(row.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
-          DataCell(_badge(row.quantity.toString(), Colors.blue)),
+          DataCell(_skuBadge(context, row.sku)),
+          DataCell(Text(row.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface))),
+          DataCell(_badge(context, row.quantity.toString(), Colors.blue)),
           DataCell(Text(currFmt.format(row.costPrice), style: const TextStyle(fontSize: 13))),
           DataCell(Text(currFmt.format(row.sellingPrice), style: const TextStyle(fontSize: 13))),
           DataCell(Text(currFmt.format(row.costValue), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
@@ -695,22 +743,22 @@ class FragInventoryReport extends StatelessWidget {
       InventoryReportType.expiry => rows.map((r) {
         final row = r as ExpiryRow;
         return DataRow(cells: [
-          DataCell(Text(row.itemName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
-          DataCell(_skuBadge(row.batchNo)),
+          DataCell(Text(row.itemName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface))),
+          DataCell(_skuBadge(context, row.batchNo)),
           DataCell(Text(row.expiryDate, style: const TextStyle(fontSize: 13, color: Colors.red, fontWeight: FontWeight.w600))),
-          DataCell(_badge(row.quantity.toString(), Colors.red)),
-          DataCell(_badge('${row.daysExpired} days ago', Colors.pink)),
+          DataCell(_badge(context, row.quantity.toString(), Colors.red)),
+          DataCell(_badge(context, '${row.daysExpired} days ago', Colors.pink)),
         ]);
       }).toList(),
 
       InventoryReportType.nearExpiry => rows.map((r) {
         final row = r as NearExpiryRow;
         return DataRow(cells: [
-          DataCell(Text(row.itemName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.grey.shade800))),
-          DataCell(_skuBadge(row.batchNo)),
+          DataCell(Text(row.itemName, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colorScheme.onSurface))),
+          DataCell(_skuBadge(context, row.batchNo)),
           DataCell(Text(row.expiryDate, style: const TextStyle(fontSize: 13, color: Colors.green, fontWeight: FontWeight.w600))),
-          DataCell(_badge(row.quantity.toString(), Colors.blue)),
-          DataCell(_badge('${row.daysRemaining} days left', Colors.orange)),
+          DataCell(_badge(context, row.quantity.toString(), Colors.blue)),
+          DataCell(_badge(context, '${row.daysRemaining} days left', Colors.orange)),
         ]);
       }).toList(),
     };
@@ -721,43 +769,47 @@ class FragInventoryReport extends StatelessWidget {
   // ═════════════════════════════════════════════════════════════════════════
 
   DataColumn _col(BuildContext context, String label, IconData icon, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DataColumn(
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-            child: Icon(icon, size: 14, color: color.withOpacity(0.8)),
+            decoration: BoxDecoration(color: color.withValues(alpha: isDark ? 0.2 : 0.1), borderRadius: BorderRadius.circular(6)),
+            child: Icon(icon, size: 14, color: isDark && color is MaterialColor ? color.shade300 : color.withValues(alpha: 0.8)),
           ),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(label, style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _badge(String text, MaterialColor color) {
+  Widget _badge(BuildContext context, String text, MaterialColor color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: isDark ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.4 : 0.25)),
       ),
-      child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color.shade700)),
+      child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? color.shade300 : color.shade700)),
     );
   }
 
-  Widget _skuBadge(String sku) {
+  Widget _skuBadge(BuildContext context, String sku) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.grey.shade300),
       ),
-      child: Text(sku, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+      child: Text(sku, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
     );
   }
 
@@ -774,9 +826,9 @@ class FragInventoryReport extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(type, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color.shade700)),
     );
@@ -786,7 +838,9 @@ class FragInventoryReport extends StatelessWidget {
   // Empty State and Pagination
   // ═════════════════════════════════════════════════════════════════════════
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -801,21 +855,21 @@ class FragInventoryReport extends StatelessWidget {
               ),
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: Colors.orange.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
+                BoxShadow(color: Colors.orange.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 10)),
               ],
             ),
             child: Icon(Icons.inventory_2_outlined, size: 64, color: Colors.orange.shade400),
           ),
           const SizedBox(height: 16),
-          Text('No inventory records found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          Text('No inventory records found', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
           const SizedBox(height: 6),
-          Text('Try adjusting filters or report types', style: TextStyle(fontSize: 14, color: Colors.grey.shade400)),
+          Text('Try adjusting filters or report types', style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
         ],
       ),
     );
   }
 
-  Widget _buildPagination(ControllerInventoryReport controller) {
+  Widget _buildPagination(BuildContext context, ControllerInventoryReport controller) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -823,7 +877,7 @@ class FragInventoryReport extends StatelessWidget {
         children: [
           Obx(() => Text(
             'Total: ${controller.totalCount.value} records',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
           )),
           Row(
             children: [
@@ -839,12 +893,12 @@ class FragInventoryReport extends StatelessWidget {
               Obx(() => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   'Page ${controller.currentPage.value + 1}',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange.shade700),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.orange.shade300 : Colors.orange.shade700),
                 ),
               )),
               const SizedBox(width: 12),
@@ -914,7 +968,7 @@ class _InventorySummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: data.gradientColors.first.withOpacity(0.3),
+            color: data.gradientColors.first.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -925,7 +979,7 @@ class _InventorySummaryCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(data.icon, color: Colors.white, size: 18),
@@ -942,7 +996,7 @@ class _InventorySummaryCard extends StatelessWidget {
                 ),
                 Text(
                   data.label,
-                  style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.8)),
+                  style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.8)),
                 ),
               ],
             ),

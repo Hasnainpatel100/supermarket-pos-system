@@ -189,7 +189,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
               _supplierName,
               style: TextStyle(
                   fontSize: 11,
-                  color: Colors.grey.shade500,
+                  color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500),
             ),
           ]),
@@ -685,6 +685,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
 
   Widget _statCard(
       String label, String value, Color color, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
@@ -702,7 +703,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
                 Text(label,
                     style: TextStyle(
                         fontSize: 10,
-                        color: Colors.grey.shade500,
+                        color: colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500)),
                 Text(value,
                     style: TextStyle(

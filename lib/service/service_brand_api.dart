@@ -208,13 +208,13 @@ class ServiceBrandApi {
       Response response;
       try {
         response = await _dio.post(
-          '/api/brands/create',
+          '/api/brands',
           data: payloadJson,
         );
       } on DioException catch (e) {
         if (e.response?.statusCode == 404) {
           response = await _dio.post(
-            '/api/brands',
+            '/api/brands/create',
             data: payloadJson,
           );
         } else {
@@ -342,6 +342,29 @@ class ServiceBrandApi {
       return BrandApiResponse.error(_handleDioError(e, baseUrl), statusCode: e.response?.statusCode ?? 0);
     } catch (e) {
       return BrandApiResponse.error('Error updating brand: $e');
+    }
+  }
+
+  /// DELETE /api/brands/:id
+  Future<BrandApiResponse<bool>> deleteBrand(String id) async {
+    try {
+      final response = await _dio.delete('/api/brands/$id');
+      final statusCode = response.statusCode ?? 200;
+
+      if (statusCode == 200 || statusCode == 204) {
+        return BrandApiResponse.success(
+          true,
+          statusCode: statusCode,
+          message: 'Brand deleted successfully',
+        );
+      } else {
+        final errorMsg = _extractErrorMessage(response.data, statusCode);
+        return BrandApiResponse.error(errorMsg, statusCode: statusCode);
+      }
+    } on DioException catch (e) {
+      return BrandApiResponse.error(_handleDioError(e, baseUrl), statusCode: e.response?.statusCode ?? 0);
+    } catch (e) {
+      return BrandApiResponse.error('Error deleting brand: $e');
     }
   }
 

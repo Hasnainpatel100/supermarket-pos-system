@@ -12,6 +12,7 @@ class FragmentHomeStock extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(ControllerHomeStock());
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -53,7 +54,7 @@ class FragmentHomeStock extends StatelessWidget {
                   'track_inventory_movements'.tr,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey.shade500,
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -218,16 +219,16 @@ class FragmentHomeStock extends StatelessWidget {
                       headingTextStyle: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
-                        color: colorScheme.onSurface,
+                        color: isDark ? Colors.white : colorScheme.onSurface,
                       ),
                       dividerThickness: 0.5,
                       dataRowMaxHeight: 56,
                       columns: [
-                        DataColumn(label: Text('date_time'.tr)),
-                        DataColumn(label: Text('item'.tr)),
-                        DataColumn(label: Text('type'.tr)),
-                        DataColumn(label: Text('qty'.tr), numeric: true),
-                        DataColumn(label: Text('remarks'.tr)),
+                        DataColumn(label: Text('date_time'.tr, style: TextStyle(color: isDark ? Colors.white : null, fontWeight: FontWeight.bold))),
+                        DataColumn(label: Text('item'.tr, style: TextStyle(color: isDark ? Colors.white : null, fontWeight: FontWeight.bold))),
+                        DataColumn(label: Text('type'.tr, style: TextStyle(color: isDark ? Colors.white : null, fontWeight: FontWeight.bold))),
+                        DataColumn(label: Text('qty'.tr, style: TextStyle(color: isDark ? Colors.white : null, fontWeight: FontWeight.bold)), numeric: true),
+                        DataColumn(label: Text('remarks'.tr, style: TextStyle(color: isDark ? Colors.white : null, fontWeight: FontWeight.bold))),
                       ],
                       rows: controller.rxListTxn.map((txn) {
                         final type = _typeFromIndex(txn.type);
@@ -242,7 +243,7 @@ class FragmentHomeStock extends StatelessWidget {
                                 controller.formatDate(txn.createdAtUtcMs),
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey.shade600,
+                                  color: isDark ? Colors.white.withValues(alpha: 0.85) : Colors.grey.shade700,
                                 ),
                               ),
                             ),
@@ -251,8 +252,9 @@ class FragmentHomeStock extends StatelessWidget {
                               Text(
                                 txn.referenceId ??
                                     controller.getItemName(txn.itemId),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : colorScheme.onSurface,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -267,12 +269,12 @@ class FragmentHomeStock extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: _typeColor(
                                     type,
-                                  ).withValues(alpha: 0.12),
+                                  ).withValues(alpha: isDark ? 0.2 : 0.12),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: _typeColor(
                                       type,
-                                    ).withValues(alpha: 0.3),
+                                    ).withValues(alpha: isDark ? 0.45 : 0.3),
                                   ),
                                 ),
                                 child: Row(
@@ -281,7 +283,7 @@ class FragmentHomeStock extends StatelessWidget {
                                     Icon(
                                       _typeIcon(type),
                                       size: 13,
-                                      color: _typeColor(type),
+                                      color: isDark && _typeColor(type) is MaterialColor ? (_typeColor(type) as MaterialColor).shade300 : _typeColor(type),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -289,7 +291,7 @@ class FragmentHomeStock extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
-                                        color: _typeColor(type),
+                                        color: isDark && _typeColor(type) is MaterialColor ? (_typeColor(type) as MaterialColor).shade300 : _typeColor(type),
                                       ),
                                     ),
                                   ],
@@ -304,8 +306,8 @@ class FragmentHomeStock extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                   color: isPositive
-                                      ? Colors.green.shade600
-                                      : Colors.red.shade600,
+                                      ? (isDark ? Colors.green.shade400 : Colors.green.shade600)
+                                      : (isDark ? Colors.red.shade400 : Colors.red.shade600),
                                 ),
                               ),
                             ),
@@ -315,7 +317,7 @@ class FragmentHomeStock extends StatelessWidget {
                                 txn.remarks ?? '-',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey.shade600,
+                                  color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.grey.shade600,
                                   fontStyle: FontStyle.italic,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -331,13 +333,14 @@ class FragmentHomeStock extends StatelessWidget {
             }),
           ),
           // ── Pagination Footer ──
-          Obx(() => _buildPagination(controller)),
+          Obx(() => _buildPagination(context, controller)),
         ],
       ),
     );
   }
 
-  Widget _buildPagination(ControllerHomeStock controller) {
+  Widget _buildPagination(BuildContext context, ControllerHomeStock controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -345,7 +348,7 @@ class FragmentHomeStock extends StatelessWidget {
         children: [
           Text(
             '${'total'.tr}: ${controller.totalCount.value} ${'transactions'.tr}',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           Row(
             children: [
@@ -454,28 +457,31 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color : Colors.white,
+          color: isSelected ? color : (isDark ? colorScheme.surfaceContainerHigh : Colors.white),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+            color: isSelected ? Colors.transparent : (isDark ? colorScheme.outlineVariant : Colors.grey.shade300),
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: color.withOpacity(0.3),
+                    color: color.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -486,7 +492,7 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: isSelected ? Colors.white : Colors.grey.shade700,
+            color: isSelected ? Colors.white : (isDark ? Colors.white.withValues(alpha: 0.9) : Colors.grey.shade700),
           ),
         ),
       ),

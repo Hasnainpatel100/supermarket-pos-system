@@ -60,7 +60,7 @@ class FragHomeBills extends StatelessWidget {
                           ?.copyWith(
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
-                            color: Colors.grey.shade800,
+                            color: colorScheme.onSurface,
                           ),
                     ),
                     Obx(
@@ -70,10 +70,10 @@ class FragHomeBills extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.indigo.shade50,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.indigo.shade100),
-                        ),
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withOpacity(0.18) : Colors.indigo.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withOpacity(0.35) : Colors.indigo.shade100),
+                ),
                         child: Row(
                           children: [
                             Icon(
@@ -235,7 +235,7 @@ class FragHomeBills extends StatelessWidget {
                   'transactions_label'.tr,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -316,7 +316,7 @@ class FragHomeBills extends StatelessWidget {
           ),
 
           // ── Pagination Footer ──
-          Obx(() => controller.rxListBill.isNotEmpty ? _buildPagination(controller) : const SizedBox.shrink()),
+          Obx(() => controller.rxListBill.isNotEmpty ? _buildPagination(context, controller) : const SizedBox.shrink()),
 
           const SizedBox(height: 8),
         ],
@@ -324,7 +324,7 @@ class FragHomeBills extends StatelessWidget {
     );
   }
 
-  Widget _buildPagination(ControllerHomeBills controller) {
+  Widget _buildPagination(BuildContext context, ControllerHomeBills controller) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -332,7 +332,7 @@ class FragHomeBills extends StatelessWidget {
         children: [
           Text(
             'total_bills_count'.trParams({'count': '${controller.totalCount.value}'}),
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           Row(
             children: [
@@ -347,9 +347,9 @@ class FragHomeBills extends StatelessWidget {
               const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                 child: Text('page_number'.trParams({'number': '${controller.currentPage.value + 1}'}),
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.blue.shade300 : Colors.blue.shade700),
                 ),
               ),
               const SizedBox(width: 12),
@@ -408,6 +408,7 @@ class FragHomeBills extends StatelessWidget {
   }
 
   DataColumn _col(BuildContext context, String label, IconData icon, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DataColumn(
       label: Row(
         mainAxisSize: MainAxisSize.min,
@@ -415,13 +416,13 @@ class FragHomeBills extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Icon(icon, size: 16, color: color.withOpacity(0.8)),
+            child: Icon(icon, size: 16, color: color.withValues(alpha: 0.8)),
           ),
           const SizedBox(width: 8),
-          Text(label, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -436,6 +437,7 @@ class FragHomeBills extends StatelessWidget {
   ) {
     final isCancelled = bill.status == "CANCELLED";
     final isDue = bill.status == "DUE";
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     String formattedDateTime = bill.billDate ?? '-';
     if (bill.createdAtUtcMs != null) {
@@ -452,7 +454,11 @@ class FragHomeBills extends StatelessWidget {
         // Date & Time
         DataCell(Text(
           formattedDateTime,
-          style: TextStyle(fontSize: 13, color: Colors.indigo.shade600, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark ? Colors.white.withValues(alpha: 0.9) : Colors.indigo.shade600,
+            fontWeight: FontWeight.w500,
+          ),
         )),
 
         // Bill No
@@ -460,13 +466,13 @@ class FragHomeBills extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: isDark ? colorScheme.surfaceContainerHighest : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.grey.shade300),
             ),
             child: Text(
               '#${bill.billNo ?? "-"}',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.grey.shade700),
             ),
           ),
         ),
@@ -477,7 +483,7 @@ class FragHomeBills extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,
-            color: isCancelled ? Colors.grey : Colors.grey.shade800,
+            color: isCancelled ? Colors.grey : (isDark ? Colors.white : Colors.grey.shade800),
             decoration: isCancelled ? TextDecoration.lineThrough : null,
           ),
         )),
@@ -487,13 +493,13 @@ class FragHomeBills extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.1),
+              color: Colors.teal.withValues(alpha: isDark ? 0.25 : 0.1),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.teal.withOpacity(0.3)),
+              border: Border.all(color: Colors.teal.withValues(alpha: isDark ? 0.5 : 0.3)),
             ),
             child: Text(
               bill.paymentMode ?? '-',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.teal.shade700),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: isDark ? Colors.tealAccent.shade200 : Colors.teal.shade700),
             ),
           ),
         ),
@@ -504,7 +510,7 @@ class FragHomeBills extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: isCancelled ? Colors.grey : Colors.grey.shade800,
+            color: isCancelled ? Colors.grey : (isDark ? Colors.white : Colors.grey.shade800),
           ),
         )),
 
@@ -514,7 +520,7 @@ class FragHomeBills extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            color: isDue ? Colors.red.shade700 : Colors.grey,
+            color: isDue ? (isDark ? Colors.redAccent.shade100 : Colors.red.shade700) : Colors.grey,
           ),
         )),
 
@@ -524,13 +530,13 @@ class FragHomeBills extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: isCancelled
-                  ? Colors.grey.withOpacity(0.1)
-                  : (isDue ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1)),
+                  ? Colors.grey.withValues(alpha: isDark ? 0.25 : 0.1)
+                  : (isDue ? Colors.orange.withValues(alpha: isDark ? 0.25 : 0.1) : Colors.green.withValues(alpha: isDark ? 0.25 : 0.1)),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isCancelled
-                    ? Colors.grey.withOpacity(0.3)
-                    : (isDue ? Colors.orange.withOpacity(0.3) : Colors.green.withOpacity(0.3)),
+                    ? Colors.grey.withValues(alpha: isDark ? 0.5 : 0.3)
+                    : (isDue ? Colors.orange.withValues(alpha: isDark ? 0.5 : 0.3) : Colors.green.withValues(alpha: isDark ? 0.5 : 0.3)),
               ),
             ),
             child: Text(
@@ -539,8 +545,8 @@ class FragHomeBills extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: isCancelled
-                    ? Colors.grey.shade700
-                    : (isDue ? Colors.orange.shade800 : Colors.green.shade700),
+                    ? (isDark ? Colors.grey.shade400 : Colors.grey.shade700)
+                    : (isDue ? (isDark ? Colors.orangeAccent.shade200 : Colors.orange.shade800) : (isDark ? Colors.greenAccent.shade200 : Colors.green.shade700)),
               ),
             ),
           ),

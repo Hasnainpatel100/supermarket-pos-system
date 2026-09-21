@@ -57,7 +57,7 @@ class FragmentHomePurchase extends StatelessWidget {
                   'Manage purchase orders'.tr,
                   style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey.shade500,
+                      color: colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500),
                 ),
               ],
@@ -164,13 +164,13 @@ class FragmentHomePurchase extends StatelessWidget {
       body: Column(
         children: [
           // ── Status Filter Chips ──
-          _buildFilterChips(controller),
+          _buildFilterChips(context, controller),
 
           // ── Table ──
           Expanded(
             child: Obx(
                   () => controller.rxListPurchase.isEmpty
-                  ? _buildEmpty()
+                  ? _buildEmpty(context)
                   : MyCard(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: SizedBox(
@@ -217,7 +217,7 @@ class FragmentHomePurchase extends StatelessWidget {
           ),
 
           // ── Pagination ──
-          Obx(() => _buildPagination(controller)),
+          Obx(() => _buildPagination(context, controller)),
         ],
       ),
     );
@@ -227,7 +227,7 @@ class FragmentHomePurchase extends StatelessWidget {
   //  FILTER CHIPS
   // ─────────────────────────────────────────────
 
-  Widget _buildFilterChips(ControllerHomePurchase controller) {
+  Widget _buildFilterChips(BuildContext context, ControllerHomePurchase controller) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Obx(() {
@@ -236,11 +236,11 @@ class FragmentHomePurchase extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _chip('All'.tr, null, selected, controller),
+              _chip('All'.tr, null, selected, controller, context),
               const SizedBox(width: 8),
               ...PurchaseStatus.values.map((s) => Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: _chip(s.label, s, selected, controller),
+                child: _chip(s.label, s, selected, controller, context),
               )),
             ],
           ),
@@ -254,8 +254,11 @@ class FragmentHomePurchase extends StatelessWidget {
       PurchaseStatus? status,
       PurchaseStatus? selected,
       ControllerHomePurchase controller,
+      BuildContext context,
       ) {
     final isSelected = selected == status;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     final color = status != null
         ? Color(status.colorValue)
         : Colors.deepPurple;
@@ -265,12 +268,12 @@ class FragmentHomePurchase extends StatelessWidget {
           style: TextStyle(
               fontWeight:
               isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? Colors.white : color)),
+              color: isSelected ? Colors.white : (isDark ? Colors.white.withValues(alpha: 0.9) : color))),
       selected: isSelected,
       selectedColor: color,
       onSelected: (_) => controller.setStatusFilter(status),
-      backgroundColor: color.withOpacity(0.08),
-      side: BorderSide(color: color.withOpacity(0.3)),
+      backgroundColor: isDark ? colorScheme.surfaceContainerHigh : color.withValues(alpha: 0.08),
+      side: BorderSide(color: isDark ? colorScheme.outlineVariant : color.withValues(alpha: 0.3)),
       showCheckmark: false,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
@@ -282,6 +285,8 @@ class FragmentHomePurchase extends StatelessWidget {
 
   DataColumn _col(
       BuildContext context, String label, IconData icon, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DataColumn(
       label: Row(
         mainAxisSize: MainAxisSize.min,
@@ -289,16 +294,14 @@ class FragmentHomePurchase extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: isDark ? 0.2 : 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Icon(icon, size: 16, color: color.withOpacity(0.8)),
+            child: Icon(icon, size: 16, color: color.withValues(alpha: 0.8)),
           ),
           const SizedBox(width: 8),
           Text(label,
-              style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.bold)),
+              style: TextStyle(color: isDark ? Colors.white : colorScheme.onSurface, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -321,6 +324,7 @@ class FragmentHomePurchase extends StatelessWidget {
 
     // ── Delete is only available for POs created TODAY ──
     final canDelete = controller.canDeletePurchase(p);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final date = p.purchaseDateUtcMs != null
         ? DateFormat('dd MMM yyyy').format(
@@ -335,26 +339,27 @@ class FragmentHomePurchase extends StatelessWidget {
           padding:
           const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: Colors.deepPurple.withOpacity(0.08),
+            color: isDark ? colorScheme.surfaceContainerHighest : Colors.deepPurple.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.deepPurple.withValues(alpha: 0.2)),
           ),
           child: Text(
             p.purchaseNo ?? '-',
-            style: const TextStyle(
+            style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
-                color: Colors.deepPurple),
+                color: isDark ? Colors.deepPurple.shade200 : Colors.deepPurple),
           ),
         ),
       ),
 
       // Supplier
       DataCell(Text(p.supplierName ?? '-',
-          style: const TextStyle(fontWeight: FontWeight.w500))),
+          style: TextStyle(fontWeight: FontWeight.w500, color: isDark ? Colors.white : null))),
 
       // Date
       DataCell(Text(date,
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade700))),
+          style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withValues(alpha: 0.9) : Colors.grey.shade700))),
 
       // Status Badge
       DataCell(_statusBadge(status, statusColor)),
@@ -362,11 +367,11 @@ class FragmentHomePurchase extends StatelessWidget {
       // Total
       DataCell(Text(
         '₹ ${(p.totalAmount ?? 0).toStringAsFixed(2)}',
-        style: const TextStyle(fontWeight: FontWeight.w600),
+        style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white : null),
       )),
 
       // Outstanding
-      DataCell(_buildOutstandingBadge(p)),
+      DataCell(_buildOutstandingBadge(p, isDark)),
 
       // Actions
       DataCell(
@@ -503,14 +508,15 @@ class FragmentHomePurchase extends StatelessWidget {
   //  PAGINATION
   // ─────────────────────────────────────────────
 
-  Widget _buildPagination(ControllerHomePurchase controller) {
+  Widget _buildPagination(BuildContext context, ControllerHomePurchase controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text('Total: ${controller.totalCount.value} purchases',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurface)),
           Row(children: [
             OutlinedButton.icon(
               onPressed: controller.hasPrev ? controller.prevPage : null,
@@ -552,7 +558,8 @@ class FragmentHomePurchase extends StatelessWidget {
   //  EMPTY STATE
   // ─────────────────────────────────────────────
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -582,7 +589,7 @@ class FragmentHomePurchase extends StatelessWidget {
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade600)),
+                  color: colorScheme.onSurface)),
           const SizedBox(height: 6),
           Text('Create a new purchase order to get started'.tr,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
@@ -595,7 +602,7 @@ class FragmentHomePurchase extends StatelessWidget {
   //  DIALOGS / NAVIGATION
   // ─────────────────────────────────────────────
 
-  Widget _buildOutstandingBadge(EntityPurchase p) {
+  Widget _buildOutstandingBadge(EntityPurchase p, [bool isDark = false]) {
     final outstanding = p.outstandingAmount;
     final isFullyPaid = outstanding <= 0.001;
 
@@ -603,18 +610,19 @@ class FragmentHomePurchase extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
+          color: Colors.green.withValues(alpha: isDark ? 0.25 : 0.1),
           borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.green.withValues(alpha: isDark ? 0.5 : 0.25)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.check_circle_rounded,
-              size: 13, color: Colors.green.shade600),
+              size: 13, color: isDark ? Colors.greenAccent.shade200 : Colors.green.shade600),
           const SizedBox(width: 4),
           Text('Paid'.tr,
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Colors.green.shade700)),
+                  color: isDark ? Colors.greenAccent.shade200 : Colors.green.shade700)),
         ]),
       );
     }
@@ -622,15 +630,16 @@ class FragmentHomePurchase extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.08),
+        color: Colors.red.withValues(alpha: isDark ? 0.25 : 0.08),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.withValues(alpha: isDark ? 0.5 : 0.25)),
       ),
       child: Text(
         '₹ ${outstanding.toStringAsFixed(2)}',
         style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.red.shade700),
+            color: isDark ? Colors.redAccent.shade100 : Colors.red.shade700),
       ),
     );
   }

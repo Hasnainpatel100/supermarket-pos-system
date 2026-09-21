@@ -224,7 +224,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
                 '${_purchase.purchaseNo} · ${_purchase.supplierName}',
                 style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey.shade500,
+                    color: colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500),
               ),
             ]),
@@ -292,6 +292,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
 
   Widget _overviewTile(
       String label, String value, Color color, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -305,7 +306,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
         Text(label,
             style: TextStyle(
                 fontSize: 11,
-                color: Colors.grey.shade500,
+                color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500)),
         const SizedBox(height: 2),
         Text(value,

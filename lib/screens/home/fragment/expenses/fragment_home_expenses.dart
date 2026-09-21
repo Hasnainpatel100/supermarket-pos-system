@@ -71,7 +71,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                       'Track your expenses'.tr,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade500,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -527,7 +527,7 @@ class FragmentHomeExpenses extends StatelessWidget {
           ),
 
           // ── Pagination Footer ──
-          Obx(() => controller.rxList.isNotEmpty ? _buildPagination(controller) : const SizedBox.shrink()),
+          Obx(() => controller.rxList.isNotEmpty ? _buildPagination(context, controller) : const SizedBox.shrink()),
 
           const SizedBox(height: 16),
         ],
@@ -535,7 +535,8 @@ class FragmentHomeExpenses extends StatelessWidget {
     );
   }
 
-  Widget _buildPagination(ControllerHomeExpenses controller) {
+  Widget _buildPagination(BuildContext context, ControllerHomeExpenses controller) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -543,7 +544,7 @@ class FragmentHomeExpenses extends StatelessWidget {
         children: [
           Text(
             'Total: ${controller.totalCount.value} records',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           Row(
             children: [
@@ -592,11 +593,12 @@ class FragmentHomeExpenses extends StatelessWidget {
       ControllerHomeExpenses controller,
       EntityFinanceTransaction tx,
       ) {
+    final colorScheme = Theme.of(context).colorScheme;
     final typeColor = switch (tx.type) {
       'expense' => Colors.red.shade600,
       'borrow' => Colors.orange.shade700,
       'lend' => Colors.blue.shade700,
-      _ => Theme.of(context).colorScheme.primary,
+      _ => colorScheme.primary,
     };
 
     Get.dialog(
@@ -625,7 +627,7 @@ class FragmentHomeExpenses extends StatelessWidget {
             Text(
               'Are you sure you want to delete this transaction?'.tr,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: colorScheme.onSurface),
             ),
             const SizedBox(height: 12),
             Container(

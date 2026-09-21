@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../model/model_api_user.dart';
 import '../../../../repository/repo_api_user.dart';
+import '../../../../service/service_brand_context.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../api_user/activity_api_user_form.dart';
 import '../../../api_user/dialog_api_user_config.dart';
@@ -43,7 +44,13 @@ class ControllerHomeApiUsers extends GetxController {
   Future<void> loadUsers({bool forceRefresh = false}) async {
     rxIsLoading.value = true;
     try {
-      final (users, isFromApi, errorMsg) = await _repo.fetchUsers(forceRefresh: forceRefresh);
+      final brandContext = Get.isRegistered<ServiceBrandContext>() ? Get.find<ServiceBrandContext>() : null;
+      final brandId = brandContext?.selectedBrandId;
+
+      final (users, isFromApi, errorMsg) = await _repo.fetchUsers(
+        brandId: brandId,
+        forceRefresh: forceRefresh,
+      );
       rxApiUserList.assignAll(users);
 
       if (forceRefresh && errorMsg != null) {

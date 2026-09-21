@@ -112,7 +112,7 @@ class ServiceBrandApi {
   /// Gets the currently configured API Base URL
   String get baseUrl {
     final url = _storage.readString(storageKeyBaseUrl);
-    if (url != null && url.trim().isNotEmpty && !url.contains('localhost')) {
+    if (url != null && url.trim().isNotEmpty) {
       return _sanitizeUrl(url.trim());
     }
     return defaultBaseUrl;
@@ -127,13 +127,13 @@ class ServiceBrandApi {
 
   /// Gets the auth token if any
   String? get authToken {
-    final token = _storage.readString(storageKeyAuthToken);
-    if (token != null && token.trim().isNotEmpty) {
-      return token.trim();
-    }
     final mainToken = _storage.readString('auth_access_token');
     if (mainToken != null && mainToken.trim().isNotEmpty) {
       return mainToken.trim();
+    }
+    final token = _storage.readString(storageKeyAuthToken);
+    if (token != null && token.trim().isNotEmpty) {
+      return token.trim();
     }
     return null;
   }
@@ -141,8 +141,8 @@ class ServiceBrandApi {
   /// Sets the auth token
   Future<void> setAuthToken(String token) async {
     final trimmed = token.trim();
-    await _storage.writeString(storageKeyAuthToken, trimmed);
     await _storage.writeString('auth_access_token', trimmed);
+    await _storage.writeString(storageKeyAuthToken, trimmed);
   }
 
   String _sanitizeUrl(String url) {
@@ -199,16 +199,28 @@ class ServiceBrandApi {
     }
   }
 
-  /// POST /api/brands
+  /// POST /api/brands/create or POST /api/brands
   /// Creates a new brand with the specified payload using Dio.
   Future<BrandApiResponse<ModelBrand>> createBrand(ModelBrand brand) async {
     final payloadJson = brand.toJson();
 
     try {
-      final response = await _dio.post(
-        '/api/brands',
-        data: payloadJson,
-      );
+      Response response;
+      try {
+        response = await _dio.post(
+          '/api/brands/create',
+          data: payloadJson,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404) {
+          response = await _dio.post(
+            '/api/brands',
+            data: payloadJson,
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       final statusCode = response.statusCode ?? 200;
 
@@ -218,7 +230,7 @@ class ServiceBrandApi {
         final createdBrand = brandData != null
             ? ModelBrand.fromJson(brandData)
             : (decoded is Map<String, dynamic>
-                ? brand.copyWith(id: decoded['id']?.toString() ?? decoded['_id']?.toString())
+                ? brand.copyWith(id: decoded['id']?.toString() ?? decoded['_id']?.toString() ?? (decoded['data'] is Map ? (decoded['data']['id']?.toString() ?? decoded['data']['_id']?.toString()) : null))
                 : brand);
 
         if (kDebugMode) {
@@ -354,12 +366,22 @@ class ServiceBrandApi {
     if (decoded is List) {
       rawList = decoded;
     } else if (decoded is Map<String, dynamic>) {
-      if (decoded['data'] is List) {
-        rawList = decoded['data'] as List;
+      final data = decoded['data'];
+      if (data is List) {
+        rawList = data;
+      } else if (data is Map<String, dynamic>) {
+        rawList = (data['content'] as List?) ??
+            (data['brands'] as List?) ??
+            (data['items'] as List?) ??
+            (data['docs'] as List?) ??
+            (data['data'] as List?) ??
+            [];
       } else if (decoded['brands'] is List) {
         rawList = decoded['brands'] as List;
       } else if (decoded['items'] is List) {
         rawList = decoded['items'] as List;
+      } else if (decoded['content'] is List) {
+        rawList = decoded['content'] as List;
       }
     }
     return rawList

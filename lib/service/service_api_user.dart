@@ -121,21 +121,21 @@ class ServiceApiUser {
   }
 
   String? get authToken {
-    final token = _storage.readString(storageKeyAuthToken);
-    if (token != null && token.trim().isNotEmpty) {
-      return token.trim();
-    }
     final mainToken = _storage.readString('auth_access_token');
     if (mainToken != null && mainToken.trim().isNotEmpty) {
       return mainToken.trim();
+    }
+    final token = _storage.readString(storageKeyAuthToken);
+    if (token != null && token.trim().isNotEmpty) {
+      return token.trim();
     }
     return null;
   }
 
   Future<void> setAuthToken(String token) async {
     final trimmed = token.trim();
-    await _storage.writeString(storageKeyAuthToken, trimmed);
     await _storage.writeString('auth_access_token', trimmed);
+    await _storage.writeString(storageKeyAuthToken, trimmed);
   }
 
   String _sanitizeUrl(String url) {
@@ -192,16 +192,28 @@ class ServiceApiUser {
     }
   }
 
-  /// POST /api/users/create
+  /// POST /api/users/create or POST /api/users
   /// Creates a new API user matching the exact cURL endpoint and JSON structure.
   Future<ApiUserResponse<ModelApiUser>> createApiUser(ModelApiUser user) async {
     final payloadJson = user.toCreatePayloadJson();
 
     try {
-      final response = await _dio.post(
-        '/api/users/create',
-        data: payloadJson,
-      );
+      Response response;
+      try {
+        response = await _dio.post(
+          '/api/users/create',
+          data: payloadJson,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404) {
+          response = await _dio.post(
+            '/api/users',
+            data: payloadJson,
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       final statusCode = response.statusCode ?? 200;
 
@@ -211,7 +223,7 @@ class ServiceApiUser {
         final createdUser = userData != null
             ? ModelApiUser.fromJson(userData)
             : (decoded is Map<String, dynamic>
-                ? user.copyWith(id: decoded['id']?.toString() ?? decoded['_id']?.toString())
+                ? user.copyWith(id: decoded['id']?.toString() ?? decoded['_id']?.toString() ?? (decoded['data'] is Map ? (decoded['data']['id']?.toString() ?? decoded['data']['_id']?.toString()) : null))
                 : user);
 
         final msg = (decoded is Map<String, dynamic> && decoded['message'] != null)
@@ -247,12 +259,20 @@ class ServiceApiUser {
   }
 
   /// GET /api/users
-  /// Fetches API users list from server with appType=MARKET.
-  Future<ApiUserResponse<List<ModelApiUser>>> getApiUsers() async {
+  /// Fetches API users list from server with appType=MARKET and brandId.
+  Future<ApiUserResponse<List<ModelApiUser>>> getApiUsers({String? brandId}) async {
     try {
+      final effectiveBrandId = (brandId != null && brandId.isNotEmpty)
+          ? brandId
+          : (_storage.readString('auth_brand_id') ?? '000000000000000000000000');
+
+      final params = <String, dynamic>{
+        'appType': 'MARKET',
+        'brandId': effectiveBrandId,
+      };
       final response = await _dio.get(
         '/api/users',
-        queryParameters: {'appType': 'MARKET'},
+        queryParameters: params,
       );
       final statusCode = response.statusCode ?? 200;
 
@@ -288,6 +308,10 @@ class ServiceApiUser {
 
   /// PUT /api/users/:id
   Future<ApiUserResponse<ModelApiUser>> updateApiUser(String id, ModelApiUser user) async {
+    if (id.startsWith('local_')) {
+      return createApiUser(user.copyWith(id: null));
+    }
+
     final payloadJson = user.toCreatePayloadJson();
 
     try {
@@ -321,6 +345,10 @@ class ServiceApiUser {
 
   /// DELETE /api/users/:id
   Future<ApiUserResponse<bool>> deleteApiUser(String id) async {
+    if (id.startsWith('local_')) {
+      return ApiUserResponse.success(true, statusCode: 200, message: 'Local user removed');
+    }
+
     try {
       final response = await _dio.delete('/api/users/$id');
       final statusCode = response.statusCode ?? 200;
@@ -366,12 +394,22 @@ class ServiceApiUser {
     if (decoded is List) {
       rawList = decoded;
     } else if (decoded is Map<String, dynamic>) {
-      if (decoded['data'] is List) {
-        rawList = decoded['data'] as List;
-      } else if (decoded['data'] is Map<String, dynamic> && decoded['data']['users'] is List) {
-        rawList = decoded['data']['users'] as List;
+      final data = decoded['data'];
+      if (data is List) {
+        rawList = data;
+      } else if (data is Map<String, dynamic>) {
+        rawList = (data['content'] as List?) ??
+            (data['users'] as List?) ??
+            (data['items'] as List?) ??
+            (data['docs'] as List?) ??
+            (data['data'] as List?) ??
+            [];
       } else if (decoded['users'] is List) {
         rawList = decoded['users'] as List;
+      } else if (decoded['items'] is List) {
+        rawList = decoded['items'] as List;
+      } else if (decoded['content'] is List) {
+        rawList = decoded['content'] as List;
       }
     }
     return rawList

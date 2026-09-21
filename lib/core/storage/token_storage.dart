@@ -12,6 +12,7 @@ class TokenStorage {
   static const String keyBrandId = 'auth_brand_id';
   static const String keyBranchId = 'auth_branch_id';
   static const String keyUserInfo = 'auth_user_info_json';
+  static const String keyAppType = 'auth_app_type';
 
   TokenStorage(this._storage);
 
@@ -55,6 +56,16 @@ class TokenStorage {
     return _storage.readString(keyBranchId);
   }
 
+  /// Save the authenticated user's appType (e.g. MARKET, RESTAURANT).
+  Future<void> saveAppType(String appType) async {
+    await _storage.writeString(keyAppType, appType);
+  }
+
+  /// Get stored appType, or null if not available.
+  String? getAppType() {
+    return _storage.readString(keyAppType);
+  }
+
   /// Check if user is currently authenticated (has access token).
   bool get hasAccessToken {
     final token = getAccessToken();
@@ -68,8 +79,10 @@ class TokenStorage {
     await _storage.delete(keyBrandId);
     await _storage.delete(keyBranchId);
     await _storage.delete(keyUserInfo);
+    await _storage.delete(keyAppType);
     if (kDebugMode) {
       debugPrint('🔑 [TokenStorage] Tokens and session cleared.');
     }
   }
 }
+

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
+import '../../../enums/enum_permission.dart';
 import '../../../model/entity_user.dart';
 import '../../../repository/repo_storage.dart';
 import '../../../service/service_brand_context.dart';
@@ -68,16 +69,29 @@ class AuthRepository {
         await _tokenStorage.saveBranchId(response.branchId!);
       }
 
+      // Preserve appType for MARKET validation on session restore
+      if (response.appType != null && response.appType!.isNotEmpty) {
+        await _tokenStorage.saveAppType(response.appType!);
+      }
+
       // Map AuthLoginResponse to EntityUser for application session compatibility
+      final roleNormalized = response.role?.toUpperCase().replaceAll('_', '') ?? '';
+      final isSuperAdmin = roleNormalized == 'SUPERADMIN' ||
+          response.userType?.toUpperCase() == 'PLATFORM';
+
+      final allPermissions = EnumPermission.values.map((e) => e.name).toList();
+
       final entityUser = EntityUser(
         username: response.username,
         first: response.firstName ?? response.username,
         last: response.lastName ?? '',
         role: response.role ?? 'superAdmin',
         mongoId: response.userId,
-        permissions: response.permissions.isNotEmpty
-            ? response.permissions
-            : ['dashboard', 'pos', 'item', 'stocks', 'customer', 'brandManage', 'branchManage'],
+        permissions: isSuperAdmin
+            ? allPermissions
+            : (response.permissions.isNotEmpty
+                ? response.permissions
+                : allPermissions),
         isActive: true,
       );
 

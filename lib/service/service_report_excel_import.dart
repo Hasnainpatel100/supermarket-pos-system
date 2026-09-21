@@ -205,11 +205,19 @@ class ServiceReportExcelImport {
         .toList();
     final expectedSet = expectedNormalized.toSet();
 
+    final allRows = sheet.rows;
+    if (allRows.isEmpty) {
+      return _ExcelParseResult(
+        success: false,
+        errorMessage: 'The worksheet contains no data.',
+      );
+    }
+
     int headerRowIdx = -1;
     final Map<int, String> colIndexToHeader = {};
 
-    for (int i = 0; i < sheet.rows.length; i++) {
-      final row = sheet.rows[i];
+    for (int i = 0; i < allRows.length; i++) {
+      final row = allRows[i];
       if (row.isEmpty) continue;
 
       final rowStrings = <String>[];
@@ -253,7 +261,7 @@ class ServiceReportExcelImport {
     if (headerRowIdx == -1) {
       // Find first non-empty row to list found headers for validation error
       final foundHeaderList = <String>[];
-      for (final row in sheet.rows) {
+      for (final row in allRows) {
         if (row.isEmpty) continue;
         for (final cell in row) {
           final v = cell?.value?.toString().trim();
@@ -274,8 +282,8 @@ class ServiceReportExcelImport {
     final parsedRows = <Map<String, dynamic>>[];
     final colEntries = colIndexToHeader.entries.toList();
 
-    for (int i = headerRowIdx + 1; i < sheet.rows.length; i++) {
-      final row = sheet.rows[i];
+    for (int i = headerRowIdx + 1; i < allRows.length; i++) {
+      final row = allRows[i];
       if (row.isEmpty) continue;
 
       final rowMap = <String, dynamic>{};

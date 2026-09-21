@@ -2,34 +2,21 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../commons/loader.dart';
-import '../../enums/enum_permission.dart';
 import '../../features/authentication/data/auth_repository.dart';
-import '../../model/entity_user.dart';
-import '../../objectbox.g.dart';
 import '../../repository/repo_storage.dart';
-import '../../service/service_object_box.dart';
 import '../../util/app_route.dart';
-import '../../util/my_date_time.dart';
 import '../../util/snackbar_util.dart';
+import '../../util/my_date_time.dart';
 import '../../util/util_device.dart';
 
 class ControllerLogin extends GetxController {
-  late Box<EntityUser> _boxUser;
   final RepoStorage _repoStorage = Get.find();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   var isPasswordHidden = true.obs;
-
-  @override
-  void onInit() {
-    final ob = Get.find<ServiceObjectBox>();
-    _boxUser = ob.box<EntityUser>();
-    super.onInit();
-  }
 
   void togglePasswordVisibility() {
     isPasswordHidden.value = !isPasswordHidden.value;
@@ -37,8 +24,6 @@ class ControllerLogin extends GetxController {
 
   void login() async {
     Loader.showLoader();
-
-    await checkUserCount();
 
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
@@ -48,106 +33,52 @@ class ControllerLogin extends GetxController {
       return;
     }
 
-    // 1. Attempt HTTP API login via Dio & AuthRepository
-    if (Get.isRegistered<AuthRepository>()) {
-      final authRepo = Get.find<AuthRepository>();
-      final result = await authRepo.login(username: email, pin: password);
-
-      if (result.success && result.user != null) {
-        if (kDebugMode) {
-          debugPrint('LOGIN SUCCESS');
-        }
-
-        final user = result.user!;
-
-        // Update login details in Entity User
-        user.lastLoginAt = MyDateTime.getCurrentDateTimeUtc();
-        var deviceName = await UtilDevice.getDeviceName();
-        user.lastLoginDevice = deviceName;
-        var deviceIp = await UtilDevice.getIpAddress();
-        user.lastLoginIp = deviceIp;
-
-        // Upsert user into local ObjectBox box
-        try {
-          final existing = _boxUser
-              .query(EntityUser_.username.equals(email))
-              .build()
-              .findFirst();
-          if (existing != null) {
-            user.id = existing.id;
-          }
-          _boxUser.put(user);
-        } catch (e) {
-          if (kDebugMode) {
-            debugPrint('Notice: Local ObjectBox cache skipped: $e');
-          }
-        }
-
-        Loader.hideLoader();
-        Get.offAllNamed(AppRoute.home);
-        return;
-      }
-    }
-
-    // 2. Local ObjectBox fallback authentication for offline dev/testing
-    final query = _boxUser
-        .query(
-          EntityUser_.username.equals(email) &
-              EntityUser_.password.equals(password),
-        )
-        .build();
-    final user = query.findFirst();
-    if (user == null) {
+    // ── Server-based authentication via AuthRepository ──
+    if (!Get.isRegistered<AuthRepository>()) {
       Loader.hideLoader();
-      SnackbarUtil.showError('invalid_credentials'.tr);
+      SnackbarUtil.showError('Authentication service is not available. Please restart the app.');
       return;
     }
 
-    // Ensure superAdmin permissions
-    if (user.role == 'superAdmin') {
-      final allPermissions = EnumPermission.values.map((e) => e.name).toList();
-      user.permissions ??= [];
-      for (var p in allPermissions) {
-        if (!user.permissions!.contains(p)) {
-          user.permissions!.add(p);
-        }
-      }
-      debugPrint("superAdmin permissions updated: ${user.permissions?.length}");
+    final authRepo = Get.find<AuthRepository>();
+    final result = await authRepo.login(username: email, pin: password);
+
+    if (!result.success || result.user == null) {
+      Loader.hideLoader();
+      SnackbarUtil.showError(result.errorMessage ?? 'invalid_credentials'.tr);
+      return;
     }
 
-    // Update login details in Entity User
-    user.lastLoginAt = MyDateTime.getCurrentDateTimeUtc();
-    var deviceName = await UtilDevice.getDeviceName();
-    user.lastLoginDevice = deviceName;
-    var deviceIp = await UtilDevice.getIpAddress();
-    user.lastLoginIp = deviceIp;
-    _boxUser.put(user);
+    // ── Enforce appType == MARKET ──
+    final appType = result.authResponse?.appType;
+    if (appType != null && appType.toUpperCase() != 'MARKET') {
+      Loader.hideLoader();
+      SnackbarUtil.showError(
+        'Access denied. This app is only for MARKET users. Your account type: $appType',
+      );
+      // Clear tokens since this user shouldn't be logged in
+      if (Get.isRegistered<AuthRepository>()) {
+        await Get.find<AuthRepository>().logout();
+      }
+      return;
+    }
 
-    // Store users details in storage
+    if (kDebugMode) {
+      debugPrint('✅ LOGIN SUCCESS (Server) - appType: $appType');
+    }
+
+    final user = result.user!;
+
+    // Update login metadata
+    user.lastLoginAt = MyDateTime.getCurrentDateTimeUtc();
+    user.lastLoginDevice = await UtilDevice.getDeviceName();
+    user.lastLoginIp = await UtilDevice.getIpAddress();
+
+    // Persist user session in RepoStorage
     await _repoStorage.setUser(json.encode(user.toMap()));
+
     Loader.hideLoader();
     Get.offAllNamed(AppRoute.home);
-  }
-
-  Future<void> checkUserCount() async {
-    int userCount = _boxUser.count();
-    debugPrint('userCount: $userCount');
-    if (userCount == 0) {
-      List<EntityUser> users = await loadUsersFromJson();
-      _boxUser.putMany(users);
-    } else {
-      for (var user in _boxUser.getAll()) {
-        debugPrint(json.encode(user.toMap()));
-      }
-    }
-  }
-
-  Future<List<EntityUser>> loadUsersFromJson() async {
-    final String jsonString = await rootBundle.loadString(
-      'assets/json/users.json',
-    );
-    final List<dynamic> jsonList = jsonDecode(jsonString);
-    return jsonList.map((e) => EntityUser.fromMap(e)).toList();
   }
 
   @override

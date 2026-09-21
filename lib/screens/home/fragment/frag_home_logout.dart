@@ -6,7 +6,6 @@ import '../../../enums/enum_main_menu.dart';
 import '../../../features/authentication/data/auth_repository.dart';
 import '../../../repository/repo_storage.dart';
 import '../../../util/app_route.dart';
-import '../../../util/static_methods.dart';
 import '../controller_home.dart';
 
 class FragHomeLogout extends StatelessWidget {
@@ -55,14 +54,10 @@ class FragHomeLogout extends StatelessWidget {
                 }
 
                 if (Get.isRegistered<ControllerHome>()) {
-                  final ControllerHome homeController = Get.find();
-                  homeController.selectedMainMenu.value = EnumMainMenu.dashboard;
+                  Get.delete<ControllerHome>(force: true);
                 }
-
-                Get.deleteAll(force: true);
-                await StaticMethods.initServices();
               } catch (e) {
-                debugPrint('Notice during logout reset: $e');
+                debugPrint('Notice during logout: $e');
               } finally {
                 Loader.hideLoader();
                 Get.offAllNamed(AppRoute.login);

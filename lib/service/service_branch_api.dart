@@ -115,15 +115,21 @@ class ServiceBranchApi {
   }
 
   String? get authToken {
-    final token = _storage.readString(storageKeyAuthToken);
-    if (token != null && token.trim().isNotEmpty) {
-      return token.trim();
-    }
     final mainToken = _storage.readString('auth_access_token');
     if (mainToken != null && mainToken.trim().isNotEmpty) {
       return mainToken.trim();
     }
+    final token = _storage.readString(storageKeyAuthToken);
+    if (token != null && token.trim().isNotEmpty) {
+      return token.trim();
+    }
     return null;
+  }
+
+  Future<void> setAuthToken(String token) async {
+    final trimmed = token.trim();
+    await _storage.writeString('auth_access_token', trimmed);
+    await _storage.writeString(storageKeyAuthToken, trimmed);
   }
 
   String _sanitizeUrl(String url) {

@@ -46,12 +46,13 @@ class RepoApiUser {
 
   /// Fetches API users from server, falling back to local cache if offline
   Future<(List<ModelApiUser> users, bool isFromApi, String? errorMessage)> fetchUsers({
+    String? brandId,
     bool forceRefresh = false,
   }) async {
     final cached = getCachedUsers();
 
     try {
-      final response = await _api.getApiUsers();
+      final response = await _api.getApiUsers(brandId: brandId);
       if (response.success && response.data != null) {
         final apiList = response.data!;
         // Merge API list with any cached ones that haven't synced yet

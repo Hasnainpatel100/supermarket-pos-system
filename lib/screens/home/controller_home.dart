@@ -26,8 +26,10 @@ class ControllerHome extends GetxController {
     var mapUser = json.decode(strUser);
     EntityUser entityUser = EntityUser.fromMap(mapUser);
 
-    // ✅ PATCH: Ensure superAdmin has all permissions (including newly added ones) on session restore
-    if (entityUser.role == 'superAdmin') {
+    // ✅ Ensure superAdmin has all permissions (including newly added ones) on session restore
+    final roleNormalized = entityUser.role?.toUpperCase().replaceAll('_', '') ?? '';
+    final isSuperAdmin = roleNormalized == 'SUPERADMIN';
+    if (isSuperAdmin) {
       final allPermissions = EnumPermission.values.map((e) => e.name).toList();
       entityUser.permissions ??= [];
       for (var p in allPermissions) {

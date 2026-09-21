@@ -11,6 +11,7 @@ class AuthLoginResponse {
   final String? branchId;
   final String? role;
   final String? userType;
+  final String? appType;
   final List<String> permissions;
 
   AuthLoginResponse({
@@ -25,6 +26,7 @@ class AuthLoginResponse {
     this.branchId,
     this.role,
     this.userType,
+    this.appType,
     this.permissions = const [],
   });
 
@@ -50,6 +52,7 @@ class AuthLoginResponse {
       branchId: data['branchId']?.toString(),
       role: data['role']?.toString(),
       userType: data['userType']?.toString(),
+      appType: data['appType']?.toString(),
       permissions: permissionsList,
     );
   }
@@ -67,6 +70,7 @@ class AuthLoginResponse {
       if (branchId != null) 'branchId': branchId,
       if (role != null) 'role': role,
       if (userType != null) 'userType': userType,
+      if (appType != null) 'appType': appType,
       'permissions': permissions,
     };
   }

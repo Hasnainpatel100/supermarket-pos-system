@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../service/service_api_user.dart';
+import '../../service/service_branch_api.dart';
 import '../../service/service_brand_api.dart';
 import '../../util/snackbar_util.dart';
 import '../../widget/app_dialog_components.dart';
@@ -20,6 +22,7 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
   bool _isTesting = false;
   String? _testResult;
   bool? _testSuccess;
+  bool _obscureToken = true;
 
   @override
   void initState() {
@@ -48,7 +51,8 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
       _testSuccess = null;
     });
 
-    final res = await _api.testConnection(url);
+    final token = _tokenController.text.trim();
+    final res = await _api.testConnection(url, token);
 
     setState(() {
       _isTesting = false;
@@ -64,9 +68,19 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
       return;
     }
 
-    await _api.setBaseUrl(url);
     final token = _tokenController.text.trim();
+
+    await _api.setBaseUrl(url);
     await _api.setAuthToken(token);
+
+    if (Get.isRegistered<ServiceBranchApi>()) {
+      await Get.find<ServiceBranchApi>().setBaseUrl(url);
+      await Get.find<ServiceBranchApi>().setAuthToken(token);
+    }
+    if (Get.isRegistered<ServiceApiUser>()) {
+      await Get.find<ServiceApiUser>().setBaseUrl(url);
+      await Get.find<ServiceApiUser>().setAuthToken(token);
+    }
 
     SnackbarUtil.showSuccess('API Server configuration saved');
     Get.back(result: true);
@@ -124,9 +138,33 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
               label: 'Bearer Auth Token (Optional)',
               hint: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
               prefixIcon: Icons.key_rounded,
-              obscure: true,
+              obscure: _obscureToken,
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      _obscureToken ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      size: 20,
+                    ),
+                    tooltip: _obscureToken ? 'Show token' : 'Hide token',
+                    onPressed: () => setState(() => _obscureToken = !_obscureToken),
+                  ),
+                  if (_tokenController.text.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.clear_rounded, size: 20),
+                      tooltip: 'Clear token',
+                      onPressed: () => setState(() => _tokenController.clear()),
+                    ),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 6),
+            const Text(
+              'Tip: Redundant "Bearer " prefixes and surrounding quotes are automatically stripped.',
+              style: TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+            const SizedBox(height: 14),
 
             // Test Connection button
             OutlinedButton.icon(

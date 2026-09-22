@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../model/model_brand.dart';
+import '../../model/model_branch.dart';
 import 'controller_api_user_form.dart';
 
 class ActivityApiUserForm extends StatelessWidget {
@@ -275,8 +277,9 @@ class ActivityApiUserForm extends StatelessWidget {
                                     )
                                     .toList(),
                                 onChanged: (v) {
-                                  if (v != null)
+                                  if (v != null) {
                                     controller.rxUserType.value = v;
+                                  }
                                 },
                               ),
                             ),
@@ -312,37 +315,121 @@ class ActivityApiUserForm extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
 
-                      // Brand & Branch IDs
+                      // Brand & Branch Dropdowns (appType: MARKET from server)
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Brand Dropdown
                           Expanded(
-                            child: TextFormField(
-                              controller: controller.textControllerBrandId,
-                              decoration: const InputDecoration(
-                                labelText: 'Brand ID',
-                                prefixIcon: Icon(
-                                  Icons.branding_watermark_outlined,
-                                  size: 20,
+                            child: Obx(() {
+                              final isLoading = controller.rxIsLoadingBrands.value;
+                              final brands = controller.rxBrandList;
+                              final selectedBrand = controller.rxSelectedBrand.value;
+
+                              return DropdownButtonFormField<ModelBrand>(
+                                value: brands.firstWhereOrNull((b) => b.id == selectedBrand?.id),
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Brand (MARKET) *',
+                                  hintText: isLoading ? 'Loading MARKET brands...' : 'Select Brand',
+                                  prefixIcon: isLoading
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          ),
+                                        )
+                                      : const Icon(Icons.branding_watermark_outlined, size: 20),
+                                  border: const OutlineInputBorder(),
+                                  helperText: 'Server brands with appType=MARKET',
                                 ),
-                                border: OutlineInputBorder(),
-                                helperText: 'Default: 000000000000000000000000',
-                              ),
-                            ),
+                                items: brands.map((brand) {
+                                  return DropdownMenuItem<ModelBrand>(
+                                    value: brand,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            brand.name.en,
+                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.shade900.withValues(alpha: 0.3),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(color: Colors.blue.shade400, width: 0.5),
+                                          ),
+                                          child: const Text('MARKET', style: TextStyle(fontSize: 10, color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (brand) => controller.onBrandSelected(brand),
+                              );
+                            }),
                           ),
                           const SizedBox(width: 14),
+                          // Branch Dropdown
                           Expanded(
-                            child: TextFormField(
-                              controller: controller.textControllerBranchId,
-                              decoration: const InputDecoration(
-                                labelText: 'Branch ID',
-                                prefixIcon: Icon(
-                                  Icons.add_business_outlined,
-                                  size: 20,
+                            child: Obx(() {
+                              final isLoading = controller.rxIsLoadingBranches.value;
+                              final branches = controller.rxBranchList;
+                              final selectedBranch = controller.rxSelectedBranch.value;
+                              final hasBrandSelected = controller.rxSelectedBrand.value != null;
+
+                              return DropdownButtonFormField<ModelBranch>(
+                                value: branches.firstWhereOrNull((b) => b.id == selectedBranch?.id),
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: 'Branch (MARKET) *',
+                                  hintText: !hasBrandSelected
+                                      ? 'Select a Brand first'
+                                      : (isLoading ? 'Loading branches...' : (branches.isEmpty ? 'No branches found' : 'Select Branch')),
+                                  prefixIcon: isLoading
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          ),
+                                        )
+                                      : const Icon(Icons.add_business_outlined, size: 20),
+                                  border: const OutlineInputBorder(),
+                                  helperText: 'Branches under selected brand',
                                 ),
-                                border: OutlineInputBorder(),
-                                helperText: 'Default: 000000000000000000000000',
-                              ),
-                            ),
+                                items: branches.map((branch) {
+                                  return DropdownMenuItem<ModelBranch>(
+                                    value: branch,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            branch.name.en,
+                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (branch.branchCode.isNotEmpty) ...[
+                                          const SizedBox(width: 6),
+                                          Text('[${branch.branchCode}]', style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                                        ],
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: !hasBrandSelected ? null : (branch) => controller.onBranchSelected(branch),
+                              );
+                            }),
                           ),
                         ],
                       ),

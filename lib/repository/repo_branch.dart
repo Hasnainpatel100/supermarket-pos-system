@@ -121,6 +121,34 @@ class RepoBranch {
     String id,
     ModelBranch branch,
   ) async {
+    // If the ID is a local temp ID, the branch was never synced — create it instead
+    if (id.startsWith('local_')) {
+      // IMPORTANT: copyWith(id: null) doesn't work in Dart (null ?? existingId = existingId)
+      // So we must rebuild the branch explicitly with id: null to strip the local_ ID
+      final branchForCreate = ModelBranch(
+        id: null,  // strip the local_ ID — let server assign real MongoDB _id
+        brandId: branch.brandId,
+        brandName: branch.brandName,
+        branchCode: branch.branchCode,
+        name: branch.name,
+        address: branch.address,
+        contact: branch.contact,
+        serviceTypes: branch.serviceTypes,
+        appType: branch.appType,
+        status: branch.status,
+        settings: branch.settings,
+        remoteId: branch.remoteId,
+      );
+      final (created, success, message) = await createBranch(branchForCreate);
+      if (success && created != null) {
+        // Remove the old local entry and replace with the synced one
+        final all = getCachedBranches();
+        all.removeWhere((b) => b.id == id);
+        await _saveToCache(all);
+      }
+      return (created, success, success ? 'Branch synced to server successfully' : message);
+    }
+
     final response = await _api.updateBranch(id, branch);
     final updated = (response.success && response.data != null) ? response.data! : branch.copyWith(id: id);
 
@@ -143,10 +171,38 @@ class RepoBranch {
     return (updated, response.success, response.message);
   }
 
-  Future<(bool success, String message)> deleteBranch(String id, {String? branchName}) async {
+  /// Clears the local branches cache.
+  Future<void> clearLocalCache() async {
+    await _storage.writeString(_cacheKey, '[]');
+  }
+
+  Future<(bool success, String message)> deleteBranch(
+    String id, {
+    String? branchName,
+    String? branchCode,
+  }) async {
+    // If the ID is empty, starts with 'local_', or was never saved with a server ID
+    if (id.isEmpty || id.startsWith('local_')) {
+      final all = getCachedBranches();
+      all.removeWhere((b) =>
+          (id.isNotEmpty && b.id == id) ||
+          (branchCode != null && branchCode.isNotEmpty && b.branchCode == branchCode) ||
+          (branchName != null && branchName.isNotEmpty && b.name.en == branchName));
+      await _saveToCache(all);
+      _logAudit(
+        action: AuditAction.delete,
+        branchId: id.isEmpty ? 'local' : id,
+        branchName: branchName ?? id,
+        description: 'Local branch "${branchName ?? id}" removed (was never synced)',
+      );
+      return (true, 'Local branch removed successfully');
+    }
+
     final response = await _api.deleteBranch(id);
     final all = getCachedBranches();
-    all.removeWhere((b) => b.id == id);
+    all.removeWhere((b) =>
+        b.id == id ||
+        (branchCode != null && branchCode.isNotEmpty && b.branchCode == branchCode));
     await _saveToCache(all);
 
     _logAudit(

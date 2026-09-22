@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Represents an API User data model for REST API endpoints.
 class ModelApiUser {
   final String? id;
@@ -24,8 +22,8 @@ class ModelApiUser {
 
   const ModelApiUser({
     this.id,
-    this.brandId = '000000000000000000000000',
-    this.branchId = '000000000000000000000000',
+    this.brandId = '',
+    this.branchId = '',
     this.appType = 'MARKET',
     this.userType = 'PLATFORM',
     this.role = 'SUPPORT_TEAM',
@@ -62,8 +60,8 @@ class ModelApiUser {
 
     return ModelApiUser(
       id: json['id']?.toString() ?? json['_id']?.toString(),
-      brandId: json['brandId']?.toString() ?? '000000000000000000000000',
-      branchId: json['branchId']?.toString() ?? '000000000000000000000000',
+      brandId: json['brandId']?.toString() ?? '',
+      branchId: json['branchId']?.toString() ?? '',
       appType: json['appType']?.toString() ?? 'MARKET',
       userType: json['userType']?.toString() ?? 'PLATFORM',
       role: json['role']?.toString() ?? 'SUPPORT_TEAM',
@@ -74,22 +72,20 @@ class ModelApiUser {
       email: json['email']?.toString() ?? '',
       phoneNumber: json['phoneNumber']?.toString() ?? '',
       permissions: parsedPermissions,
-      isActive: json['isActive'] == true || json['isActive'] == null,
-      isLocked: json['isLocked'] == true,
+      isActive: json['isActive'] == true || json['isActive'] == 1,
+      isLocked: json['isLocked'] == true || json['isLocked'] == 1,
       failedLoginAttempts: json['failedLoginAttempts'] is int
           ? json['failedLoginAttempts'] as int
-          : int.tryParse(json['failedLoginAttempts']?.toString() ?? '0') ?? 0,
+          : int.tryParse(json['failedLoginAttempts']?.toString() ?? '') ?? 0,
       lastSeenAt: json['lastSeenAt'],
       createdAt: json['createdAt'],
       updatedAt: json['updatedAt'],
     );
   }
 
-  /// Converts model to the request JSON payload expected by POST /api/users/create
+  /// Converts payload for POST /api/users (creation)
   Map<String, dynamic> toCreatePayloadJson() {
     final map = <String, dynamic>{
-      'brandId': brandId,
-      'branchId': branchId,
       'appType': 'MARKET',
       'userType': userType,
       'role': role,
@@ -101,6 +97,13 @@ class ModelApiUser {
       'phoneNumber': phoneNumber,
       'permissions': permissions,
     };
+    // Only include brandId / branchId if they are real MongoDB ObjectIds (non-empty, not dummy 0s, not local_)
+    if (brandId.isNotEmpty && brandId != '000000000000000000000000' && !brandId.startsWith('local_')) {
+      map['brandId'] = brandId;
+    }
+    if (branchId.isNotEmpty && branchId != '000000000000000000000000' && !branchId.startsWith('local_')) {
+      map['branchId'] = branchId;
+    }
     return map;
   }
 

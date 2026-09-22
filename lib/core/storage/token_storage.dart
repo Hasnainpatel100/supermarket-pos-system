@@ -16,14 +16,32 @@ class TokenStorage {
 
   TokenStorage(this._storage);
 
+  /// Cleans and strips 'Bearer ' prefixes, quotes, whitespace, and newlines
+  static String sanitizeToken(String? raw) {
+    if (raw == null) return '';
+    var token = raw.trim();
+    if ((token.startsWith('"') && token.endsWith('"')) ||
+        (token.startsWith("'") && token.endsWith("'"))) {
+      token = token.substring(1, token.length - 1).trim();
+    }
+    while (token.toLowerCase().startsWith('bearer ')) {
+      token = token.substring(7).trim();
+    }
+    return token.replaceAll('\r', '').replaceAll('\n', '').trim();
+  }
+
   /// Save the JWT access token.
   Future<void> saveAccessToken(String token) async {
-    await _storage.writeString(keyAccessToken, token);
+    final clean = sanitizeToken(token);
+    await _storage.writeString(keyAccessToken, clean);
   }
 
   /// Get stored JWT access token, or null if not available.
   String? getAccessToken() {
-    return _storage.readString(keyAccessToken);
+    final token = _storage.readString(keyAccessToken);
+    if (token == null || token.trim().isEmpty) return null;
+    final clean = sanitizeToken(token);
+    return clean.isNotEmpty ? clean : null;
   }
 
   /// Save the refresh token.

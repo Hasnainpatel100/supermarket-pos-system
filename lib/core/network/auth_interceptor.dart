@@ -88,7 +88,8 @@ class AuthInterceptor extends Interceptor {
           await _tokenStorage.saveAccessToken(newAccessToken);
 
           // Update header and retry request
-          requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+          final cleanToken = TokenStorage.sanitizeToken(newAccessToken);
+          requestOptions.headers['Authorization'] = 'Bearer $cleanToken';
 
           try {
             // Create a clean Dio instance to retry the original request

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -85,8 +86,10 @@ class ControllerBranchForm extends GetxController {
     tcWhatsapp.text = branch.contact.phones.whatsapp;
     tcEmail.text = branch.contact.email;
     rxSelectedServiceTypes.assignAll(branch.serviceTypes);
-    rxAppType.value = branch.appType;
-    rxStatus.value = branch.status;
+    final upperAppType = branch.appType.toUpperCase();
+    rxAppType.value = appTypeOptions.contains(upperAppType) ? upperAppType : 'MARKET';
+    final upperStatus = branch.status.toUpperCase();
+    rxStatus.value = statusOptions.contains(upperStatus) ? upperStatus : 'ACTIVE';
   }
 
   void copyPrimaryToWhatsapp() {
@@ -140,30 +143,53 @@ class ControllerBranchForm extends GetxController {
       return;
     }
 
+    final selectedBrandId = rxSelectedBrand.value?.id ?? '';
+    // Guard against dummy IDs — means brand was saved locally and not yet synced
+    if (selectedBrandId.isEmpty ||
+        selectedBrandId == '000000000000000000000000' ||
+        selectedBrandId.startsWith('local_')) {
+      SnackbarUtil.showError(
+        'The selected brand "${rxSelectedBrand.value?.name.en}" does not have a valid server ID.\n'
+        'Please go to Brands screen and sync it to the server first.',
+      );
+      return;
+    }
+
     rxIsSubmitting.value = true;
     try {
       final branch = _buildBranch();
+
+      if (kDebugMode) {
+        debugPrint('🌿 [BranchForm] Submitting payload:');
+        debugPrint(branch.toJsonString(pretty: true));
+      }
+
       final isEditing = editingBranch != null && editingBranch!.id != null;
 
       if (isEditing) {
-        final (_, success, message) = await _repoBranch.updateBranch(editingBranch!.id!, branch);
+        final (updated, success, message) = await _repoBranch.updateBranch(editingBranch!.id!, branch);
+        final resultBranch = updated ?? branch;
         if (success) {
           SnackbarUtil.showSuccess('Branch updated successfully');
-          Get.back(result: branch);
+          Get.back(result: resultBranch);
         } else {
           SnackbarUtil.showWarning(message);
+          Get.back(result: resultBranch);
         }
       } else {
         final (created, success, message) = await _repoBranch.createBranch(branch);
         if (success) {
           SnackbarUtil.showSuccess('Branch created successfully');
           Get.back(result: created);
-        } else {
-          // Still close with result on local fallback
+        } else if (created != null) {
           SnackbarUtil.showWarning(message);
-          if (created != null) Get.back(result: created);
+          Get.back(result: created);
+        } else {
+          SnackbarUtil.showError(message);
         }
       }
+    } catch (e) {
+      SnackbarUtil.showError('Unexpected error: $e');
     } finally {
       rxIsSubmitting.value = false;
     }

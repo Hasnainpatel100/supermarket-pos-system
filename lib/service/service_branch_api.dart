@@ -68,7 +68,7 @@ class ServiceBranchApi {
           'Accept': 'application/json',
         },
         responseType: ResponseType.json,
-        validateStatus: (status) => status != null && status < 500,
+        validateStatus: (status) => true, // Accept all status codes to read error body
       ),
     );
 
@@ -79,6 +79,8 @@ class ServiceBranchApi {
           final token = authToken;
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
+          } else {
+            options.headers.remove('Authorization');
           }
           if (kDebugMode) {
             debugPrint('🌿 [Branch] ${options.method} ${options.baseUrl}${options.path}');
@@ -108,28 +110,57 @@ class ServiceBranchApi {
 
   String get baseUrl {
     final url = _storage.readString(storageKeyBaseUrl);
-    if (url != null && url.trim().isNotEmpty && !url.contains('localhost')) {
+    if (url != null && url.trim().isNotEmpty) {
       return _sanitizeUrl(url.trim());
     }
     return defaultBaseUrl;
   }
 
+  Future<void> setBaseUrl(String url) async {
+    final sanitized = _sanitizeUrl(url.trim());
+    await _storage.writeString(storageKeyBaseUrl, sanitized);
+    _dio.options.baseUrl = sanitized;
+  }
+
+  /// Strips redundant 'Bearer ' prefixes, whitespace, quotes, and newlines
+  static String sanitizeToken(String? raw) {
+    if (raw == null) return '';
+    var token = raw.trim();
+    if ((token.startsWith('"') && token.endsWith('"')) ||
+        (token.startsWith("'") && token.endsWith("'"))) {
+      token = token.substring(1, token.length - 1).trim();
+    }
+    while (token.toLowerCase().startsWith('bearer ')) {
+      token = token.substring(7).trim();
+    }
+    return token.replaceAll('\r', '').replaceAll('\n', '').trim();
+  }
+
   String? get authToken {
     final mainToken = _storage.readString('auth_access_token');
     if (mainToken != null && mainToken.trim().isNotEmpty) {
-      return mainToken.trim();
+      final clean = sanitizeToken(mainToken);
+      if (clean.isNotEmpty) return clean;
     }
     final token = _storage.readString(storageKeyAuthToken);
     if (token != null && token.trim().isNotEmpty) {
-      return token.trim();
+      final clean = sanitizeToken(token);
+      if (clean.isNotEmpty) return clean;
     }
     return null;
   }
 
   Future<void> setAuthToken(String token) async {
-    final trimmed = token.trim();
-    await _storage.writeString('auth_access_token', trimmed);
-    await _storage.writeString(storageKeyAuthToken, trimmed);
+    final clean = sanitizeToken(token);
+    if (clean.isEmpty) {
+      await _storage.delete('auth_access_token');
+      await _storage.delete(storageKeyAuthToken);
+      _dio.options.headers.remove('Authorization');
+    } else {
+      await _storage.writeString('auth_access_token', clean);
+      await _storage.writeString(storageKeyAuthToken, clean);
+      _dio.options.headers['Authorization'] = 'Bearer $clean';
+    }
   }
 
   String _sanitizeUrl(String url) {
@@ -143,19 +174,23 @@ class ServiceBranchApi {
 
   // ── CRUD Methods ─────────────────────────────────────────────────────────────
 
-  /// POST /api/branches/create or POST /api/branches
+  /// POST /api/branches/create (with auto-fallback to POST /api/branches on 404)
   Future<BranchApiResponse<ModelBranch>> createBranch(ModelBranch branch) async {
     try {
-      Response response;
-      try {
-        response = await _dio.post('/api/branches/create', data: branch.toJson());
-      } on DioException catch (e) {
-        if (e.response?.statusCode == 404) {
-          response = await _dio.post('/api/branches', data: branch.toJson());
-        } else {
-          rethrow;
+      final payload = branch.toJson();
+      Response response = await _dio.post('/api/branches/create', data: payload);
+
+      // Auto-fallback to /api/branches if /api/branches/create is not found
+      if (response.statusCode == 404) {
+        if (kDebugMode) {
+          debugPrint('⚠️ [Branch] /api/branches/create was 404, trying /api/branches');
+        }
+        final fallback = await _dio.post('/api/branches', data: payload);
+        if (fallback.statusCode != 404) {
+          response = fallback;
         }
       }
+
       final statusCode = response.statusCode ?? 200;
 
       if (statusCode == 200 || statusCode == 201) {
@@ -164,7 +199,7 @@ class ServiceBranchApi {
             ? ModelBranch.fromJson(branchData)
             : branch.copyWith(id: _extractId(response.data));
         if (kDebugMode) {
-          debugPrint('BRANCH CREATE SUCCESS');
+          debugPrint('✅ BRANCH CREATE SUCCESS: ${created.id}');
         }
         return BranchApiResponse.success(created, statusCode: statusCode, message: 'Branch created successfully');
       }
@@ -184,16 +219,30 @@ class ServiceBranchApi {
     }
   }
 
-  /// GET /api/branches
-  Future<BranchApiResponse<List<ModelBranch>>> getBranches({String? status}) async {
+  /// GET /api/branches?page=1&limit=20&appType=MARKET
+  Future<BranchApiResponse<List<ModelBranch>>> getBranches({String? status, int page = 1, int limit = 100}) async {
     try {
       final params = <String, dynamic>{
+        'page': page,
+        'limit': limit,
         'appType': 'MARKET',
       };
       if (status != null && status.isNotEmpty && status.toUpperCase() != 'ALL') {
         params['status'] = status;
       }
-      final response = await _dio.get('/api/branches', queryParameters: params);
+      Response response = await _dio.get('/api/branches', queryParameters: params);
+
+      // Auto-fallback: If /api/branches with appType param returns 404, retry plain /api/branches
+      if (response.statusCode == 404) {
+        if (kDebugMode) {
+          debugPrint('⚠️ [Branch] GET /api/branches?appType=MARKET was 404, trying plain /api/branches');
+        }
+        final fallback = await _dio.get('/api/branches');
+        if (fallback.statusCode != 404) {
+          response = fallback;
+        }
+      }
+
       final statusCode = response.statusCode ?? 200;
 
       if (statusCode == 200) {
@@ -228,10 +277,35 @@ class ServiceBranchApi {
     }
   }
 
-  /// GET /api/branches/brand/:brandId
-  Future<BranchApiResponse<List<ModelBranch>>> getBranchesByBrand(String brandId) async {
+  /// GET /api/branches/brand/:brandId?page=1&limit=20 (with fallback to ?brandId= query param)
+  Future<BranchApiResponse<List<ModelBranch>>> getBranchesByBrand(String brandId, {int page = 1, int limit = 100}) async {
+    // If brandId is invalid or dummy, fetch all branches instead of calling invalid backend route
+    if (brandId.isEmpty || brandId == '000000000000000000000000' || brandId.startsWith('local_')) {
+      return getBranches();
+    }
+
     try {
-      final response = await _dio.get('/api/branches/brand/$brandId');
+      final params = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+      };
+      Response response = await _dio.get('/api/branches/brand/$brandId', queryParameters: params);
+
+      if (response.statusCode == 404) {
+        if (kDebugMode) {
+          debugPrint('⚠️ [Branch] /api/branches/brand/$brandId was 404, falling back to query param');
+        }
+        final fallback = await _dio.get('/api/branches', queryParameters: {
+          'brandId': brandId,
+          'appType': 'MARKET',
+          'page': page,
+          'limit': limit,
+        });
+        if (fallback.statusCode != 404) {
+          response = fallback;
+        }
+      }
+
       final statusCode = response.statusCode ?? 200;
 
       if (statusCode == 200) {
@@ -246,10 +320,27 @@ class ServiceBranchApi {
     }
   }
 
-  /// PUT /api/branches/:id
+  /// PUT /api/branches/:id (with fallback to PATCH or /update/:id on 404)
   Future<BranchApiResponse<ModelBranch>> updateBranch(String id, ModelBranch branch) async {
     try {
-      final response = await _dio.put('/api/branches/$id', data: branch.toJson());
+      final payload = branch.toJson();
+      Response response = await _dio.put('/api/branches/$id', data: payload);
+
+      if (response.statusCode == 404) {
+        if (kDebugMode) {
+          debugPrint('⚠️ [Branch] PUT /api/branches/$id was 404, trying PATCH');
+        }
+        final patchResp = await _dio.patch('/api/branches/$id', data: payload);
+        if (patchResp.statusCode != 404) {
+          response = patchResp;
+        } else {
+          final updateResp = await _dio.put('/api/branches/update/$id', data: payload);
+          if (updateResp.statusCode != 404) {
+            response = updateResp;
+          }
+        }
+      }
+
       final statusCode = response.statusCode ?? 200;
 
       if (statusCode == 200 || statusCode == 204) {
@@ -381,12 +472,19 @@ class ServiceBranchApi {
 
   String _extractErrorMessage(dynamic body, int statusCode) {
     if (body is Map<String, dynamic>) {
+      // Handle {code: INTERNAL_ERROR, message: ...} format
       if (body['message'] != null) return body['message'].toString();
+      if (body['error'] is Map && body['error']['message'] != null) {
+        return body['error']['message'].toString();
+      }
       if (body['error'] != null) return body['error'].toString();
+      if (body['detail'] != null) return body['detail'].toString();
     }
+    // Return full raw body so nothing is hidden
+    final rawStr = body?.toString() ?? '';
     switch (statusCode) {
       case 400:
-        return 'Invalid branch data. Please check all required fields.';
+        return rawStr.isNotEmpty ? rawStr : 'Invalid branch data. Please check all required fields.';
       case 401:
         return 'Unauthorized. Please check your authentication token.';
       case 403:
@@ -396,9 +494,11 @@ class ServiceBranchApi {
       case 409:
         return 'A branch with this code already exists under the selected brand.';
       case 422:
-        return 'Validation failed. Please review the form fields.';
+        return rawStr.isNotEmpty ? rawStr : 'Validation failed. Please review the form fields.';
+      case 500:
+        return rawStr.isNotEmpty ? 'Server error: $rawStr' : 'Internal server error. Please check server logs.';
       default:
-        return 'Server responded with HTTP $statusCode.';
+        return rawStr.isNotEmpty ? rawStr : 'Server responded with HTTP $statusCode.';
     }
   }
 

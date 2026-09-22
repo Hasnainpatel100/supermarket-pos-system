@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../service/service_api_user.dart';
+import '../../service/service_branch_api.dart';
+import '../../service/service_brand_api.dart';
 import '../../util/snackbar_util.dart';
 
 class DialogApiUserConfig extends StatefulWidget {
@@ -41,7 +43,10 @@ class _DialogApiUserConfigState extends State<DialogApiUserConfig> {
       _testResult = null;
     });
 
-    final res = await _apiService.testConnection(_urlController.text.trim());
+    final res = await _apiService.testConnection(
+      _urlController.text.trim(),
+      _tokenController.text.trim(),
+    );
 
     setState(() {
       _isTesting = false;
@@ -61,6 +66,15 @@ class _DialogApiUserConfigState extends State<DialogApiUserConfig> {
 
     await _apiService.setBaseUrl(url);
     await _apiService.setAuthToken(token);
+
+    if (Get.isRegistered<ServiceBrandApi>()) {
+      await Get.find<ServiceBrandApi>().setBaseUrl(url);
+      await Get.find<ServiceBrandApi>().setAuthToken(token);
+    }
+    if (Get.isRegistered<ServiceBranchApi>()) {
+      await Get.find<ServiceBranchApi>().setBaseUrl(url);
+      await Get.find<ServiceBranchApi>().setAuthToken(token);
+    }
 
     SnackbarUtil.showSuccess('API User configuration saved!');
     Get.back(result: true);

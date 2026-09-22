@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../model/model_branch.dart';
+import '../../model/model_brand.dart';
 import '../../widget/app_dialog_components.dart';
 import 'controller_branch_form.dart';
 
@@ -349,8 +350,12 @@ class ActivityBranchForm extends StatelessWidget {
         );
       }
 
-      return DropdownButtonFormField(
-        value: controller.rxSelectedBrand.value,
+      final selectedBrand = controller.rxBrandList
+          .where((b) => b.id == controller.rxSelectedBrand.value?.id)
+          .firstOrNull;
+
+      return DropdownButtonFormField<ModelBrand>(
+        value: selectedBrand,
         decoration: InputDecoration(
           labelText: 'Brand *',
           hintText: 'Select a Brand',
@@ -429,8 +434,14 @@ class ActivityBranchForm extends StatelessWidget {
     required ColorScheme colorScheme,
     Color? activeColor,
   }) {
+    // Case-insensitive match against allowed items to prevent Flutter DropdownButton AssertionError
+    final normalizedValue = items.firstWhere(
+      (item) => item.toUpperCase() == value.toUpperCase(),
+      orElse: () => items.first,
+    );
+
     return DropdownButtonFormField<String>(
-      value: value,
+      value: normalizedValue,
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),

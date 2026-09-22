@@ -67,7 +67,7 @@ class ServiceApiUser {
         'Accept': 'application/json',
       },
       responseType: ResponseType.json,
-      validateStatus: (status) => status != null && status < 500,
+      validateStatus: (status) => true, // Accept all status codes to read error body
     );
 
     final dioInstance = Dio(options);
@@ -79,6 +79,8 @@ class ServiceApiUser {
           final token = authToken;
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
+          } else {
+            options.headers.remove('Authorization');
           }
           if (kDebugMode) {
             debugPrint('🚀 [API User Request] ${options.method} ${options.baseUrl}${options.path}');
@@ -108,7 +110,7 @@ class ServiceApiUser {
 
   String get baseUrl {
     final url = _storage.readString(storageKeyBaseUrl);
-    if (url != null && url.trim().isNotEmpty && !url.contains('localhost')) {
+    if (url != null && url.trim().isNotEmpty) {
       return _sanitizeUrl(url.trim());
     }
     return defaultBaseUrl;
@@ -120,22 +122,45 @@ class ServiceApiUser {
     _dio.options.baseUrl = sanitized;
   }
 
+  /// Strips redundant 'Bearer ' prefixes, whitespace, quotes, and newlines
+  static String sanitizeToken(String? raw) {
+    if (raw == null) return '';
+    var token = raw.trim();
+    if ((token.startsWith('"') && token.endsWith('"')) ||
+        (token.startsWith("'") && token.endsWith("'"))) {
+      token = token.substring(1, token.length - 1).trim();
+    }
+    while (token.toLowerCase().startsWith('bearer ')) {
+      token = token.substring(7).trim();
+    }
+    return token.replaceAll('\r', '').replaceAll('\n', '').trim();
+  }
+
   String? get authToken {
     final mainToken = _storage.readString('auth_access_token');
     if (mainToken != null && mainToken.trim().isNotEmpty) {
-      return mainToken.trim();
+      final clean = sanitizeToken(mainToken);
+      if (clean.isNotEmpty) return clean;
     }
     final token = _storage.readString(storageKeyAuthToken);
     if (token != null && token.trim().isNotEmpty) {
-      return token.trim();
+      final clean = sanitizeToken(token);
+      if (clean.isNotEmpty) return clean;
     }
     return null;
   }
 
   Future<void> setAuthToken(String token) async {
-    final trimmed = token.trim();
-    await _storage.writeString('auth_access_token', trimmed);
-    await _storage.writeString(storageKeyAuthToken, trimmed);
+    final clean = sanitizeToken(token);
+    if (clean.isEmpty) {
+      await _storage.delete('auth_access_token');
+      await _storage.delete(storageKeyAuthToken);
+      _dio.options.headers.remove('Authorization');
+    } else {
+      await _storage.writeString('auth_access_token', clean);
+      await _storage.writeString(storageKeyAuthToken, clean);
+      _dio.options.headers['Authorization'] = 'Bearer $clean';
+    }
   }
 
   String _sanitizeUrl(String url) {
@@ -150,36 +175,60 @@ class ServiceApiUser {
   }
 
   /// Tests connection to backend API server.
-  Future<ApiUserResponse<bool>> testConnection([String? customUrl]) async {
+  Future<ApiUserResponse<bool>> testConnection([String? customUrl, String? customToken]) async {
     final targetUrl = _sanitizeUrl(customUrl ?? baseUrl);
+    final rawToken = customToken != null ? sanitizeToken(customToken) : (authToken ?? '');
+
     try {
+      final storedBrandId = _storage.readString('auth_brand_id');
+      final queryParams = <String, dynamic>{'appType': 'MARKET'};
+      if (storedBrandId != null && storedBrandId.isNotEmpty) {
+        queryParams['brandId'] = storedBrandId;
+      }
+
       final testDio = Dio(
         BaseOptions(
           baseUrl: targetUrl,
-          connectTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 5),
+          connectTimeout: const Duration(seconds: 8),
+          receiveTimeout: const Duration(seconds: 8),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            if (authToken != null && authToken!.isNotEmpty)
-              'Authorization': 'Bearer $authToken',
+            if (rawToken.isNotEmpty)
+              'Authorization': 'Bearer $rawToken',
           },
-          validateStatus: (status) => status != null && status < 500,
+          validateStatus: (status) => true,
         ),
       );
 
-      final response = await testDio.get('/api/users');
+      final response = await testDio.get('/api/users', queryParameters: queryParams);
+      final status = response.statusCode ?? 0;
 
-      if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 500) {
+      if (status >= 200 && status < 300) {
         return ApiUserResponse.success(
           true,
-          statusCode: response.statusCode ?? 200,
-          message: 'Connected successfully to $targetUrl (HTTP ${response.statusCode})',
+          statusCode: status,
+          message: 'Connected successfully to $targetUrl (HTTP $status)',
+        );
+      } else if (status == 401) {
+        return ApiUserResponse.error(
+          rawToken.isEmpty
+              ? 'Authentication required (HTTP 401). Please enter a valid Bearer Token.'
+              : 'Invalid or expired token (HTTP 401). The server rejected the auth token.',
+          statusCode: 401,
+          rawBody: response.data,
+        );
+      } else if (status == 403) {
+        return ApiUserResponse.error(
+          'Forbidden (HTTP 403): Token does not have permission to access /api/users.',
+          statusCode: 403,
+          rawBody: response.data,
         );
       } else {
         return ApiUserResponse.error(
-          'Server returned HTTP status ${response.statusCode}',
-          statusCode: response.statusCode ?? 500,
+          _extractErrorMessage(response.data, status),
+          statusCode: status,
+          rawBody: response.data,
         );
       }
     } on DioException catch (e) {
@@ -192,26 +241,20 @@ class ServiceApiUser {
     }
   }
 
-  /// POST /api/users/create or POST /api/users
-  /// Creates a new API user matching the exact cURL endpoint and JSON structure.
+  /// POST /api/users/create (with fallback to POST /api/users on 404)
   Future<ApiUserResponse<ModelApiUser>> createApiUser(ModelApiUser user) async {
     final payloadJson = user.toCreatePayloadJson();
 
     try {
-      Response response;
-      try {
-        response = await _dio.post(
-          '/api/users/create',
-          data: payloadJson,
-        );
-      } on DioException catch (e) {
-        if (e.response?.statusCode == 404) {
-          response = await _dio.post(
-            '/api/users',
-            data: payloadJson,
-          );
-        } else {
-          rethrow;
+      Response response = await _dio.post('/api/users/create', data: payloadJson);
+
+      if (response.statusCode == 404) {
+        if (kDebugMode) {
+          debugPrint('⚠️ [User] /api/users/create was 404, trying /api/users');
+        }
+        final fallback = await _dio.post('/api/users', data: payloadJson);
+        if (fallback.statusCode != 404) {
+          response = fallback;
         }
       }
 
@@ -259,17 +302,27 @@ class ServiceApiUser {
   }
 
   /// GET /api/users
-  /// Fetches API users list from server with appType=MARKET and brandId.
-  Future<ApiUserResponse<List<ModelApiUser>>> getApiUsers({String? brandId}) async {
+  /// Fetches API users list from server with appType=MARKET and optional brandId.
+  Future<ApiUserResponse<List<ModelApiUser>>> getApiUsers({
+    String? brandId,
+    int page = 1,
+    int limit = 50,
+  }) async {
     try {
+      // Only send brandId if we have a real one — backend rejects dummy IDs
       final effectiveBrandId = (brandId != null && brandId.isNotEmpty)
           ? brandId
-          : (_storage.readString('auth_brand_id') ?? '000000000000000000000000');
+          : _storage.readString('auth_brand_id');
 
       final params = <String, dynamic>{
+        'page': page,
+        'limit': limit,
         'appType': 'MARKET',
-        'brandId': effectiveBrandId,
       };
+      if (effectiveBrandId != null && effectiveBrandId.isNotEmpty) {
+        params['brandId'] = effectiveBrandId;
+      }
+
       final response = await _dio.get(
         '/api/users',
         queryParameters: params,

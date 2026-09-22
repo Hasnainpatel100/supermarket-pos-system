@@ -356,7 +356,7 @@ class ModelBranch {
     );
   }
 
-  /// Converts to JSON for POST /api/branches/create and PUT /api/branches/:id
+  /// Converts to JSON for POST /api/branches and PUT /api/branches/:id
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{
       'brandId': brandId,
@@ -371,7 +371,8 @@ class ModelBranch {
     if (remoteId != null && remoteId!.isNotEmpty) {
       map['remoteId'] = remoteId;
     }
-    if (id != null && id!.isNotEmpty) {
+    // IMPORTANT: Never include local_ temp IDs in API payloads — only real server IDs
+    if (id != null && id!.isNotEmpty && !id!.startsWith('local_')) {
       map['id'] = id;
     }
     return map;
@@ -379,6 +380,8 @@ class ModelBranch {
 
   Map<String, dynamic> toMap() {
     final map = toJson();
+    // Cache MUST preserve id (including local_ temp IDs) so it can be identified and deleted
+    if (id != null && id!.isNotEmpty) map['id'] = id;
     if (brandName != null) map['brandName'] = brandName;
     if (settings != const BranchSettings()) map['settings'] = settings.toJson();
     if (planDetails != null) map['planDetails'] = planDetails!.toJson();

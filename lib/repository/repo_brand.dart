@@ -48,6 +48,11 @@ class RepoBrand {
     await _storage.writeString(storageKeyBrands, jsonStr);
   }
 
+  /// Clears all locally cached brands — next fetchBrands() will get fresh data from server
+  Future<void> clearLocalCache() async {
+    await _storage.writeString(storageKeyBrands, '[]');
+  }
+
   /// Fetches brands from API, falling back to local cache if offline
   Future<(List<ModelBrand> brands, bool isFromApi, String? errorMessage)> fetchBrands({
     String? appType,
@@ -119,6 +124,26 @@ class RepoBrand {
     String id,
     ModelBrand brand,
   ) async {
+    // If the ID is a local temp ID, create it on server instead of updating
+    if (id.startsWith('local_')) {
+      final brandForCreate = ModelBrand(
+        id: null,
+        name: brand.name,
+        registration: brand.registration,
+        contact: brand.contact,
+        appType: brand.appType,
+        status: brand.status,
+        ownerId: brand.ownerId,
+      );
+      final (created, success, message) = await createBrand(brandForCreate);
+      if (success && created != null) {
+        final currentList = getCachedBrands();
+        currentList.removeWhere((b) => b.id == id);
+        await _saveToCache(currentList);
+      }
+      return (created, success, success ? 'Brand synced to server successfully' : message);
+    }
+
     final response = await _api.updateBrand(id, brand);
 
     final updated = (response.success && response.data != null)
@@ -145,20 +170,48 @@ class RepoBrand {
     return (updated, response.success, response.message);
   }
 
-  /// Deletes a brand from local cache
+  /// Deletes a brand via DELETE /api/brands/:id and removes from local cache
   Future<(bool success, String message)> deleteBrand(String id, {String? brandName}) async {
-    final currentList = getCachedBrands();
-    currentList.removeWhere((b) => b.id == id);
-    await _saveToCache(currentList);
+    // If it only exists locally, just remove from cache — never existed on server
+    if (id.startsWith('local_')) {
+      final currentList = getCachedBrands();
+      currentList.removeWhere((b) => b.id == id);
+      await _saveToCache(currentList);
+      _logAudit(
+        action: AuditAction.delete,
+        brandId: id,
+        brandName: brandName ?? id,
+        description: 'Local brand "${brandName ?? id}" removed (was never synced to server)',
+      );
+      return (true, 'Local brand removed');
+    }
 
-    _logAudit(
-      action: AuditAction.delete,
-      brandId: id,
-      brandName: brandName ?? id,
-      description: 'Brand "${brandName ?? id}" deleted locally',
-    );
+    // Call the server DELETE endpoint
+    final response = await _api.deleteBrand(id);
 
-    return (true, 'Brand removed locally');
+    if (response.success) {
+      // Server confirmed deletion — remove from cache
+      final currentList = getCachedBrands();
+      currentList.removeWhere((b) => b.id == id);
+      await _saveToCache(currentList);
+
+      _logAudit(
+        action: AuditAction.delete,
+        brandId: id,
+        brandName: brandName ?? id,
+        description: 'Brand "${brandName ?? id}" deleted from server and cache',
+      );
+      return (true, response.message);
+    } else {
+      // Server deletion failed — keep in cache, return error
+      _logAudit(
+        action: AuditAction.delete,
+        brandId: id,
+        brandName: brandName ?? id,
+        description: 'Failed to delete brand "${brandName ?? id}" from server: ${response.message}',
+      );
+      return (false, response.message);
+    }
   }
 
 

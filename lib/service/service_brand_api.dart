@@ -68,7 +68,7 @@ class ServiceBrandApi {
         'Accept': 'application/json',
       },
       responseType: ResponseType.json,
-      validateStatus: (status) => status != null && status < 500,
+      validateStatus: (status) => true, // Accept all status codes to read error body
     );
 
     final dioInstance = Dio(options);
@@ -125,24 +125,47 @@ class ServiceBrandApi {
     _dio.options.baseUrl = sanitized;
   }
 
-  /// Gets the auth token if any
+  /// Strips redundant 'Bearer ' prefixes, whitespace, quotes, and newlines
+  static String sanitizeToken(String? raw) {
+    if (raw == null) return '';
+    var token = raw.trim();
+    if ((token.startsWith('"') && token.endsWith('"')) ||
+        (token.startsWith("'") && token.endsWith("'"))) {
+      token = token.substring(1, token.length - 1).trim();
+    }
+    while (token.toLowerCase().startsWith('bearer ')) {
+      token = token.substring(7).trim();
+    }
+    return token.replaceAll('\r', '').replaceAll('\n', '').trim();
+  }
+
+  /// Gets the auth token if any (sanitized)
   String? get authToken {
     final mainToken = _storage.readString('auth_access_token');
     if (mainToken != null && mainToken.trim().isNotEmpty) {
-      return mainToken.trim();
+      final clean = sanitizeToken(mainToken);
+      if (clean.isNotEmpty) return clean;
     }
     final token = _storage.readString(storageKeyAuthToken);
     if (token != null && token.trim().isNotEmpty) {
-      return token.trim();
+      final clean = sanitizeToken(token);
+      if (clean.isNotEmpty) return clean;
     }
     return null;
   }
 
-  /// Sets the auth token
+  /// Sets the auth token (auto-sanitizes by removing any leading 'Bearer ' or quotes)
   Future<void> setAuthToken(String token) async {
-    final trimmed = token.trim();
-    await _storage.writeString('auth_access_token', trimmed);
-    await _storage.writeString(storageKeyAuthToken, trimmed);
+    final clean = sanitizeToken(token);
+    if (clean.isEmpty) {
+      await _storage.delete('auth_access_token');
+      await _storage.delete(storageKeyAuthToken);
+      _dio.options.headers.remove('Authorization');
+    } else {
+      await _storage.writeString('auth_access_token', clean);
+      await _storage.writeString(storageKeyAuthToken, clean);
+      _dio.options.headers['Authorization'] = 'Bearer $clean';
+    }
   }
 
   String _sanitizeUrl(String url) {
@@ -157,36 +180,55 @@ class ServiceBrandApi {
   }
 
   /// Tests connectivity to a given base URL using Dio.
-  Future<BrandApiResponse<bool>> testConnection([String? customUrl]) async {
+  /// Accepts optional customUrl and customToken (e.g. during configuration tests).
+  Future<BrandApiResponse<bool>> testConnection([String? customUrl, String? customToken]) async {
     final targetUrl = _sanitizeUrl(customUrl ?? baseUrl);
+    final rawToken = customToken != null ? sanitizeToken(customToken) : (authToken ?? '');
+
     try {
       final testDio = Dio(
         BaseOptions(
           baseUrl: targetUrl,
-          connectTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 5),
+          connectTimeout: const Duration(seconds: 8),
+          receiveTimeout: const Duration(seconds: 8),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            if (authToken != null && authToken!.isNotEmpty)
-              'Authorization': 'Bearer $authToken',
+            if (rawToken.isNotEmpty)
+              'Authorization': 'Bearer $rawToken',
           },
-          validateStatus: (status) => status != null && status < 500,
+          validateStatus: (status) => true, // capture all status codes to inspect payload
         ),
       );
 
       final response = await testDio.get('/api/brands');
+      final status = response.statusCode ?? 0;
 
-      if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 500) {
+      if (status >= 200 && status < 300) {
         return BrandApiResponse.success(
           true,
-          statusCode: response.statusCode ?? 200,
-          message: 'Connected successfully to $targetUrl (HTTP ${response.statusCode})',
+          statusCode: status,
+          message: 'Connected successfully to $targetUrl (HTTP $status)',
+        );
+      } else if (status == 401) {
+        return BrandApiResponse.error(
+          rawToken.isEmpty
+              ? 'Authentication required (HTTP 401). Please provide a valid Bearer Token.'
+              : 'Invalid or expired token (HTTP 401). The server rejected the auth token.',
+          statusCode: 401,
+          rawBody: response.data,
+        );
+      } else if (status == 403) {
+        return BrandApiResponse.error(
+          'Forbidden (HTTP 403): Token does not have permission to access /api/brands.',
+          statusCode: 403,
+          rawBody: response.data,
         );
       } else {
         return BrandApiResponse.error(
-          'Server returned HTTP status ${response.statusCode}',
-          statusCode: response.statusCode ?? 500,
+          _extractErrorMessage(response.data, status),
+          statusCode: status,
+          rawBody: response.data,
         );
       }
     } on DioException catch (e) {
@@ -265,10 +307,13 @@ class ServiceBrandApi {
     }
   }
 
-  /// GET /api/brands
-  /// Fetches brands list with appType=MARKET query parameter.
-  Future<BrandApiResponse<List<ModelBrand>>> getBrands({String? appType}) async {
-    final queryParams = <String, dynamic>{};
+  /// GET /api/brands?appType=MARKET&page=1&limit=20
+  /// Fetches brands list with appType=MARKET, page, and limit query parameters.
+  Future<BrandApiResponse<List<ModelBrand>>> getBrands({String? appType, int page = 1, int limit = 20}) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+    };
     if (appType != null && appType.isNotEmpty && appType.toUpperCase() != 'ALL') {
       queryParams['appType'] = appType.toUpperCase();
     } else if (appType == null) {
@@ -278,7 +323,7 @@ class ServiceBrandApi {
     try {
       final response = await _dio.get(
         '/api/brands',
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+        queryParameters: queryParams,
       );
 
       final statusCode = response.statusCode ?? 200;

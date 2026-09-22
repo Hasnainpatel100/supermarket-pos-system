@@ -36,6 +36,10 @@ class ControllerHomeBrand extends GetxController {
   Future<void> loadBrands({bool forceRefresh = false}) async {
     rxIsLoading.value = true;
     try {
+      // On force refresh: clear local cache first so server deletions are reflected
+      if (forceRefresh) {
+        await _repo.clearLocalCache();
+      }
       final (brands, isFromApi, errorMsg) = await _repo.fetchBrands(
         forceRefresh: forceRefresh,
       );

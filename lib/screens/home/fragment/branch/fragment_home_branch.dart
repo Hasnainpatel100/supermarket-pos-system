@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../model/model_branch.dart';
 import '../../../../service/service_brand_context.dart';
 import '../../../../util/snackbar_util.dart';
+import '../../../brand/dialog_brand_api_config.dart';
 import 'controller_home_branch.dart';
 
 class FragmentHomeBranch extends StatelessWidget {
@@ -53,6 +54,20 @@ class FragmentHomeBranch extends StatelessWidget {
           ],
         ),
         actions: [
+          // API Server Settings
+          IconButton(
+            tooltip: 'API Server Settings',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () async {
+              final updated = await Get.dialog<bool>(
+                const DialogBrandApiConfig(),
+                barrierDismissible: true,
+              );
+              if (updated == true) {
+                controller.loadBranches(forceRefresh: true);
+              }
+            },
+          ),
           // Sync button
           IconButton(
             tooltip: 'Sync with API Server',

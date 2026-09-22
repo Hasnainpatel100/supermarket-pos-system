@@ -49,12 +49,17 @@ class ControllerHomeBranch extends GetxController {
     rxIsLoading.value = true;
     rxHasError.value = false;
     try {
-      final selectedBrandId = rxBrandFilter.value == 'ALL'
-          ? _brandContext.selectedBrandId
-          : rxBrandFilter.value;
+      if (forceRefresh) {
+        await _repoBranch.clearLocalCache();
+      }
+      final filterBrandId = rxBrandFilter.value;
+      final shouldFilterByBrand = filterBrandId != 'ALL' &&
+          filterBrandId.isNotEmpty &&
+          filterBrandId != '000000000000000000000000' &&
+          !filterBrandId.startsWith('local_');
 
-      final (branches, isFromApi, errorMsg) = (selectedBrandId != null && selectedBrandId.isNotEmpty)
-          ? await _repoBranch.fetchBranchesByBrand(selectedBrandId)
+      final (branches, isFromApi, errorMsg) = shouldFilterByBrand
+          ? await _repoBranch.fetchBranchesByBrand(filterBrandId)
           : await _repoBranch.fetchBranches(forceRefresh: forceRefresh);
 
       rxBranchList.assignAll(branches);
@@ -134,7 +139,12 @@ class ControllerHomeBranch extends GetxController {
       const ActivityBranchForm(),
       barrierDismissible: false,
     );
-    if (result != null) await loadBranches();
+    if (result != null) {
+      // Instantly insert into local observable list for instant UI feedback
+      rxBranchList.removeWhere((b) => b.id == result.id);
+      rxBranchList.insert(0, result);
+      await loadBranches(forceRefresh: true);
+    }
   }
 
   Future<void> openEditDialog(ModelBranch branch) async {
@@ -142,7 +152,13 @@ class ControllerHomeBranch extends GetxController {
       ActivityBranchForm(editingBranch: branch),
       barrierDismissible: false,
     );
-    if (result != null) await loadBranches();
+    if (result != null) {
+      final idx = rxBranchList.indexWhere((b) => b.id == result.id);
+      if (idx != -1) {
+        rxBranchList[idx] = result;
+      }
+      await loadBranches(forceRefresh: true);
+    }
   }
 
   Future<void> openDetailsDialog(ModelBranch branch) async {
@@ -203,8 +219,20 @@ class ControllerHomeBranch extends GetxController {
       ),
     );
 
-    if (confirm == true && branch.id != null) {
-      final (success, message) = await _repoBranch.deleteBranch(branch.id!, branchName: branch.name.en);
+    if (confirm == true) {
+      final branchId = branch.id;
+      final (success, message) = await _repoBranch.deleteBranch(
+        branchId ?? '',
+        branchName: branch.name.en,
+        branchCode: branch.branchCode,
+      );
+
+      // Instantly remove from local observable list for immediate UI response
+      rxBranchList.removeWhere((b) =>
+          (branchId != null && branchId.isNotEmpty && b.id == branchId) ||
+          (b.branchCode.isNotEmpty && b.branchCode == branch.branchCode) ||
+          (b.name.en.isNotEmpty && b.name.en == branch.name.en));
+
       if (success) {
         SnackbarUtil.showSuccess('Branch deleted successfully');
       } else {

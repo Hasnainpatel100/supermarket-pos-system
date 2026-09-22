@@ -58,8 +58,11 @@ class RepoApiUser {
         // Merge API list with any cached ones that haven't synced yet
         final Map<String, ModelApiUser> mergedMap = {};
         for (var user in apiList) {
-          if (user.id != null) mergedMap[user.id!] = user;
-          else if (user.username.isNotEmpty) mergedMap[user.username] = user;
+          if (user.id != null) {
+            mergedMap[user.id!] = user;
+          } else if (user.username.isNotEmpty) {
+            mergedMap[user.username] = user;
+          }
         }
         for (var user in cached) {
           final key = user.id ?? user.username;
@@ -90,22 +93,8 @@ class RepoApiUser {
       await _saveToCache(currentList);
       return response;
     } else {
-      // If server unreachable or error, save locally with temporary ID so user isn't stuck
-      final tempUser = user.copyWith(
-        id: user.id ?? 'local_${DateTime.now().millisecondsSinceEpoch}',
-        createdAt: user.createdAt ?? DateTime.now().millisecondsSinceEpoch,
-      );
-      final currentList = getCachedUsers();
-      currentList.insert(0, tempUser);
-      await _saveToCache(currentList);
-
-      return ApiUserResponse.error(
-        response.message.isNotEmpty
-            ? '${response.message} (Saved locally)'
-            : 'Could not connect to API server. Saved user locally.',
-        statusCode: response.statusCode,
-        rawBody: tempUser.toJson(),
-      );
+      // Do not save locally with temporary ID — save directly to server
+      return response;
     }
   }
 

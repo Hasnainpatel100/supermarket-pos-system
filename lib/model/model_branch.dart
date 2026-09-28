@@ -67,14 +67,16 @@ class BranchAddress {
   }
 
   Map<String, dynamic> toJson() {
+    final lat = double.tryParse(latitude ?? '');
+    final lon = double.tryParse(longitude ?? '');
     return {
       'full': full,
       'city': city,
       'state': state,
       'country': country,
       'zipCode': zipCode,
-      if (latitude != null && latitude!.isNotEmpty) 'latitude': latitude,
-      if (longitude != null && longitude!.isNotEmpty) 'longitude': longitude,
+      'latitude': lat ?? 0.0,
+      'longitude': lon ?? 0.0,
       if (gMapUrl != null && gMapUrl!.isNotEmpty) 'gMapUrl': gMapUrl,
       if (gMapPlaceId != null && gMapPlaceId!.isNotEmpty) 'gMapPlaceId': gMapPlaceId,
     };
@@ -370,10 +372,6 @@ class ModelBranch {
     };
     if (remoteId != null && remoteId!.isNotEmpty) {
       map['remoteId'] = remoteId;
-    }
-    // IMPORTANT: Never include local_ temp IDs in API payloads — only real server IDs
-    if (id != null && id!.isNotEmpty && !id!.startsWith('local_')) {
-      map['id'] = id;
     }
     return map;
   }

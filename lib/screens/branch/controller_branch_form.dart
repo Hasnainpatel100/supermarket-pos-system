@@ -26,7 +26,7 @@ class ControllerBranchForm extends GetxController {
   final rxAppType = 'MARKET'.obs;
   final rxStatus = 'ACTIVE'.obs;
 
-  static const List<String> appTypeOptions = ['MARKET'];
+  static const List<String> appTypeOptions = ['MARKET', 'RESTAURANT'];
   static const List<String> statusOptions = ['ACTIVE', 'INACTIVE'];
 
   // ── Text Controllers ──────────────────────────────────────────────────────
@@ -144,13 +144,11 @@ class ControllerBranchForm extends GetxController {
     }
 
     final selectedBrandId = rxSelectedBrand.value?.id ?? '';
-    // Guard against dummy IDs — means brand was saved locally and not yet synced
-    if (selectedBrandId.isEmpty ||
-        selectedBrandId == '000000000000000000000000' ||
-        selectedBrandId.startsWith('local_')) {
+    final isValidMongoId = RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(selectedBrandId);
+    if (!isValidMongoId) {
       SnackbarUtil.showError(
-        'The selected brand "${rxSelectedBrand.value?.name.en}" does not have a valid server ID.\n'
-        'Please go to Brands screen and sync it to the server first.',
+        'The selected brand "${rxSelectedBrand.value?.name.en}" does not have a valid server ID (must be a 24-character hexadecimal ObjectId).\n'
+        'Please select a brand that is synced to the server.',
       );
       return;
     }

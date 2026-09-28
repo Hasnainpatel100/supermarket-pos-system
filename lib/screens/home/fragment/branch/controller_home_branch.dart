@@ -49,14 +49,11 @@ class ControllerHomeBranch extends GetxController {
     rxIsLoading.value = true;
     rxHasError.value = false;
     try {
-      if (forceRefresh) {
-        await _repoBranch.clearLocalCache();
-      }
       final filterBrandId = rxBrandFilter.value;
       final shouldFilterByBrand = filterBrandId != 'ALL' &&
           filterBrandId.isNotEmpty &&
-          filterBrandId != '000000000000000000000000' &&
-          !filterBrandId.startsWith('local_');
+          !filterBrandId.startsWith('local_') &&
+          RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(filterBrandId);
 
       final (branches, isFromApi, errorMsg) = shouldFilterByBrand
           ? await _repoBranch.fetchBranchesByBrand(filterBrandId)
@@ -64,7 +61,7 @@ class ControllerHomeBranch extends GetxController {
 
       rxBranchList.assignAll(branches);
 
-      if (forceRefresh && errorMsg != null) {
+      if (!isFromApi && errorMsg != null) {
         SnackbarUtil.showWarning('Could not sync: $errorMsg (showing local data)');
       }
     } catch (e) {

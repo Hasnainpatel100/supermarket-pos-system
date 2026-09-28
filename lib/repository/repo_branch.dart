@@ -83,6 +83,15 @@ class RepoBranch {
   // ── CRUD ──────────────────────────────────────────────────────────────────
 
   Future<(ModelBranch? branch, bool success, String message)> createBranch(ModelBranch branch) async {
+    // Guard against non-24 hex character brandId which causes BSON assertion failure on server
+    if (!RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(branch.brandId)) {
+      return (
+        null,
+        false,
+        'Cannot sync branch: Selected Brand does not have a valid server ID (must be a 24-character hex string). Please select a server-synced brand.'
+      );
+    }
+
     final response = await _api.createBranch(branch);
 
     if (response.success && response.data != null) {
@@ -121,12 +130,12 @@ class RepoBranch {
     String id,
     ModelBranch branch,
   ) async {
-    // If the ID is a local temp ID, the branch was never synced — create it instead
-    if (id.startsWith('local_')) {
-      // IMPORTANT: copyWith(id: null) doesn't work in Dart (null ?? existingId = existingId)
-      // So we must rebuild the branch explicitly with id: null to strip the local_ ID
+    // If the ID is a local temp ID or not a valid 24-char hex MongoDB ID, create it on the server instead
+    final isValidMongoId = RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(id);
+    if (!isValidMongoId || id.startsWith('local_')) {
+      // Rebuild the branch explicitly with id: null to strip local/dummy ID
       final branchForCreate = ModelBranch(
-        id: null,  // strip the local_ ID — let server assign real MongoDB _id
+        id: null,
         brandId: branch.brandId,
         brandName: branch.brandName,
         branchCode: branch.branchCode,
@@ -144,6 +153,8 @@ class RepoBranch {
         // Remove the old local entry and replace with the synced one
         final all = getCachedBranches();
         all.removeWhere((b) => b.id == id);
+        all.removeWhere((b) => b.id == created.id);
+        all.insert(0, created);
         await _saveToCache(all);
       }
       return (created, success, success ? 'Branch synced to server successfully' : message);

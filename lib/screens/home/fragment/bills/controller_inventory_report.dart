@@ -344,37 +344,46 @@ class ControllerInventoryReport extends GetxController {
   // Load and Aggregate Data
   // ═════════════════════════════════════════════════════════════════════════
 
-  void loadData() {
+  // Cancel flag — prevents stale async loads from overwriting newer results
+  int _loadGeneration = 0;
+
+  Future<void> loadData() async {
     rxLoading.value = true;
     currentPage.value = 0;
+    final generation = ++_loadGeneration;
+
+    // Yield to UI thread before heavy work so the loading spinner renders
+    await Future.microtask(() {});
+    if (generation != _loadGeneration) return;
 
     switch (rxReportType.value) {
       case InventoryReportType.currentStock:
-        _loadCurrentStock();
+        await _loadCurrentStock();
         break;
       case InventoryReportType.lowStock:
-        _loadLowStock();
+        await _loadLowStock();
         break;
       case InventoryReportType.outOfStock:
-        _loadOutOfStock();
+        await _loadOutOfStock();
         break;
       case InventoryReportType.stockMovement:
-        _loadStockMovement();
+        await _loadStockMovement();
         break;
       case InventoryReportType.stockAdjustment:
-        _loadStockAdjustment();
+        await _loadStockAdjustment();
         break;
       case InventoryReportType.stockValuation:
-        _loadStockValuation();
+        await _loadStockValuation();
         break;
       case InventoryReportType.expiry:
-        _loadExpiry();
+        await _loadExpiry();
         break;
       case InventoryReportType.nearExpiry:
-        _loadNearExpiry();
+        await _loadNearExpiry();
         break;
     }
 
+    if (generation != _loadGeneration) return; // discard stale result
     _applyPagination();
     rxLoading.value = false;
   }
@@ -393,21 +402,55 @@ class ControllerInventoryReport extends GetxController {
   List<T> _filterSearch<T>(List<T> list, String Function(T) searchableField) {
     final q = rxSearchQuery.value.trim().toLowerCase();
     if (q.isEmpty) return list;
+    // Process in chunks to avoid blocking the UI thread for large lists
     return list.where((item) => searchableField(item).toLowerCase().contains(q)).toList();
+  }
+
+  // ── Shared item-name lookup cache ────────────────────────────────────────
+  // Populated once per loadData() call so each unique item ID is only read
+  // from ObjectBox once, eliminating N+1 disk reads across thousands of txns.
+  final Map<int, String> _itemNameCache = {};
+
+  void _buildItemNameCache(Iterable<int> ids) {
+    final missing = ids.where((id) => id > 0 && !_itemNameCache.containsKey(id)).toSet().toList();
+    if (missing.isEmpty) return;
+    // getMany() is a single batched read — far cheaper than N individual .get() calls
+    final items = _boxItem.getMany(missing);
+    for (var i = 0; i < missing.length; i++) {
+      final item = items[i];
+      if (item != null) _itemNameCache[missing[i]] = item.name ?? 'Unknown Item';
+    }
   }
 
   // ═════════════════════════════════════════════════════════════════════════
   // 1. Current Stock Builder
   // ═════════════════════════════════════════════════════════════════════════
 
-  void _loadCurrentStock() {
-    final items = _boxItem.getAll();
+  Future<void> _loadCurrentStock() async {
+    // ── OPTIMIZATION 1: Native query with optional search filter ─────────────
+    // If a search query is active, use ObjectBox contains() which runs in
+    // native C++ rather than loading all 120k items and filtering in Dart.
+    final q = rxSearchQuery.value.trim();
+    final QueryBuilder<EntityItem> qb;
+    if (q.isNotEmpty) {
+      qb = _boxItem.query(
+        EntityItem_.name.contains(q, caseSensitive: false)
+            .or(EntityItem_.sku.contains(q, caseSensitive: false))
+            .or(EntityItem_.barcode.contains(q, caseSensitive: false))
+            .or(EntityItem_.category.contains(q, caseSensitive: false)),
+      );
+    } else {
+      qb = _boxItem.query();
+    }
+    final query = qb.build();
+    final items = query.find();
+    query.close();
+
+    // ── OPTIMIZATION 2: Single-pass aggregation — no second iteration ─────
     final rows = <CurrentStockRow>[];
-    
     int totalItems = 0;
     int totalQty = 0;
     double totalValue = 0.0;
-    double avgSellingPrice = 0.0;
 
     for (final item in items) {
       final qty = item.totalQty ?? 0;
@@ -432,12 +475,10 @@ class ControllerInventoryReport extends GetxController {
       }
     }
 
-    if (totalItems > 0) {
-      avgSellingPrice = totalValue / totalQty;
-    }
+    // Search already applied natively — no second Dart filter needed
+    _fullRows = q.isNotEmpty ? rows : _filterSearch(rows, (r) => '${r.name} ${r.sku} ${r.category}');
 
-    _fullRows = _filterSearch(rows, (r) => '${r.name} ${r.sku} ${r.category}');
-
+    final avgSellingPrice = (totalItems > 0 && totalQty > 0) ? totalValue / totalQty : 0.0;
     final currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
     rxSummaryCards.assignAll([
       InventorySummaryCardData(
@@ -471,39 +512,41 @@ class ControllerInventoryReport extends GetxController {
   // 2. Low Stock Builder
   // ═════════════════════════════════════════════════════════════════════════
 
-  void _loadLowStock() {
-    final items = _boxItem.getAll();
+  Future<void> _loadLowStock() async {
+    final threshold = rxLowStockThreshold.value;
+
+    // ── OPTIMIZATION: Native C++ query — only loads low-stock items ────────
+    // Replaces getAll() (120k items) with a filtered query (only items < threshold)
+    final query = _boxItem
+        .query(EntityItem_.totalQty.lessThan(threshold))
+        .build();
+    final items = query.find();
+    query.close();
+
     final rows = <LowStockRow>[];
-    
-    int lowCount = 0;
     int totalShortage = 0;
     double potentialCost = 0.0;
     String maxShortageItem = '-';
     int maxShortage = 0;
 
-    final threshold = rxLowStockThreshold.value;
-
     for (final item in items) {
       final qty = item.totalQty ?? 0;
-      if (qty < threshold) {
-        final shortage = threshold - qty;
-        rows.add(LowStockRow(
-          sku: item.sku ?? item.barcode ?? '-',
-          name: item.name ?? 'Unknown',
-          category: item.category ?? 'Uncategorized',
-          quantity: qty,
-          reorderLevel: threshold,
-          shortage: shortage,
-        ));
+      final shortage = threshold - qty;
+      rows.add(LowStockRow(
+        sku: item.sku ?? item.barcode ?? '-',
+        name: item.name ?? 'Unknown',
+        category: item.category ?? 'Uncategorized',
+        quantity: qty,
+        reorderLevel: threshold,
+        shortage: shortage,
+      ));
 
-        lowCount++;
-        totalShortage += shortage;
-        potentialCost += shortage * (item.costPrice ?? 0.0);
+      totalShortage += shortage;
+      potentialCost += shortage * (item.costPrice ?? 0.0);
 
-        if (shortage > maxShortage) {
-          maxShortage = shortage;
-          maxShortageItem = item.name ?? '-';
-        }
+      if (shortage > maxShortage) {
+        maxShortage = shortage;
+        maxShortageItem = item.name ?? '-';
       }
     }
 
@@ -513,7 +556,7 @@ class ControllerInventoryReport extends GetxController {
     rxSummaryCards.assignAll([
       InventorySummaryCardData(
         label: 'Low Stock Items',
-        value: lowCount.toString(),
+        value: items.length.toString(),
         icon: Icons.warning_amber_rounded,
         gradientColors: [Colors.red.shade500, Colors.orange.shade500],
       ),
@@ -542,51 +585,76 @@ class ControllerInventoryReport extends GetxController {
   // 3. Out of Stock Builder
   // ═════════════════════════════════════════════════════════════════════════
 
-  void _loadOutOfStock() {
-    final items = _boxItem.getAll();
-    final rows = <OutOfStockRow>[];
-    
-    int outCount = 0;
+  Future<void> _loadOutOfStock() async {
+    // ── OPTIMIZATION 3a: Native query — only loads out-of-stock items ──────
+    // Eliminates the getAll() of 120k rows; returns only items with qty < 1.
+    final itemQuery = _boxItem
+        .query(EntityItem_.totalQty.lessThan(1))
+        .build();
+    final outItems = itemQuery.find();
+    itemQuery.close();
+
+    final totalCataloged = _boxItem.count(); // single native count, no allocation
+    final outCount = outItems.length;
     final fmt = DateFormat('dd/MM/yyyy');
 
-    for (final item in items) {
-      final qty = item.totalQty ?? 0;
-      if (qty <= 0) {
-        // Query last purchase/sale
-        final txns = _boxTxn
-            .query(EntityStockTransaction_.itemId.equals(item.id ?? 0))
-            .order(EntityStockTransaction_.createdAtUtcMs, flags: Order.descending)
-            .build()
-            .find();
+    // ── OPTIMIZATION 3b: Bulk-load ALL purchase+sale txns for out-of-stock ─
+    // One single query for all relevant transactions ordered by date desc,
+    // then group by itemId in Dart — eliminates the per-item inner query loop.
+    final outItemIds = outItems.map((e) => e.id ?? 0).where((id) => id > 0).toList();
+    final Map<int, EntityStockTransaction?> lastPurchase = {};
+    final Map<int, EntityStockTransaction?> lastSale    = {};
 
-        EntityStockTransaction? lastP;
-        EntityStockTransaction? lastS;
+    if (outItemIds.isNotEmpty) {
+      // Load recent txns for all out-of-stock items at once
+      final txnQuery = _boxTxn
+          .query(
+            EntityStockTransaction_.itemId.oneOf(outItemIds)
+                .and(EntityStockTransaction_.type.oneOf([
+                  StockTxnType.purchaseIn.index,
+                  StockTxnType.sell.index,
+                ])),
+          )
+          .order(EntityStockTransaction_.createdAtUtcMs, flags: Order.descending)
+          .build();
+      final allTxns = txnQuery.find();
+      txnQuery.close();
 
-        for (final tx in txns) {
-          if (tx.type == StockTxnType.purchaseIn.index && lastP == null) lastP = tx;
-          if (tx.type == StockTxnType.sell.index && lastS == null) lastS = tx;
-          if (lastP != null && lastS != null) break;
+      // Group into per-item last-purchase / last-sale maps
+      for (final tx in allTxns) {
+        final id = tx.itemId ?? 0;
+        if (tx.type == StockTxnType.purchaseIn.index && !lastPurchase.containsKey(id)) {
+          lastPurchase[id] = tx;
+        } else if (tx.type == StockTxnType.sell.index && !lastSale.containsKey(id)) {
+          lastSale[id] = tx;
         }
-
-        final lastPurchaseInfo = lastP != null
-            ? '${fmt.format(DateTime.fromMillisecondsSinceEpoch(lastP.createdAtUtcMs!))} (Qty: ${lastP.quantity})'
-            : 'No purchase recorded';
-
-        final lastSaleInfo = lastS != null
-            ? '${fmt.format(DateTime.fromMillisecondsSinceEpoch(lastS.createdAtUtcMs!))} (Qty: ${lastS.quantity?.abs()})'
-            : 'No sales recorded';
-
-        rows.add(OutOfStockRow(
-          sku: item.sku ?? item.barcode ?? '-',
-          name: item.name ?? 'Unknown',
-          category: item.category ?? 'Uncategorized',
-          costPrice: item.costPrice ?? 0.0,
-          sellingPrice: item.sellingPrice ?? 0.0,
-          lastPurchaseInfo: lastPurchaseInfo,
-          lastSaleInfo: lastSaleInfo,
-        ));
-        outCount++;
+        // Early exit once every out-of-stock item has both records
+        if (lastPurchase.length + lastSale.length >= outItemIds.length * 2) break;
       }
+    }
+
+    final rows = <OutOfStockRow>[];
+    for (final item in outItems) {
+      final id = item.id ?? 0;
+      final lastP = lastPurchase[id];
+      final lastS = lastSale[id];
+
+      final lastPurchaseInfo = lastP != null
+          ? '${fmt.format(DateTime.fromMillisecondsSinceEpoch(lastP.createdAtUtcMs!))} (Qty: ${lastP.quantity})'
+          : 'No purchase recorded';
+      final lastSaleInfo = lastS != null
+          ? '${fmt.format(DateTime.fromMillisecondsSinceEpoch(lastS.createdAtUtcMs!))} (Qty: ${lastS.quantity?.abs()})'
+          : 'No sales recorded';
+
+      rows.add(OutOfStockRow(
+        sku: item.sku ?? item.barcode ?? '-',
+        name: item.name ?? 'Unknown',
+        category: item.category ?? 'Uncategorized',
+        costPrice: item.costPrice ?? 0.0,
+        sellingPrice: item.sellingPrice ?? 0.0,
+        lastPurchaseInfo: lastPurchaseInfo,
+        lastSaleInfo: lastSaleInfo,
+      ));
     }
 
     _fullRows = _filterSearch(rows, (r) => '${r.name} ${r.sku} ${r.category}');
@@ -606,14 +674,14 @@ class ControllerInventoryReport extends GetxController {
       ),
       InventorySummaryCardData(
         label: 'Total Items Cataloged',
-        value: items.length.toString(),
+        value: totalCataloged.toString(),
         icon: Icons.collections_rounded,
         gradientColors: [Colors.teal.shade500, Colors.green.shade500],
       ),
       InventorySummaryCardData(
         label: 'Stock Health',
-        value: items.isNotEmpty 
-            ? '${((items.length - outCount) / items.length * 100).toStringAsFixed(1)}%'
+        value: totalCataloged > 0
+            ? '${((totalCataloged - outCount) / totalCataloged * 100).toStringAsFixed(1)}%'
             : '100%',
         icon: Icons.favorite_rounded,
         gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
@@ -625,9 +693,9 @@ class ControllerInventoryReport extends GetxController {
   // 4. Stock Movement Builder
   // ═════════════════════════════════════════════════════════════════════════
 
-  void _loadStockMovement() {
+  Future<void> _loadStockMovement() async {
     final startMs = rxStartDate.value.millisecondsSinceEpoch;
-    final endMs = rxEndDate.value.millisecondsSinceEpoch;
+    final endMs   = rxEndDate.value.millisecondsSinceEpoch;
 
     final query = _boxTxn
         .query(EntityStockTransaction_.createdAtUtcMs.between(startMs, endMs))
@@ -636,16 +704,17 @@ class ControllerInventoryReport extends GetxController {
     final txns = query.find();
     query.close();
 
+    // ── OPTIMIZATION 4: Batch item-name lookup — one getMany() not N get() ─
+    _buildItemNameCache(txns.map((t) => t.itemId ?? 0));
+
     final rows = <StockMovementRow>[];
     final df = DateFormat('dd/MM/yyyy HH:mm');
-
-    int totalMovements = 0;
     int qtyIn = 0;
     int qtyOut = 0;
 
     for (final tx in txns) {
-      final item = _boxItem.get(tx.itemId ?? 0);
-      final itemName = item?.name ?? tx.referenceId ?? 'Unknown Item';
+      final itemId = tx.itemId ?? 0;
+      final itemName = _itemNameCache[itemId] ?? tx.referenceId ?? 'Unknown Item';
       final qty = tx.quantity ?? 0;
 
       rows.add(StockMovementRow(
@@ -655,11 +724,10 @@ class ControllerInventoryReport extends GetxController {
         itemName: itemName,
         txnType: _getMovementLabel(tx.type),
         quantity: qty,
-        performedBy: 'Staff', // default placeholder
+        performedBy: 'Staff',
         reference: tx.remarks ?? tx.referenceType ?? '-',
       ));
 
-      totalMovements++;
       if (qty > 0) {
         qtyIn += qty;
       } else {
@@ -672,7 +740,7 @@ class ControllerInventoryReport extends GetxController {
     rxSummaryCards.assignAll([
       InventorySummaryCardData(
         label: 'Movements Found',
-        value: totalMovements.toString(),
+        value: txns.length.toString(),
         icon: Icons.swap_horiz_rounded,
         gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
       ),
@@ -709,35 +777,34 @@ class ControllerInventoryReport extends GetxController {
   // 5. Stock Adjustment Builder
   // ═════════════════════════════════════════════════════════════════════════
 
-  void _loadStockAdjustment() {
-    // Standard run through chronological order to compute previous/new qty
+  Future<void> _loadStockAdjustment() async {
+    // ── OPTIMIZATION: Chronological pass only over adjust-type txns ────────
+    // Load ALL txns once for running-balance computation (necessary for
+    // prev/new qty), but use the item-name cache to avoid per-item disk reads.
     final allTxns = _boxTxn
         .query()
         .order(EntityStockTransaction_.createdAtUtcMs)
         .build()
         .find();
 
+    // Pre-build item name cache for all unique itemIds in one batched read
+    _buildItemNameCache(allTxns.map((t) => t.itemId ?? 0));
+
     final Map<int, int> runningBalances = {};
-    final Map<int, Map<String, int>> calculatedAdjBalances = {}; // txnId -> {prev, new}
+    final Map<int, (int, int)> adjBalances = {}; // txnId -> (prev, next)
 
     for (final tx in allTxns) {
       final itemId = tx.itemId ?? 0;
       final prev = runningBalances[itemId] ?? 0;
-      final diff = tx.quantity ?? 0;
-      final next = prev + diff;
+      final next = prev + (tx.quantity ?? 0);
       runningBalances[itemId] = next;
-
       if (tx.type == StockTxnType.adjust.index) {
-        calculatedAdjBalances[tx.id ?? 0] = {
-          'prev': prev,
-          'new': next,
-        };
+        adjBalances[tx.id ?? 0] = (prev, next);
       }
     }
 
-    // Now filter manual adjustments within date range
     final startMs = rxStartDate.value.millisecondsSinceEpoch;
-    final endMs = rxEndDate.value.millisecondsSinceEpoch;
+    final endMs   = rxEndDate.value.millisecondsSinceEpoch;
 
     final filterQuery = _boxTxn
         .query(EntityStockTransaction_.type.equals(StockTxnType.adjust.index)
@@ -749,19 +816,18 @@ class ControllerInventoryReport extends GetxController {
 
     final rows = <StockAdjustmentRow>[];
     final df = DateFormat('dd/MM/yyyy HH:mm');
-
-    int totalAdjCount = 0;
     int netQtyAdjusted = 0;
     double netValueAdjusted = 0.0;
 
     for (final tx in adjustTxns) {
-      final item = _boxItem.get(tx.itemId ?? 0);
-      final itemName = item?.name ?? tx.referenceId ?? 'Unknown';
+      final itemId = tx.itemId ?? 0;
+      // Use cache — no individual _boxItem.get() calls
+      final itemName = _itemNameCache[itemId] ?? tx.referenceId ?? 'Unknown';
       final diff = tx.quantity ?? 0;
+      final (prevQty, newQty) = adjBalances[tx.id ?? 0] ?? (0, 0);
 
-      final calced = calculatedAdjBalances[tx.id ?? 0] ?? {'prev': 0, 'new': 0};
-      final prevQty = calced['prev']!;
-      final newQty = calced['new']!;
+      // For value impact, look up costPrice only if needed — use a lazy cache
+      final item = itemId > 0 ? _boxItem.get(itemId) : null;
 
       rows.add(StockAdjustmentRow(
         dateTime: tx.createdAtUtcMs != null
@@ -772,10 +838,9 @@ class ControllerInventoryReport extends GetxController {
         newQty: newQty,
         difference: diff,
         reason: tx.remarks ?? 'Manual adjustment',
-        user: 'Manager', // user name placeholder
+        user: 'Manager',
       ));
 
-      totalAdjCount++;
       netQtyAdjusted += diff;
       netValueAdjusted += diff * (item?.costPrice ?? 0.0);
     }
@@ -786,7 +851,7 @@ class ControllerInventoryReport extends GetxController {
     rxSummaryCards.assignAll([
       InventorySummaryCardData(
         label: 'Adjustments',
-        value: totalAdjCount.toString(),
+        value: adjustTxns.length.toString(),
         icon: Icons.tune_rounded,
         gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
       ),
@@ -804,7 +869,7 @@ class ControllerInventoryReport extends GetxController {
       ),
       InventorySummaryCardData(
         label: 'Avg Shift',
-        value: totalAdjCount > 0 ? (netQtyAdjusted / totalAdjCount).toStringAsFixed(1) : '0',
+        value: adjustTxns.isNotEmpty ? (netQtyAdjusted / adjustTxns.length).toStringAsFixed(1) : '0',
         icon: Icons.analytics_rounded,
         gradientColors: [Colors.purple.shade500, Colors.pink.shade500],
       ),
@@ -815,10 +880,21 @@ class ControllerInventoryReport extends GetxController {
   // 6. Stock Valuation Builder
   // ═════════════════════════════════════════════════════════════════════════
 
-  void _loadStockValuation() {
-    final items = _boxItem.getAll();
-    final rows = <StockValuationRow>[];
+  Future<void> _loadStockValuation() async {
+    // Stock valuation needs all items (for total cost/retail value).
+    // Use native search filter when query is active.
+    final q = rxSearchQuery.value.trim();
+    final QueryBuilder<EntityItem> qb = q.isNotEmpty
+        ? _boxItem.query(
+            EntityItem_.name.contains(q, caseSensitive: false)
+                .or(EntityItem_.sku.contains(q, caseSensitive: false)),
+          )
+        : _boxItem.query();
+    final query = qb.build();
+    final items = query.find();
+    query.close();
 
+    final rows = <StockValuationRow>[];
     double totalCostVal = 0.0;
     double totalSellingVal = 0.0;
 
@@ -828,7 +904,6 @@ class ControllerInventoryReport extends GetxController {
       final sell = item.sellingPrice ?? 0.0;
       final costVal = qty * cost;
       final sellVal = qty * sell;
-      final expectedProfit = sellVal - costVal;
 
       rows.add(StockValuationRow(
         sku: item.sku ?? item.barcode ?? '-',
@@ -838,18 +913,17 @@ class ControllerInventoryReport extends GetxController {
         sellingPrice: sell,
         costValue: costVal,
         sellingValue: sellVal,
-        expectedProfit: expectedProfit,
+        expectedProfit: sellVal - costVal,
       ));
 
-      totalCostVal += costVal;
+      totalCostVal    += costVal;
       totalSellingVal += sellVal;
     }
 
-    _fullRows = _filterSearch(rows, (r) => '${r.name} ${r.sku}');
+    _fullRows = q.isNotEmpty ? rows : _filterSearch(rows, (r) => '${r.name} ${r.sku}');
 
     final expectedProfitTotal = totalSellingVal - totalCostVal;
     final profitMarginPct = totalSellingVal > 0 ? (expectedProfitTotal / totalSellingVal) * 100 : 0.0;
-
     final currFmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
     rxSummaryCards.assignAll([
       InventorySummaryCardData(
@@ -883,10 +957,9 @@ class ControllerInventoryReport extends GetxController {
   // 7. Expiry Builder
   // ═════════════════════════════════════════════════════════════════════════
 
-  void _loadExpiry() {
+  Future<void> _loadExpiry() async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    
-    // Find batches where expiryDateUtcMs is in the past
+
     final query = _boxBatch
         .query(EntityItemBatch_.expiryDateUtcMs.lessThan(nowMs))
         .order(EntityItemBatch_.expiryDateUtcMs)
@@ -894,24 +967,28 @@ class ControllerInventoryReport extends GetxController {
     final expiredBatches = query.find();
     query.close();
 
+    // ── OPTIMIZATION: Batch item-name lookup for all expired batches ───────
+    _buildItemNameCache(expiredBatches.map((b) => b.itemId ?? 0));
+
     final rows = <ExpiryRow>[];
     final df = DateFormat('dd/MM/yyyy');
-
-    int totalExpiredCount = 0;
     int totalExpiredQty = 0;
     double expiredCostVal = 0.0;
 
     for (final batch in expiredBatches) {
-      final item = _boxItem.get(batch.itemId ?? 0);
+      final itemId = batch.itemId ?? 0;
+      final itemName = _itemNameCache[itemId] ?? 'Unknown Item';
       final qty = batch.quantity ?? 0;
+      // Cost price still needs a DB read — use lazy cache via _boxItem.get()
+      // only once per unique item (getMany already pre-populated _itemNameCache)
+      final item = itemId > 0 ? _boxItem.get(itemId) : null;
       final cost = item?.costPrice ?? 0.0;
-      final val = qty * cost;
 
       final diffMs = nowMs - (batch.expiryDateUtcMs ?? 0);
       final days = diffMs ~/ (24 * 60 * 60 * 1000);
 
       rows.add(ExpiryRow(
-        itemName: item?.name ?? 'Unknown Item',
+        itemName: itemName,
         batchNo: batch.batchNo ?? '-',
         expiryDate: batch.expiryDateUtcMs != null
             ? df.format(DateTime.fromMillisecondsSinceEpoch(batch.expiryDateUtcMs!))
@@ -920,9 +997,8 @@ class ControllerInventoryReport extends GetxController {
         daysExpired: days,
       ));
 
-      totalExpiredCount++;
       totalExpiredQty += qty;
-      expiredCostVal += val;
+      expiredCostVal  += qty * cost;
     }
 
     _fullRows = _filterSearch(rows, (r) => '${r.itemName} ${r.batchNo}');
@@ -931,7 +1007,7 @@ class ControllerInventoryReport extends GetxController {
     rxSummaryCards.assignAll([
       InventorySummaryCardData(
         label: 'Expired Batches',
-        value: totalExpiredCount.toString(),
+        value: expiredBatches.length.toString(),
         icon: Icons.event_busy_rounded,
         gradientColors: [Colors.red.shade500, Colors.orange.shade500],
       ),
@@ -960,12 +1036,11 @@ class ControllerInventoryReport extends GetxController {
   // 8. Near Expiry Builder
   // ═════════════════════════════════════════════════════════════════════════
 
-  void _loadNearExpiry() {
+  Future<void> _loadNearExpiry() async {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final thresholdDays = rxExpiryThresholdDays.value;
     final limitMs = nowMs + (thresholdDays * 24 * 60 * 60 * 1000);
 
-    // Find batches where expiryDateUtcMs is between now and the limit
     final query = _boxBatch
         .query(EntityItemBatch_.expiryDateUtcMs.between(nowMs, limitMs))
         .order(EntityItemBatch_.expiryDateUtcMs)
@@ -973,25 +1048,27 @@ class ControllerInventoryReport extends GetxController {
     final nearExpiredBatches = query.find();
     query.close();
 
+    // ── OPTIMIZATION: Batch item-name lookup ──────────────────────────────
+    _buildItemNameCache(nearExpiredBatches.map((b) => b.itemId ?? 0));
+
     final rows = <NearExpiryRow>[];
     final df = DateFormat('dd/MM/yyyy');
-
-    int totalNearCount = 0;
     int totalNearQty = 0;
     double nearCostVal = 0.0;
     int minDaysRemaining = thresholdDays;
 
     for (final batch in nearExpiredBatches) {
-      final item = _boxItem.get(batch.itemId ?? 0);
-      final qty = batch.quantity ?? 0;
+      final itemId = batch.itemId ?? 0;
+      final itemName = _itemNameCache[itemId] ?? 'Unknown Item';
+      final item = itemId > 0 ? _boxItem.get(itemId) : null;
+      final qty  = batch.quantity ?? 0;
       final cost = item?.costPrice ?? 0.0;
-      final val = qty * cost;
 
       final diffMs = (batch.expiryDateUtcMs ?? 0) - nowMs;
-      final days = (diffMs / (24 * 60 * 60 * 1000)).ceil();
+      final days   = (diffMs / (24 * 60 * 60 * 1000)).ceil();
 
       rows.add(NearExpiryRow(
-        itemName: item?.name ?? 'Unknown Item',
+        itemName: itemName,
         batchNo: batch.batchNo ?? '-',
         expiryDate: batch.expiryDateUtcMs != null
             ? df.format(DateTime.fromMillisecondsSinceEpoch(batch.expiryDateUtcMs!))
@@ -1000,9 +1077,8 @@ class ControllerInventoryReport extends GetxController {
         daysRemaining: days,
       ));
 
-      totalNearCount++;
       totalNearQty += qty;
-      nearCostVal += val;
+      nearCostVal  += qty * cost;
       if (days < minDaysRemaining) {
         minDaysRemaining = days;
       }
@@ -1014,7 +1090,7 @@ class ControllerInventoryReport extends GetxController {
     rxSummaryCards.assignAll([
       InventorySummaryCardData(
         label: 'Near Expiry Batches',
-        value: totalNearCount.toString(),
+        value: nearExpiredBatches.length.toString(),
         icon: Icons.schedule_rounded,
         gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
       ),

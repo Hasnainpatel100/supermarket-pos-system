@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/network/dio_client.dart';
 import '../../service/service_api_user.dart';
 import '../../service/service_branch_api.dart';
 import '../../service/service_brand_api.dart';
@@ -80,6 +81,9 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
     if (Get.isRegistered<ServiceApiUser>()) {
       await Get.find<ServiceApiUser>().setBaseUrl(url);
       await Get.find<ServiceApiUser>().setAuthToken(token);
+    }
+    if (Get.isRegistered<DioClient>()) {
+      Get.find<DioClient>().setBaseUrl(url);
     }
 
     SnackbarUtil.showSuccess('API Server configuration saved');

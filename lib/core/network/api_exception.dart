@@ -108,7 +108,7 @@ class ApiException implements Exception {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
         return ApiException(
-          message: 'Connection timed out. Please check server availability at http://172.19.112.1:8080.',
+          message: 'Connection timed out. Please verify the server is running and reachable.',
           statusCode: 408,
           code: 'CONNECTION_TIMEOUT',
         );
@@ -120,13 +120,13 @@ class ApiException implements Exception {
         );
       case DioExceptionType.receiveTimeout:
         return ApiException(
-          message: 'Server response timed out.',
+          message: 'Server response timed out. The server took too long to respond.',
           statusCode: 408,
           code: 'RECEIVE_TIMEOUT',
         );
       case DioExceptionType.connectionError:
         return ApiException(
-          message: 'Cannot connect to backend server at http://172.19.112.1:8080. Please ensure the backend is running.',
+          message: 'Cannot connect to backend server. Please verify the server is running.',
           statusCode: 503,
           code: 'CONNECTION_ERROR',
         );

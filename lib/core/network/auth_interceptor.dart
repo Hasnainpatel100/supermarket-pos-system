@@ -11,13 +11,17 @@ import '../storage/token_storage.dart';
 /// and retries the original request ONCE. Prevents infinite refresh loops.
 class AuthInterceptor extends Interceptor {
   final TokenStorage _tokenStorage;
-  final String _baseUrl;
+  String _baseUrl;
 
   AuthInterceptor({
     required TokenStorage tokenStorage,
     String baseUrl = 'http://172.19.112.1:8080',
   })  : _tokenStorage = tokenStorage,
         _baseUrl = baseUrl;
+
+  void setBaseUrl(String newUrl) {
+    _baseUrl = newUrl;
+  }
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {

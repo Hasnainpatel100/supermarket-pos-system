@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../brand/dialog_brand_api_config.dart';
 import 'controller_login.dart';
 
 class ActivityLogin extends GetView<ControllerLogin> {
@@ -13,6 +14,20 @@ class ActivityLogin extends GetView<ControllerLogin> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.dns_rounded),
+            tooltip: 'Server Settings',
+            onPressed: () {
+              Get.dialog(const DialogBrandApiConfig());
+            },
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

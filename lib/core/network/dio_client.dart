@@ -45,7 +45,10 @@ class DioClient {
         'Accept': 'application/json',
       },
       responseType: ResponseType.json,
-      validateStatus: (status) => status != null && status < 500,
+      // 401/403 must be treated as errors so AuthInterceptor.onError can
+      // intercept them, refresh the token, and retry the original request.
+      // Only 2xx are true successes; everything else goes through onError.
+      validateStatus: (status) => status != null && status >= 200 && status < 300,
     );
 
     final dioInstance = Dio(options);

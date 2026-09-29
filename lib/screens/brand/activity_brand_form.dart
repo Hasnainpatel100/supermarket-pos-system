@@ -368,6 +368,10 @@ class ActivityBrandForm extends StatelessWidget {
                       prefixIcon: Icons.phone_rounded,
                       keyboardType: TextInputType.phone,
                       validator: (v) => _validatePhone(v, required: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -380,6 +384,10 @@ class ActivityBrandForm extends StatelessWidget {
                       prefixIcon: Icons.phone_callback_rounded,
                       keyboardType: TextInputType.phone,
                       validator: _validatePhone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -392,6 +400,10 @@ class ActivityBrandForm extends StatelessWidget {
                       prefixIcon: Icons.chat_bubble_outline_rounded,
                       keyboardType: TextInputType.phone,
                       validator: _validatePhone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                     ),
                   ),
                 ],

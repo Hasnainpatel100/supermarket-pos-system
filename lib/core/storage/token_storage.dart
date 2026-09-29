@@ -13,6 +13,10 @@ class TokenStorage {
   static const String keyBranchId = 'auth_branch_id';
   static const String keyUserInfo = 'auth_user_info_json';
   static const String keyAppType = 'auth_app_type';
+  /// Full brand model JSON saved after login for offline session restore.
+  static const String keyBrandJson = 'auth_session_brand_json';
+  /// Full branch model JSON saved after login for offline session restore.
+  static const String keyBranchJson = 'auth_session_branch_json';
 
   TokenStorage(this._storage);
 
@@ -84,6 +88,26 @@ class TokenStorage {
     return _storage.readString(keyAppType);
   }
 
+  /// Save the full brand model as a JSON string.
+  Future<void> saveBrandJson(String json) async {
+    await _storage.writeString(keyBrandJson, json);
+  }
+
+  /// Get the stored brand JSON string (full ModelBrand), or null.
+  String? getBrandJson() {
+    return _storage.readString(keyBrandJson);
+  }
+
+  /// Save the full branch model as a JSON string.
+  Future<void> saveBranchJson(String json) async {
+    await _storage.writeString(keyBranchJson, json);
+  }
+
+  /// Get the stored branch JSON string (full ModelBranch), or null.
+  String? getBranchJson() {
+    return _storage.readString(keyBranchJson);
+  }
+
   /// Check if user is currently authenticated (has access token).
   bool get hasAccessToken {
     final token = getAccessToken();
@@ -98,6 +122,8 @@ class TokenStorage {
     await _storage.delete(keyBranchId);
     await _storage.delete(keyUserInfo);
     await _storage.delete(keyAppType);
+    await _storage.delete(keyBrandJson);
+    await _storage.delete(keyBranchJson);
     if (kDebugMode) {
       debugPrint('🔑 [TokenStorage] Tokens and session cleared.');
     }

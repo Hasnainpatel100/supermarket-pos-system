@@ -357,6 +357,42 @@ class ServiceBrandApi {
       );
     }
   }
+  /// GET /api/brands/:id
+  /// Fetches a single brand by its MongoDB ObjectId.
+  Future<BrandApiResponse<ModelBrand>> getBrandById(String id) async {
+    if (id.isEmpty || !RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(id)) {
+      return BrandApiResponse.error(
+        'Cannot fetch brand: "$id" is not a valid 24-character ObjectId.',
+        statusCode: 400,
+      );
+    }
+    try {
+      final response = await _dio.get('/api/brands/$id');
+      final statusCode = response.statusCode ?? 200;
+      if (statusCode == 200) {
+        final data = _extractBrandObject(response.data);
+        if (data != null) {
+          return BrandApiResponse.success(
+            ModelBrand.fromJson(data),
+            statusCode: statusCode,
+          );
+        }
+      }
+      return BrandApiResponse.error(
+        _extractErrorMessage(response.data, statusCode),
+        statusCode: statusCode,
+        rawBody: response.data,
+      );
+    } on DioException catch (e) {
+      return BrandApiResponse.error(
+        _handleDioError(e, baseUrl),
+        statusCode: e.response?.statusCode ?? 0,
+      );
+    } catch (e) {
+      return BrandApiResponse.error('Error fetching brand by id: $e');
+    }
+  }
+
   /// PUT /api/brands/:id
   Future<BrandApiResponse<ModelBrand>> updateBrand(String id, ModelBrand brand) async {
     final payloadJson = brand.toJson();

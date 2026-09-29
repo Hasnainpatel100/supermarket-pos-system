@@ -211,30 +211,28 @@ class RepoDrawer {
       menu: EnumMainMenu.apiUser,
       titleKey: 'api_user',
       icon: Icons.cloud_sync_outlined,
+      // Only the software vendor's admin can access API user management.
+      // Client accounts never see this menu.
       permissions: [
-        EnumPermission.userCreate,
-        EnumPermission.userUpdate,
-        EnumPermission.apiUserManage,
+        EnumPermission.superVendorAccess,
       ],
     ),
     ModelDrawerMenu(
       menu: EnumMainMenu.brand,
       titleKey: 'Brands',
       icon: Icons.branding_watermark_outlined,
+      // Only the software vendor's admin can manage brands.
       permissions: [
-        EnumPermission.brandManage,
-        EnumPermission.brandCreate,
-        EnumPermission.brandView,
+        EnumPermission.superVendorAccess,
       ],
     ),
     ModelDrawerMenu(
       menu: EnumMainMenu.branch,
       titleKey: 'Branches',
       icon: Icons.add_business_outlined,
+      // Only the software vendor's admin can manage branches.
       permissions: [
-        EnumPermission.branchManage,
-        EnumPermission.branchCreate,
-        EnumPermission.branchView,
+        EnumPermission.superVendorAccess,
       ],
     ),
   ];

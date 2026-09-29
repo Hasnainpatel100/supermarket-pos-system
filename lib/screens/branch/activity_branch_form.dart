@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../model/model_branch.dart';
 import '../../model/model_brand.dart';
 import '../../widget/app_dialog_components.dart';
 import 'controller_branch_form.dart';
+
+/// Returns null if valid, else an error message.
+/// Enforces exactly 10 digits (ignoring any spaces or hyphens).
+String? _validateBranchPhone(String? value, {bool required = false}) {
+  if (value == null || value.trim().isEmpty) {
+    return required ? 'Phone number is required' : null;
+  }
+  final digits = value.replaceAll(RegExp(r'[^\d]'), '');
+  if (digits.length != 10) {
+    return 'Phone number must be exactly 10 digits';
+  }
+  return null;
+}
 
 class ActivityBranchForm extends StatelessWidget {
   final ModelBranch? editingBranch;
@@ -226,40 +240,45 @@ class ActivityBranchForm extends StatelessWidget {
                     Expanded(
                       child: _buildTextField(
                         controller: controller.tcPrimaryPhone,
-                        label: 'Primary Phone *',
-                        hint: '+971504847006',
+                        label: 'Primary Phone * (10 digits)',
+                        hint: '9715048470',
                         icon: Icons.phone_rounded,
                         keyboardType: TextInputType.phone,
-                        validator: (v) {
-                          if (v == null || v.trim().isEmpty) {
-                            return 'Primary phone is required';
-                          }
-                          final digits = v.replaceAll(RegExp(r'[^\d]'), '');
-                          if (digits.length != 10) {
-                            return 'Phone number must be exactly 10 digits';
-                          }
-                          return null;
-                        },
+                        validator: (v) => _validateBranchPhone(v, required: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildTextField(
                         controller: controller.tcAlternatePhone,
-                        label: 'Alternate Phone',
-                        hint: '+971504847007',
+                        label: 'Alternate Phone (10 digits)',
+                        hint: '9715048470',
                         icon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
+                        validator: (v) => _validateBranchPhone(v, required: false),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildTextField(
                         controller: controller.tcWhatsapp,
-                        label: 'WhatsApp',
-                        hint: '+971504847006',
+                        label: 'WhatsApp (10 digits)',
+                        hint: '9715048470',
                         icon: Icons.chat_rounded,
                         keyboardType: TextInputType.phone,
+                        validator: (v) => _validateBranchPhone(v, required: false),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
                         suffix: IconButton(
                           tooltip: 'Copy Primary to WhatsApp',
                           icon: Icon(
@@ -547,12 +566,14 @@ class ActivityBranchForm extends StatelessWidget {
     String? Function(String?)? validator,
     int maxLines = 1,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
     Widget? suffix,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       validator: validator,
       decoration: InputDecoration(
         labelText: label,

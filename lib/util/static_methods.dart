@@ -79,19 +79,9 @@ class StaticMethods {
       permanent: true,
     );
 
-    // 8. Auth API & Repository
+    // 8. Auth API
     final authApi = Get.put<AuthApi>(
       AuthApi(dioClient.dio),
-      permanent: true,
-    );
-
-    Get.put<AuthRepository>(
-      AuthRepository(
-        api: authApi,
-        tokenStorage: tokenStorage,
-        repoStorage: repoStorage,
-        brandContext: brandContext,
-      ),
       permanent: true,
     );
 
@@ -114,6 +104,22 @@ class StaticMethods {
       RepoBranch(api: branchApi, storage: storage),
       permanent: true,
     );
+
+    // 11. Auth Repository (with brand + branch session restore)
+    final authRepo = Get.put<AuthRepository>(
+      AuthRepository(
+        api: authApi,
+        tokenStorage: tokenStorage,
+        repoStorage: repoStorage,
+        brandContext: brandContext,
+        brandApi: brandApi,
+        branchApi: branchApi,
+      ),
+      permanent: true,
+    );
+
+    // Restore cached session context (brand/branch) if previously logged in
+    await authRepo.restoreSessionContext();
 
     // 11. API User Service & Repo (uses Centralized Dio)
     final apiUserApi = Get.put<ServiceApiUser>(

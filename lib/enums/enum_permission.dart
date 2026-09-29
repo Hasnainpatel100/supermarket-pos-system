@@ -76,4 +76,9 @@ enum EnumPermission {
   // for app purpose only
   dashboard,
   logout,
+
+  /// Gates Brand/Branch management & API User screens.
+  /// Only the software vendor's own admin accounts receive this permission.
+  /// Client users (store managers, cashiers) never get it and never see those menus.
+  superVendorAccess,
 }

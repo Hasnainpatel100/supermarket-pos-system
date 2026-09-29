@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Model representing the backend authentication response from POST /auth/login
 class AuthLoginResponse {
   final String accessToken;
@@ -32,29 +34,112 @@ class AuthLoginResponse {
 
   factory AuthLoginResponse.fromJson(Map<String, dynamic> json) {
     // Handle nested 'data' or top-level fields
-    final data = json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json;
+    final data = json['data'] is Map<String, dynamic>
+        ? json['data'] as Map<String, dynamic>
+        : json;
 
-    final rawPermissions = data['permissions'];
+    final token = data['accessToken']?.toString() ??
+        data['token']?.toString() ??
+        json['accessToken']?.toString() ??
+        json['token']?.toString() ??
+        '';
+
+    final jwtClaims = _decodeJwtPayload(token);
+
+    final userMap = data['user'] is Map<String, dynamic>
+        ? data['user'] as Map<String, dynamic>
+        : (json['user'] is Map<String, dynamic>
+            ? json['user'] as Map<String, dynamic>
+            : null);
+
+    final rawPermissions = data['permissions'] ??
+        userMap?['permissions'] ??
+        jwtClaims['permissions'];
+
     List<String> permissionsList = [];
     if (rawPermissions is List) {
       permissionsList = rawPermissions.map((e) => e.toString()).toList();
     }
 
+    final userId = data['userId']?.toString() ??
+        data['id']?.toString() ??
+        userMap?['id']?.toString() ??
+        userMap?['userId']?.toString() ??
+        jwtClaims['userId']?.toString() ??
+        jwtClaims['id']?.toString();
+
+    final username = data['username']?.toString() ??
+        userMap?['username']?.toString() ??
+        jwtClaims['username']?.toString() ??
+        '';
+
+    final firstName = data['firstName']?.toString() ??
+        data['first']?.toString() ??
+        userMap?['firstName']?.toString() ??
+        userMap?['first']?.toString() ??
+        jwtClaims['firstName']?.toString();
+
+    final lastName = data['lastName']?.toString() ??
+        data['last']?.toString() ??
+        userMap?['lastName']?.toString() ??
+        userMap?['last']?.toString() ??
+        jwtClaims['lastName']?.toString();
+
+    final brandId = data['brandId']?.toString() ??
+        userMap?['brandId']?.toString() ??
+        jwtClaims['brandId']?.toString();
+
+    final branchId = data['branchId']?.toString() ??
+        userMap?['branchId']?.toString() ??
+        jwtClaims['branchId']?.toString();
+
+    final role = data['role']?.toString() ??
+        userMap?['role']?.toString() ??
+        jwtClaims['role']?.toString();
+
+    final userType = data['userType']?.toString() ??
+        userMap?['userType']?.toString() ??
+        jwtClaims['userType']?.toString();
+
+    final appType = data['appType']?.toString() ??
+        userMap?['appType']?.toString() ??
+        jwtClaims['appType']?.toString();
+
     return AuthLoginResponse(
-      accessToken: data['accessToken']?.toString() ?? '',
-      refreshToken: data['refreshToken']?.toString() ?? '',
+      accessToken: token,
+      refreshToken: data['refreshToken']?.toString() ??
+          json['refreshToken']?.toString() ??
+          '',
       expiresIn: data['expiresIn'] is int ? data['expiresIn'] as int : 900,
-      userId: data['userId']?.toString() ?? data['id']?.toString(),
-      username: data['username']?.toString() ?? '',
-      firstName: data['firstName']?.toString() ?? data['first']?.toString(),
-      lastName: data['lastName']?.toString() ?? data['last']?.toString(),
-      brandId: data['brandId']?.toString(),
-      branchId: data['branchId']?.toString(),
-      role: data['role']?.toString(),
-      userType: data['userType']?.toString(),
-      appType: data['appType']?.toString(),
+      userId: userId,
+      username: username,
+      firstName: firstName,
+      lastName: lastName,
+      brandId: brandId,
+      branchId: branchId,
+      role: role,
+      userType: userType,
+      appType: appType,
       permissions: permissionsList,
     );
+  }
+
+  static Map<String, dynamic> _decodeJwtPayload(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return {};
+      var payload = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+      while (payload.length % 4 != 0) {
+        payload += '=';
+      }
+      final bytes = base64Decode(payload);
+      final jsonStr = utf8.decode(bytes);
+      final map = jsonDecode(jsonStr);
+      if (map is Map<String, dynamic>) {
+        return map;
+      }
+    } catch (_) {}
+    return {};
   }
 
   Map<String, dynamic> toJson() {

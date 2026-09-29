@@ -74,22 +74,23 @@ class AuthRepository {
     try {
       final response = await _api.login(username: username, pin: pin);
 
-      // ── 1. Validate that userType == MARKET ────────────────────────────────
+      // ── 1. Validate that account is permitted on Supermarket POS ───────────
       final userTypeUpper = (response.userType ?? '').trim().toUpperCase();
       final appTypeUpper = (response.appType ?? '').trim().toUpperCase();
-      final isMarket = userTypeUpper == 'MARKET' || appTypeUpper == 'MARKET';
 
-      if (!isMarket) {
-        final currentType = userTypeUpper.isNotEmpty
-            ? userTypeUpper
-            : (appTypeUpper.isNotEmpty ? appTypeUpper : 'UNKNOWN');
+      // Only reject if explicitly assigned to another non-market domain (e.g. RESTAURANT)
+      final isNonMarket = (appTypeUpper.isNotEmpty && appTypeUpper != 'MARKET' && userTypeUpper != 'PLATFORM') ||
+          (userTypeUpper == 'RESTAURANT');
+
+      if (isNonMarket) {
+        final currentType = appTypeUpper.isNotEmpty ? appTypeUpper : userTypeUpper;
         if (kDebugMode) {
-          debugPrint('🚫 [AuthRepository] Login rejected: userType ($currentType) is not MARKET');
+          debugPrint('🚫 [AuthRepository] Login rejected: type ($currentType) is not MARKET');
         }
         return AuthResult(
           success: false,
           errorMessage:
-              'Access denied: Only MARKET accounts are permitted on this Supermarket POS terminal. (Account type: $currentType)',
+              'Access denied: This Supermarket POS terminal is only for MARKET accounts. (Account type: $currentType)',
           isFromApi: true,
         );
       }
@@ -111,13 +112,19 @@ class AuthRepository {
         await _tokenStorage.saveAppType(response.appType!);
       }
 
+      bool isValidMongoId(String? id) {
+        if (id == null || id.isEmpty) return false;
+        if (id == '000000000000000000000000') return false;
+        return RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(id);
+      }
+
       // ── 3. Function 1: Fetch brand details ONLY for this user's brandId ───
-      if (response.brandId != null && response.brandId!.isNotEmpty) {
+      if (isValidMongoId(response.brandId)) {
         await fetchAndSaveBrandDetails(response.brandId!);
       }
 
       // ── 4. Function 2: Fetch branch details ONLY for this user's branchId ──
-      if (response.branchId != null && response.branchId!.isNotEmpty) {
+      if (isValidMongoId(response.branchId)) {
         await fetchAndSaveBranchDetails(response.branchId!);
       }
 
@@ -247,7 +254,7 @@ class AuthRepository {
   /// Function 1: Fetches brand details strictly for the given [brandId],
   /// saves full JSON to local storage, and updates [ServiceBrandContext].
   Future<void> fetchAndSaveBrandDetails(String brandId) async {
-    if (brandId.isEmpty) return;
+    if (brandId.isEmpty || brandId == '000000000000000000000000') return;
     try {
       final brandApi = _getBrandApi();
       if (brandApi == null) {
@@ -280,7 +287,7 @@ class AuthRepository {
   /// Function 2: Fetches branch details strictly for the given [branchId],
   /// saves full JSON (including planDetails) to local storage, and updates [ServiceBrandContext].
   Future<void> fetchAndSaveBranchDetails(String branchId) async {
-    if (branchId.isEmpty) return;
+    if (branchId.isEmpty || branchId == '000000000000000000000000') return;
     try {
       final branchApi = _getBranchApi();
       if (branchApi == null) {

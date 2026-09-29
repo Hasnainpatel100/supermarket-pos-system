@@ -49,9 +49,13 @@ class ControllerLogin extends GetxController {
       return;
     }
 
-    // ── Enforce userType / appType == MARKET ──
-    final userType = (result.authResponse?.userType ?? result.authResponse?.appType ?? '').toUpperCase();
-    if (userType != 'MARKET') {
+    // ── Enforce MARKET check (allow MARKET and PLATFORM users, reject RESTAURANT) ──
+    final appType = (result.authResponse?.appType ?? '').toUpperCase();
+    final userType = (result.authResponse?.userType ?? '').toUpperCase();
+    final isNonMarket = (appType.isNotEmpty && appType != 'MARKET' && userType != 'PLATFORM') ||
+        (userType == 'RESTAURANT');
+
+    if (isNonMarket) {
       Loader.hideLoader();
       SnackbarUtil.showError(
         'Access denied: Only MARKET users are authorized on this POS terminal.',
@@ -64,7 +68,7 @@ class ControllerLogin extends GetxController {
     }
 
     if (kDebugMode) {
-      debugPrint('✅ LOGIN SUCCESS (Server) - userType: $userType');
+      debugPrint('✅ LOGIN SUCCESS (Server) - appType: $appType, userType: $userType');
     }
 
     final user = result.user!;

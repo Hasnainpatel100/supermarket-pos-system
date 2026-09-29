@@ -173,10 +173,6 @@ class RepoDrawer {
       titleKey: 'system',
       icon: Icons.admin_panel_settings_outlined,
       permissions: [
-        EnumPermission.userCreate,
-        EnumPermission.userUpdate,
-        EnumPermission.userDisable,
-        EnumPermission.roleAssign,
         EnumPermission.backupRestore,
         EnumPermission.auditLogView,
       ],
@@ -186,11 +182,10 @@ class RepoDrawer {
           menu: EnumMainMenu.systemUsers,
           titleKey: 'users',
           icon: Icons.people_outline,
+          // Only software vendor admin can access Users management.
+          // Client accounts never see this menu.
           permissions: [
-            EnumPermission.userCreate,
-            EnumPermission.userUpdate,
-            EnumPermission.userDisable,
-            EnumPermission.roleAssign,
+            EnumPermission.superVendorAccess,
           ],
         ),
         ModelDrawerMenu(

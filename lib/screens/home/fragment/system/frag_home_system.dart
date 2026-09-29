@@ -27,8 +27,8 @@ class FragHomeSystem extends StatelessWidget {
                 SectionTile(
                   title: 'Users',
                   icon: Icons.people,
-                  visible: permissions.any((p) => p.startsWith('user')),
-                  selected: true,
+                  visible: permissions.contains(EnumPermission.superVendorAccess.name),
+                  selected: false,
                   onTap: () {
                     controllerHome.selectedMainMenu.value = EnumMainMenu.systemUsers;
                   },
@@ -37,9 +37,7 @@ class FragHomeSystem extends StatelessWidget {
                 SectionTile(
                   title: 'Brands',
                   icon: Icons.branding_watermark_outlined,
-                  visible: permissions.contains(
-                    EnumPermission.brandManage.name,
-                  ) || permissions.contains('brandManage') || permissions.contains('superAdmin'),
+                  visible: permissions.contains(EnumPermission.superVendorAccess.name),
                   selected: false,
                   onTap: () {
                     controllerHome.selectedMainMenu.value = EnumMainMenu.brand;
@@ -49,9 +47,7 @@ class FragHomeSystem extends StatelessWidget {
                 SectionTile(
                   title: 'Branches',
                   icon: Icons.add_business_outlined,
-                  visible: permissions.contains(
-                    EnumPermission.branchManage.name,
-                  ) || permissions.contains('branchManage') || permissions.contains('superAdmin'),
+                  visible: permissions.contains(EnumPermission.superVendorAccess.name),
                   selected: false,
                   onTap: () {
                     controllerHome.selectedMainMenu.value = EnumMainMenu.branch;

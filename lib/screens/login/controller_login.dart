@@ -49,12 +49,12 @@ class ControllerLogin extends GetxController {
       return;
     }
 
-    // ── Enforce appType == MARKET ──
-    final appType = result.authResponse?.appType;
-    if (appType != null && appType.toUpperCase() != 'MARKET') {
+    // ── Enforce userType / appType == MARKET ──
+    final userType = (result.authResponse?.userType ?? result.authResponse?.appType ?? '').toUpperCase();
+    if (userType != 'MARKET') {
       Loader.hideLoader();
       SnackbarUtil.showError(
-        'Access denied. This app is only for MARKET users. Your account type: $appType',
+        'Access denied: Only MARKET users are authorized on this POS terminal.',
       );
       // Clear tokens since this user shouldn't be logged in
       if (Get.isRegistered<AuthRepository>()) {
@@ -64,7 +64,7 @@ class ControllerLogin extends GetxController {
     }
 
     if (kDebugMode) {
-      debugPrint('✅ LOGIN SUCCESS (Server) - appType: $appType');
+      debugPrint('✅ LOGIN SUCCESS (Server) - userType: $userType');
     }
 
     final user = result.user!;

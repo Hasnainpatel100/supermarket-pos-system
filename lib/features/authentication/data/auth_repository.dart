@@ -35,11 +35,10 @@ class AuthResult {
 /// Authentication Repository handling backend API login, token persistence,
 /// session context storage, and user profile management.
 ///
-/// After a successful login it also:
-///  - Fetches the full brand details using brandId from the JWT response
-///  - Fetches the full branch details using branchId from the JWT response
-///  - Saves both as JSON strings in TokenStorage (encrypted local storage)
-///  - Populates ServiceBrandContext so the rest of the app has instant access
+/// On login:
+///  - Validates that userType / appType == 'MARKET'.
+///  - Executes 2 functions to fetch Brand details (by brandId) and Branch details (by branchId).
+///  - Strips Brand, Branch, and User management permissions from client users.
 class AuthRepository {
   final AuthApi _api;
   final TokenStorage _tokenStorage;
@@ -64,9 +63,10 @@ class AuthRepository {
 
   /// Performs backend login using username and pin/password.
   ///
-  /// On success, automatically fetches & caches the brand and branch
-  /// associated with the logged-in user so the app is fully configured
-  /// without requiring any additional user action.
+  /// Enforces:
+  /// 1. userType/appType must be MARKET.
+  /// 2. Executes 2 functions for brand and branch to fetch only this user's data.
+  /// 3. Completely isolates client users by stripping brand, branch, and user management permissions.
   Future<AuthResult> login({
     required String username,
     required String pin,
@@ -74,7 +74,27 @@ class AuthRepository {
     try {
       final response = await _api.login(username: username, pin: pin);
 
-      // ── 1. Persist tokens ─────────────────────────────────────────────────
+      // ── 1. Validate that userType == MARKET ────────────────────────────────
+      final userTypeUpper = (response.userType ?? '').trim().toUpperCase();
+      final appTypeUpper = (response.appType ?? '').trim().toUpperCase();
+      final isMarket = userTypeUpper == 'MARKET' || appTypeUpper == 'MARKET';
+
+      if (!isMarket) {
+        final currentType = userTypeUpper.isNotEmpty
+            ? userTypeUpper
+            : (appTypeUpper.isNotEmpty ? appTypeUpper : 'UNKNOWN');
+        if (kDebugMode) {
+          debugPrint('🚫 [AuthRepository] Login rejected: userType ($currentType) is not MARKET');
+        }
+        return AuthResult(
+          success: false,
+          errorMessage:
+              'Access denied: Only MARKET accounts are permitted on this Supermarket POS terminal. (Account type: $currentType)',
+          isFromApi: true,
+        );
+      }
+
+      // ── 2. Persist tokens and identifiers ──────────────────────────────────
       if (response.accessToken.isNotEmpty) {
         await _tokenStorage.saveAccessToken(response.accessToken);
       }
@@ -91,40 +111,63 @@ class AuthRepository {
         await _tokenStorage.saveAppType(response.appType!);
       }
 
-      // ── 2. Build EntityUser ───────────────────────────────────────────────
-      final roleNormalized =
-          response.role?.toUpperCase().replaceAll('_', '') ?? '';
-      final isSuperAdmin = roleNormalized == 'SUPERADMIN' ||
-          response.userType?.toUpperCase() == 'PLATFORM';
+      // ── 3. Function 1: Fetch brand details ONLY for this user's brandId ───
+      if (response.brandId != null && response.brandId!.isNotEmpty) {
+        await fetchAndSaveBrandDetails(response.brandId!);
+      }
 
-      final allPermissions =
-          EnumPermission.values.map((e) => e.name).toList();
+      // ── 4. Function 2: Fetch branch details ONLY for this user's branchId ──
+      if (response.branchId != null && response.branchId!.isNotEmpty) {
+        await fetchAndSaveBranchDetails(response.branchId!);
+      }
+
+      // ── 5. Build EntityUser (Stripping Brand, Branch & User access for clients) ──
+      const Set<String> restrictedPermissions = {
+        'superVendorAccess',
+        'brandManage',
+        'brandCreate',
+        'brandUpdate',
+        'brandDelete',
+        'brandView',
+        'branchManage',
+        'branchCreate',
+        'branchUpdate',
+        'branchDelete',
+        'branchView',
+        'userCreate',
+        'userUpdate',
+        'userDisable',
+        'roleAssign',
+        'apiUserManage',
+      };
+
+      final isSuperVendor = (response.userType?.toUpperCase() == 'PLATFORM');
+
+      List<String> effectivePermissions;
+      if (isSuperVendor) {
+        effectivePermissions = EnumPermission.values.map((e) => e.name).toList();
+      } else {
+        // Standard / Client User:
+        // Client users cannot see or manage brands, branches, or other users.
+        final base = response.permissions.isNotEmpty
+            ? response.permissions
+            : EnumPermission.values.map((e) => e.name).toList();
+        effectivePermissions = base
+            .where((p) => !restrictedPermissions.contains(p))
+            .toList();
+      }
 
       final entityUser = EntityUser(
         username: response.username,
         first: response.firstName ?? response.username,
         last: response.lastName ?? '',
-        role: response.role ?? 'superAdmin',
+        role: response.role ?? 'cashier',
         mongoId: response.userId,
-        permissions: isSuperAdmin
-            ? allPermissions
-            : (response.permissions.isNotEmpty
-                ? response.permissions
-                : allPermissions),
+        permissions: effectivePermissions,
         isActive: true,
       );
 
       await _repoStorage.setUser(json.encode(entityUser.toMap()));
-
-      // ── 3. Fetch & cache brand details using brandId from JWT ─────────────
-      if (response.brandId != null && response.brandId!.isNotEmpty) {
-        await _fetchAndSaveBrand(response.brandId!);
-      }
-
-      // ── 4. Fetch & cache branch details using branchId from JWT ──────────
-      if (response.branchId != null && response.branchId!.isNotEmpty) {
-        await _fetchAndSaveBranch(response.branchId!);
-      }
 
       return AuthResult(
         success: true,
@@ -155,8 +198,6 @@ class AuthRepository {
 
   /// Restores brand and branch context from local storage on app start
   /// (when the user is already logged in and the app is resumed).
-  ///
-  /// Call this from the splash/init flow after confirming a valid access token exists.
   Future<void> restoreSessionContext() async {
     // Restore brand
     final brandJson = _tokenStorage.getBrandJson();
@@ -201,26 +242,32 @@ class AuthRepository {
     await _repoStorage.setUser('');
   }
 
-  // ── Private helpers ────────────────────────────────────────────────────────
+  // ── 2 Functions for Brand & Branch Data Fetching ──────────────────────────
 
-  /// Fetches brand by ID, saves JSON to storage, and updates [ServiceBrandContext].
-  Future<void> _fetchAndSaveBrand(String brandId) async {
+  /// Function 1: Fetches brand details strictly for the given [brandId],
+  /// saves full JSON to local storage, and updates [ServiceBrandContext].
+  Future<void> fetchAndSaveBrandDetails(String brandId) async {
+    if (brandId.isEmpty) return;
     try {
       final brandApi = _getBrandApi();
-      if (brandApi == null) return;
+      if (brandApi == null) {
+        if (kDebugMode) debugPrint('⚠️ [AuthRepository] ServiceBrandApi unavailable');
+        return;
+      }
 
       final result = await brandApi.getBrandById(brandId);
       if (result.success && result.data != null) {
         final brand = result.data!;
+        // Save full JSON to encrypted local storage
         await _tokenStorage.saveBrandJson(jsonEncode(brand.toMap()));
+        // Populate session context
         _brandContext.selectBrand(brand);
         if (kDebugMode) {
-          debugPrint('✅ [AuthRepository] Brand fetched and saved: ${brand.name.en}');
+          debugPrint('✅ [AuthRepository] Brand data fetched & cached strictly for user: ${brand.name.en} ($brandId)');
         }
       } else {
         if (kDebugMode) {
-          debugPrint(
-              '⚠️ [AuthRepository] Could not fetch brand ($brandId): ${result.message}');
+          debugPrint('⚠️ [AuthRepository] Could not fetch brand ($brandId): ${result.message}');
         }
       }
     } catch (e) {
@@ -230,27 +277,33 @@ class AuthRepository {
     }
   }
 
-  /// Fetches branch by ID, saves JSON to storage, and updates [ServiceBrandContext].
-  Future<void> _fetchAndSaveBranch(String branchId) async {
+  /// Function 2: Fetches branch details strictly for the given [branchId],
+  /// saves full JSON (including planDetails) to local storage, and updates [ServiceBrandContext].
+  Future<void> fetchAndSaveBranchDetails(String branchId) async {
+    if (branchId.isEmpty) return;
     try {
       final branchApi = _getBranchApi();
-      if (branchApi == null) return;
+      if (branchApi == null) {
+        if (kDebugMode) debugPrint('⚠️ [AuthRepository] ServiceBranchApi unavailable');
+        return;
+      }
 
       final result = await branchApi.getBranchById(branchId);
       if (result.success && result.data != null) {
         final branch = result.data!;
+        // Save full JSON (including planDetails, serviceTypes, payment, etc.)
         await _tokenStorage.saveBranchJson(jsonEncode(branch.toMap()));
+        // Populate session context
         _brandContext.selectBranch(branch);
         if (kDebugMode) {
           debugPrint(
-              '✅ [AuthRepository] Branch fetched and saved: ${branch.name.en} '
+              '✅ [AuthRepository] Branch data fetched & cached strictly for user: ${branch.name.en} ($branchId) '
               '(maxUsers=${branch.planDetails?.maxUsers}, '
               'maxDevices=${branch.planDetails?.maxPosDevices})');
         }
       } else {
         if (kDebugMode) {
-          debugPrint(
-              '⚠️ [AuthRepository] Could not fetch branch ($branchId): ${result.message}');
+          debugPrint('⚠️ [AuthRepository] Could not fetch branch ($branchId): ${result.message}');
         }
       }
     } catch (e) {

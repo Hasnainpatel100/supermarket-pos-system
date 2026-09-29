@@ -24,35 +24,6 @@ class FragHomeSystem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             child: Wrap(
               children: [
-                SectionTile(
-                  title: 'Users',
-                  icon: Icons.people,
-                  visible: permissions.contains(EnumPermission.superVendorAccess.name),
-                  selected: false,
-                  onTap: () {
-                    controllerHome.selectedMainMenu.value = EnumMainMenu.systemUsers;
-                  },
-                ),
-
-                SectionTile(
-                  title: 'Brands',
-                  icon: Icons.branding_watermark_outlined,
-                  visible: permissions.contains(EnumPermission.superVendorAccess.name),
-                  selected: false,
-                  onTap: () {
-                    controllerHome.selectedMainMenu.value = EnumMainMenu.brand;
-                  },
-                ),
-
-                SectionTile(
-                  title: 'Branches',
-                  icon: Icons.add_business_outlined,
-                  visible: permissions.contains(EnumPermission.superVendorAccess.name),
-                  selected: false,
-                  onTap: () {
-                    controllerHome.selectedMainMenu.value = EnumMainMenu.branch;
-                  },
-                ),
 
                 SectionTile(
                   title: 'Backup & Recovery',

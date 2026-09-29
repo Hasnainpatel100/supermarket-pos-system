@@ -179,16 +179,6 @@ class RepoDrawer {
 
       children: [
         ModelDrawerMenu(
-          menu: EnumMainMenu.systemUsers,
-          titleKey: 'users',
-          icon: Icons.people_outline,
-          // Only software vendor admin can access Users management.
-          // Client accounts never see this menu.
-          permissions: [
-            EnumPermission.superVendorAccess,
-          ],
-        ),
-        ModelDrawerMenu(
           menu: EnumMainMenu.backup,
           titleKey: 'Backup & Recovery',
           icon: Icons.backup_outlined,
@@ -200,34 +190,6 @@ class RepoDrawer {
           icon: Icons.history_rounded,
           permissions: [EnumPermission.auditLogView],
         ),
-      ],
-    ),
-    ModelDrawerMenu(
-      menu: EnumMainMenu.apiUser,
-      titleKey: 'api_user',
-      icon: Icons.cloud_sync_outlined,
-      // Only the software vendor's admin can access API user management.
-      // Client accounts never see this menu.
-      permissions: [
-        EnumPermission.superVendorAccess,
-      ],
-    ),
-    ModelDrawerMenu(
-      menu: EnumMainMenu.brand,
-      titleKey: 'Brands',
-      icon: Icons.branding_watermark_outlined,
-      // Only the software vendor's admin can manage brands.
-      permissions: [
-        EnumPermission.superVendorAccess,
-      ],
-    ),
-    ModelDrawerMenu(
-      menu: EnumMainMenu.branch,
-      titleKey: 'Branches',
-      icon: Icons.add_business_outlined,
-      // Only the software vendor's admin can manage branches.
-      permissions: [
-        EnumPermission.superVendorAccess,
       ],
     ),
   ];

@@ -148,21 +148,13 @@ class AuthRepository {
         'apiUserManage',
       };
 
-      final isSuperVendor = (response.userType?.toUpperCase() == 'PLATFORM');
-
-      List<String> effectivePermissions;
-      if (isSuperVendor) {
-        effectivePermissions = EnumPermission.values.map((e) => e.name).toList();
-      } else {
-        // Standard / Client User:
-        // Client users cannot see or manage brands, branches, or other users.
-        final base = response.permissions.isNotEmpty
-            ? response.permissions
-            : EnumPermission.values.map((e) => e.name).toList();
-        effectivePermissions = base
-            .where((p) => !restrictedPermissions.contains(p))
-            .toList();
-      }
+      // Strip brand, branch, and user management for all users logging into this POS app
+      final base = response.permissions.isNotEmpty
+          ? response.permissions
+          : EnumPermission.values.map((e) => e.name).toList();
+      final effectivePermissions = base
+          .where((p) => !restrictedPermissions.contains(p))
+          .toList();
 
       final entityUser = EntityUser(
         username: response.username,

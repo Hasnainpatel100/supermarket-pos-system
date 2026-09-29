@@ -306,14 +306,14 @@ class AppTextField extends StatelessWidget {
         if (trimmed.isNotEmpty) {
           final cleanLabel = label.toLowerCase();
           
-          // 1. Phone number validation (supports local 10 digits and international E.164 with +)
+          // 1. Phone number validation — must be exactly 10 digits
           if (cleanLabel.contains('phone') || cleanLabel.contains('mobile')) {
             final digitsOnly = trimmed.replaceAll(RegExp(r'\D'), '');
-            if (digitsOnly.length < 7 || digitsOnly.length > 15) {
-              return "Please enter a valid phone number (7-15 digits)";
+            if (digitsOnly.length != 10) {
+              return 'Phone number must be exactly 10 digits';
             }
             if (!RegExp(r'^\+?[0-9\-\s]+$').hasMatch(trimmed)) {
-              return "Phone number contains invalid characters";
+              return 'Phone number contains invalid characters';
             }
           }
           

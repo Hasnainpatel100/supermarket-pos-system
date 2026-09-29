@@ -233,11 +233,10 @@ class ActivityBranchForm extends StatelessWidget {
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
                             return 'Primary phone is required';
-                          } 
-                          if (!RegExp(
-                            r'^\+?[0-9\-\s]{7,15}$',
-                          ).hasMatch(v.trim())) {
-                            return 'Invalid phone number';
+                          }
+                          final digits = v.replaceAll(RegExp(r'[^\d]'), '');
+                          if (digits.length != 10) {
+                            return 'Phone number must be exactly 10 digits';
                           }
                           return null;
                         },

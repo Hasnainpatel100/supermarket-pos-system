@@ -8,6 +8,19 @@ import '../../util/snackbar_util.dart';
 import '../../widget/app_dialog_components.dart';
 import 'controller_brand_form.dart';
 
+/// Returns null if valid, else an error message.
+/// Accepts: optional leading '+', then exactly 10 digits (ignoring spaces/hyphens).
+String? _validatePhone(String? value, {bool required = false}) {
+  if (value == null || value.trim().isEmpty) {
+    return required ? 'Phone number is required' : null;
+  }
+  final digits = value.replaceAll(RegExp(r'[^\d]'), '');
+  if (digits.length != 10) {
+    return 'Phone number must be exactly 10 digits';
+  }
+  return null;
+}
+
 class ActivityBrandForm extends StatelessWidget {
   final ModelBrand? editingBrand;
 
@@ -349,11 +362,12 @@ class ActivityBrandForm extends StatelessWidget {
                   Expanded(
                     child: AppTextField(
                       controller: controller.phonePrimaryController,
-                      label: 'Primary Phone *',
-                      hint: 'e.g. +971504847006',
+                      label: 'Primary Phone * (10 digits)',
+                      hint: 'e.g. 9715048470',
                       required: true,
                       prefixIcon: Icons.phone_rounded,
                       keyboardType: TextInputType.phone,
+                      validator: (v) => _validatePhone(v, required: true),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -361,10 +375,11 @@ class ActivityBrandForm extends StatelessWidget {
                   Expanded(
                     child: AppTextField(
                       controller: controller.phoneAlternateController,
-                      label: 'Alternate Phone',
-                      hint: 'e.g. +971500000000',
+                      label: 'Alternate Phone (10 digits)',
+                      hint: 'e.g. 9715000000',
                       prefixIcon: Icons.phone_callback_rounded,
                       keyboardType: TextInputType.phone,
+                      validator: _validatePhone,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -372,10 +387,11 @@ class ActivityBrandForm extends StatelessWidget {
                   Expanded(
                     child: AppTextField(
                       controller: controller.phoneWhatsappController,
-                      label: 'WhatsApp Phone',
-                      hint: 'e.g. +971504847006',
+                      label: 'WhatsApp Phone (10 digits)',
+                      hint: 'e.g. 9715048470',
                       prefixIcon: Icons.chat_bubble_outline_rounded,
                       keyboardType: TextInputType.phone,
+                      validator: _validatePhone,
                     ),
                   ),
                 ],

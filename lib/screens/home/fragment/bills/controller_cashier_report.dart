@@ -220,21 +220,29 @@ class ControllerCashierReport extends GetxController {
   // Data Load
   // ═════════════════════════════════════════════════════════════════════════
 
-  void loadData() {
+  Future<void> loadData() async {
     rxLoading.value = true;
     currentPage.value = 0;
 
-    switch (rxReportType.value) {
-      case CashierReportType.cashierSales:
-        _loadCashierSales();
-        break;
-      case CashierReportType.cashierShift:
-        _loadCashierShift();
-        break;
-    }
+    await Future.delayed(Duration.zero);
 
-    _applyPagination();
-    rxLoading.value = false;
+    try {
+      switch (rxReportType.value) {
+        case CashierReportType.cashierSales:
+          _loadCashierSales();
+          break;
+        case CashierReportType.cashierShift:
+          _loadCashierShift();
+          break;
+      }
+      _applyPagination();
+    } catch (e, stack) {
+      debugPrint('⚠️ [ControllerCashierReport] Error loading cashier report: $e\n$stack');
+      _fullRows = [];
+      rxRows.assignAll([]);
+    } finally {
+      rxLoading.value = false;
+    }
   }
 
   void _applyPagination() {

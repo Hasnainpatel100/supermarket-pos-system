@@ -6,6 +6,8 @@ import '../../../../widget/app_dialog_components.dart';
 import '../../../../service/service_currency.dart';
 import '../../../../service/service_locale.dart';
 import '../../../../service/service_theme.dart';
+import '../../../../service/service_brand_context.dart';
+import '../../../../widget/dialog_plan_expiry.dart';
 import '../../../../widget/list_tile_dropdown.dart';
 import '../../../../widget/list_tile_toggle.dart';
 import '../../../../widget/my_card.dart';
@@ -188,6 +190,246 @@ class _ProfileTab extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 28),
+
+              // ── Active Brand & Branch ────────────────────────────────────
+              _buildSectionHeader(context, 'Brand & Branch Details'),
+              const SizedBox(height: 4),
+              Obx(() {
+                final brandCtx = Get.find<ServiceBrandContext>();
+                final brand = brandCtx.rxSelectedBrand.value;
+                final branch = brandCtx.rxSelectedBranch.value;
+                final brandName = brand?.name.en ?? 'No Brand Configured';
+                final branchName = branch?.name.en ?? 'No Branch Selected';
+                final branchCode = branch?.branchCode ?? '';
+                final isBranchActive = (branch?.status.toLowerCase() ?? '') == 'active';
+
+                return MyCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(Icons.store_mall_directory_rounded,
+                                color: colorScheme.primary, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Active Organization Context',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Current operating brand and active branch outlet',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                          color: colorScheme.onSurface
+                                              .withValues(alpha: 0.5)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.1)),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          // Brand Box
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.storefront_rounded, size: 16, color: colorScheme.primary),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'ACTIVE BRAND',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: colorScheme.primary,
+                                          letterSpacing: 0.8,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    brandName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  if (brand?.branchCode != null && brand!.branchCode!.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Code: ${brand.branchCode}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ],
+                                  if (brand?.registration.gstNo != null &&
+                                      brand!.registration.gstNo.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'GST/Tax: ${brand.registration.gstNo}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          // Branch Box
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.location_on_rounded, size: 16, color: Colors.deepPurple),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        'ACTIVE BRANCH',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.deepPurple,
+                                          letterSpacing: 0.8,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: isBranchActive
+                                              ? Colors.green.withValues(alpha: 0.15)
+                                              : Colors.orange.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          branch?.status.toUpperCase() ?? 'NONE',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                            color: isBranchActive ? Colors.green : Colors.orange,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    branchName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  if (branchCode.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Branch Code: $branchCode',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ],
+                                  if (branch?.address.city != null && branch!.address.city.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'City: ${branch.address.city}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ],
+                                  if (branch?.planDetails != null) ...[
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Plan: ${branch!.planDetails!.note.isNotEmpty ? branch.planDetails!.note : "Active"} (Expires: ${branch.planDetails!.formattedExpiry})',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: branch.planDetails!.isExpiringSoon || branch.planDetails!.isExpired
+                                            ? Colors.amber.shade800
+                                            : Colors.green.shade700,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (branch?.planDetails != null) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Expiry Alarm: Alerts ${brandCtx.expiryAlarmDays} days before expiry',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: colorScheme.onSurface.withValues(alpha: 0.65),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () => DialogPlanExpiry.show(context, branch: branch),
+                              icon: const Icon(Icons.credit_card_rounded, size: 14),
+                              label: const Text('View Plan & Set Alarm', style: TextStyle(fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }),
               const SizedBox(height: 28),
 
               // ── Store Information ─────────────────────────────────────────

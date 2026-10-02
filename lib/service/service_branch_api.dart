@@ -471,23 +471,54 @@ class ServiceBranchApi {
     }
   }
 
-  /// GET /api/branches/:id/plan-history
-  Future<BranchApiResponse<List<dynamic>>> getBranchPlanHistory(String id) async {
+  /// GET /api/branches/:id/plan-history?page=0&limit=20
+  Future<BranchApiResponse<List<ModelBranchPlanHistory>>> getBranchPlanHistory(
+    String id, {
+    int page = 0,
+    int limit = 20,
+  }) async {
     if (!RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(id)) {
       return BranchApiResponse.error('Cannot get plan history: Branch ID "$id" is not a valid 24-character hexadecimal ObjectId.');
     }
     try {
-      final response = await _dio.get('/api/branches/$id/plan-history');
+      final response = await _dio.get(
+        '/api/branches/$id/plan-history',
+        queryParameters: {'page': page, 'limit': limit},
+      );
       final statusCode = response.statusCode ?? 200;
 
       if (statusCode == 200) {
-        List<dynamic> list = [];
+        List<dynamic> rawList = [];
         final body = response.data;
         if (body is List) {
-          list = body;
+          rawList = body;
         } else if (body is Map<String, dynamic>) {
-          list = (body['data'] as List?) ?? (body['history'] as List?) ?? [];
+          final data = body['data'];
+          if (data is List) {
+            rawList = data;
+          } else if (data is Map<String, dynamic>) {
+            // As seen in API: { "data": { "data": [ ... ], "page": 0, "limit": 20, "total": 1 } }
+            rawList = (data['data'] as List?) ??
+                (data['history'] as List?) ??
+                (data['items'] as List?) ??
+                (data['docs'] as List?) ??
+                [];
+          } else if (body['history'] is List) {
+            rawList = body['history'] as List;
+          }
         }
+        final list = rawList
+            .whereType<Map<String, dynamic>>()
+            .map((m) => ModelBranchPlanHistory.fromJson(m))
+            .toList();
+
+        // Sort newest first
+        list.sort((a, b) {
+          final tA = a.assignedDate?.millisecondsSinceEpoch ?? 0;
+          final tB = b.assignedDate?.millisecondsSinceEpoch ?? 0;
+          return tB.compareTo(tA);
+        });
+
         return BranchApiResponse.success(list, statusCode: statusCode);
       }
       return BranchApiResponse.error(_extractErrorMessage(response.data, statusCode), statusCode: statusCode);

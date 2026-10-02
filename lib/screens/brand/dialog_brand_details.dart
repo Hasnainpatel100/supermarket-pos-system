@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../model/model_brand.dart';
-import '../../repository/repo_brand.dart';
 import '../../util/snackbar_util.dart';
 import '../../widget/app_dialog_components.dart';
 import 'activity_brand_form.dart';

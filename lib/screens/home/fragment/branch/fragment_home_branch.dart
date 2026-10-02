@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../model/model_branch.dart';
 import '../../../../service/service_brand_context.dart';
 import '../../../../util/snackbar_util.dart';
+import '../../../../widget/dialog_plan_expiry.dart';
 import '../../../brand/dialog_brand_api_config.dart';
 import 'controller_home_branch.dart';
 
@@ -319,11 +320,11 @@ class FragmentHomeBranch extends StatelessWidget {
         mainAxisSpacing: 16,
       ),
       itemCount: branches.length,
-      itemBuilder: (context, index) => _buildBranchCard(branches[index], controller, colorScheme),
+      itemBuilder: (context, index) => _buildBranchCard(context, branches[index], controller, colorScheme),
     );
   }
 
-  Widget _buildBranchCard(ModelBranch branch, ControllerHomeBranch controller, ColorScheme colorScheme) {
+  Widget _buildBranchCard(BuildContext context, ModelBranch branch, ControllerHomeBranch controller, ColorScheme colorScheme) {
     final isActive = branch.isActive;
     return Card(
       elevation: 2,
@@ -401,6 +402,8 @@ class FragmentHomeBranch extends StatelessWidget {
                       if (action == 'view') controller.openDetailsDialog(branch);
                       if (action == 'edit') controller.openEditDialog(branch);
                       if (action == 'select') controller.selectAsActive(branch);
+                      if (action == 'plan') DialogPlanExpiry.show(context, branch: branch);
+                      if (action == 'history') DialogPlanExpiry.showHistory(context, branch: branch);
                       if (action == 'toggle') controller.toggleStatus(branch);
                       if (action == 'copy') {
                         Clipboard.setData(ClipboardData(text: branch.toJsonString(pretty: true)));
@@ -417,6 +420,23 @@ class FragmentHomeBranch extends StatelessWidget {
                           Icon(Icons.check_circle_outline_rounded, size: 16, color: Colors.deepPurple),
                           SizedBox(width: 8),
                           Text('Set as Active Branch', style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold)),
+                        ]),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'plan',
+                        child: Row(children: [
+                          Icon(Icons.credit_card_rounded, size: 16, color: Colors.blueAccent),
+                          SizedBox(width: 8),
+                          Text('Plan Details'),
+                        ]),
+                      ),
+                      const PopupMenuItem(
+                        value: 'history',
+                        child: Row(children: [
+                          Icon(Icons.history_edu_rounded, size: 16, color: Colors.teal),
+                          SizedBox(width: 8),
+                          Text('Plan History'),
                         ]),
                       ),
                       const PopupMenuDivider(),
@@ -445,6 +465,24 @@ class FragmentHomeBranch extends StatelessWidget {
                 branch.contact.phones.primary.isNotEmpty ? branch.contact.phones.primary : 'No phone',
                 Colors.teal.shade600,
               ),
+
+              // Plan & Subscription
+              if (branch.planDetails != null) ...[
+                const SizedBox(height: 5),
+                InkWell(
+                  onTap: () => DialogPlanExpiry.show(context, branch: branch),
+                  borderRadius: BorderRadius.circular(20),
+                  child: _infoPill(
+                    Icons.card_membership_rounded,
+                    'Plan: ${branch.planDetails!.note.isNotEmpty ? branch.planDetails!.note : "Active"} (${branch.planDetails!.expiryStatusText})',
+                    branch.planDetails!.isExpired
+                        ? Colors.red.shade700
+                        : branch.planDetails!.isExpiringSoon
+                            ? Colors.amber.shade800
+                            : Colors.teal.shade700,
+                  ),
+                ),
+              ],
 
               const Spacer(),
 

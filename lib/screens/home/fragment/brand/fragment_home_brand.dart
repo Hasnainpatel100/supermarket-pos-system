@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../model/model_brand.dart';
+import '../../../../service/service_brand_context.dart';
 import '../../../../util/snackbar_util.dart';
 import 'controller_home_brand.dart';
 
@@ -169,47 +170,106 @@ class FragmentHomeBrand extends StatelessWidget {
   // ─── Metric Cards ─────────────────────────────────────────────────────────
 
   Widget _buildMetricCards(ControllerHomeBrand controller, ColorScheme colorScheme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: _metricTile(
-              title: 'Total Brands',
-              count: controller.totalBrandsCount,
-              icon: Icons.storefront_rounded,
-              gradient: [Colors.indigo.shade600, Colors.indigo.shade800],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 840;
+
+        if (isCompact) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _metricTile(
+                        title: 'Total Brands',
+                        count: controller.totalBrandsCount,
+                        icon: Icons.storefront_rounded,
+                        gradient: [Colors.indigo.shade600, Colors.indigo.shade800],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _metricTile(
+                        title: 'Active Brands',
+                        count: controller.activeBrandsCount,
+                        icon: Icons.check_circle_rounded,
+                        gradient: [Colors.teal.shade600, Colors.teal.shade800],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _metricTile(
+                        title: 'Supermarket Brands',
+                        count: controller.marketBrandsCount,
+                        icon: Icons.shopping_basket_rounded,
+                        gradient: [Colors.blue.shade600, Colors.blue.shade800],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _metricTile(
+                        title: 'Restaurant Brands',
+                        count: controller.restaurantBrandsCount,
+                        icon: Icons.restaurant_rounded,
+                        gradient: [Colors.orange.shade700, Colors.deepOrange.shade800],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: _metricTile(
+                  title: 'Total Brands',
+                  count: controller.totalBrandsCount,
+                  icon: Icons.storefront_rounded,
+                  gradient: [Colors.indigo.shade600, Colors.indigo.shade800],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _metricTile(
+                  title: 'Active Brands',
+                  count: controller.activeBrandsCount,
+                  icon: Icons.check_circle_rounded,
+                  gradient: [Colors.teal.shade600, Colors.teal.shade800],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _metricTile(
+                  title: 'Supermarket Brands',
+                  count: controller.marketBrandsCount,
+                  icon: Icons.shopping_basket_rounded,
+                  gradient: [Colors.blue.shade600, Colors.blue.shade800],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _metricTile(
+                  title: 'Restaurant Brands',
+                  count: controller.restaurantBrandsCount,
+                  icon: Icons.restaurant_rounded,
+                  gradient: [Colors.orange.shade700, Colors.deepOrange.shade800],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _metricTile(
-              title: 'Active Brands',
-              count: controller.activeBrandsCount,
-              icon: Icons.check_circle_rounded,
-              gradient: [Colors.teal.shade600, Colors.teal.shade800],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _metricTile(
-              title: 'Supermarket Brands',
-              count: controller.marketBrandsCount,
-              icon: Icons.shopping_basket_rounded,
-              gradient: [Colors.blue.shade600, Colors.blue.shade800],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _metricTile(
-              title: 'Restaurant Brands',
-              count: controller.restaurantBrandsCount,
-              icon: Icons.restaurant_rounded,
-              gradient: [Colors.orange.shade700, Colors.deepOrange.shade800],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -220,7 +280,7 @@ class FragmentHomeBrand extends StatelessWidget {
     required List<Color> gradient,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: gradient,
@@ -239,14 +299,14 @@ class FragmentHomeBrand extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: Colors.white, size: 22),
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,6 +314,8 @@ class FragmentHomeBrand extends StatelessWidget {
               children: [
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 11,
@@ -263,9 +325,11 @@ class FragmentHomeBrand extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '$count',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -280,103 +344,158 @@ class FragmentHomeBrand extends StatelessWidget {
   // ─── Filter Bar ───────────────────────────────────────────────────────────
 
   Widget _buildFilterBar(ControllerHomeBrand controller, ColorScheme colorScheme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
-      ),
-      child: Row(
-        children: [
-          // Search Input
-          Expanded(
-            flex: 3,
-            child: TextField(
-              controller: controller.searchController,
-              decoration: InputDecoration(
-                hintText: 'Search by brand name, GST number, email, phone...',
-                hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-                prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                suffixIcon: controller.searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded, size: 18),
-                        onPressed: () {
-                          controller.searchController.clear();
-                        },
-                      )
-                    : null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 640;
+
+        final appTypeDropdown = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Obx(() {
+            final currentVal = ControllerHomeBrand.appTypeFilterOptions
+                    .contains(controller.rxAppTypeFilter.value)
+                ? controller.rxAppTypeFilter.value
+                : 'ALL';
+
+            return DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: currentVal,
                 isDense: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+                items: ControllerHomeBrand.appTypeFilterOptions.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text('Type: $type'),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) controller.rxAppTypeFilter.value = val;
+                },
+              ),
+            );
+          }),
+        );
+
+        final statusDropdown = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Obx(() {
+            final currentVal = ControllerHomeBrand.statusFilterOptions
+                    .contains(controller.rxStatusFilter.value)
+                ? controller.rxStatusFilter.value
+                : 'ALL';
+
+            return DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: currentVal,
+                isDense: true,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+                items: ControllerHomeBrand.statusFilterOptions.map((status) {
+                  return DropdownMenuItem(
+                    value: status,
+                    child: Text('Status: $status'),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) controller.rxStatusFilter.value = val;
+                },
+              ),
+            );
+          }),
+        );
+
+        if (isCompact) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+            ),
+            child: Column(
+              children: [
+                TextField(
+                  controller: controller.searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search by brand name, GST, email...',
+                    hintStyle: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    isDense: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(child: appTypeDropdown),
+                    const SizedBox(width: 8),
+                    Expanded(child: statusDropdown),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+          ),
+          child: Row(
+            children: [
+              // Search Input
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: controller.searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search by brand name, GST number, email, phone...',
+                    hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                    suffixIcon: controller.searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 18),
+                            onPressed: () {
+                              controller.searchController.clear();
+                            },
+                          )
+                        : null,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 12),
+              appTypeDropdown,
+              const SizedBox(width: 12),
+              statusDropdown,
+            ],
           ),
-          const SizedBox(width: 12),
-
-          // App Type Filter
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Obx(() => DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: controller.rxAppTypeFilter.value,
-                    isDense: true,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
-                    items: ControllerHomeBrand.appTypeFilterOptions.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text('Type: $type'),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) controller.rxAppTypeFilter.value = val;
-                    },
-                  ),
-                )),
-          ),
-          const SizedBox(width: 12),
-
-          // Status Filter
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Obx(() => DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: controller.rxStatusFilter.value,
-                    isDense: true,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
-                    items: ControllerHomeBrand.statusFilterOptions.map((status) {
-                      return DropdownMenuItem(
-                        value: status,
-                        child: Text('Status: $status'),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) controller.rxStatusFilter.value = val;
-                    },
-                  ),
-                )),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -389,7 +508,7 @@ class FragmentHomeBrand extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 380,
-        mainAxisExtent: 250,
+        mainAxisExtent: 280,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
@@ -407,12 +526,19 @@ class FragmentHomeBrand extends StatelessWidget {
     ColorScheme colorScheme,
   ) {
     final isActive = brand.isActive;
+    final ServiceBrandContext brandContext = Get.find<ServiceBrandContext>();
+    final isCurrentActive = brandContext.selectedBrand?.id == brand.id;
 
     return Card(
-      elevation: 2,
+      elevation: isCurrentActive ? 4 : 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.1)),
+        side: BorderSide(
+          color: isCurrentActive
+              ? Colors.indigo.shade400
+              : colorScheme.outline.withValues(alpha: 0.1),
+          width: isCurrentActive ? 1.8 : 1.0,
+        ),
       ),
       child: InkWell(
         onTap: () => controller.openDetailsDialog(brand),
@@ -422,7 +548,7 @@ class FragmentHomeBrand extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Row: Avatar, Name, Popup Menu
+              // Header Row: Avatar, Name, Status, Popup Menu
               Row(
                 children: [
                   Container(
@@ -507,6 +633,7 @@ class FragmentHomeBrand extends StatelessWidget {
                     onSelected: (action) {
                       if (action == 'view') controller.openDetailsDialog(brand);
                       if (action == 'edit') controller.openEditDialog(brand);
+                      if (action == 'select') controller.selectAsActive(brand);
                       if (action == 'toggle') controller.toggleStatus(brand);
                       if (action == 'copy') {
                         Clipboard.setData(ClipboardData(text: brand.toJsonString(pretty: true)));
@@ -535,6 +662,16 @@ class FragmentHomeBrand extends StatelessWidget {
                           ],
                         ),
                       ),
+                      const PopupMenuItem(
+                        value: 'select',
+                        child: Row(
+                          children: [
+                            Icon(Icons.check_circle_outline_rounded, size: 16, color: Colors.indigo),
+                            SizedBox(width: 8),
+                            Text('Set as Active Brand', style: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
                       PopupMenuItem(
                         value: 'toggle',
                         child: Row(
@@ -544,11 +681,12 @@ class FragmentHomeBrand extends StatelessWidget {
                               size: 16,
                               color: isActive ? Colors.orange : Colors.green,
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text(isActive ? 'Deactivate' : 'Activate'),
                           ],
                         ),
                       ),
+                      const PopupMenuDivider(),
                       const PopupMenuItem(
                         value: 'copy',
                         child: Row(
@@ -575,7 +713,7 @@ class FragmentHomeBrand extends StatelessWidget {
                 ],
               ),
 
-              const Divider(height: 20),
+              const Divider(height: 18),
 
               // Details Body
               _infoPill(
@@ -605,15 +743,15 @@ class FragmentHomeBrand extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton.icon(
-                    onPressed: () => controller.openDetailsDialog(brand),
-                    icon: const Icon(Icons.info_outline_rounded, size: 14),
-                    label: const Text('Details', style: TextStyle(fontSize: 12)),
+                    onPressed: () => controller.selectAsActive(brand),
+                    icon: Icon(Icons.check_circle_outline_rounded, size: 14, color: Colors.indigo.shade600),
+                    label: Text('Select', style: TextStyle(fontSize: 11, color: Colors.indigo.shade600)),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
                   FilledButton.tonalIcon(
                     onPressed: () => controller.openEditDialog(brand),
                     icon: const Icon(Icons.edit_rounded, size: 14),
-                    label: const Text('Edit', style: TextStyle(fontSize: 12)),
+                    label: const Text('Edit', style: TextStyle(fontSize: 11)),
                   ),
                 ],
               ),
@@ -641,99 +779,114 @@ class FragmentHomeBrand extends StatelessWidget {
     );
   }
 
-  // ─── Table View ───────────────────────────────────────────────────────────
+  // ─── Table View (Horizontally Scrollable) ─────────────────────────────────
 
   Widget _buildTableView(ControllerHomeBrand controller, ColorScheme colorScheme) {
     final brands = controller.filteredBrands;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
-        ),
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(
-            colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth - 32),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+                ),
+                child: DataTable(
+                  headingRowColor: WidgetStateProperty.all(
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                  ),
+                  columns: const [
+                    DataColumn(label: Text('Brand Name', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('App Type', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('GST/VAT No', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Primary Phone', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Email', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
+                  ],
+                  rows: brands.map((b) {
+                    final isActive = b.isActive;
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                b.isMarket ? Icons.shopping_basket_rounded : Icons.restaurant_rounded,
+                                size: 18,
+                                color: b.isMarket ? Colors.teal : Colors.deepOrange,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(b.name.en, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          onTap: () => controller.openDetailsDialog(b),
+                        ),
+                        DataCell(Text(b.appType)),
+                        DataCell(Text(b.registration.gstNo.isNotEmpty ? b.registration.gstNo : '-')),
+                        DataCell(Text(b.contact.phones.primary.isNotEmpty ? b.contact.phones.primary : '-')),
+                        DataCell(Text(b.contact.email.isNotEmpty ? b.contact.email : '-')),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              b.status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isActive ? Colors.green.shade800 : Colors.red.shade800,
+                              ),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.check_circle_outline_rounded, size: 18, color: Colors.indigo),
+                                tooltip: 'Set as Active Brand',
+                                onPressed: () => controller.selectAsActive(b),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.visibility_outlined, size: 18),
+                                tooltip: 'View Details',
+                                onPressed: () => controller.openDetailsDialog(b),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, size: 18),
+                                tooltip: 'Edit Brand',
+                                onPressed: () => controller.openEditDialog(b),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
+                                tooltip: 'Delete Brand',
+                                onPressed: () => controller.deleteBrand(b),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
           ),
-          columns: const [
-            DataColumn(label: Text('Brand Name', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('App Type', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('GST/VAT No', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Primary Phone', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Email', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
-          ],
-          rows: brands.map((b) {
-            final isActive = b.isActive;
-            return DataRow(
-              cells: [
-                DataCell(
-                  Row(
-                    children: [
-                      Icon(
-                        b.isMarket ? Icons.shopping_basket_rounded : Icons.restaurant_rounded,
-                        size: 18,
-                        color: b.isMarket ? Colors.teal : Colors.deepOrange,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(b.name.en, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  onTap: () => controller.openDetailsDialog(b),
-                ),
-                DataCell(Text(b.appType)),
-                DataCell(Text(b.registration.gstNo.isNotEmpty ? b.registration.gstNo : '-')),
-                DataCell(Text(b.contact.phones.primary.isNotEmpty ? b.contact.phones.primary : '-')),
-                DataCell(Text(b.contact.email.isNotEmpty ? b.contact.email : '-')),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      b.status,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: isActive ? Colors.green.shade800 : Colors.red.shade800,
-                      ),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.visibility_outlined, size: 18),
-                        tooltip: 'View Details',
-                        onPressed: () => controller.openDetailsDialog(b),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 18),
-                        tooltip: 'Edit Brand',
-                        onPressed: () => controller.openEditDialog(b),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
-                        tooltip: 'Delete Brand',
-                        onPressed: () => controller.deleteBrand(b),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
-        ),
-      ),
+        );
+      },
     );
   }
 

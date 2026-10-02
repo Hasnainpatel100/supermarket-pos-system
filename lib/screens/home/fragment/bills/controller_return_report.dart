@@ -209,21 +209,29 @@ class ControllerReturnReport extends GetxController {
   // Data Load
   // ═════════════════════════════════════════════════════════════════════════
 
-  void loadData() {
+  Future<void> loadData() async {
     rxLoading.value = true;
     currentPage.value = 0;
 
-    switch (rxReportType.value) {
-      case ReturnReportType.salesReturn:
-        _loadSalesReturn();
-        break;
-      case ReturnReportType.purchaseReturn:
-        _loadPurchaseReturn();
-        break;
-    }
+    await Future.delayed(Duration.zero);
 
-    _applyPagination();
-    rxLoading.value = false;
+    try {
+      switch (rxReportType.value) {
+        case ReturnReportType.salesReturn:
+          _loadSalesReturn();
+          break;
+        case ReturnReportType.purchaseReturn:
+          _loadPurchaseReturn();
+          break;
+      }
+      _applyPagination();
+    } catch (e, stack) {
+      debugPrint('⚠️ [ControllerReturnReport] Error loading return report: $e\n$stack');
+      _fullRows = [];
+      rxRows.assignAll([]);
+    } finally {
+      rxLoading.value = false;
+    }
   }
 
   void _applyPagination() {

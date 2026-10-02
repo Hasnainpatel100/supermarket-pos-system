@@ -38,6 +38,9 @@ class ControllerItemForm extends GetxController {
     'Beverages',
     'Snacks',
     'Dairy',
+    'Fruits',
+    'Vegetables',
+    'Bakery',
     'Grocery',
     'Electronics',
     'Clothing',
@@ -71,6 +74,7 @@ class ControllerItemForm extends GetxController {
   @override
   void onInit() {
     _loadTaxPresets();
+    _loadCategories();
     if (editingItem != null) {
       _loadItemData();
     }
@@ -85,6 +89,24 @@ class ControllerItemForm extends GetxController {
     rxTaxPresets.value = _taxBox.getAll();
   }
 
+  void _loadCategories() {
+    try {
+      final itemBox = Get.find<ServiceObjectBox>().box<EntityItem>();
+      final existingCategories = itemBox
+          .getAll()
+          .map((e) => e.category?.trim())
+          .where((c) => c != null && c.isNotEmpty)
+          .cast<String>()
+          .toSet();
+
+      for (final cat in existingCategories) {
+        if (!rxCategories.any((c) => c.toLowerCase() == cat.toLowerCase())) {
+          rxCategories.add(cat);
+        }
+      }
+    } catch (_) {}
+  }
+
   void _loadItemData() {
     nameController.text = editingItem?.name ?? '';
     barcodeController.text = editingItem?.barcode ?? '';
@@ -92,17 +114,29 @@ class ControllerItemForm extends GetxController {
     priceController.text = editingItem?.sellingPrice?.toString() ?? '';
     costController.text = editingItem?.costPrice?.toString() ?? '';
     unitController.text = editingItem?.unit ?? '';
-    final u = editingItem?.unit;
+    final u = editingItem?.unit?.trim();
     if (u != null && u.isNotEmpty) {
-      if (!rxUnits.contains(u)) {
+      if (!rxUnits.any((x) => x.toLowerCase() == u.toLowerCase())) {
         rxUnits.add(u);
       }
-      rxUnit.value = u;
+      final match = rxUnits.firstWhereOrNull((x) => x.toLowerCase() == u.toLowerCase());
+      rxUnit.value = match ?? u;
     } else {
       rxUnit.value = null;
     }
     hasExpiry.value = editingItem?.hasExpiry ?? false;
-    rxCategory.value = editingItem?.category;
+
+    final cat = editingItem?.category?.trim();
+    if (cat != null && cat.isNotEmpty) {
+      if (!rxCategories.any((c) => c.toLowerCase() == cat.toLowerCase())) {
+        rxCategories.add(cat);
+      }
+      final match = rxCategories.firstWhereOrNull((c) => c.toLowerCase() == cat.toLowerCase());
+      rxCategory.value = match ?? cat;
+    } else {
+      rxCategory.value = null;
+    }
+
     rxTaxType.value = editingItem?.taxType ?? 'exclusive';
     rxSalePriceType.value = editingItem?.taxType ?? 'exclusive';
     rxTaxRate.value = editingItem?.taxRate ?? 0.0;
@@ -175,10 +209,13 @@ class ControllerItemForm extends GetxController {
   void createCategory(String name) {
     if (name.trim().isEmpty) return;
     final trimmed = name.trim();
-    if (!rxCategories.contains(trimmed)) {
+    final match = rxCategories.firstWhereOrNull((c) => c.toLowerCase() == trimmed.toLowerCase());
+    if (match == null) {
       rxCategories.add(trimmed);
+      rxCategory.value = trimmed;
+    } else {
+      rxCategory.value = match;
     }
-    rxCategory.value = trimmed;
   }
 
   void saveItem() async {

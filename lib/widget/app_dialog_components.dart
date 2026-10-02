@@ -41,26 +41,32 @@ class AppDialog extends StatelessWidget {
           elevation: 0,
           insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Center(
-            child: SizedBox(
-              width: maxWidth,
-              height: maxHeight,
-              child: Card(
-                elevation: 12,
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    header,
-                    Expanded(
-                      child: body,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final effectiveWidth = constraints.maxWidth < maxWidth ? constraints.maxWidth : maxWidth;
+                final effectiveHeight = constraints.maxHeight < maxHeight ? constraints.maxHeight : maxHeight;
+                return SizedBox(
+                  width: effectiveWidth,
+                  height: effectiveHeight,
+                  child: Card(
+                    elevation: 12,
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    if (footer != null) footer!,
-                  ],
-                ),
-              ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        header,
+                        Expanded(
+                          child: body,
+                        ),
+                        if (footer != null) footer!,
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -457,9 +463,22 @@ class AppDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Deduplicate items to prevent assertion error when multiple items have identical values
+    final seen = <T?>{};
+    final uniqueItems = <DropdownMenuItem<T>>[];
+    for (final item in items) {
+      if (seen.add(item.value)) {
+        uniqueItems.add(item);
+      }
+    }
+
+    // Ensure value exists in items to avoid Flutter DropdownButton AssertionError
+    final hasMatch = uniqueItems.any((item) => item.value == value);
+    final safeValue = (value != null && hasMatch) ? value : null;
+
     return DropdownButtonFormField<T>(
-      value: value,
-      items: items,
+      value: safeValue,
+      items: uniqueItems,
       onChanged: onChanged,
       validator: (val) {
         if (required && val == null) {

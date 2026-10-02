@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../model/model_brand.dart';
 import '../../../../repository/repo_brand.dart';
+import '../../../../service/service_brand_context.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../brand/activity_brand_form.dart';
 import '../../../brand/dialog_brand_api_config.dart';
@@ -10,6 +11,7 @@ import '../../../brand/dialog_brand_details.dart';
 
 class ControllerHomeBrand extends GetxController {
   final RepoBrand _repo = Get.find<RepoBrand>();
+  final ServiceBrandContext _brandContext = Get.find<ServiceBrandContext>();
 
   final rxBrandList = <ModelBrand>[].obs;
   final rxIsLoading = false.obs;
@@ -21,7 +23,7 @@ class ControllerHomeBrand extends GetxController {
 
   final searchController = TextEditingController();
 
-  static const List<String> appTypeFilterOptions = ['ALL', 'MARKET'];
+  static const List<String> appTypeFilterOptions = ['ALL', 'MARKET', 'RESTAURANT'];
   static const List<String> statusFilterOptions = ['ALL', 'ACTIVE', 'INACTIVE'];
 
   @override
@@ -135,6 +137,15 @@ class ControllerHomeBrand extends GetxController {
     );
     if (updated == true) {
       await loadBrands(forceRefresh: true);
+    }
+  }
+
+  void selectAsActive(ModelBrand brand) {
+    try {
+      _brandContext.selectBrand(brand);
+      SnackbarUtil.showSuccess('Active brand set to "${brand.name.en}"');
+    } catch (e) {
+      SnackbarUtil.showWarning('Could not set active brand: $e');
     }
   }
 

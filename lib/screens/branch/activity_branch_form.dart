@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import '../../model/model_branch.dart';
 import '../../model/model_brand.dart';
 import '../../widget/app_dialog_components.dart';
+import '../../widget/dialog_plan_expiry.dart';
+import '../../widget/dialog_renew_plan.dart';
 import 'controller_branch_form.dart';
 
 /// Returns null if valid, else an error message.
@@ -50,6 +52,11 @@ class ActivityBranchForm extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (isEditing && editingBranch?.planDetails != null) ...[
+                  _buildPlanSummaryBanner(context, editingBranch!),
+                  const SizedBox(height: 20),
+                ],
+
                 // ─── Section 1: Branch Identity ───────────────────────────
                 _buildSectionHeader(
                   context,
@@ -631,6 +638,93 @@ class ActivityBranchForm extends StatelessWidget {
           )
           .toList(),
       onChanged: onChanged,
+    );
+  }
+
+  Widget _buildPlanSummaryBanner(BuildContext context, ModelBranch branch) {
+    final plan = branch.planDetails!;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final statusColor = plan.isExpired
+        ? const Color(0xFFEF4444)
+        : plan.isExpiringSoon
+            ? const Color(0xFFF59E0B)
+            : const Color(0xFF10B981);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: isDark ? 0.12 : 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: statusColor.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.card_membership_rounded, color: statusColor, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Subscription Plan: ${plan.note.isNotEmpty ? plan.note : "Active Plan"}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  plan.expiryStatusText.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                'Expires: ${plan.formattedExpiry} • Users: ${plan.maxUsers} • POS Terminals: ${plan.maxPosDevices}',
+                style: TextStyle(fontSize: 11.5, color: colorScheme.onSurfaceVariant),
+              ),
+              const Spacer(),
+              OutlinedButton.icon(
+                onPressed: () => DialogPlanExpiry.showHistory(context, branch: branch),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                icon: const Icon(Icons.history_edu_rounded, size: 14),
+                label: const Text('Plan History', style: TextStyle(fontSize: 11)),
+              ),
+              const SizedBox(width: 6),
+              FilledButton.icon(
+                onPressed: () => DialogRenewPlan.show(context, branch: branch),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: statusColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+                icon: const Icon(Icons.autorenew_rounded, size: 14),
+                label: const Text('Renew Plan', style: TextStyle(fontSize: 11)),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

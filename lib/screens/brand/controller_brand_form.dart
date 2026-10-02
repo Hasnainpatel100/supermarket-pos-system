@@ -39,7 +39,7 @@ class ControllerBrandForm extends GetxController {
   final rxShowJsonPreview = false.obs;
   final rxJsonPreview = ''.obs;
 
-  static const List<String> appTypeOptions = ['MARKET'];
+  static const List<String> appTypeOptions = ['MARKET', 'RESTAURANT'];
   static const List<String> gstTypeOptions = ['VAT', 'GST', 'NON_GST', 'COMPOSITION', 'EXEMPTED'];
   static const List<String> statusOptions = ['ACTIVE', 'INACTIVE'];
 
@@ -55,11 +55,14 @@ class ControllerBrandForm extends GetxController {
     if (editingBrand != null) {
       final b = editingBrand!;
       nameEnController.text = b.name.en;
-      rxAppType.value = b.appType.isNotEmpty ? b.appType.toUpperCase() : 'MARKET';
-      rxStatus.value = b.status.isNotEmpty ? b.status.toUpperCase() : 'ACTIVE';
+      final upperAppType = b.appType.toUpperCase();
+      rxAppType.value = appTypeOptions.contains(upperAppType) ? upperAppType : 'MARKET';
+      final upperStatus = b.status.toUpperCase();
+      rxStatus.value = statusOptions.contains(upperStatus) ? upperStatus : 'ACTIVE';
 
       gstNoController.text = b.registration.gstNo;
-      rxGstType.value = b.registration.gstType.isNotEmpty ? b.registration.gstType.toUpperCase() : 'VAT';
+      final upperGstType = b.registration.gstType.toUpperCase();
+      rxGstType.value = gstTypeOptions.contains(upperGstType) ? upperGstType : 'VAT';
       gstRegistrationDateController.text = b.registration.gstRegistrationDate;
       fssaiNoController.text = b.registration.fssaiNo;
       fssaiExpiryDateController.text = b.registration.fssaiExpiryDate;

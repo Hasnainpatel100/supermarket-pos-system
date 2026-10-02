@@ -70,6 +70,9 @@ enum EnumPermission {
   //Expenses
   expenses,
 
+  // Account & Cash Drawer
+  account,
+
   // Backup & Recovery
   backupRestore,
 

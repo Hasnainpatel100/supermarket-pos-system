@@ -21,6 +21,7 @@
   "required": "Required",
   "active": "Active",
   "inactive": "Inactive",
+  "account": "Account",
   "api_user": "API Users",
   "success": "Success",
   "error": "Error",

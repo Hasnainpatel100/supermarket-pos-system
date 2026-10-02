@@ -28,6 +28,9 @@ class ActivityBrandForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (Get.isRegistered<ControllerBrandForm>()) {
+      Get.delete<ControllerBrandForm>();
+    }
     final controller = Get.put(
       ControllerBrandForm(editingBrand: editingBrand),
     );

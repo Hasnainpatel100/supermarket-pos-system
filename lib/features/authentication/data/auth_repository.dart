@@ -74,23 +74,17 @@ class AuthRepository {
     try {
       final response = await _api.login(username: username, pin: pin);
 
-      // ── 1. Validate that account is permitted on Supermarket POS ───────────
-      final userTypeUpper = (response.userType ?? '').trim().toUpperCase();
+      // ── 1. Strictly enforce appType == 'MARKET' requirement ────────────────
       final appTypeUpper = (response.appType ?? '').trim().toUpperCase();
 
-      // Only reject if explicitly assigned to another non-market domain (e.g. RESTAURANT)
-      final isNonMarket = (appTypeUpper.isNotEmpty && appTypeUpper != 'MARKET' && userTypeUpper != 'PLATFORM') ||
-          (userTypeUpper == 'RESTAURANT');
-
-      if (isNonMarket) {
-        final currentType = appTypeUpper.isNotEmpty ? appTypeUpper : userTypeUpper;
+      if (appTypeUpper != 'MARKET') {
         if (kDebugMode) {
-          debugPrint('🚫 [AuthRepository] Login rejected: type ($currentType) is not MARKET');
+          debugPrint('🚫 [AuthRepository] Login rejected: appType "$appTypeUpper" is not MARKET');
         }
         return AuthResult(
           success: false,
           errorMessage:
-              'Access denied: This Supermarket POS terminal is only for MARKET accounts. (Account type: $currentType)',
+              'Access denied: Only MARKET accounts are permitted to login. Current appType: "${response.appType ?? 'none'}".',
           isFromApi: true,
         );
       }
@@ -114,19 +108,19 @@ class AuthRepository {
 
       bool isValidMongoId(String? id) {
         if (id == null || id.isEmpty) return false;
-        if (id == '000000000000000000000000') return false;
         return RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(id);
       }
 
       // ── 3. Function 1: Fetch brand details ONLY for this user's brandId ───
-      if (isValidMongoId(response.brandId)) {
-        await fetchAndSaveBrandDetails(response.brandId!);
-      }
+      final brandIdToFetch = response.brandId ?? '';
+      await fetchAndSaveBrandDetails(brandIdToFetch);
 
       // ── 4. Function 2: Fetch branch details ONLY for this user's branchId ──
-      if (isValidMongoId(response.branchId)) {
-        await fetchAndSaveBranchDetails(response.branchId!);
-      }
+      final branchIdToFetch = response.branchId ?? '';
+      await fetchAndSaveBranchDetails(
+        branchIdToFetch,
+        brandId: _brandContext.selectedBrandId ?? (isValidMongoId(brandIdToFetch) ? brandIdToFetch : null),
+      );
 
       // ── 5. Build EntityUser (Stripping Brand, Branch & User access for clients) ──
       const Set<String> restrictedPermissions = {
@@ -148,13 +142,19 @@ class AuthRepository {
         'apiUserManage',
       };
 
-      // Strip brand, branch, and user management for all users logging into this POS app
-      final base = response.permissions.isNotEmpty
-          ? response.permissions
-          : EnumPermission.values.map((e) => e.name).toList();
-      final effectivePermissions = base
+      // Ensure all local operational POS permissions (items, customers, pos, stocks, reports, expenses)
+      // are granted to operational users, while stripping brand, branch, and user management.
+      final operationalPermissions = EnumPermission.values
+          .map((e) => e.name)
           .where((p) => !restrictedPermissions.contains(p))
-          .toList();
+          .toSet();
+
+      // Also retain any server permissions that are not restricted
+      operationalPermissions.addAll(
+        response.permissions.where((p) => !restrictedPermissions.contains(p)),
+      );
+
+      final effectivePermissions = operationalPermissions.toList();
 
       final entityUser = EntityUser(
         username: response.username,
@@ -198,7 +198,7 @@ class AuthRepository {
   /// Restores brand and branch context from local storage on app start
   /// (when the user is already logged in and the app is resumed).
   Future<void> restoreSessionContext() async {
-    // Restore brand
+    // 1. Restore brand from cache if present
     final brandJson = _tokenStorage.getBrandJson();
     if (brandJson != null && brandJson.isNotEmpty) {
       try {
@@ -206,7 +206,7 @@ class AuthRepository {
         final brand = ModelBrand.fromJson(map);
         _brandContext.selectBrand(brand);
         if (kDebugMode) {
-          debugPrint('✅ [AuthRepository] Brand context restored: ${brand.name.en}');
+          debugPrint('✅ [AuthRepository] Brand context restored from cache: ${brand.name.en}');
         }
       } catch (e) {
         if (kDebugMode) {
@@ -215,7 +215,7 @@ class AuthRepository {
       }
     }
 
-    // Restore branch
+    // 2. Restore branch from cache if present
     final branchJson = _tokenStorage.getBranchJson();
     if (branchJson != null && branchJson.isNotEmpty) {
       try {
@@ -223,14 +223,26 @@ class AuthRepository {
         final branch = ModelBranch.fromJson(map);
         _brandContext.selectBranch(branch);
         if (kDebugMode) {
-          debugPrint(
-              '✅ [AuthRepository] Branch context restored: ${branch.name.en}');
+          debugPrint('✅ [AuthRepository] Branch context restored from cache: ${branch.name.en}');
         }
       } catch (e) {
         if (kDebugMode) {
           debugPrint('⚠️ [AuthRepository] Failed to restore branch from cache: $e');
         }
       }
+    }
+
+    // 3. Fallback: If brand or branch is still missing, fetch live from backend
+    if (!_brandContext.hasBrand) {
+      final savedBrandId = _tokenStorage.getBrandId() ?? '';
+      await fetchAndSaveBrandDetails(savedBrandId);
+    }
+    if (!_brandContext.hasBranch) {
+      final savedBranchId = _tokenStorage.getBranchId() ?? '';
+      await fetchAndSaveBranchDetails(
+        savedBranchId,
+        brandId: _brandContext.selectedBrandId,
+      );
     }
   }
 
@@ -246,7 +258,6 @@ class AuthRepository {
   /// Function 1: Fetches brand details strictly for the given [brandId],
   /// saves full JSON to local storage, and updates [ServiceBrandContext].
   Future<void> fetchAndSaveBrandDetails(String brandId) async {
-    if (brandId.isEmpty || brandId == '000000000000000000000000') return;
     try {
       final brandApi = _getBrandApi();
       if (brandApi == null) {
@@ -254,19 +265,39 @@ class AuthRepository {
         return;
       }
 
-      final result = await brandApi.getBrandById(brandId);
-      if (result.success && result.data != null) {
-        final brand = result.data!;
+      ModelBrand? brand;
+      if (brandId.isNotEmpty && RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(brandId)) {
+        final result = await brandApi.getBrandById(brandId);
+        if (result.success && result.data != null) {
+          brand = result.data!;
+        }
+      }
+
+      // Fallback: If not found directly by ID, query brands list for MARKET
+      if (brand == null) {
+        final allBrands = await brandApi.getBrands(appType: 'MARKET');
+        if (allBrands.success && allBrands.data != null && allBrands.data!.isNotEmpty) {
+          if (brandId.isNotEmpty) {
+            brand = allBrands.data!.firstWhereOrNull((b) => b.id == brandId);
+          }
+          brand ??= allBrands.data!.firstWhereOrNull((b) => b.status.toLowerCase() == 'active') ?? allBrands.data!.first;
+        }
+      }
+
+      if (brand != null) {
         // Save full JSON to encrypted local storage
         await _tokenStorage.saveBrandJson(jsonEncode(brand.toMap()));
+        if (brand.id != null) {
+          await _tokenStorage.saveBrandId(brand.id!);
+        }
         // Populate session context
         _brandContext.selectBrand(brand);
         if (kDebugMode) {
-          debugPrint('✅ [AuthRepository] Brand data fetched & cached strictly for user: ${brand.name.en} ($brandId)');
+          debugPrint('✅ [AuthRepository] Brand data fetched & cached: ${brand.name.en} (${brand.id})');
         }
       } else {
         if (kDebugMode) {
-          debugPrint('⚠️ [AuthRepository] Could not fetch brand ($brandId): ${result.message}');
+          debugPrint('⚠️ [AuthRepository] Could not resolve brand for brandId ($brandId)');
         }
       }
     } catch (e) {
@@ -278,8 +309,7 @@ class AuthRepository {
 
   /// Function 2: Fetches branch details strictly for the given [branchId],
   /// saves full JSON (including planDetails) to local storage, and updates [ServiceBrandContext].
-  Future<void> fetchAndSaveBranchDetails(String branchId) async {
-    if (branchId.isEmpty || branchId == '000000000000000000000000') return;
+  Future<void> fetchAndSaveBranchDetails(String branchId, {String? brandId}) async {
     try {
       final branchApi = _getBranchApi();
       if (branchApi == null) {
@@ -287,22 +317,45 @@ class AuthRepository {
         return;
       }
 
-      final result = await branchApi.getBranchById(branchId);
-      if (result.success && result.data != null) {
-        final branch = result.data!;
+      final activeBrandId = brandId ?? _brandContext.selectedBrandId ?? _tokenStorage.getBrandId();
+      ModelBranch? branch;
+
+      // 1. Try fetching by branchId if valid
+      if (branchId.isNotEmpty && RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(branchId)) {
+        final result = await branchApi.getBranchById(branchId);
+        if (result.success && result.data != null) {
+          branch = result.data!;
+        }
+      }
+
+      // 2. Fallback: If not found by ID or placeholder, fetch branches for the active brand
+      if (branch == null && activeBrandId != null && activeBrandId.isNotEmpty) {
+        final branchesResult = await branchApi.getBranchesByBrand(activeBrandId);
+        if (branchesResult.success && branchesResult.data != null && branchesResult.data!.isNotEmpty) {
+          if (branchId.isNotEmpty) {
+            branch = branchesResult.data!.firstWhereOrNull((b) => b.id == branchId);
+          }
+          branch ??= branchesResult.data!.firstWhereOrNull((b) => b.status.toLowerCase() == 'active') ?? branchesResult.data!.first;
+        }
+      }
+
+      if (branch != null) {
         // Save full JSON (including planDetails, serviceTypes, payment, etc.)
         await _tokenStorage.saveBranchJson(jsonEncode(branch.toMap()));
+        if (branch.id != null) {
+          await _tokenStorage.saveBranchId(branch.id!);
+        }
         // Populate session context
         _brandContext.selectBranch(branch);
         if (kDebugMode) {
           debugPrint(
-              '✅ [AuthRepository] Branch data fetched & cached strictly for user: ${branch.name.en} ($branchId) '
+              '✅ [AuthRepository] Branch data fetched & cached: ${branch.name.en} (${branch.id}) '
               '(maxUsers=${branch.planDetails?.maxUsers}, '
               'maxDevices=${branch.planDetails?.maxPosDevices})');
         }
       } else {
         if (kDebugMode) {
-          debugPrint('⚠️ [AuthRepository] Could not fetch branch ($branchId): ${result.message}');
+          debugPrint('⚠️ [AuthRepository] Could not resolve branch for branchId ($branchId), brandId ($activeBrandId)');
         }
       }
     } catch (e) {

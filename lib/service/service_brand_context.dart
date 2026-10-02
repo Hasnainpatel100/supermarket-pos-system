@@ -30,13 +30,51 @@ class ServiceBrandContext extends GetxService {
   bool get hasBranch => rxSelectedBranch.value != null;
   bool get isFullyConfigured => hasBrand && hasBranch;
 
+  // ── Plan & Subscription getters ──────────────────────────────────────────
+
+  final rxExpiryAlarmDays = 15.obs;
+  int get expiryAlarmDays => rxExpiryAlarmDays.value;
+
+  BranchPlanDetails? get planDetails => rxSelectedBranch.value?.planDetails;
+  bool get hasPlanDetails => planDetails != null;
+  DateTime? get planExpiryDate => planDetails?.expiryDate;
+  int? get planDaysRemaining => planDetails?.daysRemaining;
+  /// Returns true only if the plan has passed its expiration date.
+  /// (A plan remains valid throughout its expiry date until 23:59:59.999).
+  bool get isPlanExpired => planDetails?.isExpired ?? false;
+
+  /// Backwards compatibility alias: returns true if plan is expired.
+  /// Users can log in throughout the entire calendar day of their expiry date.
+  bool get isPlanExpiredOrToday => isPlanExpired;
+
+  /// Whether the plan is expired or will expire within the configured alarm window
+  bool get isPlanExpiringSoon {
+    if (isPlanExpired) return true;
+    final days = planDaysRemaining;
+    if (days == null) return false;
+    return days <= rxExpiryAlarmDays.value;
+  }
+
+  String get planExpiryStatusText =>
+      planDetails?.expiryStatusText ?? 'Active Plan';
+
+  void setExpiryAlarmDays(int days) {
+    rxExpiryAlarmDays.value = days;
+  }
+
   // ── Setters ───────────────────────────────────────────────────────────────
 
-  /// Sets the active brand. Clears the selected branch since it may
-  /// not belong to the new brand.
+  /// Sets the active brand. Only resets the selected branch if the branch
+  /// does not belong to the new brand.
   void selectBrand(ModelBrand brand) {
     rxSelectedBrand.value = brand;
-    rxSelectedBranch.value = null; // reset branch when brand changes
+    final currentBranch = rxSelectedBranch.value;
+    if (currentBranch != null &&
+        brand.id != null &&
+        currentBranch.brandId.isNotEmpty &&
+        currentBranch.brandId != brand.id) {
+      rxSelectedBranch.value = null;
+    }
   }
 
   /// Sets the active branch and also updates the brand reference if provided.
@@ -60,3 +98,4 @@ class ServiceBrandContext extends GetxService {
     return '$selectedBrandName › $selectedBranchName';
   }
 }
+

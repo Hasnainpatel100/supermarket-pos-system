@@ -4,6 +4,7 @@ import '../enums/enum_main_menu.dart';
 import '../enums/enum_permission.dart';
 import '../model/entity_user.dart';
 import '../model/model_drawer_menu.dart';
+import '../widget/brand_branch_card.dart';
 import '../widget/side_menu_header.dart';
 import '../widget/side_menu_item.dart';
 
@@ -36,6 +37,9 @@ class RepoDrawer {
           ),
 
           const Divider(height: 1),
+
+          // ── Brand / Branch context card ───────────────────────────────────
+          const BrandBranchCard(),
 
           const SideMenuItem.simple(
             icon: Icons.settings_outlined,
@@ -167,6 +171,12 @@ class RepoDrawer {
       titleKey: 'Expenses',
       icon: Icons.payment_outlined,
       permissions: [EnumPermission.expenses],
+    ),
+    ModelDrawerMenu(
+      menu: EnumMainMenu.account,
+      titleKey: 'account',
+      icon: Icons.account_balance,
+      permissions: [EnumPermission.account],
     ),
     ModelDrawerMenu(
       menu: EnumMainMenu.system,

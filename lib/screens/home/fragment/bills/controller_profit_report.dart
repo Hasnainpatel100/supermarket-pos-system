@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
+import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_item.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
@@ -268,37 +269,64 @@ class ControllerProfitReport extends GetxController {
     return s == e ? s : '$s  →  $e';
   }
 
+  // Cache to avoid repeated ObjectBox lookups across bill items
+  final Map<int, EntityItem?> _itemCache = {};
+
+  EntityItem? _getItem(EntityBillItem item) {
+    if (item.item.hasValue && item.item.target != null) {
+      return item.item.target;
+    }
+    final targetId = item.item.targetId;
+    if (targetId <= 0) return null;
+    if (_itemCache.containsKey(targetId)) {
+      return _itemCache[targetId];
+    }
+    final found = _boxItem.get(targetId);
+    _itemCache[targetId] = found;
+    return found;
+  }
+
   // ═════════════════════════════════════════════════════════════════════════
   // Data Load
   // ═════════════════════════════════════════════════════════════════════════
 
-  void loadData() {
+  Future<void> loadData() async {
     rxLoading.value = true;
     currentPage.value = 0;
+    _itemCache.clear();
 
-    switch (rxReportType.value) {
-      case ProfitReportType.profitSummary:
-        _loadProfitSummary();
-        break;
-      case ProfitReportType.itemProfit:
-        _loadItemProfit();
-        break;
-      case ProfitReportType.categoryProfit:
-        _loadCategoryProfit();
-        break;
-      case ProfitReportType.brandProfit:
-        _loadBrandProfit();
-        break;
-      case ProfitReportType.dailyProfit:
-        _loadDailyProfit();
-        break;
-      case ProfitReportType.monthlyProfit:
-        _loadMonthlyProfit();
-        break;
+    // Yield to the event loop so Flutter paints the loading indicator smoothly
+    await Future.delayed(Duration.zero);
+
+    try {
+      switch (rxReportType.value) {
+        case ProfitReportType.profitSummary:
+          _loadProfitSummary();
+          break;
+        case ProfitReportType.itemProfit:
+          _loadItemProfit();
+          break;
+        case ProfitReportType.categoryProfit:
+          _loadCategoryProfit();
+          break;
+        case ProfitReportType.brandProfit:
+          _loadBrandProfit();
+          break;
+        case ProfitReportType.dailyProfit:
+          _loadDailyProfit();
+          break;
+        case ProfitReportType.monthlyProfit:
+          _loadMonthlyProfit();
+          break;
+      }
+      _applyPagination();
+    } catch (e, stack) {
+      debugPrint('⚠️ [ControllerProfitReport] Error loading profit report: $e\n$stack');
+      _fullRows = [];
+      rxRows.assignAll([]);
+    } finally {
+      rxLoading.value = false;
     }
-
-    _applyPagination();
-    rxLoading.value = false;
   }
 
   void _applyPagination() {
@@ -351,7 +379,7 @@ class ControllerProfitReport extends GetxController {
         final totalItemRevenue = item.total ?? (qty * price);
 
         // Fetch cost price or default to 70% of price
-        final itemMaster = _boxItem.get(item.item.targetId);
+        final itemMaster = _getItem(item);
         final unitCost = itemMaster?.costPrice ?? (price * 0.70);
         final itemCost = qty * unitCost;
 
@@ -417,7 +445,7 @@ class ControllerProfitReport extends GetxController {
         final price = item.price ?? 0.0;
         final totalItemRevenue = item.total ?? (qty * price);
 
-        final itemMaster = _boxItem.get(item.item.targetId);
+        final itemMaster = _getItem(item);
         final unitCost = itemMaster?.costPrice ?? (price * 0.70);
         final itemCost = qty * unitCost;
 
@@ -477,7 +505,7 @@ class ControllerProfitReport extends GetxController {
 
     for (final bill in bills) {
       for (final item in bill.items) {
-        final itemMaster = _boxItem.get(item.item.targetId);
+        final itemMaster = _getItem(item);
         final category = itemMaster?.category ?? 'Uncategorized';
         final qty = item.qty ?? 0;
         final price = item.price ?? 0.0;
@@ -539,7 +567,7 @@ class ControllerProfitReport extends GetxController {
         final price = item.price ?? 0.0;
         final totalItemRevenue = item.total ?? (qty * price);
 
-        final itemMaster = _boxItem.get(item.item.targetId);
+        final itemMaster = _getItem(item);
         final unitCost = itemMaster?.costPrice ?? (price * 0.70);
         final itemCost = qty * unitCost;
 
@@ -602,7 +630,7 @@ class ControllerProfitReport extends GetxController {
         final price = item.price ?? 0.0;
         final totalItemRevenue = item.total ?? (qty * price);
 
-        final itemMaster = _boxItem.get(item.item.targetId);
+        final itemMaster = _getItem(item);
         final unitCost = itemMaster?.costPrice ?? (price * 0.70);
         final itemCost = qty * unitCost;
 
@@ -672,7 +700,7 @@ class ControllerProfitReport extends GetxController {
         final price = item.price ?? 0.0;
         final totalItemRevenue = item.total ?? (qty * price);
 
-        final itemMaster = _boxItem.get(item.item.targetId);
+        final itemMaster = _getItem(item);
         final unitCost = itemMaster?.costPrice ?? (price * 0.70);
         final itemCost = qty * unitCost;
 

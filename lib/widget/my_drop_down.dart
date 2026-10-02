@@ -16,9 +16,12 @@ class MyDropDown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final uniqueItems = items.toSet().toList();
+    final safeValue = (value != null && uniqueItems.contains(value)) ? value : null;
+
     return DropdownButtonFormField<String>(
-      initialValue: value,
-      items: items
+      value: safeValue,
+      items: uniqueItems
           .map((e) => DropdownMenuItem(value: e, child: Text(e)))
           .toList(),
       onChanged: onChanged,

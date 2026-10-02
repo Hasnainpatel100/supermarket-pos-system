@@ -37,13 +37,28 @@ import 'fragment/system/frag_home_backup.dart';
 import 'fragment/system/frag_audit_logs.dart';
 import 'fragment/brand/fragment_home_brand.dart';
 import 'fragment/branch/fragment_home_branch.dart';
+import 'fragment/account/fragment_home_account.dart';
 
 class ActivityHome extends StatelessWidget {
   const ActivityHome({super.key});
 
   @override
   Widget build(BuildContext context) {
-    ControllerHome controller = Get.put(ControllerHome(), permanent: true);
+    ControllerHome controller = Get.isRegistered<ControllerHome>()
+        ? Get.find<ControllerHome>()
+        : Get.put(ControllerHome());
+
+    // Never allow home screen to remain stuck on logout menu
+    if (controller.selectedMainMenu.value == EnumMainMenu.logout) {
+      controller.selectedMainMenu.value = EnumMainMenu.account;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        controller.checkAndPromptDayShift(context);
+      }
+    });
+
     // Register Settings controller globally so bill details can always display store info
     if (!Get.isRegistered<ControllerHomeSettings>()) {
       Get.put(ControllerHomeSettings(), permanent: true);
@@ -106,6 +121,10 @@ class ActivityHome extends StatelessWidget {
               }
               if(controller.selectedMainMenu.value == EnumMainMenu.expenses){
                 return FragmentHomeExpenses();
+              }
+
+              if (controller.selectedMainMenu.value == EnumMainMenu.account) {
+                return const FragmentHomeAccount();
               }
 
               if (controller.selectedMainMenu.value == EnumMainMenu.backup) {

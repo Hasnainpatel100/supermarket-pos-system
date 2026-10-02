@@ -7,10 +7,14 @@ import 'package:get/get.dart';
 import '../../commons/loader.dart';
 import '../../features/authentication/data/auth_repository.dart';
 import '../../repository/repo_storage.dart';
+import '../../service/service_brand_context.dart';
 import '../../util/app_route.dart';
 import '../../util/snackbar_util.dart';
 import '../../util/my_date_time.dart';
 import '../../util/util_device.dart';
+import '../../widget/dialog_plan_expired_block.dart';
+import '../home/controller_home.dart';
+import '../home/fragment/account/controller_home_account.dart';
 
 class ControllerLogin extends GetxController {
   final RepoStorage _repoStorage = Get.find();
@@ -49,22 +53,38 @@ class ControllerLogin extends GetxController {
       return;
     }
 
-    // ── Enforce MARKET check (allow MARKET and PLATFORM users, reject RESTAURANT) ──
-    final appType = (result.authResponse?.appType ?? '').toUpperCase();
-    final userType = (result.authResponse?.userType ?? '').toUpperCase();
-    final isNonMarket = (appType.isNotEmpty && appType != 'MARKET' && userType != 'PLATFORM') ||
-        (userType == 'RESTAURANT');
+    // ── Enforce strict MARKET check (only MARKET accounts allowed) ──
+    final appType = (result.authResponse?.appType ?? '').trim().toUpperCase();
+    final userType = (result.authResponse?.userType ?? '').trim().toUpperCase();
 
-    if (isNonMarket) {
+    if (appType != 'MARKET') {
       Loader.hideLoader();
       SnackbarUtil.showError(
-        'Access denied: Only MARKET users are authorized on this POS terminal.',
+        'Access denied: Only accounts with appType "MARKET" are authorized to login.',
       );
       // Clear tokens since this user shouldn't be logged in
       if (Get.isRegistered<AuthRepository>()) {
         await Get.find<AuthRepository>().logout();
       }
       return;
+    }
+
+    // ── Enforce Plan Expiry Check (Block login only if plan has expired) ──
+    if (Get.isRegistered<ServiceBrandContext>()) {
+      final brandCtx = Get.find<ServiceBrandContext>();
+      final branch = brandCtx.selectedBranch;
+      final plan = branch?.planDetails;
+      if (plan != null && brandCtx.isPlanExpired) {
+        Loader.hideLoader();
+        if (Get.isRegistered<AuthRepository>()) {
+          await Get.find<AuthRepository>().logout();
+        }
+        await _repoStorage.logout();
+        if (Get.context != null) {
+          DialogPlanExpiredBlock.show(Get.context!, branch: branch, plan: plan);
+        }
+        return;
+      }
     }
 
     if (kDebugMode) {
@@ -80,6 +100,14 @@ class ControllerLogin extends GetxController {
 
     // Persist user session in RepoStorage
     await _repoStorage.setUser(json.encode(user.toMap()));
+
+    // Reset home controllers so fresh login triggers Start Day / Shift dialog
+    if (Get.isRegistered<ControllerHome>()) {
+      Get.delete<ControllerHome>(force: true);
+    }
+    if (Get.isRegistered<ControllerHomeAccount>()) {
+      Get.delete<ControllerHomeAccount>(force: true);
+    }
 
     Loader.hideLoader();
     Get.offAllNamed(AppRoute.home);

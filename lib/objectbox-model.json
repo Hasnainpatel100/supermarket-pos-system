@@ -1626,10 +1626,333 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "22:2155316630154843243",
+      "lastPropertyId": "18:7823029175089290411",
+      "name": "EntityDaySession",
+      "properties": [
+        {
+          "id": "1:4907924988887030875",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6536229746271105447",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "51:5199647081375689505"
+        },
+        {
+          "id": "3:3782006193873168852",
+          "name": "startTimestampMs",
+          "type": 6
+        },
+        {
+          "id": "4:4535876040065199673",
+          "name": "endTimestampMs",
+          "type": 6
+        },
+        {
+          "id": "5:7095924826720405428",
+          "name": "isOpen",
+          "type": 1
+        },
+        {
+          "id": "6:7468961003503160047",
+          "name": "openingCash",
+          "type": 8
+        },
+        {
+          "id": "7:4469514370183540228",
+          "name": "closingCash",
+          "type": 8
+        },
+        {
+          "id": "8:918395499660222915",
+          "name": "startedByUserId",
+          "type": 9
+        },
+        {
+          "id": "9:2535002916538801213",
+          "name": "startedByUsername",
+          "type": 9
+        },
+        {
+          "id": "10:3760885444260382245",
+          "name": "closedByUserId",
+          "type": 9
+        },
+        {
+          "id": "11:5174546801741362142",
+          "name": "closedByUsername",
+          "type": 9
+        },
+        {
+          "id": "12:2660698804474401277",
+          "name": "openingComment",
+          "type": 9
+        },
+        {
+          "id": "13:7933516649927586665",
+          "name": "closingComment",
+          "type": 9
+        },
+        {
+          "id": "14:8559149234242149821",
+          "name": "branchId",
+          "type": 9
+        },
+        {
+          "id": "15:1291714199544684015",
+          "name": "brandId",
+          "type": 9
+        },
+        {
+          "id": "16:2431591994788855389",
+          "name": "openingDenominationsJson",
+          "type": 9
+        },
+        {
+          "id": "17:6235039171502792692",
+          "name": "closingDenominationsJson",
+          "type": 9
+        },
+        {
+          "id": "18:7823029175089290411",
+          "name": "createdAtUtcMs",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "23:8087769018287953305",
+      "lastPropertyId": "14:1366221263201563194",
+      "name": "EntityDrawerMovement",
+      "properties": [
+        {
+          "id": "1:7498648479648094679",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2698582518331780934",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "52:8553175613203689136"
+        },
+        {
+          "id": "3:2029632804771312487",
+          "name": "shiftSessionId",
+          "type": 6
+        },
+        {
+          "id": "4:317000236148677847",
+          "name": "daySessionId",
+          "type": 6
+        },
+        {
+          "id": "5:2893428755120331070",
+          "name": "type",
+          "type": 9
+        },
+        {
+          "id": "6:1894061941322351281",
+          "name": "amount",
+          "type": 8
+        },
+        {
+          "id": "7:245399875901730939",
+          "name": "reason",
+          "type": 9
+        },
+        {
+          "id": "8:21081993877250560",
+          "name": "remarks",
+          "type": 9
+        },
+        {
+          "id": "9:2680868627151760342",
+          "name": "timestampMs",
+          "type": 6
+        },
+        {
+          "id": "10:6699095456605184851",
+          "name": "userId",
+          "type": 9
+        },
+        {
+          "id": "11:3629046706831656270",
+          "name": "username",
+          "type": 9
+        },
+        {
+          "id": "12:6593639107514246670",
+          "name": "branchId",
+          "type": 9
+        },
+        {
+          "id": "13:1215590371028790205",
+          "name": "brandId",
+          "type": 9
+        },
+        {
+          "id": "14:1366221263201563194",
+          "name": "createdAtUtcMs",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "24:5657266504859656832",
+      "lastPropertyId": "26:6008817068056583914",
+      "name": "EntityShiftSession",
+      "properties": [
+        {
+          "id": "1:1209203522328984425",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1896705740472548787",
+          "name": "objectId",
+          "type": 9,
+          "flags": 2080,
+          "indexId": "53:6050841811100062138"
+        },
+        {
+          "id": "3:1907850282612800132",
+          "name": "daySessionId",
+          "type": 6
+        },
+        {
+          "id": "4:882950880574021615",
+          "name": "startTimestampMs",
+          "type": 6
+        },
+        {
+          "id": "5:279034646921426985",
+          "name": "endTimestampMs",
+          "type": 6
+        },
+        {
+          "id": "6:4090713538446196783",
+          "name": "isOpen",
+          "type": 1
+        },
+        {
+          "id": "7:4737112369995299118",
+          "name": "openingCash",
+          "type": 8
+        },
+        {
+          "id": "8:4622674941360559283",
+          "name": "closingCash",
+          "type": 8
+        },
+        {
+          "id": "9:307095470413243372",
+          "name": "cashIn",
+          "type": 8
+        },
+        {
+          "id": "10:7198584693583159487",
+          "name": "cashOut",
+          "type": 8
+        },
+        {
+          "id": "11:7763867611738076101",
+          "name": "salesCash",
+          "type": 8
+        },
+        {
+          "id": "12:542171207795939970",
+          "name": "expensesCash",
+          "type": 8
+        },
+        {
+          "id": "13:7439177669525910365",
+          "name": "startedByUserId",
+          "type": 9
+        },
+        {
+          "id": "14:794853526707013009",
+          "name": "startedByUsername",
+          "type": 9
+        },
+        {
+          "id": "15:147719650444528774",
+          "name": "closedByUserId",
+          "type": 9
+        },
+        {
+          "id": "16:6921036479901250863",
+          "name": "closedByUsername",
+          "type": 9
+        },
+        {
+          "id": "17:3859096979263817562",
+          "name": "comments",
+          "type": 9
+        },
+        {
+          "id": "18:6447486484787821266",
+          "name": "openingDenominationsJson",
+          "type": 9
+        },
+        {
+          "id": "19:1847612192510291532",
+          "name": "closingDenominationsJson",
+          "type": 9
+        },
+        {
+          "id": "20:1186788497420639688",
+          "name": "paymentModesJson",
+          "type": 9
+        },
+        {
+          "id": "21:8219147409148237616",
+          "name": "fulfilledOrders",
+          "type": 6
+        },
+        {
+          "id": "22:3694731231503930275",
+          "name": "cancelledOrders",
+          "type": 6
+        },
+        {
+          "id": "23:8811592946200378909",
+          "name": "complimentaryOrders",
+          "type": 6
+        },
+        {
+          "id": "24:3697769516401166356",
+          "name": "branchId",
+          "type": 9
+        },
+        {
+          "id": "25:5747787982779028804",
+          "name": "brandId",
+          "type": 9
+        },
+        {
+          "id": "26:6008817068056583914",
+          "name": "createdAtUtcMs",
+          "type": 6
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "21:4972311659241473103",
-  "lastIndexId": "50:6531342150979188821",
+  "lastEntityId": "24:5657266504859656832",
+  "lastIndexId": "53:6050841811100062138",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

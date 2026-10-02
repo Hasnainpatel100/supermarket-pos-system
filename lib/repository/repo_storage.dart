@@ -19,4 +19,12 @@ class RepoStorage {
   Future<void> logout() async {
     await _storage.writeString("a", "");
   }
+
+  Future<int> getExpiryAlarmDays() async {
+    return _storage.readInt("pref_expiry_alarm_days") ?? 15;
+  }
+
+  Future<void> setExpiryAlarmDays(int days) async {
+    await _storage.writeInt("pref_expiry_alarm_days", days);
+  }
 }

@@ -314,4 +314,15 @@ class ModelBrand {
   bool get isActive => status.toUpperCase() == 'ACTIVE';
   bool get isMarket => appType.toUpperCase() == 'MARKET';
   bool get isRestaurant => appType.toUpperCase() == 'RESTAURANT';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ModelBrand &&
+          runtimeType == other.runtimeType &&
+          ((id != null && other.id != null && id == other.id) ||
+              (id == null && other.id == null && name.en == other.name.en));
+
+  @override
+  int get hashCode => (id ?? name.en).hashCode;
 }

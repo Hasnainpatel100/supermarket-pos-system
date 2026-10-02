@@ -2,6 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../../service/service_brand_context.dart';
+import '../../../../widget/dialog_plan_expiry.dart';
 import 'controller_home_dashboard.dart';
 
 // ────────────────────────────────────────────────────────
@@ -65,6 +67,9 @@ class FragHomeDashboard extends StatelessWidget {
               // ── Header ──
               SliverToBoxAdapter(child: _buildHeader(context, ctrl)),
 
+              // ── Plan Expiry Alert Banner ──
+              SliverToBoxAdapter(child: _buildPlanExpiryBanner(context)),
+
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
               // ── Top Stat Cards ──
@@ -86,6 +91,90 @@ class FragHomeDashboard extends StatelessWidget {
         );
       }),
     );
+  }
+
+  // ──────────────────────────────────────────────────────
+  //  Plan Expiry Alert Banner
+  // ──────────────────────────────────────────────────────
+  Widget _buildPlanExpiryBanner(BuildContext context) {
+    if (!Get.isRegistered<ServiceBrandContext>()) return const SizedBox.shrink();
+    final ServiceBrandContext brandCtx = Get.find();
+
+    return Obx(() {
+      final branch = brandCtx.rxSelectedBranch.value;
+      final plan = branch?.planDetails;
+      if (plan == null) return const SizedBox.shrink();
+
+      if (!plan.isExpiringSoon && !plan.isExpired) {
+        return const SizedBox.shrink();
+      }
+
+      final isExpired = plan.isExpired;
+      final color = isExpired ? const Color(0xFFEF4444) : const Color(0xFFF59E0B);
+      final icon = isExpired ? Icons.error_outline_rounded : Icons.warning_amber_rounded;
+      final branchName = branch?.name.en ?? 'Branch';
+
+      return Container(
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.4), width: 1.2),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isExpired
+                        ? 'Plan Expired for $branchName'
+                        : 'Plan Expiring Soon: ${plan.expiryStatusText}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isExpired
+                        ? 'Your subscription expired on ${plan.formattedExpiry}. Contact administrator to renew.'
+                        : 'Your branch subscription will expire on ${plan.formattedExpiry}. Please renew in advance.',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.tonal(
+              onPressed: () => DialogPlanExpiry.show(context, branch: branch),
+              style: FilledButton.styleFrom(
+                backgroundColor: color.withValues(alpha: 0.2),
+                foregroundColor: color,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              child: const Text('View Plan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   // ──────────────────────────────────────────────────────
@@ -1111,7 +1200,7 @@ class _PaymentDonut extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      _compactDouble(e.value),
+                      '${_compactDouble(e.value)} (${pct.toStringAsFixed(0)}%)',
                       style: TextStyle(
                         color: _DashboardTheme.textPrimary(context),
                         fontSize: 12,

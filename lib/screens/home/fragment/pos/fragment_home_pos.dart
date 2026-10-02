@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../model/entity_item.dart';
 import '../../../../model/entity_customer.dart';
+import '../account/controller_home_account.dart';
+import '../account/dialog_start_day_shift.dart';
 import 'activity_split_bill.dart';
 import 'controller_home_pos.dart';
 
@@ -12,48 +14,137 @@ class FragmentHomePos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ControllerHomePos());
-    final cs = Theme.of(context).colorScheme;
+    final ControllerHomeAccount accountCtrl = Get.isRegistered<ControllerHomeAccount>()
+        ? Get.find<ControllerHomeAccount>()
+        : Get.put(ControllerHomeAccount(), permanent: true);
 
-    return Scaffold(
-      backgroundColor: cs.surfaceContainerLowest,
-      body: FocusScope(
-        autofocus: true,
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.f2 ||
-                event.logicalKey == LogicalKeyboardKey.f3 ||
-                event.logicalKey == LogicalKeyboardKey.f4 ||
-                event.logicalKey == LogicalKeyboardKey.f5 ||
-                event.logicalKey == LogicalKeyboardKey.delete ||
-                (event.logicalKey == LogicalKeyboardKey.keyP &&
-                    HardwareKeyboard.instance.isControlPressed) ||
-                (event.logicalKey == LogicalKeyboardKey.keyT &&
-                    HardwareKeyboard.instance.isControlPressed)) {
-              controller.handleShortcut(event.logicalKey);
-              return KeyEventResult.handled;
+    return Obx(() {
+      if (!accountCtrl.isShiftOpen) {
+        final bool isDayOpen = accountCtrl.isDayOpen;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        return Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 480),
+            margin: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border.all(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_clock_rounded,
+                    color: Color(0xFFF59E0B),
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  isDayOpen ? 'Shift Not Started' : 'Day & Shift Not Started',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  isDayOpen
+                      ? 'You must start your shift before taking orders, collecting payments, and dispensing change.'
+                      : 'The business day has not been started yet. You must start the day and your shift before operating the POS terminal.',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 1.4,
+                    color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () {
+                    DialogStartDayShift.show(context, isShiftOnly: isDayOpen);
+                  },
+                  icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                  label: Text(
+                    isDayOpen ? 'Start Shift' : 'Start Day & Shift',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF00796B),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      final controller = Get.put(ControllerHomePos());
+      final cs = Theme.of(context).colorScheme;
+
+      return Scaffold(
+        backgroundColor: cs.surfaceContainerLowest,
+        body: FocusScope(
+          autofocus: true,
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.f2 ||
+                  event.logicalKey == LogicalKeyboardKey.f3 ||
+                  event.logicalKey == LogicalKeyboardKey.f4 ||
+                  event.logicalKey == LogicalKeyboardKey.f5 ||
+                  event.logicalKey == LogicalKeyboardKey.delete ||
+                  (event.logicalKey == LogicalKeyboardKey.keyP &&
+                      HardwareKeyboard.instance.isControlPressed) ||
+                  (event.logicalKey == LogicalKeyboardKey.keyT &&
+                      HardwareKeyboard.instance.isControlPressed)) {
+                controller.handleShortcut(event.logicalKey);
+                return KeyEventResult.handled;
+              }
             }
-          }
-          return KeyEventResult.ignored;
-        },
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// ── LEFT PANEL (70%) ──
-            Expanded(
-              flex: 7,
-              child: _LeftPanel(controller: controller),
-            ),
+            return KeyEventResult.ignored;
+          },
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// ── LEFT PANEL (70%) ──
+              Expanded(
+                flex: 7,
+                child: _LeftPanel(controller: controller),
+              ),
 
-            /// ── RIGHT PANEL (30%) ──
-            Expanded(
-              flex: 3,
-              child: _RightPanel(controller: controller),
-            ),
-          ],
+              /// ── RIGHT PANEL (30%) ──
+              Expanded(
+                flex: 3,
+                child: _RightPanel(controller: controller),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -1146,9 +1237,9 @@ class _SettleButtons extends StatelessWidget {
 
 // ─── Split Payment Section ───────────────────────────────────────────────────
 
-class _SplitPaymentSection extends StatelessWidget {
+class SplitPaymentSection extends StatelessWidget {
   final ControllerHomePos controller;
-  const _SplitPaymentSection({required this.controller});
+  const SplitPaymentSection({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {

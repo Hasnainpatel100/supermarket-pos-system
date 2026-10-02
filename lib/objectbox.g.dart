@@ -19,6 +19,8 @@ import 'model/entity_audit_log.dart';
 import 'model/entity_bill.dart';
 import 'model/entity_bill_item.dart';
 import 'model/entity_customer.dart';
+import 'model/entity_day_session.dart';
+import 'model/entity_drawer_movement.dart';
 import 'model/entity_finance_transaction.dart';
 import 'model/entity_item.dart';
 import 'model/entity_item_batch.dart';
@@ -30,6 +32,7 @@ import 'model/entity_purchase_receipt.dart';
 import 'model/entity_purchase_receipt_item.dart';
 import 'model/entity_sale.dart';
 import 'model/entity_sale_item.dart';
+import 'model/entity_shift_session.dart';
 import 'model/entity_stock_count.dart';
 import 'model/entity_stock_transaction.dart';
 import 'model/entity_supplier.dart';
@@ -1617,6 +1620,326 @@ final _entities = <obx_int.ModelEntity>[
             indexId: const obx_int.IdUid(50, 6531342150979188821))
       ],
       relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(22, 2155316630154843243),
+      name: 'EntityDaySession',
+      lastPropertyId: const obx_int.IdUid(18, 7823029175089290411),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 4907924988887030875),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 6536229746271105447),
+            name: 'objectId',
+            type: 9,
+            flags: 2080,
+            indexId: const obx_int.IdUid(51, 5199647081375689505)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 3782006193873168852),
+            name: 'startTimestampMs',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 4535876040065199673),
+            name: 'endTimestampMs',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 7095924826720405428),
+            name: 'isOpen',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 7468961003503160047),
+            name: 'openingCash',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(7, 4469514370183540228),
+            name: 'closingCash',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(8, 918395499660222915),
+            name: 'startedByUserId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(9, 2535002916538801213),
+            name: 'startedByUsername',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(10, 3760885444260382245),
+            name: 'closedByUserId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 5174546801741362142),
+            name: 'closedByUsername',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(12, 2660698804474401277),
+            name: 'openingComment',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(13, 7933516649927586665),
+            name: 'closingComment',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 8559149234242149821),
+            name: 'branchId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(15, 1291714199544684015),
+            name: 'brandId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(16, 2431591994788855389),
+            name: 'openingDenominationsJson',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(17, 6235039171502792692),
+            name: 'closingDenominationsJson',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(18, 7823029175089290411),
+            name: 'createdAtUtcMs',
+            type: 6,
+            flags: 0)
+      ],
+      relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(23, 8087769018287953305),
+      name: 'EntityDrawerMovement',
+      lastPropertyId: const obx_int.IdUid(14, 1366221263201563194),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 7498648479648094679),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 2698582518331780934),
+            name: 'objectId',
+            type: 9,
+            flags: 2080,
+            indexId: const obx_int.IdUid(52, 8553175613203689136)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 2029632804771312487),
+            name: 'shiftSessionId',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 317000236148677847),
+            name: 'daySessionId',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 2893428755120331070),
+            name: 'type',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 1894061941322351281),
+            name: 'amount',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(7, 245399875901730939),
+            name: 'reason',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(8, 21081993877250560),
+            name: 'remarks',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(9, 2680868627151760342),
+            name: 'timestampMs',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(10, 6699095456605184851),
+            name: 'userId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 3629046706831656270),
+            name: 'username',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(12, 6593639107514246670),
+            name: 'branchId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(13, 1215590371028790205),
+            name: 'brandId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 1366221263201563194),
+            name: 'createdAtUtcMs',
+            type: 6,
+            flags: 0)
+      ],
+      relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(24, 5657266504859656832),
+      name: 'EntityShiftSession',
+      lastPropertyId: const obx_int.IdUid(26, 6008817068056583914),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 1209203522328984425),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 1896705740472548787),
+            name: 'objectId',
+            type: 9,
+            flags: 2080,
+            indexId: const obx_int.IdUid(53, 6050841811100062138)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 1907850282612800132),
+            name: 'daySessionId',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 882950880574021615),
+            name: 'startTimestampMs',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 279034646921426985),
+            name: 'endTimestampMs',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 4090713538446196783),
+            name: 'isOpen',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(7, 4737112369995299118),
+            name: 'openingCash',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(8, 4622674941360559283),
+            name: 'closingCash',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(9, 307095470413243372),
+            name: 'cashIn',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(10, 7198584693583159487),
+            name: 'cashOut',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 7763867611738076101),
+            name: 'salesCash',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(12, 542171207795939970),
+            name: 'expensesCash',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(13, 7439177669525910365),
+            name: 'startedByUserId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 794853526707013009),
+            name: 'startedByUsername',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(15, 147719650444528774),
+            name: 'closedByUserId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(16, 6921036479901250863),
+            name: 'closedByUsername',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(17, 3859096979263817562),
+            name: 'comments',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(18, 6447486484787821266),
+            name: 'openingDenominationsJson',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(19, 1847612192510291532),
+            name: 'closingDenominationsJson',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(20, 1186788497420639688),
+            name: 'paymentModesJson',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(21, 8219147409148237616),
+            name: 'fulfilledOrders',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(22, 3694731231503930275),
+            name: 'cancelledOrders',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(23, 8811592946200378909),
+            name: 'complimentaryOrders',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(24, 3697769516401166356),
+            name: 'branchId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(25, 5747787982779028804),
+            name: 'brandId',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(26, 6008817068056583914),
+            name: 'createdAtUtcMs',
+            type: 6,
+            flags: 0)
+      ],
+      relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[])
 ];
 
@@ -1655,8 +1978,8 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(21, 4972311659241473103),
-      lastIndexId: const obx_int.IdUid(50, 6531342150979188821),
+      lastEntityId: const obx_int.IdUid(24, 5657266504859656832),
+      lastIndexId: const obx_int.IdUid(53, 6050841811100062138),
       lastRelationId: const obx_int.IdUid(0, 0),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [],
@@ -3404,6 +3727,390 @@ obx_int.ModelDefinition getObjectBoxModel() {
                 .vTableGet(buffer, rootOffset, 6, '');
 
           return object;
+        }),
+    EntityDaySession: obx_int.EntityDefinition<EntityDaySession>(
+        model: _entities[21],
+        toOneRelations: (EntityDaySession object) => [],
+        toManyRelations: (EntityDaySession object) => {},
+        getId: (EntityDaySession object) => object.id,
+        setId: (EntityDaySession object, int id) {
+          object.id = id;
+        },
+        objectToFB: (EntityDaySession object, fb.Builder fbb) {
+          final objectIdOffset = fbb.writeString(object.objectId);
+          final startedByUserIdOffset = object.startedByUserId == null
+              ? null
+              : fbb.writeString(object.startedByUserId!);
+          final startedByUsernameOffset = object.startedByUsername == null
+              ? null
+              : fbb.writeString(object.startedByUsername!);
+          final closedByUserIdOffset = object.closedByUserId == null
+              ? null
+              : fbb.writeString(object.closedByUserId!);
+          final closedByUsernameOffset = object.closedByUsername == null
+              ? null
+              : fbb.writeString(object.closedByUsername!);
+          final openingCommentOffset = object.openingComment == null
+              ? null
+              : fbb.writeString(object.openingComment!);
+          final closingCommentOffset = object.closingComment == null
+              ? null
+              : fbb.writeString(object.closingComment!);
+          final branchIdOffset = object.branchId == null
+              ? null
+              : fbb.writeString(object.branchId!);
+          final brandIdOffset =
+              object.brandId == null ? null : fbb.writeString(object.brandId!);
+          final openingDenominationsJsonOffset =
+              object.openingDenominationsJson == null
+                  ? null
+                  : fbb.writeString(object.openingDenominationsJson!);
+          final closingDenominationsJsonOffset =
+              object.closingDenominationsJson == null
+                  ? null
+                  : fbb.writeString(object.closingDenominationsJson!);
+          fbb.startTable(19);
+          fbb.addInt64(0, object.id);
+          fbb.addOffset(1, objectIdOffset);
+          fbb.addInt64(2, object.startTimestampMs);
+          fbb.addInt64(3, object.endTimestampMs);
+          fbb.addBool(4, object.isOpen);
+          fbb.addFloat64(5, object.openingCash);
+          fbb.addFloat64(6, object.closingCash);
+          fbb.addOffset(7, startedByUserIdOffset);
+          fbb.addOffset(8, startedByUsernameOffset);
+          fbb.addOffset(9, closedByUserIdOffset);
+          fbb.addOffset(10, closedByUsernameOffset);
+          fbb.addOffset(11, openingCommentOffset);
+          fbb.addOffset(12, closingCommentOffset);
+          fbb.addOffset(13, branchIdOffset);
+          fbb.addOffset(14, brandIdOffset);
+          fbb.addOffset(15, openingDenominationsJsonOffset);
+          fbb.addOffset(16, closingDenominationsJsonOffset);
+          fbb.addInt64(17, object.createdAtUtcMs);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final idParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          final startTimestampMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 8);
+          final endTimestampMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 10);
+          final isOpenParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 12, false);
+          final openingCashParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 14, 0);
+          final closingCashParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 16, 0);
+          final startedByUserIdParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 18);
+          final startedByUsernameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 20);
+          final closedByUserIdParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 22);
+          final closedByUsernameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 24);
+          final openingCommentParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 26);
+          final closingCommentParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 28);
+          final branchIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 30);
+          final brandIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 32);
+          final openingDenominationsJsonParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 34);
+          final closingDenominationsJsonParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 36);
+          final createdAtUtcMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 38);
+          final object = EntityDaySession(
+              id: idParam,
+              startTimestampMs: startTimestampMsParam,
+              endTimestampMs: endTimestampMsParam,
+              isOpen: isOpenParam,
+              openingCash: openingCashParam,
+              closingCash: closingCashParam,
+              startedByUserId: startedByUserIdParam,
+              startedByUsername: startedByUsernameParam,
+              closedByUserId: closedByUserIdParam,
+              closedByUsername: closedByUsernameParam,
+              openingComment: openingCommentParam,
+              closingComment: closingCommentParam,
+              branchId: branchIdParam,
+              brandId: brandIdParam,
+              openingDenominationsJson: openingDenominationsJsonParam,
+              closingDenominationsJson: closingDenominationsJsonParam,
+              createdAtUtcMs: createdAtUtcMsParam)
+            ..objectId = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 6, '');
+
+          return object;
+        }),
+    EntityDrawerMovement: obx_int.EntityDefinition<EntityDrawerMovement>(
+        model: _entities[22],
+        toOneRelations: (EntityDrawerMovement object) => [],
+        toManyRelations: (EntityDrawerMovement object) => {},
+        getId: (EntityDrawerMovement object) => object.id,
+        setId: (EntityDrawerMovement object, int id) {
+          object.id = id;
+        },
+        objectToFB: (EntityDrawerMovement object, fb.Builder fbb) {
+          final objectIdOffset = fbb.writeString(object.objectId);
+          final typeOffset = fbb.writeString(object.type);
+          final reasonOffset =
+              object.reason == null ? null : fbb.writeString(object.reason!);
+          final remarksOffset =
+              object.remarks == null ? null : fbb.writeString(object.remarks!);
+          final userIdOffset =
+              object.userId == null ? null : fbb.writeString(object.userId!);
+          final usernameOffset = object.username == null
+              ? null
+              : fbb.writeString(object.username!);
+          final branchIdOffset = object.branchId == null
+              ? null
+              : fbb.writeString(object.branchId!);
+          final brandIdOffset =
+              object.brandId == null ? null : fbb.writeString(object.brandId!);
+          fbb.startTable(15);
+          fbb.addInt64(0, object.id);
+          fbb.addOffset(1, objectIdOffset);
+          fbb.addInt64(2, object.shiftSessionId);
+          fbb.addInt64(3, object.daySessionId);
+          fbb.addOffset(4, typeOffset);
+          fbb.addFloat64(5, object.amount);
+          fbb.addOffset(6, reasonOffset);
+          fbb.addOffset(7, remarksOffset);
+          fbb.addInt64(8, object.timestampMs);
+          fbb.addOffset(9, userIdOffset);
+          fbb.addOffset(10, usernameOffset);
+          fbb.addOffset(11, branchIdOffset);
+          fbb.addOffset(12, brandIdOffset);
+          fbb.addInt64(13, object.createdAtUtcMs);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final idParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          final shiftSessionIdParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0);
+          final daySessionIdParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 10, 0);
+          final typeParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 12, '');
+          final amountParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 14, 0);
+          final reasonParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 16);
+          final remarksParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 18);
+          final timestampMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 20);
+          final userIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 22);
+          final usernameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 24);
+          final branchIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 26);
+          final brandIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 28);
+          final createdAtUtcMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 30);
+          final object = EntityDrawerMovement(
+              id: idParam,
+              shiftSessionId: shiftSessionIdParam,
+              daySessionId: daySessionIdParam,
+              type: typeParam,
+              amount: amountParam,
+              reason: reasonParam,
+              remarks: remarksParam,
+              timestampMs: timestampMsParam,
+              userId: userIdParam,
+              username: usernameParam,
+              branchId: branchIdParam,
+              brandId: brandIdParam,
+              createdAtUtcMs: createdAtUtcMsParam)
+            ..objectId = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 6, '');
+
+          return object;
+        }),
+    EntityShiftSession: obx_int.EntityDefinition<EntityShiftSession>(
+        model: _entities[23],
+        toOneRelations: (EntityShiftSession object) => [],
+        toManyRelations: (EntityShiftSession object) => {},
+        getId: (EntityShiftSession object) => object.id,
+        setId: (EntityShiftSession object, int id) {
+          object.id = id;
+        },
+        objectToFB: (EntityShiftSession object, fb.Builder fbb) {
+          final objectIdOffset = fbb.writeString(object.objectId);
+          final startedByUserIdOffset = object.startedByUserId == null
+              ? null
+              : fbb.writeString(object.startedByUserId!);
+          final startedByUsernameOffset = object.startedByUsername == null
+              ? null
+              : fbb.writeString(object.startedByUsername!);
+          final closedByUserIdOffset = object.closedByUserId == null
+              ? null
+              : fbb.writeString(object.closedByUserId!);
+          final closedByUsernameOffset = object.closedByUsername == null
+              ? null
+              : fbb.writeString(object.closedByUsername!);
+          final commentsOffset = object.comments == null
+              ? null
+              : fbb.writeString(object.comments!);
+          final openingDenominationsJsonOffset =
+              object.openingDenominationsJson == null
+                  ? null
+                  : fbb.writeString(object.openingDenominationsJson!);
+          final closingDenominationsJsonOffset =
+              object.closingDenominationsJson == null
+                  ? null
+                  : fbb.writeString(object.closingDenominationsJson!);
+          final paymentModesJsonOffset = object.paymentModesJson == null
+              ? null
+              : fbb.writeString(object.paymentModesJson!);
+          final branchIdOffset = object.branchId == null
+              ? null
+              : fbb.writeString(object.branchId!);
+          final brandIdOffset =
+              object.brandId == null ? null : fbb.writeString(object.brandId!);
+          fbb.startTable(27);
+          fbb.addInt64(0, object.id);
+          fbb.addOffset(1, objectIdOffset);
+          fbb.addInt64(2, object.daySessionId);
+          fbb.addInt64(3, object.startTimestampMs);
+          fbb.addInt64(4, object.endTimestampMs);
+          fbb.addBool(5, object.isOpen);
+          fbb.addFloat64(6, object.openingCash);
+          fbb.addFloat64(7, object.closingCash);
+          fbb.addFloat64(8, object.cashIn);
+          fbb.addFloat64(9, object.cashOut);
+          fbb.addFloat64(10, object.salesCash);
+          fbb.addFloat64(11, object.expensesCash);
+          fbb.addOffset(12, startedByUserIdOffset);
+          fbb.addOffset(13, startedByUsernameOffset);
+          fbb.addOffset(14, closedByUserIdOffset);
+          fbb.addOffset(15, closedByUsernameOffset);
+          fbb.addOffset(16, commentsOffset);
+          fbb.addOffset(17, openingDenominationsJsonOffset);
+          fbb.addOffset(18, closingDenominationsJsonOffset);
+          fbb.addOffset(19, paymentModesJsonOffset);
+          fbb.addInt64(20, object.fulfilledOrders);
+          fbb.addInt64(21, object.cancelledOrders);
+          fbb.addInt64(22, object.complimentaryOrders);
+          fbb.addOffset(23, branchIdOffset);
+          fbb.addOffset(24, brandIdOffset);
+          fbb.addInt64(25, object.createdAtUtcMs);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final idParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          final daySessionIdParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0);
+          final startTimestampMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 10);
+          final endTimestampMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
+          final isOpenParam =
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 14, false);
+          final openingCashParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 16, 0);
+          final closingCashParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 18, 0);
+          final cashInParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 20, 0);
+          final cashOutParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 22, 0);
+          final salesCashParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 24, 0);
+          final expensesCashParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 26, 0);
+          final startedByUserIdParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 28);
+          final startedByUsernameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 30);
+          final closedByUserIdParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 32);
+          final closedByUsernameParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 34);
+          final commentsParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 36);
+          final openingDenominationsJsonParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 38);
+          final closingDenominationsJsonParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 40);
+          final paymentModesJsonParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGetNullable(buffer, rootOffset, 42);
+          final fulfilledOrdersParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 44, 0);
+          final cancelledOrdersParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 46, 0);
+          final complimentaryOrdersParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 48, 0);
+          final branchIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 50);
+          final brandIdParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGetNullable(buffer, rootOffset, 52);
+          final createdAtUtcMsParam =
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 54);
+          final object = EntityShiftSession(
+              id: idParam,
+              daySessionId: daySessionIdParam,
+              startTimestampMs: startTimestampMsParam,
+              endTimestampMs: endTimestampMsParam,
+              isOpen: isOpenParam,
+              openingCash: openingCashParam,
+              closingCash: closingCashParam,
+              cashIn: cashInParam,
+              cashOut: cashOutParam,
+              salesCash: salesCashParam,
+              expensesCash: expensesCashParam,
+              startedByUserId: startedByUserIdParam,
+              startedByUsername: startedByUsernameParam,
+              closedByUserId: closedByUserIdParam,
+              closedByUsername: closedByUsernameParam,
+              comments: commentsParam,
+              openingDenominationsJson: openingDenominationsJsonParam,
+              closingDenominationsJson: closingDenominationsJsonParam,
+              paymentModesJson: paymentModesJsonParam,
+              fulfilledOrders: fulfilledOrdersParam,
+              cancelledOrders: cancelledOrdersParam,
+              complimentaryOrders: complimentaryOrdersParam,
+              branchId: branchIdParam,
+              brandId: brandIdParam,
+              createdAtUtcMs: createdAtUtcMsParam)
+            ..objectId = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 6, '');
+
+          return object;
         })
   };
 
@@ -4550,4 +5257,246 @@ class EntityAuditLog_ {
   /// see [EntityAuditLog.createdAtUtcMs]
   static final createdAtUtcMs =
       obx.QueryIntegerProperty<EntityAuditLog>(_entities[20].properties[13]);
+}
+
+/// [EntityDaySession] entity fields to define ObjectBox queries.
+class EntityDaySession_ {
+  /// see [EntityDaySession.id]
+  static final id =
+      obx.QueryIntegerProperty<EntityDaySession>(_entities[21].properties[0]);
+
+  /// see [EntityDaySession.objectId]
+  static final objectId =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[1]);
+
+  /// see [EntityDaySession.startTimestampMs]
+  static final startTimestampMs =
+      obx.QueryIntegerProperty<EntityDaySession>(_entities[21].properties[2]);
+
+  /// see [EntityDaySession.endTimestampMs]
+  static final endTimestampMs =
+      obx.QueryIntegerProperty<EntityDaySession>(_entities[21].properties[3]);
+
+  /// see [EntityDaySession.isOpen]
+  static final isOpen =
+      obx.QueryBooleanProperty<EntityDaySession>(_entities[21].properties[4]);
+
+  /// see [EntityDaySession.openingCash]
+  static final openingCash =
+      obx.QueryDoubleProperty<EntityDaySession>(_entities[21].properties[5]);
+
+  /// see [EntityDaySession.closingCash]
+  static final closingCash =
+      obx.QueryDoubleProperty<EntityDaySession>(_entities[21].properties[6]);
+
+  /// see [EntityDaySession.startedByUserId]
+  static final startedByUserId =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[7]);
+
+  /// see [EntityDaySession.startedByUsername]
+  static final startedByUsername =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[8]);
+
+  /// see [EntityDaySession.closedByUserId]
+  static final closedByUserId =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[9]);
+
+  /// see [EntityDaySession.closedByUsername]
+  static final closedByUsername =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[10]);
+
+  /// see [EntityDaySession.openingComment]
+  static final openingComment =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[11]);
+
+  /// see [EntityDaySession.closingComment]
+  static final closingComment =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[12]);
+
+  /// see [EntityDaySession.branchId]
+  static final branchId =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[13]);
+
+  /// see [EntityDaySession.brandId]
+  static final brandId =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[14]);
+
+  /// see [EntityDaySession.openingDenominationsJson]
+  static final openingDenominationsJson =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[15]);
+
+  /// see [EntityDaySession.closingDenominationsJson]
+  static final closingDenominationsJson =
+      obx.QueryStringProperty<EntityDaySession>(_entities[21].properties[16]);
+
+  /// see [EntityDaySession.createdAtUtcMs]
+  static final createdAtUtcMs =
+      obx.QueryIntegerProperty<EntityDaySession>(_entities[21].properties[17]);
+}
+
+/// [EntityDrawerMovement] entity fields to define ObjectBox queries.
+class EntityDrawerMovement_ {
+  /// see [EntityDrawerMovement.id]
+  static final id = obx.QueryIntegerProperty<EntityDrawerMovement>(
+      _entities[22].properties[0]);
+
+  /// see [EntityDrawerMovement.objectId]
+  static final objectId = obx.QueryStringProperty<EntityDrawerMovement>(
+      _entities[22].properties[1]);
+
+  /// see [EntityDrawerMovement.shiftSessionId]
+  static final shiftSessionId = obx.QueryIntegerProperty<EntityDrawerMovement>(
+      _entities[22].properties[2]);
+
+  /// see [EntityDrawerMovement.daySessionId]
+  static final daySessionId = obx.QueryIntegerProperty<EntityDrawerMovement>(
+      _entities[22].properties[3]);
+
+  /// see [EntityDrawerMovement.type]
+  static final type = obx.QueryStringProperty<EntityDrawerMovement>(
+      _entities[22].properties[4]);
+
+  /// see [EntityDrawerMovement.amount]
+  static final amount = obx.QueryDoubleProperty<EntityDrawerMovement>(
+      _entities[22].properties[5]);
+
+  /// see [EntityDrawerMovement.reason]
+  static final reason = obx.QueryStringProperty<EntityDrawerMovement>(
+      _entities[22].properties[6]);
+
+  /// see [EntityDrawerMovement.remarks]
+  static final remarks = obx.QueryStringProperty<EntityDrawerMovement>(
+      _entities[22].properties[7]);
+
+  /// see [EntityDrawerMovement.timestampMs]
+  static final timestampMs = obx.QueryIntegerProperty<EntityDrawerMovement>(
+      _entities[22].properties[8]);
+
+  /// see [EntityDrawerMovement.userId]
+  static final userId = obx.QueryStringProperty<EntityDrawerMovement>(
+      _entities[22].properties[9]);
+
+  /// see [EntityDrawerMovement.username]
+  static final username = obx.QueryStringProperty<EntityDrawerMovement>(
+      _entities[22].properties[10]);
+
+  /// see [EntityDrawerMovement.branchId]
+  static final branchId = obx.QueryStringProperty<EntityDrawerMovement>(
+      _entities[22].properties[11]);
+
+  /// see [EntityDrawerMovement.brandId]
+  static final brandId = obx.QueryStringProperty<EntityDrawerMovement>(
+      _entities[22].properties[12]);
+
+  /// see [EntityDrawerMovement.createdAtUtcMs]
+  static final createdAtUtcMs = obx.QueryIntegerProperty<EntityDrawerMovement>(
+      _entities[22].properties[13]);
+}
+
+/// [EntityShiftSession] entity fields to define ObjectBox queries.
+class EntityShiftSession_ {
+  /// see [EntityShiftSession.id]
+  static final id =
+      obx.QueryIntegerProperty<EntityShiftSession>(_entities[23].properties[0]);
+
+  /// see [EntityShiftSession.objectId]
+  static final objectId =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[1]);
+
+  /// see [EntityShiftSession.daySessionId]
+  static final daySessionId =
+      obx.QueryIntegerProperty<EntityShiftSession>(_entities[23].properties[2]);
+
+  /// see [EntityShiftSession.startTimestampMs]
+  static final startTimestampMs =
+      obx.QueryIntegerProperty<EntityShiftSession>(_entities[23].properties[3]);
+
+  /// see [EntityShiftSession.endTimestampMs]
+  static final endTimestampMs =
+      obx.QueryIntegerProperty<EntityShiftSession>(_entities[23].properties[4]);
+
+  /// see [EntityShiftSession.isOpen]
+  static final isOpen =
+      obx.QueryBooleanProperty<EntityShiftSession>(_entities[23].properties[5]);
+
+  /// see [EntityShiftSession.openingCash]
+  static final openingCash =
+      obx.QueryDoubleProperty<EntityShiftSession>(_entities[23].properties[6]);
+
+  /// see [EntityShiftSession.closingCash]
+  static final closingCash =
+      obx.QueryDoubleProperty<EntityShiftSession>(_entities[23].properties[7]);
+
+  /// see [EntityShiftSession.cashIn]
+  static final cashIn =
+      obx.QueryDoubleProperty<EntityShiftSession>(_entities[23].properties[8]);
+
+  /// see [EntityShiftSession.cashOut]
+  static final cashOut =
+      obx.QueryDoubleProperty<EntityShiftSession>(_entities[23].properties[9]);
+
+  /// see [EntityShiftSession.salesCash]
+  static final salesCash =
+      obx.QueryDoubleProperty<EntityShiftSession>(_entities[23].properties[10]);
+
+  /// see [EntityShiftSession.expensesCash]
+  static final expensesCash =
+      obx.QueryDoubleProperty<EntityShiftSession>(_entities[23].properties[11]);
+
+  /// see [EntityShiftSession.startedByUserId]
+  static final startedByUserId =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[12]);
+
+  /// see [EntityShiftSession.startedByUsername]
+  static final startedByUsername =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[13]);
+
+  /// see [EntityShiftSession.closedByUserId]
+  static final closedByUserId =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[14]);
+
+  /// see [EntityShiftSession.closedByUsername]
+  static final closedByUsername =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[15]);
+
+  /// see [EntityShiftSession.comments]
+  static final comments =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[16]);
+
+  /// see [EntityShiftSession.openingDenominationsJson]
+  static final openingDenominationsJson =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[17]);
+
+  /// see [EntityShiftSession.closingDenominationsJson]
+  static final closingDenominationsJson =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[18]);
+
+  /// see [EntityShiftSession.paymentModesJson]
+  static final paymentModesJson =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[19]);
+
+  /// see [EntityShiftSession.fulfilledOrders]
+  static final fulfilledOrders = obx.QueryIntegerProperty<EntityShiftSession>(
+      _entities[23].properties[20]);
+
+  /// see [EntityShiftSession.cancelledOrders]
+  static final cancelledOrders = obx.QueryIntegerProperty<EntityShiftSession>(
+      _entities[23].properties[21]);
+
+  /// see [EntityShiftSession.complimentaryOrders]
+  static final complimentaryOrders =
+      obx.QueryIntegerProperty<EntityShiftSession>(
+          _entities[23].properties[22]);
+
+  /// see [EntityShiftSession.branchId]
+  static final branchId =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[23]);
+
+  /// see [EntityShiftSession.brandId]
+  static final brandId =
+      obx.QueryStringProperty<EntityShiftSession>(_entities[23].properties[24]);
+
+  /// see [EntityShiftSession.createdAtUtcMs]
+  static final createdAtUtcMs = obx.QueryIntegerProperty<EntityShiftSession>(
+      _entities[23].properties[25]);
 }

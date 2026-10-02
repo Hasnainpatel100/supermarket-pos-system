@@ -241,24 +241,32 @@ class ControllerFinancialReport extends GetxController {
   // Data Load
   // ═════════════════════════════════════════════════════════════════════════
 
-  void loadData() {
+  Future<void> loadData() async {
     rxLoading.value = true;
     currentPage.value = 0;
 
-    switch (rxReportType.value) {
-      case FinancialReportType.paymentCollection:
-        _loadPaymentCollection();
-        break;
-      case FinancialReportType.dailyCashClosing:
-        _loadDailyCashClosing();
-        break;
-      case FinancialReportType.taxGST:
-        _loadTaxGST();
-        break;
-    }
+    await Future.delayed(Duration.zero);
 
-    _applyPagination();
-    rxLoading.value = false;
+    try {
+      switch (rxReportType.value) {
+        case FinancialReportType.paymentCollection:
+          _loadPaymentCollection();
+          break;
+        case FinancialReportType.dailyCashClosing:
+          _loadDailyCashClosing();
+          break;
+        case FinancialReportType.taxGST:
+          _loadTaxGST();
+          break;
+      }
+      _applyPagination();
+    } catch (e, stack) {
+      debugPrint('⚠️ [ControllerFinancialReport] Error loading financial report: $e\n$stack');
+      _fullRows = [];
+      rxRows.assignAll([]);
+    } finally {
+      rxLoading.value = false;
+    }
   }
 
   void _applyPagination() {
@@ -562,7 +570,10 @@ class ControllerFinancialReport extends GetxController {
         final taxAmount = item.tax ?? 0.0;
         final taxable = total - taxAmount;
 
-        final itemMaster = _boxItem.get(item.item.targetId);
+        final targetId = item.item.targetId;
+        final itemMaster = (item.item.hasValue && item.item.target != null)
+            ? item.item.target
+            : (targetId > 0 ? _boxItem.get(targetId) : null);
         final rate = itemMaster?.taxRate ?? 18.0;
 
         totalTaxableSales += taxable;

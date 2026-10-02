@@ -245,12 +245,12 @@ class RepoBranch {
   }
 
   /// Fetches branch plan history via GET /api/branches/:id/plan-history
-  Future<(List<dynamic> history, bool success, String message)> getBranchPlanHistory(String id) async {
+  Future<(List<ModelBranchPlanHistory> history, bool success, String message)> getBranchPlanHistory(String id) async {
     final response = await _api.getBranchPlanHistory(id);
     if (response.success && response.data != null) {
       return (response.data!, true, response.message);
     }
-    return ([], false, response.message);
+    return (<ModelBranchPlanHistory>[], false, response.message);
   }
 
   // ── Audit ─────────────────────────────────────────────────────────────────

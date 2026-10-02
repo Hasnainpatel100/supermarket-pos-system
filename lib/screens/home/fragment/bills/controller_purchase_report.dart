@@ -291,30 +291,38 @@ class ControllerPurchaseReport extends GetxController {
   // Data Load
   // ═════════════════════════════════════════════════════════════════════════
 
-  void loadData() {
+  Future<void> loadData() async {
     rxLoading.value = true;
     currentPage.value = 0;
 
-    switch (rxReportType.value) {
-      case PurchaseReportType.purchaseSummary:
-        _loadPurchaseSummary();
-        break;
-      case PurchaseReportType.purchaseDetail:
-        _loadPurchaseDetail();
-        break;
-      case PurchaseReportType.supplierPurchase:
-        _loadSupplierPurchase();
-        break;
-      case PurchaseReportType.pendingPurchaseOrders:
-        _loadPendingPurchaseOrders();
-        break;
-      case PurchaseReportType.purchaseReturn:
-        _loadPurchaseReturn();
-        break;
-    }
+    await Future.delayed(Duration.zero);
 
-    _applyPagination();
-    rxLoading.value = false;
+    try {
+      switch (rxReportType.value) {
+        case PurchaseReportType.purchaseSummary:
+          _loadPurchaseSummary();
+          break;
+        case PurchaseReportType.purchaseDetail:
+          _loadPurchaseDetail();
+          break;
+        case PurchaseReportType.supplierPurchase:
+          _loadSupplierPurchase();
+          break;
+        case PurchaseReportType.pendingPurchaseOrders:
+          _loadPendingPurchaseOrders();
+          break;
+        case PurchaseReportType.purchaseReturn:
+          _loadPurchaseReturn();
+          break;
+      }
+      _applyPagination();
+    } catch (e, stack) {
+      debugPrint('⚠️ [ControllerPurchaseReport] Error loading purchase report: $e\n$stack');
+      _fullRows = [];
+      rxRows.assignAll([]);
+    } finally {
+      rxLoading.value = false;
+    }
   }
 
   void _applyPagination() {

@@ -38,6 +38,7 @@ class TokenStorage {
   Future<void> saveAccessToken(String token) async {
     final clean = sanitizeToken(token);
     await _storage.writeString(keyAccessToken, clean);
+    await _storage.writeString('brand_api_auth_token', clean);
   }
 
   /// Get stored JWT access token, or null if not available.
@@ -117,6 +118,7 @@ class TokenStorage {
   /// Clear all tokens and session context (e.g. on logout or refresh failure).
   Future<void> clearTokens() async {
     await _storage.delete(keyAccessToken);
+    await _storage.delete('brand_api_auth_token');
     await _storage.delete(keyRefreshToken);
     await _storage.delete(keyBrandId);
     await _storage.delete(keyBranchId);

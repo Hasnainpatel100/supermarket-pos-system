@@ -501,9 +501,27 @@ class _CategoryDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final cats = [...controller.rxCategories, '+ Create New'];
+      final currentCategory = controller.rxCategory.value?.trim();
+      final uniqueCategories = <String>[];
+      for (final cat in controller.rxCategories) {
+        final trimmed = cat.trim();
+        if (trimmed.isNotEmpty && !uniqueCategories.any((c) => c.toLowerCase() == trimmed.toLowerCase())) {
+          uniqueCategories.add(trimmed);
+        }
+      }
+      if (currentCategory != null &&
+          currentCategory.isNotEmpty &&
+          !uniqueCategories.any((c) => c.toLowerCase() == currentCategory.toLowerCase())) {
+        uniqueCategories.add(currentCategory);
+      }
+
+      final cats = [...uniqueCategories, '+ Create New'];
+      final selectedCategory = currentCategory != null
+          ? uniqueCategories.firstWhereOrNull((c) => c.toLowerCase() == currentCategory.toLowerCase())
+          : null;
+
       return AppDropdown<String>(
-        value: controller.rxCategory.value,
+        value: selectedCategory,
         label: 'category'.tr,
         prefixIcon: Icons.category_outlined,
         items: cats.map((c) {

@@ -835,41 +835,51 @@ class ControllerSalesReport extends GetxController {
   // Data loading — queries ObjectBox, then dispatches to builder
   // ═════════════════════════════════════════════════════════════════════════
 
-  void loadData() {
+  Future<void> loadData() async {
     if (_isTestImportMode) {
       _filterTestImportRows();
       return;
     }
     rxLoading.value = true;
     currentPage.value = 0;
-    _matchingDateStrings = _buildDateStrings(rxStartDate.value, rxEndDate.value);
 
-    // ── Build query ────────────────────────────────────────────────────────
-    Condition<EntityBill>? dateCondition;
-    if (_matchingDateStrings.length == 1) {
-      dateCondition = EntityBill_.billDate.equals(_matchingDateStrings.first);
-    } else if (_matchingDateStrings.length > 1) {
-      dateCondition = EntityBill_.billDate.oneOf(_matchingDateStrings);
+    await Future.delayed(Duration.zero);
+
+    try {
+      _matchingDateStrings = _buildDateStrings(rxStartDate.value, rxEndDate.value);
+
+      // ── Build query ────────────────────────────────────────────────────────
+      Condition<EntityBill>? dateCondition;
+      if (_matchingDateStrings.length == 1) {
+        dateCondition = EntityBill_.billDate.equals(_matchingDateStrings.first);
+      } else if (_matchingDateStrings.length > 1) {
+        dateCondition = EntityBill_.billDate.oneOf(_matchingDateStrings);
+      }
+
+      // Exclude cancelled bills from reports
+      final notCancelled = EntityBill_.status.notEquals('CANCELLED');
+      Condition<EntityBill>? combined;
+      if (dateCondition != null) {
+        combined = dateCondition.and(notCancelled);
+      } else {
+        combined = notCancelled;
+      }
+
+      final qb = _boxBill.query(combined);
+      qb.order(EntityBill_.id, flags: Order.descending);
+      final query = qb.build();
+      _allFilteredBills = query.find();
+      query.close();
+
+      // ── Build report-specific rows ────────────────────────────────────────
+      _buildReport();
+    } catch (e, stack) {
+      debugPrint('⚠️ [ControllerSalesReport] Error loading sales report: $e\n$stack');
+      _fullRows = [];
+      rxRows.assignAll([]);
+    } finally {
+      rxLoading.value = false;
     }
-
-    // Exclude cancelled bills from reports
-    final notCancelled = EntityBill_.status.notEquals('CANCELLED');
-    Condition<EntityBill>? combined;
-    if (dateCondition != null) {
-      combined = dateCondition.and(notCancelled);
-    } else {
-      combined = notCancelled;
-    }
-
-    final qb = _boxBill.query(combined);
-    qb.order(EntityBill_.id, flags: Order.descending);
-    final query = qb.build();
-    _allFilteredBills = query.find();
-    query.close();
-
-    // ── Build report-specific rows ────────────────────────────────────────
-    _buildReport();
-    rxLoading.value = false;
   }
 
   void _buildReport() {

@@ -22,6 +22,7 @@ enum EnumMainMenu {
   branch, // 5. branch management
 
   expenses,
+  account,
 
   backup,
 

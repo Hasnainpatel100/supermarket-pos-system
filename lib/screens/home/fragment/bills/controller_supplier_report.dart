@@ -219,21 +219,29 @@ class ControllerSupplierReport extends GetxController {
   // Data Load
   // ═════════════════════════════════════════════════════════════════════════
 
-  void loadData() {
+  Future<void> loadData() async {
     rxLoading.value = true;
     currentPage.value = 0;
 
-    switch (rxReportType.value) {
-      case SupplierReportType.purchaseHistory:
-        _loadPurchaseHistory();
-        break;
-      case SupplierReportType.outstanding:
-        _loadOutstanding();
-        break;
-    }
+    await Future.delayed(Duration.zero);
 
-    _applyPagination();
-    rxLoading.value = false;
+    try {
+      switch (rxReportType.value) {
+        case SupplierReportType.purchaseHistory:
+          _loadPurchaseHistory();
+          break;
+        case SupplierReportType.outstanding:
+          _loadOutstanding();
+          break;
+      }
+      _applyPagination();
+    } catch (e, stack) {
+      debugPrint('⚠️ [ControllerSupplierReport] Error loading supplier report: $e\n$stack');
+      _fullRows = [];
+      rxRows.assignAll([]);
+    } finally {
+      rxLoading.value = false;
+    }
   }
 
   void _applyPagination() {

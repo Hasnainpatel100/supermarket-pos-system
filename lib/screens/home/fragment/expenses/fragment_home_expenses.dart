@@ -63,9 +63,9 @@ class FragmentHomeExpenses extends StatelessWidget {
                       'Finance'.tr,
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
                     ),
                     Text(
                       'Track your expenses'.tr,
@@ -81,8 +81,9 @@ class FragmentHomeExpenses extends StatelessWidget {
                 // ── Actions Row: Date Range + Refresh (grouped) ──────────────
                 Container(
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
+                    color: colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: colorScheme.outline.withValues(alpha: 0.12),
@@ -119,13 +120,13 @@ class FragmentHomeExpenses extends StatelessWidget {
                               decoration: BoxDecoration(
                                 gradient: active
                                     ? LinearGradient(
-                                  colors: [
-                                    Colors.blue.shade500,
-                                    Colors.purple.shade500,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                )
+                                        colors: [
+                                          Colors.blue.shade500,
+                                          Colors.purple.shade500,
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
                                     : null,
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -203,10 +204,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                   icon: const Icon(Icons.add_rounded, size: 16),
                   label: Text(
                     'New Transaction'.tr,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.green.shade600,
@@ -473,16 +471,28 @@ class FragmentHomeExpenses extends StatelessWidget {
                         final displayDate = tx.createdDate != null
                             ? tx.createdDate!
                             : (tx.dateUtcMs != null
-                            ? DateFormat('yyyy-MM-dd').format(
-                          DateTime.fromMillisecondsSinceEpoch(tx.dateUtcMs!).toLocal(),
-                        )
-                            : '-');
+                                  ? DateFormat('yyyy-MM-dd').format(
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                        tx.dateUtcMs!,
+                                      ).toLocal(),
+                                    )
+                                  : '-');
                         return DataRow(
                           cells: [
-                            DataCell(Text(displayDate, style: const TextStyle(fontWeight: FontWeight.w600))),
+                            DataCell(
+                              Text(
+                                displayDate,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                             DataCell(
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: typeColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
@@ -494,7 +504,11 @@ class FragmentHomeExpenses extends StatelessWidget {
                                     const SizedBox(width: 4),
                                     Text(
                                       (tx.type ?? '').toUpperCase(),
-                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: typeColor),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: typeColor,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -502,18 +516,33 @@ class FragmentHomeExpenses extends StatelessWidget {
                             ),
                             DataCell(Text(tx.category ?? '-')),
                             DataCell(Text(tx.personName ?? '-')),
-                            DataCell(Text(
-                              '₹${(tx.amount ?? 0).toStringAsFixed(2)}',
-                              style: TextStyle(fontWeight: FontWeight.bold, color: typeColor),
-                            )),
-                            DataCell(Text(tx.note ?? '-', overflow: TextOverflow.ellipsis)),
+                            DataCell(
+                              Text(
+                                '₹${(tx.amount ?? 0).toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: typeColor,
+                                ),
+                              ),
+                            ),
+                            DataCell(
+                              Text(
+                                tx.note ?? '-',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                             DataCell(
                               IconButton(
-                                icon: Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 20),
+                                icon: Icon(
+                                  Icons.delete_outline_rounded,
+                                  color: Colors.red.shade400,
+                                  size: 20,
+                                ),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                                 tooltip: 'Delete'.tr,
-                                onPressed: () => _confirmDelete(context, controller, tx),
+                                onPressed: () =>
+                                    _confirmDelete(context, controller, tx),
                               ),
                             ),
                           ],
@@ -527,7 +556,11 @@ class FragmentHomeExpenses extends StatelessWidget {
           ),
 
           // ── Pagination Footer ──
-          Obx(() => controller.rxList.isNotEmpty ? _buildPagination(context, controller) : const SizedBox.shrink()),
+          Obx(
+            () => controller.rxList.isNotEmpty
+                ? _buildPagination(context, controller)
+                : const SizedBox.shrink(),
+          ),
 
           const SizedBox(height: 16),
         ],
@@ -535,7 +568,10 @@ class FragmentHomeExpenses extends StatelessWidget {
     );
   }
 
-  Widget _buildPagination(BuildContext context, ControllerHomeExpenses controller) {
+  Widget _buildPagination(
+    BuildContext context,
+    ControllerHomeExpenses controller,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -553,15 +589,27 @@ class FragmentHomeExpenses extends StatelessWidget {
                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
                 label: Text('Prev'.tr),
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Text('Page ${controller.currentPage.value + 1}',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'Page ${controller.currentPage.value + 1}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade700,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -570,7 +618,9 @@ class FragmentHomeExpenses extends StatelessWidget {
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
                 label: Text('Next'.tr),
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -589,10 +639,10 @@ class FragmentHomeExpenses extends StatelessWidget {
 
   /// Show a confirmation dialog before deleting
   void _confirmDelete(
-      BuildContext context,
-      ControllerHomeExpenses controller,
-      EntityFinanceTransaction tx,
-      ) {
+    BuildContext context,
+    ControllerHomeExpenses controller,
+    EntityFinanceTransaction tx,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final typeColor = switch (tx.type) {
       'expense' => Colors.red.shade600,
@@ -799,19 +849,19 @@ class _ModernFilterChip extends StatelessWidget {
           ),
           boxShadow: isSelected
               ? [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ]
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
               : [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -836,4 +886,3 @@ class _ModernFilterChip extends StatelessWidget {
     );
   }
 }
-

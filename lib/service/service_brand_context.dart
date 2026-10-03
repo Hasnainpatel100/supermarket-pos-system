@@ -39,12 +39,10 @@ class ServiceBrandContext extends GetxService {
   bool get hasPlanDetails => planDetails != null;
   DateTime? get planExpiryDate => planDetails?.expiryDate;
   int? get planDaysRemaining => planDetails?.daysRemaining;
-  /// Returns true only if the plan has passed its expiration date.
-  /// (A plan remains valid throughout its expiry date until 23:59:59.999).
+  /// Returns true if the plan has passed its expiration date/time in UTC (tracking hours & minutes).
   bool get isPlanExpired => planDetails?.isExpired ?? false;
 
-  /// Backwards compatibility alias: returns true if plan is expired.
-  /// Users can log in throughout the entire calendar day of their expiry date.
+  /// Returns true if the plan is expired.
   bool get isPlanExpiredOrToday => isPlanExpired;
 
   /// Whether the plan is expired or will expire within the configured alarm window

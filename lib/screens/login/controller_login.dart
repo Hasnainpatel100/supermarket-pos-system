@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../commons/loader.dart';
+import '../../core/storage/token_storage.dart';
 import '../../features/authentication/data/auth_repository.dart';
+import '../../model/model_branch.dart';
 import '../../repository/repo_storage.dart';
 import '../../service/service_brand_context.dart';
 import '../../util/app_route.dart';
@@ -69,22 +71,31 @@ class ControllerLogin extends GetxController {
       return;
     }
 
-    // ── Enforce Plan Expiry Check (Block login only if plan has expired) ──
+    // ── Enforce Plan Expiry Check (Block login if plan has expired in UTC) ──
+    ModelBranch? branchToCheck;
     if (Get.isRegistered<ServiceBrandContext>()) {
-      final brandCtx = Get.find<ServiceBrandContext>();
-      final branch = brandCtx.selectedBranch;
-      final plan = branch?.planDetails;
-      if (plan != null && brandCtx.isPlanExpired) {
-        Loader.hideLoader();
-        if (Get.isRegistered<AuthRepository>()) {
-          await Get.find<AuthRepository>().logout();
+      branchToCheck = Get.find<ServiceBrandContext>().selectedBranch;
+    }
+    if (branchToCheck == null && Get.isRegistered<TokenStorage>()) {
+      try {
+        final bJson = Get.find<TokenStorage>().getBranchJson();
+        if (bJson != null && bJson.isNotEmpty) {
+          branchToCheck = ModelBranch.fromJson(jsonDecode(bJson) as Map<String, dynamic>);
         }
-        await _repoStorage.logout();
-        if (Get.context != null) {
-          DialogPlanExpiredBlock.show(Get.context!, branch: branch, plan: plan);
-        }
-        return;
+      } catch (_) {}
+    }
+
+    final plan = branchToCheck?.planDetails;
+    if (plan != null && plan.isExpired) {
+      Loader.hideLoader();
+      if (Get.isRegistered<AuthRepository>()) {
+        await Get.find<AuthRepository>().logout();
       }
+      await _repoStorage.logout();
+      if (Get.context != null) {
+        DialogPlanExpiredBlock.show(Get.context!, branch: branchToCheck, plan: plan);
+      }
+      return;
     }
 
     if (kDebugMode) {

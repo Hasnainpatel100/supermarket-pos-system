@@ -9,6 +9,7 @@ import '../../../../service/service_brand_context.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../branch/activity_branch_form.dart';
 import '../../../branch/dialog_branch_details.dart';
+import '../../../../widget/dialog_plan_expired_block.dart';
 
 class ControllerHomeBranch extends GetxController {
   final RepoBranch _repoBranch = Get.find<RepoBranch>();
@@ -171,6 +172,12 @@ class ControllerHomeBranch extends GetxController {
 
   /// Selects this branch as the active POS context branch.
   void selectAsActive(ModelBranch branch) {
+    if (branch.planDetails?.isExpired == true) {
+      if (Get.context != null) {
+        DialogPlanExpiredBlock.show(Get.context!, branch: branch, plan: branch.planDetails);
+      }
+      return;
+    }
     final brand = rxBrandList.firstWhereOrNull((b) => b.id == branch.brandId);
     _brandContext.selectBranch(branch, brand: brand);
     SnackbarUtil.showSuccess(

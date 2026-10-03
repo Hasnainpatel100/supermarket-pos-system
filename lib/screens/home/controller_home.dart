@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ class ControllerHome extends GetxController {
   Rx<EntityUser?> rxUser = Rx<EntityUser?>(null);
   var selectedMainMenu = EnumMainMenu.account.obs;
   final isDrawerCollapsed = false.obs;
+  Timer? _expiryCheckTimer;
 
   @override
   void onInit() {
@@ -120,6 +122,36 @@ class ControllerHome extends GetxController {
         DialogPlanExpiry.showIfExpiringSoon(Get.context!);
       }
     });
+
+    // ✅ Start periodic timer to check UTC expiry every minute during active session
+    _startPeriodicExpiryCheck();
+  }
+
+  void _startPeriodicExpiryCheck() {
+    _expiryCheckTimer?.cancel();
+    _expiryCheckTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
+      if (!Get.isRegistered<ServiceBrandContext>()) return;
+      final brandCtx = Get.find<ServiceBrandContext>();
+      final branch = brandCtx.selectedBranch;
+      final plan = branch?.planDetails;
+      if (plan != null && brandCtx.isPlanExpired) {
+        _expiryCheckTimer?.cancel();
+        if (Get.context != null) {
+          DialogPlanExpiredBlock.show(Get.context!, branch: branch, plan: plan);
+        }
+        if (Get.isRegistered<AuthRepository>()) {
+          await Get.find<AuthRepository>().logout();
+        }
+        await _repoStorage.logout();
+        Get.offAllNamed(AppRoute.login);
+      }
+    });
+  }
+
+  @override
+  void onClose() {
+    _expiryCheckTimer?.cancel();
+    super.onClose();
   }
 
   static bool isPromptingDayShift = false;

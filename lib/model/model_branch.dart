@@ -533,22 +533,24 @@ class BranchPlanDetails {
     return map;
   }
 
-  /// Parses [expiryAt] to a [DateTime] object regardless of timestamp format (int ms/s, String, ISO).
-  /// Always returns a local DateTime so calendar comparisons match the user's timezone.
+  /// Parses [expiryAt] to a UTC [DateTime] object regardless of timestamp format (int ms/s, String, ISO).
+  /// Enforces UTC timing and preserves hours and minutes for accurate expiration tracking.
   DateTime? get expiryDate {
     if (expiryAt == null) return null;
-    if (expiryAt is DateTime) return (expiryAt as DateTime).toLocal();
+    if (expiryAt is DateTime) return (expiryAt as DateTime).toUtc();
     if (expiryAt is int) {
       final val = expiryAt as int;
       return DateTime.fromMillisecondsSinceEpoch(
         val > 100000000000 ? val : val * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
     if (expiryAt is num) {
       final val = (expiryAt as num).toInt();
       return DateTime.fromMillisecondsSinceEpoch(
         val > 100000000000 ? val : val * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
     final str = expiryAt.toString().trim();
     if (str.isEmpty) return null;
@@ -556,26 +558,36 @@ class BranchPlanDetails {
     if (parsedInt != null) {
       return DateTime.fromMillisecondsSinceEpoch(
         parsedInt > 100000000000 ? parsedInt : parsedInt * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
-    return DateTime.tryParse(str)?.toLocal();
+    final parsedDt = DateTime.tryParse(str);
+    if (parsedDt != null) {
+      if (!str.contains('T') && !str.contains(':')) {
+        return DateTime.utc(parsedDt.year, parsedDt.month, parsedDt.day, 23, 59, 59, 999);
+      }
+      return parsedDt.toUtc();
+    }
+    return null;
   }
 
-  /// Parses [assignedAt] to a [DateTime] object.
+  /// Parses [assignedAt] to a UTC [DateTime] object.
   DateTime? get assignedDate {
     if (assignedAt == null) return null;
-    if (assignedAt is DateTime) return (assignedAt as DateTime).toLocal();
+    if (assignedAt is DateTime) return (assignedAt as DateTime).toUtc();
     if (assignedAt is int) {
       final val = assignedAt as int;
       return DateTime.fromMillisecondsSinceEpoch(
         val > 100000000000 ? val : val * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
     if (assignedAt is num) {
       final val = (assignedAt as num).toInt();
       return DateTime.fromMillisecondsSinceEpoch(
         val > 100000000000 ? val : val * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
     final str = assignedAt.toString().trim();
     if (str.isEmpty) return null;
@@ -583,33 +595,35 @@ class BranchPlanDetails {
     if (parsedInt != null) {
       return DateTime.fromMillisecondsSinceEpoch(
         parsedInt > 100000000000 ? parsedInt : parsedInt * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
-    return DateTime.tryParse(str)?.toLocal();
+    return DateTime.tryParse(str)?.toUtc();
   }
 
-  /// Checks if the plan has already passed its expiry date.
-  /// A plan expiring on date X is valid throughout the entire day of date X (until 23:59:59.999),
-  /// and is only considered expired starting the next calendar day.
+  /// Checks if the plan has expired following UTC timing (including hours and minutes).
+  /// Once the UTC expiry date and time have passed, the plan is expired.
   bool get isExpired {
     final exp = expiryDate;
     if (exp == null) return false;
-    final endOfExpiryDay = DateTime(exp.year, exp.month, exp.day, 23, 59, 59, 999);
-    return DateTime.now().isAfter(endOfExpiryDay);
+    return DateTime.now().toUtc().isAfter(exp);
   }
 
-  /// Calculates remaining whole calendar days until expiration.
-  /// Returns:
-  ///   > 0 : Days left (e.g. 1 means expires tomorrow)
-  ///   0   : Expires today (plan is still active today)
-  ///   < 0 : Expired (e.g. -1 means expired yesterday)
+  /// Calculates remaining whole calendar days in UTC until expiration.
   int? get daysRemaining {
     final exp = expiryDate;
     if (exp == null) return null;
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-    final expDateStart = DateTime(exp.year, exp.month, exp.day);
-    return expDateStart.difference(todayStart).inDays;
+    final nowUtc = DateTime.now().toUtc();
+    final todayUtc = DateTime.utc(nowUtc.year, nowUtc.month, nowUtc.day);
+    final expDateUtc = DateTime.utc(exp.year, exp.month, exp.day);
+    return expDateUtc.difference(todayUtc).inDays;
+  }
+
+  /// Calculates duration remaining until expiration. Returns negative if expired.
+  Duration? get durationRemaining {
+    final exp = expiryDate;
+    if (exp == null) return null;
+    return exp.difference(DateTime.now().toUtc());
   }
 
   /// Whether the plan is expired or will expire within the alert window
@@ -624,36 +638,69 @@ class BranchPlanDetails {
     return days <= threshold;
   }
 
-  /// Human-readable date string e.g. "15/10/2026"
+  /// Human-readable date string with UTC time e.g. "03/10/2026 09:30 UTC"
   String get formattedExpiry {
     final exp = expiryDate;
     if (exp == null) return 'No Expiry';
-    return '${exp.day.toString().padLeft(2, '0')}/${exp.month.toString().padLeft(2, '0')}/${exp.year}';
+    final dd = exp.day.toString().padLeft(2, '0');
+    final mm = exp.month.toString().padLeft(2, '0');
+    final yyyy = exp.year;
+    final hh = exp.hour.toString().padLeft(2, '0');
+    final min = exp.minute.toString().padLeft(2, '0');
+    return '$dd/$mm/$yyyy $hh:$min UTC';
   }
 
-  /// Human-readable assigned date string e.g. "01/10/2026"
+  /// Human-readable assigned date string with UTC time e.g. "01/10/2026 08:00 UTC"
   String get formattedAssignedAt {
     final ass = assignedDate;
     if (ass == null) return 'N/A';
-    return '${ass.day.toString().padLeft(2, '0')}/${ass.month.toString().padLeft(2, '0')}/${ass.year}';
+    final dd = ass.day.toString().padLeft(2, '0');
+    final mm = ass.month.toString().padLeft(2, '0');
+    final yyyy = ass.year;
+    final hh = ass.hour.toString().padLeft(2, '0');
+    final min = ass.minute.toString().padLeft(2, '0');
+    return '$dd/$mm/$yyyy $hh:$min UTC';
   }
 
-  /// Summary badge text e.g. "Expires in 14 days", "Expires Tomorrow", "Expires Today", or "Plan Expired"
+  /// Summary badge text tracking UTC hours and minutes
   String get expiryStatusText {
     final exp = expiryDate;
     if (exp == null) return 'Active Plan';
-    if (isExpired) {
-      final now = DateTime.now();
-      final todayStart = DateTime(now.year, now.month, now.day);
-      final expDateStart = DateTime(exp.year, exp.month, exp.day);
-      final daysAgo = todayStart.difference(expDateStart).inDays;
-      if (daysAgo <= 1) return 'Expired Yesterday';
-      return 'Expired $daysAgo days ago';
+    final nowUtc = DateTime.now().toUtc();
+    if (nowUtc.isAfter(exp)) {
+      final diff = nowUtc.difference(exp);
+      if (diff.inMinutes < 60) {
+        final m = diff.inMinutes;
+        return m <= 1 ? 'Expired 1 min ago' : 'Expired $m mins ago';
+      } else if (diff.inHours < 24) {
+        final h = diff.inHours;
+        final m = diff.inMinutes % 60;
+        return m > 0 ? 'Expired ${h}h ${m}m ago' : (h == 1 ? 'Expired 1 hour ago' : 'Expired $h hours ago');
+      } else {
+        final days = diff.inDays;
+        if (days <= 1) return 'Expired Yesterday';
+        return 'Expired $days days ago';
+      }
     }
+
+    final diff = exp.difference(nowUtc);
     final days = daysRemaining ?? 0;
-    if (days == 0) return 'Expires Today';
-    if (days == 1) return 'Expires Tomorrow';
-    return 'Expires in $days days';
+    if (days >= 2) {
+      return 'Expires in $days days';
+    } else if (days == 1) {
+      return 'Expires Tomorrow';
+    } else if (diff.inHours >= 1) {
+      final hours = diff.inHours;
+      final mins = diff.inMinutes % 60;
+      if (mins > 0) {
+        return 'Expires in ${hours}h ${mins}m';
+      }
+      return 'Expires in ${hours}h';
+    } else if (diff.inMinutes > 0) {
+      return 'Expires in ${diff.inMinutes}m';
+    } else {
+      return 'Expiring Now';
+    }
   }
 }
 
@@ -721,18 +768,20 @@ class ModelBranchPlanHistory {
 
   DateTime? get expiryDate {
     if (expiryAt == null) return null;
-    if (expiryAt is DateTime) return (expiryAt as DateTime).toLocal();
+    if (expiryAt is DateTime) return (expiryAt as DateTime).toUtc();
     if (expiryAt is int) {
       final val = expiryAt as int;
       return DateTime.fromMillisecondsSinceEpoch(
         val > 100000000000 ? val : val * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
     if (expiryAt is num) {
       final val = (expiryAt as num).toInt();
       return DateTime.fromMillisecondsSinceEpoch(
         val > 100000000000 ? val : val * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
     final str = expiryAt.toString().trim();
     if (str.isEmpty) return null;
@@ -740,25 +789,35 @@ class ModelBranchPlanHistory {
     if (parsedInt != null) {
       return DateTime.fromMillisecondsSinceEpoch(
         parsedInt > 100000000000 ? parsedInt : parsedInt * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
-    return DateTime.tryParse(str)?.toLocal();
+    final parsedDt = DateTime.tryParse(str);
+    if (parsedDt != null) {
+      if (!str.contains('T') && !str.contains(':')) {
+        return DateTime.utc(parsedDt.year, parsedDt.month, parsedDt.day, 23, 59, 59, 999);
+      }
+      return parsedDt.toUtc();
+    }
+    return null;
   }
 
   DateTime? get assignedDate {
     if (assignedAt == null) return null;
-    if (assignedAt is DateTime) return (assignedAt as DateTime).toLocal();
+    if (assignedAt is DateTime) return (assignedAt as DateTime).toUtc();
     if (assignedAt is int) {
       final val = assignedAt as int;
       return DateTime.fromMillisecondsSinceEpoch(
         val > 100000000000 ? val : val * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
     if (assignedAt is num) {
       final val = (assignedAt as num).toInt();
       return DateTime.fromMillisecondsSinceEpoch(
         val > 100000000000 ? val : val * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
     final str = assignedAt.toString().trim();
     if (str.isEmpty) return null;
@@ -766,54 +825,93 @@ class ModelBranchPlanHistory {
     if (parsedInt != null) {
       return DateTime.fromMillisecondsSinceEpoch(
         parsedInt > 100000000000 ? parsedInt : parsedInt * 1000,
-      ).toLocal();
+        isUtc: true,
+      );
     }
-    return DateTime.tryParse(str)?.toLocal();
+    return DateTime.tryParse(str)?.toUtc();
   }
 
   bool get isExpired {
     final exp = expiryDate;
     if (exp == null) return false;
-    final endOfExpiryDay = DateTime(exp.year, exp.month, exp.day, 23, 59, 59, 999);
-    return DateTime.now().isAfter(endOfExpiryDay);
+    return DateTime.now().toUtc().isAfter(exp);
   }
 
   int? get daysRemaining {
     final exp = expiryDate;
     if (exp == null) return null;
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-    final expDateStart = DateTime(exp.year, exp.month, exp.day);
-    return expDateStart.difference(todayStart).inDays;
+    final nowUtc = DateTime.now().toUtc();
+    final todayUtc = DateTime.utc(nowUtc.year, nowUtc.month, nowUtc.day);
+    final expDateUtc = DateTime.utc(exp.year, exp.month, exp.day);
+    return expDateUtc.difference(todayUtc).inDays;
+  }
+
+  Duration? get durationRemaining {
+    final exp = expiryDate;
+    if (exp == null) return null;
+    return exp.difference(DateTime.now().toUtc());
   }
 
   String get formattedExpiry {
     final exp = expiryDate;
     if (exp == null) return 'No Expiry';
-    return '${exp.day.toString().padLeft(2, '0')}/${exp.month.toString().padLeft(2, '0')}/${exp.year}';
+    final dd = exp.day.toString().padLeft(2, '0');
+    final mm = exp.month.toString().padLeft(2, '0');
+    final yyyy = exp.year;
+    final hh = exp.hour.toString().padLeft(2, '0');
+    final min = exp.minute.toString().padLeft(2, '0');
+    return '$dd/$mm/$yyyy $hh:$min UTC';
   }
 
   String get formattedAssignedAt {
     final ass = assignedDate;
     if (ass == null) return 'N/A';
-    return '${ass.day.toString().padLeft(2, '0')}/${ass.month.toString().padLeft(2, '0')}/${ass.year}';
+    final dd = ass.day.toString().padLeft(2, '0');
+    final mm = ass.month.toString().padLeft(2, '0');
+    final yyyy = ass.year;
+    final hh = ass.hour.toString().padLeft(2, '0');
+    final min = ass.minute.toString().padLeft(2, '0');
+    return '$dd/$mm/$yyyy $hh:$min UTC';
   }
 
   String get expiryStatusText {
     final exp = expiryDate;
     if (exp == null) return 'Historic Plan';
-    if (isExpired) {
-      final now = DateTime.now();
-      final todayStart = DateTime(now.year, now.month, now.day);
-      final expDateStart = DateTime(exp.year, exp.month, exp.day);
-      final daysAgo = todayStart.difference(expDateStart).inDays;
-      if (daysAgo <= 1) return 'Expired Yesterday';
-      return 'Expired $daysAgo days ago';
+    final nowUtc = DateTime.now().toUtc();
+    if (nowUtc.isAfter(exp)) {
+      final diff = nowUtc.difference(exp);
+      if (diff.inMinutes < 60) {
+        final m = diff.inMinutes;
+        return m <= 1 ? 'Expired 1 min ago' : 'Expired $m mins ago';
+      } else if (diff.inHours < 24) {
+        final h = diff.inHours;
+        final m = diff.inMinutes % 60;
+        return m > 0 ? 'Expired ${h}h ${m}m ago' : (h == 1 ? 'Expired 1 hour ago' : 'Expired $h hours ago');
+      } else {
+        final days = diff.inDays;
+        if (days <= 1) return 'Expired Yesterday';
+        return 'Expired $days days ago';
+      }
     }
+
+    final diff = exp.difference(nowUtc);
     final days = daysRemaining ?? 0;
-    if (days == 0) return 'Expires Today';
-    if (days == 1) return 'Expires Tomorrow';
-    return 'Expires in $days days';
+    if (days >= 2) {
+      return 'Expires in $days days';
+    } else if (days == 1) {
+      return 'Expires Tomorrow';
+    } else if (diff.inHours >= 1) {
+      final hours = diff.inHours;
+      final mins = diff.inMinutes % 60;
+      if (mins > 0) {
+        return 'Expires in ${hours}h ${mins}m';
+      }
+      return 'Expires in ${hours}h';
+    } else if (diff.inMinutes > 0) {
+      return 'Expires in ${diff.inMinutes}m';
+    } else {
+      return 'Expiring Now';
+    }
   }
 }
 

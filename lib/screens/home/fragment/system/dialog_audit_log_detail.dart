@@ -66,7 +66,7 @@ class DialogAuditLogDetail extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Audit Log Detail #${log.id}',
+                        '${'audit_log_detail'.tr} #${log.id}',
                         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 2),
@@ -82,7 +82,7 @@ class DialogAuditLogDetail extends StatelessWidget {
                 IconButton(
                   onPressed: () => Get.back(),
                   icon: const Icon(Icons.close),
-                  tooltip: 'Close',
+                  tooltip: 'close'.tr,
                 ),
               ],
             ),
@@ -104,40 +104,40 @@ class DialogAuditLogDetail extends StatelessWidget {
                         _buildMetaItem(
                           context,
                           icon: Icons.calendar_today_outlined,
-                          label: 'Timestamp',
+                          label: 'timestamp'.tr,
                           value: _formatDate(log.createdAtUtcMs),
                         ),
                         _buildMetaItem(
                           context,
                           icon: Icons.person_outline,
-                          label: 'User',
+                          label: 'user'.tr,
                           value: log.userName ?? 'System',
                           badge: log.userId != null ? 'ID: ${log.userId}' : null,
                         ),
                         _buildMetaItem(
                           context,
                           icon: Icons.view_module_outlined,
-                          label: 'Module',
+                          label: 'module'.tr,
                           value: moduleEnum?.label ?? (log.module ?? '-'),
                         ),
                         _buildMetaItem(
                           context,
                           icon: Icons.flash_on_outlined,
-                          label: 'Action',
+                          label: 'action'.tr,
                           value: actionEnum?.label ?? (log.action ?? '-'),
                           valueColor: actionColor,
                         ),
                         _buildMetaItem(
                           context,
                           icon: Icons.category_outlined,
-                          label: 'Entity',
+                          label: 'entity'.tr,
                           value: '${log.entityType ?? "-"} ${log.entityId != null ? "#${log.entityId}" : ""}',
                         ),
                         if (log.branchId != null && log.branchId!.isNotEmpty)
                           _buildMetaItem(
                             context,
                             icon: Icons.store_outlined,
-                            label: 'Branch ID',
+                            label: 'branch_id'.tr,
                             value: log.branchId!,
                           ),
                       ],
@@ -159,7 +159,7 @@ class DialogAuditLogDetail extends StatelessWidget {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Reason: ${log.reason}',
+                                '${'reason'.tr}: ${log.reason}',
                                 style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                               ),
                             ),
@@ -172,7 +172,7 @@ class DialogAuditLogDetail extends StatelessWidget {
 
                     // ── Description Box ──
                     Text(
-                      'Description',
+                      'description'.tr,
                       style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 6),
@@ -193,7 +193,7 @@ class DialogAuditLogDetail extends StatelessWidget {
 
                     // ── JSON Diff Section (Old Data vs New Data) ──
                     Text(
-                      'Data Changes Snapshot',
+                      'data_changes_snapshot'.tr,
                       style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
@@ -203,13 +203,13 @@ class DialogAuditLogDetail extends StatelessWidget {
                         final isWide = constraints.maxWidth > 550;
                         final oldWidget = _buildJsonBox(
                           context,
-                          title: 'Old Data (Before)',
+                          title: 'old_data_before'.tr,
                           jsonText: _prettyJson(log.oldData),
                           color: Colors.red,
                         );
                         final newWidget = _buildJsonBox(
                           context,
-                          title: 'New Data (After)',
+                          title: 'new_data_after'.tr,
                           jsonText: _prettyJson(log.newData),
                           color: Colors.green,
                         );
@@ -244,7 +244,7 @@ class DialogAuditLogDetail extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: FilledButton(
                 onPressed: () => Get.back(),
-                child: const Text('Close'),
+                child: Text('close'.tr),
               ),
             ),
           ],

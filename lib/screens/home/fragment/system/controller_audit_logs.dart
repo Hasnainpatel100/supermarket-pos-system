@@ -22,13 +22,13 @@ enum AuditDatePreset {
 
 extension AuditDatePresetLabel on AuditDatePreset {
   String get label => switch (this) {
-        AuditDatePreset.allTime => 'All Time',
-        AuditDatePreset.today => 'Today',
-        AuditDatePreset.yesterday => 'Yesterday',
-        AuditDatePreset.last7Days => 'Last 7 Days',
-        AuditDatePreset.last30Days => 'Last 30 Days',
-        AuditDatePreset.thisMonth => 'This Month',
-        AuditDatePreset.custom => 'Custom Range...',
+        AuditDatePreset.allTime => 'all_time'.tr,
+        AuditDatePreset.today => 'today'.tr,
+        AuditDatePreset.yesterday => 'yesterday'.tr,
+        AuditDatePreset.last7Days => 'last_7_days'.tr,
+        AuditDatePreset.last30Days => 'last_30_days'.tr,
+        AuditDatePreset.thisMonth => 'this_month'.tr,
+        AuditDatePreset.custom => 'custom_range'.tr,
       };
 }
 

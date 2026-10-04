@@ -3,9 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../enums/enum_main_menu.dart';
-import '../../../../features/authentication/data/auth_repository.dart';
 import '../../../../model/entity_shift_session.dart';
-import '../../../../util/app_route.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../expenses_form/activity_expenses_from.dart';
 import '../../controller_home.dart';
@@ -231,7 +229,7 @@ class FragmentHomeAccount extends StatelessWidget {
     final iconColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7);
     return Obx(() => _buildSummaryCard(
           context: context,
-          title: 'Opening Balance (Cash)',
+          title: 'opening_balance_cash'.tr,
           amount: controller.rxOpeningBalance.value,
           txnCount: controller.rxOpeningTxnCount.value,
           icon: Icons.account_balance_wallet_outlined,
@@ -248,7 +246,7 @@ class FragmentHomeAccount extends StatelessWidget {
     final iconColor = isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A);
     return Obx(() => _buildSummaryCard(
           context: context,
-          title: 'Cash In (Cash)',
+          title: 'cash_in_cash'.tr,
           amount: controller.rxCashInTotal.value,
           txnCount: controller.rxCashInTxnCount.value,
           icon: Icons.add,
@@ -268,9 +266,9 @@ class FragmentHomeAccount extends StatelessWidget {
                     color: isDark ? const Color(0xFF00796B) : const Color(0xFF005963),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Text(
-                    'Cash In',
-                    style: TextStyle(
+                  child: Text(
+                    'cash_in'.tr,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -290,7 +288,7 @@ class FragmentHomeAccount extends StatelessWidget {
     final iconColor = isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A);
     return Obx(() => _buildSummaryCard(
           context: context,
-          title: 'Sales (Cash)',
+          title: 'sales_cash'.tr,
           amount: controller.rxSalesCashTotal.value,
           txnCount: controller.rxSalesCashTxnCount.value,
           icon: Icons.payments_outlined,
@@ -307,7 +305,7 @@ class FragmentHomeAccount extends StatelessWidget {
     final iconColor = isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626);
     return Obx(() => _buildSummaryCard(
           context: context,
-          title: 'Cash Out (Cash)',
+          title: 'cash_out_cash'.tr,
           amount: controller.rxCashOutTotal.value,
           txnCount: controller.rxCashOutTxnCount.value,
           icon: Icons.upload,
@@ -327,9 +325,9 @@ class FragmentHomeAccount extends StatelessWidget {
                     color: isDark ? const Color(0xFF00796B) : const Color(0xFF005963),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Text(
-                    'Cash Out',
-                    style: TextStyle(
+                  child: Text(
+                    'cash_out'.tr,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -349,7 +347,7 @@ class FragmentHomeAccount extends StatelessWidget {
     final iconColor = isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626);
     return Obx(() => _buildSummaryCard(
           context: context,
-          title: 'Expenses (Cash)',
+          title: 'expenses_cash'.tr,
           amount: controller.rxExpensesCashTotal.value,
           txnCount: controller.rxExpensesCashTxnCount.value,
           icon: Icons.credit_card,
@@ -385,9 +383,9 @@ class FragmentHomeAccount extends StatelessWidget {
                     color: const Color(0xFFDC2626),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Text(
-                    'Add',
-                    style: TextStyle(
+                  child: Text(
+                    'Add'.tr,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -407,7 +405,7 @@ class FragmentHomeAccount extends StatelessWidget {
     final iconColor = isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488);
     return Obx(() => _buildSummaryCard(
           context: context,
-          title: 'Closing Balance (Cash)',
+          title: 'closing_balance_cash'.tr,
           amount: controller.rxClosingBalance.value,
           txnCount: controller.rxClosingTxnCount.value,
           icon: Icons.account_balance,
@@ -497,7 +495,7 @@ class FragmentHomeAccount extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '$txnCount Transaction',
+            '$txnCount ${txnCount == 1 ? 'transaction'.tr : 'Transactions'.tr}',
             style: TextStyle(
               fontSize: 10,
               color: isDark ? colorScheme.onSurfaceVariant.withValues(alpha: 0.7) : const Color(0xFF94A3B8),
@@ -582,7 +580,7 @@ class FragmentHomeAccount extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isShiftOpen ? 'Close Shift' : 'Start Shift',
+                            isShiftOpen ? 'close_shift'.tr : 'start_shift'.tr,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -592,8 +590,8 @@ class FragmentHomeAccount extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             isShiftOpen
-                                ? 'Start Date: ${controller.formatTimestamp(controller.rxActiveShift.value?.startTimestampMs)}'
-                                : 'Shift is currently closed. Click to start.',
+                                ? '${'start_date'.tr}: ${controller.formatTimestamp(controller.rxActiveShift.value?.startTimestampMs)}'
+                                : 'shift_closed_msg'.tr,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.85),
                               fontSize: 11,
@@ -660,7 +658,7 @@ class FragmentHomeAccount extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isDayOpen ? 'Close Day' : 'Start Day',
+                            isDayOpen ? 'close_day'.tr : 'start_day'.tr,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -670,8 +668,8 @@ class FragmentHomeAccount extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             isDayOpen
-                                ? 'Start Date: ${controller.formatTimestamp(controller.rxActiveDay.value?.startTimestampMs)}'
-                                : 'Day is currently closed. Click to start.',
+                                ? '${'start_date'.tr}: ${controller.formatTimestamp(controller.rxActiveDay.value?.startTimestampMs)}'
+                                : 'day_closed_msg'.tr,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.85),
                               fontSize: 11,
@@ -715,7 +713,7 @@ class FragmentHomeAccount extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Outlet Details',
+            'outlet_details'.tr,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -725,11 +723,11 @@ class FragmentHomeAccount extends StatelessWidget {
           const SizedBox(height: 16),
           Obx(() => Column(
                 children: [
-                  _buildDetailRow(context, 'IP Address', controller.rxIpAddress.value),
+                  _buildDetailRow(context, 'ip_address'.tr, controller.rxIpAddress.value),
                   const SizedBox(height: 12),
                   _buildDetailRow(
                     context,
-                    'Outlet Phone',
+                    'outlet_phone'.tr,
                     controller.rxOutletPhone.value.isNotEmpty
                         ? controller.rxOutletPhone.value
                         : '+91 9876543210',
@@ -737,13 +735,13 @@ class FragmentHomeAccount extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildDetailRow(
                     context,
-                    'Address',
+                    'Address'.tr,
                     controller.rxOutletAddress.value.isNotEmpty
                         ? controller.rxOutletAddress.value
                         : 'Latur, Maharashtra, India',
                   ),
                   const SizedBox(height: 12),
-                  _buildDetailRow(context, 'User ID', controller.rxUserId.value),
+                  _buildDetailRow(context, 'user_id'.tr, controller.rxUserId.value),
                 ],
               )),
         ],
@@ -821,7 +819,7 @@ class FragmentHomeAccount extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Shift History',
+                  'shift_history'.tr,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -836,7 +834,7 @@ class FragmentHomeAccount extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${shifts.length} shifts',
+                    '${shifts.length} ${'shifts'.tr}',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -852,7 +850,7 @@ class FragmentHomeAccount extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
-                    'No shift history available',
+                    'no_shift_history'.tr,
                     style: TextStyle(
                       fontSize: 13,
                       color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8),
@@ -914,7 +912,7 @@ class FragmentHomeAccount extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  isOpen ? 'ACTIVE' : 'CLOSED',
+                  isOpen ? 'ACTIVE'.tr : 'closed'.tr.toUpperCase(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 9,
@@ -926,7 +924,7 @@ class FragmentHomeAccount extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Cashier: $username',
+                  '${'cashier'.tr}: $username',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -948,37 +946,37 @@ class FragmentHomeAccount extends StatelessWidget {
             children: [
               _buildShiftStat(
                 context,
-                'Opening',
+                'opening'.tr,
                 '₹${fmt.format(opening)}',
                 isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7),
               ),
               _buildShiftStat(
                 context,
-                'Sales',
+                'Sales'.tr,
                 '₹${fmt.format(sales)}',
                 isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A),
               ),
               _buildShiftStat(
                 context,
-                'Cash In',
+                'cash_in'.tr,
                 '₹${fmt.format(cashIn)}',
                 isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488),
               ),
               _buildShiftStat(
                 context,
-                'Expenses',
+                'Expenses'.tr,
                 '₹${fmt.format(expenses)}',
                 isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
               ),
               _buildShiftStat(
                 context,
-                'Cash Out',
+                'cash_out'.tr,
                 '₹${fmt.format(cashOut)}',
                 isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444),
               ),
               _buildShiftStat(
                 context,
-                isOpen ? 'Calculated' : 'Closing',
+                isOpen ? 'calculated'.tr : 'closing'.tr,
                 '₹${fmt.format(closing)}',
                 isDark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED),
               ),
@@ -988,7 +986,7 @@ class FragmentHomeAccount extends StatelessWidget {
           [
             const SizedBox(height: 6),
             Text(
-              'Closed: ${controller.formatTimestamp(endMs)}',
+              '${'closed'.tr}: ${controller.formatTimestamp(endMs)}',
               style: TextStyle(
                 fontSize: 10,
                 color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8),
@@ -1057,7 +1055,7 @@ class FragmentHomeAccount extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Sync Data',
+              'sync_data'.tr,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,

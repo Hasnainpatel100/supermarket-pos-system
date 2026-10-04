@@ -130,7 +130,7 @@ class FragSupplierReport extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Supplier Reports',
+                'supplier_reports'.tr,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -655,7 +655,7 @@ class FragSupplierReport extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color.shade700)),
+      child: Text(label.tr, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color.shade700)),
     );
   }
 
@@ -819,7 +819,7 @@ class _SupplierSummaryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  data.label,
+                  data.label.tr,
                   style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.8)),
                 ),
               ],

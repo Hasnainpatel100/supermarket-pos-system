@@ -158,7 +158,7 @@ class ActivityBrandForm extends StatelessWidget {
                     flex: 2,
                     child: Obx(() => AppDropdown<String>(
                           value: controller.rxAppType.value,
-                          label: 'App Type *',
+                          label: '${'app_type'.tr} *',
                           prefixIcon: Icons.category_outlined,
                           items: ControllerBrandForm.appTypeOptions.map((type) {
                             return DropdownMenuItem<String>(
@@ -179,7 +179,7 @@ class ActivityBrandForm extends StatelessWidget {
                                             : Colors.blue,
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(type),
+                                  Text(type.tr),
                                 ],
                               ),
                             );
@@ -195,7 +195,7 @@ class ActivityBrandForm extends StatelessWidget {
                     flex: 2,
                     child: Obx(() => AppDropdown<String>(
                           value: controller.rxStatus.value,
-                          label: 'Status *',
+                          label: '${'status'.tr} *',
                           prefixIcon: Icons.toggle_on_outlined,
                           items: ControllerBrandForm.statusOptions.map((status) {
                             return DropdownMenuItem<String>(
@@ -211,7 +211,7 @@ class ActivityBrandForm extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(status),
+                                  Text(status.tr),
                                 ],
                               ),
                             );

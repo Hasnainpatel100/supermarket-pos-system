@@ -153,18 +153,18 @@ class ControllerBackup extends GetxController {
     // Confirm dialog
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Delete Backup?'),
+        title: Text('delete_backup_title'.tr),
         content: Text(
-          'Are you sure you want to permanently delete:\n${item.name}\n\nThis cannot be undone.',
+          'delete_backup_confirm'.trParams({'name': item.name}),
         ),
         actions: [
           TextButton(
               onPressed: () => Get.back(result: false),
-              child: const Text('Cancel')),
+              child: Text('Cancel'.tr)),
           FilledButton(
             onPressed: () => Get.back(result: true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text('Delete'.tr),
           ),
         ],
       ),
@@ -231,11 +231,11 @@ class ControllerBackup extends GetxController {
 
     Get.dialog(
       AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.green),
-            SizedBox(width: 8),
-            Text('Restore Complete'),
+            const Icon(Icons.check_circle, color: Colors.green),
+            const SizedBox(width: 8),
+            Text('restore_complete'.tr),
           ],
         ),
         content: Text(
@@ -253,19 +253,19 @@ class ControllerBackup extends GetxController {
                 Get.back();
                 _refreshAppStates();
               },
-              child: const Text('Reload UI Now'),
+              child: Text('reload_ui_now'.tr),
             ),
             FilledButton(
               onPressed: () {
                 Get.back();
                 _refreshAppStates();
               },
-              child: const Text('OK'),
+              child: Text('ok'.tr),
             ),
           ] else
             FilledButton(
               onPressed: _restartApp,
-              child: const Text('Restart Now'),
+              child: Text('restart_now'.tr),
             ),
         ],
       ),
@@ -291,26 +291,25 @@ class _RestoreConfirmDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return AlertDialog(
-      title: const Row(
+      title: Row(
         children: [
-          Icon(Icons.restore, color: Colors.orange),
-          SizedBox(width: 8),
-          Text('Restore Backup?'),
+          const Icon(Icons.restore, color: Colors.orange),
+          const SizedBox(width: 8),
+          Text('restore_backup_title'.tr),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'The following backup will be restored. '
-            'All current data will be replaced.\n',
-            style: TextStyle(fontWeight: FontWeight.w500),
+          Text(
+            'restore_backup_msg'.tr,
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
-          _infoRow('App Version', info.appVersion),
-          _infoRow('Backup Date', info.backupDate),
-          _infoRow('Store Name', info.storeName),
-          _infoRow('Device', info.device),
+          _infoRow('app_version'.tr, info.appVersion),
+          _infoRow('backup_date'.tr, info.backupDate),
+          _infoRow('store_name'.tr, info.storeName),
+          _infoRow('device'.tr, info.device),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(10),
@@ -319,15 +318,15 @@ class _RestoreConfirmDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.warning_amber_rounded,
+                const Icon(Icons.warning_amber_rounded,
                     color: Colors.orange, size: 18),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'This action cannot be undone. The app will restart automatically.',
-                    style: TextStyle(fontSize: 12),
+                    'restore_backup_warning'.tr,
+                    style: const TextStyle(fontSize: 12),
                   ),
                 ),
               ],
@@ -338,12 +337,12 @@ class _RestoreConfirmDialog extends StatelessWidget {
       actions: [
         TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Cancel')),
+            child: Text('Cancel'.tr)),
         FilledButton(
           onPressed: () => Get.back(result: true),
           style: FilledButton.styleFrom(
               backgroundColor: colorScheme.error),
-          child: const Text('Restore'),
+          child: Text('restore'.tr),
         ),
       ],
     );

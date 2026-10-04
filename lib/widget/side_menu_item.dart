@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../enums/enum_main_menu.dart';
 import '../model/model_drawer_menu.dart';
 import '../screens/home/controller_home.dart';
+import '../service/service_locale.dart';
 
 class SideMenuItem extends StatelessWidget {
   final IconData icon;
@@ -36,8 +37,10 @@ class SideMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ControllerHome controller = Get.find();
+    final ServiceLocale localeService = Get.find();
 
     return Obx(() {
+      final _ = localeService.rxLocale.value;
       final bool collapsed = controller.isDrawerCollapsed.value;
       // SIMPLE MENU (always clickable, always visible)
       if (modelMenu == null) {

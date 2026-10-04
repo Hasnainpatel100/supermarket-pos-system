@@ -139,7 +139,7 @@ class ActivityExpensesFrom extends StatelessWidget {
                         value: controller.rxCategory.value,
                         label: 'category'.tr,
                         prefixIcon: Icons.tag_rounded,
-                        items: cats.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                        items: cats.map((c) => DropdownMenuItem(value: c, child: Text(c.tr))).toList(),
                         onChanged: (val) {
                           if (val != null) {
                             controller.rxCategory.value = val;

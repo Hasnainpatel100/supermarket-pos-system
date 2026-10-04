@@ -25,9 +25,9 @@ class FragHomeBackup extends StatelessWidget {
           children: [
             Icon(Icons.backup_outlined, color: colorScheme.primary, size: 24),
             const SizedBox(width: 10),
-            const Text(
-              'Backup & Recovery',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              'backup_and_recovery'.tr,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -98,7 +98,7 @@ class _StatusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Data Protection',
+                      'data_protection'.tr,
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
@@ -109,7 +109,7 @@ class _StatusCard extends StatelessWidget {
                       final last = controller.rxLastBackupDate.value;
                       if (last == null) {
                         return Text(
-                          'No backup created yet',
+                          'no_backup_created_yet'.tr,
                           style: TextStyle(
                               color: cs.error, fontSize: 13),
                         );
@@ -117,7 +117,7 @@ class _StatusCard extends StatelessWidget {
                       final formatted =
                           DateFormat('dd MMM yyyy  hh:mm a').format(last);
                       return Text(
-                        'Last backup: $formatted',
+                        '${'last_backup'.tr}: $formatted',
                         style: TextStyle(
                             color: cs.onSurface.withValues(alpha: 0.65),
                             fontSize: 13),
@@ -163,7 +163,7 @@ class _ProgressView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Obx(() => Text(
-              controller.rxIsBackingUp.value ? 'Creating Backup…' : 'Restoring Backup…',
+              controller.rxIsBackingUp.value ? 'creating_backup'.tr : 'restoring_backup'.tr,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
             )),
         const SizedBox(height: 10),
@@ -198,7 +198,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: Obx(() => _ActionButton(
                 icon: Icons.backup_outlined,
-                label: 'Backup Now',
+                label: 'backup_now'.tr,
                 color: Colors.green,
                 loading: controller.rxIsBackingUp.value,
                 disabled:
@@ -210,7 +210,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: Obx(() => _ActionButton(
                 icon: Icons.restore_outlined,
-                label: 'Restore Backup',
+                label: 'restore_backup'.tr,
                 color: Colors.orange,
                 loading: controller.rxIsRestoring.value,
                 disabled:
@@ -222,7 +222,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _ActionButton(
             icon: Icons.folder_open_outlined,
-            label: 'Open Folder',
+            label: 'open_folder'.tr,
             color: Colors.blue,
             loading: false,
             disabled: false,
@@ -328,7 +328,7 @@ class _BackupLocationCard extends StatelessWidget {
                 Icon(Icons.folder_outlined, color: colorScheme.primary, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Backup Location',
+                  'backup_location'.tr,
                   style: Theme.of(context)
                       .textTheme
                       .titleSmall
@@ -352,7 +352,7 @@ class _BackupLocationCard extends StatelessWidget {
                       color: colorScheme.outline.withValues(alpha: 0.2)),
                 ),
                 child: Text(
-                  loc.isEmpty ? 'Not set — click Change to set a location' : loc,
+                  loc.isEmpty ? 'not_set_click_change'.tr : loc,
                   style: TextStyle(
                     fontSize: 13,
                     color: loc.isEmpty
@@ -371,7 +371,7 @@ class _BackupLocationCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: controller.onChangeBackupLocation,
                 icon: const Icon(Icons.edit_outlined, size: 16),
-                label: const Text('Change Location'),
+                label: Text('change_location'.tr),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -410,7 +410,7 @@ class _BackupHistorySection extends StatelessWidget {
             Icon(Icons.history, color: colorScheme.primary, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Backup History',
+              'backup_history'.tr,
               style: Theme.of(context)
                   .textTheme
                   .titleSmall
@@ -432,7 +432,7 @@ class _BackupHistorySection extends StatelessWidget {
                         color: colorScheme.onSurface.withValues(alpha: 0.3)),
                     const SizedBox(height: 12),
                     Text(
-                      'No backups yet.\nPress "Backup Now" to create your first backup.',
+                      'no_backups_yet'.tr,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           color: colorScheme.onSurface.withValues(alpha: 0.5)),
@@ -529,7 +529,7 @@ class _HistoryTile extends StatelessWidget {
         children: [
           // Restore
           Tooltip(
-            message: 'Restore',
+            message: 'restore'.tr,
             child: IconButton(
               icon: const Icon(Icons.restore_outlined, size: 20),
               color: Colors.orange,
@@ -539,7 +539,7 @@ class _HistoryTile extends StatelessWidget {
           ),
           // Open Folder
           Tooltip(
-            message: 'Open Folder',
+            message: 'open_folder'.tr,
             child: IconButton(
               icon: const Icon(Icons.folder_open_outlined, size: 20),
               color: Colors.blue,
@@ -548,7 +548,7 @@ class _HistoryTile extends StatelessWidget {
           ),
           // Delete
           Tooltip(
-            message: 'Delete',
+            message: 'delete'.tr,
             child: IconButton(
               icon: const Icon(Icons.delete_outline, size: 20),
               color: colorScheme.error,

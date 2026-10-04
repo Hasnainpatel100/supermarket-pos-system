@@ -82,9 +82,9 @@ class FragHomeLogout extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Confirm Logout',
-              style: TextStyle(
+            Text(
+              'confirm_logout'.tr,
+              style: const TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.bold,
               ),
@@ -92,7 +92,7 @@ class FragHomeLogout extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Are you sure you want to log out of this terminal?',
+              'confirm_logout_msg'.tr,
               style: TextStyle(
                 fontSize: 13,
                 color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
@@ -111,7 +111,7 @@ class FragHomeLogout extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text('Cancel'.tr),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -124,7 +124,7 @@ class FragHomeLogout extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text('logout'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

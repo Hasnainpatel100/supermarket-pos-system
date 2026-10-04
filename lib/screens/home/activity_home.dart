@@ -11,6 +11,7 @@ import '../../commons/frag_coming_soon.dart';
 import '../../enums/enum_main_menu.dart';
 import '../../model/entity_user.dart';
 import '../../repository/repo_drawer.dart';
+import '../../service/service_locale.dart';
 import 'controller_home.dart';
 import 'fragment/dashboard/frag_home_dashboard.dart';
 import 'fragment/frag_home_logout.dart';
@@ -47,6 +48,7 @@ class ActivityHome extends StatelessWidget {
     ControllerHome controller = Get.isRegistered<ControllerHome>()
         ? Get.find<ControllerHome>()
         : Get.put(ControllerHome());
+    final localeService = Get.find<ServiceLocale>();
 
     // Never allow home screen to remain stuck on logout menu
     if (controller.selectedMainMenu.value == EnumMainMenu.logout) {
@@ -67,6 +69,7 @@ class ActivityHome extends StatelessWidget {
       body: Row(
         children: [
           Obx(() {
+            final _ = localeService.rxLocale.value;
             EntityUser? user = controller.rxUser.value;
             if (user == null) {
               return SizedBox();
@@ -79,6 +82,7 @@ class ActivityHome extends StatelessWidget {
 
           Expanded(
             child: Obx(() {
+              final _ = localeService.rxLocale.value;
               // return Center(
               //   child: Text(controller.selectedMainMenu.value.toString()),
               // );

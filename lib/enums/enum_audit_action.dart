@@ -1,3 +1,5 @@
+import 'package:get/get.dart';
+
 /// Typed enum for the [EntityAuditLog.action] field.
 ///
 /// Serialized to/from its [name] string when stored in ObjectBox.
@@ -18,23 +20,23 @@ extension AuditActionExtension on AuditAction {
   String get label {
     switch (this) {
       case AuditAction.create:
-        return 'Create';
+        return 'audit_create'.tr;
       case AuditAction.update:
-        return 'Update';
+        return 'audit_update'.tr;
       case AuditAction.delete:
-        return 'Delete';
+        return 'audit_delete'.tr;
       case AuditAction.login:
-        return 'Login';
+        return 'audit_login'.tr;
       case AuditAction.logout:
-        return 'Logout';
+        return 'audit_logout'.tr;
       case AuditAction.enable:
-        return 'Enable';
+        return 'audit_enable'.tr;
       case AuditAction.disable:
-        return 'Disable';
+        return 'audit_disable'.tr;
       case AuditAction.export:
-        return 'Export';
+        return 'audit_export'.tr;
       case AuditAction.restore:
-        return 'Restore';
+        return 'audit_restore'.tr;
     }
   }
 

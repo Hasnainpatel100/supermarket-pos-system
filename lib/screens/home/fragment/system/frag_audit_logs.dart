@@ -33,7 +33,7 @@ class FragAuditLogs extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Access Restricted',
+                'access_restricted'.tr,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.error,
@@ -41,7 +41,7 @@ class FragAuditLogs extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'You do not have permission (auditLogView) to view system audit logs.\nContact your administrator to request access.',
+                'audit_permission_denied'.tr,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -82,13 +82,13 @@ class FragAuditLogs extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Audit Logs',
+                      'audit_logs'.tr,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      'Immutable, tamper-resistant event trail for security, actions, and compliance.',
+                      'audit_logs_subtitle'.tr,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
@@ -98,7 +98,7 @@ class FragAuditLogs extends StatelessWidget {
                 const Spacer(),
                 Obx(() => Chip(
                       avatar: const Icon(Icons.receipt_long_outlined, size: 16),
-                      label: Text('${controller.totalCount.value} Logs'),
+                      label: Text('${controller.totalCount.value} ${'logs'.tr}'),
                       backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     )),
               ],
@@ -141,12 +141,12 @@ class FragAuditLogs extends StatelessWidget {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<int?>(
                               value: controller.rxSelectedUserId.value,
-                              hint: const Text('All Users'),
+                              hint: Text('all_users'.tr),
                               isDense: true,
                               items: [
-                                const DropdownMenuItem<int?>(
+                                DropdownMenuItem<int?>(
                                   value: null,
-                                  child: Text('All Users'),
+                                  child: Text('all_users'.tr),
                                 ),
                                 ...users.map((u) => DropdownMenuItem<int?>(
                                       value: u.id,
@@ -175,12 +175,12 @@ class FragAuditLogs extends StatelessWidget {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<AuditModule?>(
                               value: controller.rxSelectedModule.value,
-                              hint: const Text('All Modules'),
+                              hint: Text('all_modules'.tr),
                               isDense: true,
                               items: [
-                                const DropdownMenuItem<AuditModule?>(
+                                DropdownMenuItem<AuditModule?>(
                                   value: null,
-                                  child: Text('All Modules'),
+                                  child: Text('all_modules'.tr),
                                 ),
                                 ...AuditModule.values.map((m) => DropdownMenuItem<AuditModule?>(
                                       value: m,
@@ -209,12 +209,12 @@ class FragAuditLogs extends StatelessWidget {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<AuditAction?>(
                               value: controller.rxSelectedAction.value,
-                              hint: const Text('All Actions'),
+                              hint: Text('all_actions'.tr),
                               isDense: true,
                               items: [
-                                const DropdownMenuItem<AuditAction?>(
+                                DropdownMenuItem<AuditAction?>(
                                   value: null,
-                                  child: Text('All Actions'),
+                                  child: Text('all_actions'.tr),
                                 ),
                                 ...AuditAction.values.map((a) => DropdownMenuItem<AuditAction?>(
                                       value: a,
@@ -251,7 +251,7 @@ class FragAuditLogs extends StatelessWidget {
                           controller: controller.searchController,
                           onChanged: controller.updateSearch,
                           decoration: InputDecoration(
-                            hintText: 'Search logs...',
+                            hintText: 'search_logs'.tr,
                             prefixIcon: const Icon(Icons.search, size: 18),
                             contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
                             isDense: true,
@@ -277,7 +277,7 @@ class FragAuditLogs extends StatelessWidget {
                       IconButton(
                         onPressed: controller.clearFilters,
                         icon: const Icon(Icons.filter_alt_off_outlined, size: 20),
-                        tooltip: 'Reset Filters',
+                        tooltip: 'reset_filters'.tr,
                       ),
 
                       const SizedBox(width: 6),
@@ -294,7 +294,7 @@ class FragAuditLogs extends StatelessWidget {
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 )
                               : const Icon(Icons.explicit_outlined, size: 18),
-                          label: Text(isExporting ? 'Exporting...' : 'Export Excel'),
+                          label: Text(isExporting ? 'exporting'.tr : 'export_excel'.tr),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(0, 38),
                             shape: RoundedRectangleBorder(
@@ -337,14 +337,14 @@ class FragAuditLogs extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No audit logs found',
+                            'no_audit_logs_found'.tr,
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Try adjusting your search criteria or date filters.',
+                            'adjust_search_criteria_msg'.tr,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                             ),
@@ -363,14 +363,14 @@ class FragAuditLogs extends StatelessWidget {
                           color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            SizedBox(width: 170, child: Text('Date & Time', style: TextStyle(fontWeight: FontWeight.bold))),
-                            SizedBox(width: 140, child: Text('User', style: TextStyle(fontWeight: FontWeight.bold))),
-                            SizedBox(width: 110, child: Text('Module', style: TextStyle(fontWeight: FontWeight.bold))),
-                            SizedBox(width: 110, child: Text('Action', style: TextStyle(fontWeight: FontWeight.bold))),
-                            SizedBox(width: 140, child: Text('Entity', style: TextStyle(fontWeight: FontWeight.bold))),
-                            Expanded(child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold))),
+                            SizedBox(width: 170, child: Text('date_and_time'.tr, style: const TextStyle(fontWeight: FontWeight.bold))),
+                            SizedBox(width: 140, child: Text('User'.tr, style: const TextStyle(fontWeight: FontWeight.bold))),
+                            SizedBox(width: 110, child: Text('module'.tr, style: const TextStyle(fontWeight: FontWeight.bold))),
+                            SizedBox(width: 110, child: Text('action'.tr, style: const TextStyle(fontWeight: FontWeight.bold))),
+                            SizedBox(width: 140, child: Text('entity'.tr, style: const TextStyle(fontWeight: FontWeight.bold))),
+                            Expanded(child: Text('description'.tr, style: const TextStyle(fontWeight: FontWeight.bold))),
                           ],
                         ),
                       ),
@@ -518,7 +518,10 @@ class FragAuditLogs extends StatelessWidget {
                   return Row(
                     children: [
                       Text(
-                        'Showing ${controller.rxListLogs.length} of ${controller.totalCount.value} logs',
+                        'showing_logs'.trParams({
+                          'count': '${controller.rxListLogs.length}',
+                          'total': '${controller.totalCount.value}',
+                        }),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
@@ -526,7 +529,7 @@ class FragAuditLogs extends StatelessWidget {
                       const Spacer(),
 
                       // Rows per page
-                      Text('Rows per page:', style: theme.textTheme.bodySmall),
+                      Text('rows_per_page'.tr, style: theme.textTheme.bodySmall),
                       const SizedBox(width: 8),
                       DropdownButton<int>(
                         value: controller.rxPageSize.value,
@@ -550,16 +553,19 @@ class FragAuditLogs extends StatelessWidget {
                       IconButton(
                         onPressed: controller.hasPrev ? controller.prevPage : null,
                         icon: const Icon(Icons.chevron_left),
-                        tooltip: 'Previous Page',
+                        tooltip: 'prev_page'.tr,
                       ),
                       Text(
-                        'Page $page of $totalPages',
+                        'page_of'.trParams({
+                          'page': '$page',
+                          'total': '$totalPages',
+                        }),
                         style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       IconButton(
                         onPressed: controller.hasNext ? controller.nextPage : null,
                         icon: const Icon(Icons.chevron_right),
-                        tooltip: 'Next Page',
+                        tooltip: 'next_page'.tr,
                       ),
                     ],
                   );
@@ -583,7 +589,7 @@ class FragAuditLogs extends StatelessWidget {
       final hasDateFilter = controller.rxFromDate.value != null || controller.rxToDate.value != null;
 
       return PopupMenuButton<AuditDatePreset>(
-        tooltip: 'Select Date Range',
+        tooltip: 'select_date_range'.tr,
         onSelected: (preset) async {
           if (preset == AuditDatePreset.custom) {
             final now = DateTime.now();

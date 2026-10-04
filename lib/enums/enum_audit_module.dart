@@ -1,3 +1,5 @@
+import 'package:get/get.dart';
+
 /// Typed enum for the [EntityAuditLog.module] field.
 ///
 /// Each value represents a top-level functional area of the application.
@@ -21,27 +23,27 @@ extension AuditModuleExtension on AuditModule {
   String get label {
     switch (this) {
       case AuditModule.pos:
-        return 'POS';
+        return 'audit_pos'.tr;
       case AuditModule.inventory:
-        return 'Inventory';
+        return 'audit_inventory'.tr;
       case AuditModule.purchase:
-        return 'Purchase';
+        return 'audit_purchase'.tr;
       case AuditModule.supplier:
-        return 'Supplier';
+        return 'audit_supplier'.tr;
       case AuditModule.customer:
-        return 'Customer';
+        return 'audit_customer'.tr;
       case AuditModule.system:
-        return 'System';
+        return 'audit_system'.tr;
       case AuditModule.reports:
-        return 'Reports';
+        return 'audit_reports'.tr;
       case AuditModule.backup:
-        return 'Backup';
+        return 'audit_backup'.tr;
       case AuditModule.finance:
-        return 'Finance';
+        return 'audit_finance'.tr;
       case AuditModule.brand:
-        return 'Brand';
+        return 'audit_brand'.tr;
       case AuditModule.branch:
-        return 'Branch';
+        return 'audit_branch'.tr;
     }
   }
 

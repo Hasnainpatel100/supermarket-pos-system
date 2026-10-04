@@ -251,7 +251,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'Showing: ${_rangeLabel(controller)}',
+                        '${'showing'.tr}: ${_rangeLabel(controller)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: colorScheme.primary,
@@ -503,7 +503,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                                     Icon(typeIcon, size: 14, color: typeColor),
                                     const SizedBox(width: 4),
                                     Text(
-                                      (tx.type ?? '').toUpperCase(),
+                                      (tx.type ?? '').toUpperCase().tr,
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -514,7 +514,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            DataCell(Text(tx.category ?? '-')),
+                            DataCell(Text((tx.category ?? '-').tr)),
                             DataCell(Text(tx.personName ?? '-')),
                             DataCell(
                               Text(
@@ -579,7 +579,7 @@ class FragmentHomeExpenses extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: ${controller.totalCount.value} records',
+            '${'total'.tr}: ${controller.totalCount.value} ${'records'.tr}',
             style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           Row(
@@ -605,7 +605,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  'Page ${controller.currentPage.value + 1}',
+                  '${'page'.tr} ${controller.currentPage.value + 1}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.blue.shade700,
@@ -691,7 +691,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    tx.category ?? tx.type ?? '-',
+                    (tx.category ?? tx.type ?? '-').tr,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: typeColor,

@@ -138,7 +138,7 @@ class FragSalesReport extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Sales Reports',
+                'sales_reports'.tr,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -420,7 +420,7 @@ class FragSalesReport extends StatelessWidget {
             Icon(icon, size: 16, color: isSelected ? Colors.white : (isDark ? colorScheme.primary : primaryColor)),
             const SizedBox(width: 8),
             Text(
-              label,
+              label.tr,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
@@ -703,7 +703,7 @@ class FragSalesReport extends StatelessWidget {
             child: Icon(icon, size: 14, color: isDark && color is MaterialColor ? color.shade300 : color),
           ),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(label.tr, style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
         ],
       ),
     );
@@ -958,7 +958,7 @@ class _SummaryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  data.label,
+                  data.label.tr,
                   style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.8)),
                 ),
               ],

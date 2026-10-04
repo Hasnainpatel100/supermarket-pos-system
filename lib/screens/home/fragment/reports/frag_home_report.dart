@@ -56,7 +56,7 @@ class FragHomeReport extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sales Reports',
+                      'sales_reports'.tr,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
@@ -130,7 +130,7 @@ class FragHomeReport extends StatelessWidget {
                       () => DropdownButtonFormField<ReportType>(
                         value: controller.rxReportType.value,
                         decoration: InputDecoration(
-                          labelText: 'Report Type',
+                          labelText: 'report_type'.tr,
                           labelStyle: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -170,14 +170,14 @@ class FragHomeReport extends StatelessWidget {
 
                   // Start Date
                   _DatePickerButton(
-                    label: 'From',
+                    label: 'from'.tr,
                     dateRx: controller.rxStartDate,
                     colorScheme: colorScheme,
                   ),
 
                   // End Date
                   _DatePickerButton(
-                    label: 'To',
+                    label: 'to'.tr,
                     dateRx: controller.rxEndDate,
                     colorScheme: colorScheme,
                   ),
@@ -186,7 +186,7 @@ class FragHomeReport extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: controller.generateReport,
                     icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                    label: const Text('Generate'),
+                    label: Text('generate'.tr),
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.teal.shade600,
                       foregroundColor: Colors.white,
@@ -199,7 +199,7 @@ class FragHomeReport extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: controller.resetFilters,
                     icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('Reset'),
+                    label: Text('reset'.tr),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.grey.shade700,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -222,7 +222,7 @@ class FragHomeReport extends StatelessWidget {
             child: Row(
               children: [
                 Obx(() => Text(
-                      '${controller.rxRows.length} records',
+                      '${controller.rxRows.length} ${'records'.tr}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -232,14 +232,14 @@ class FragHomeReport extends StatelessWidget {
                 const Spacer(),
                 _ActionChip(
                   icon: Icons.picture_as_pdf_rounded,
-                  label: 'Export PDF',
+                  label: 'export_pdf'.tr,
                   color: Colors.red.shade600,
                   onTap: controller.exportPdf,
                 ),
                 const SizedBox(width: 8),
                 _ActionChip(
                   icon: Icons.table_chart_rounded,
-                  label: 'Export Excel',
+                  label: 'export_excel'.tr,
                   color: Colors.green.shade700,
                   onTap: controller.exportExcel,
                 ),
@@ -247,7 +247,7 @@ class FragHomeReport extends StatelessWidget {
                   const SizedBox(width: 8),
                   _ActionChip(
                     icon: Icons.file_upload_rounded,
-                    label: 'Import Excel (Test)',
+                    label: 'import_excel_test'.tr,
                     color: Colors.amber.shade900,
                     onTap: controller.importTestExcel,
                   ),
@@ -255,7 +255,7 @@ class FragHomeReport extends StatelessWidget {
                 const SizedBox(width: 8),
                 _ActionChip(
                   icon: Icons.print_rounded,
-                  label: 'Print',
+                  label: 'print'.tr,
                   color: Colors.indigo.shade600,
                   onTap: controller.printReport,
                 ),
@@ -363,37 +363,37 @@ class FragHomeReport extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _SummaryItem(
-                    label: 'Bills',
+                    label: 'Bills'.tr,
                     value: '${controller.rxTotalBills.value}',
                     icon: Icons.receipt_rounded,
                     color: Colors.indigo,
                   ),
                   _SummaryItem(
-                    label: 'Quantity',
+                    label: 'Quantity'.tr,
                     value: '${controller.rxTotalQty.value}',
                     icon: Icons.inventory_2_rounded,
                     color: Colors.blue,
                   ),
                   _SummaryItem(
-                    label: 'Gross Amount',
+                    label: 'Gross Amount'.tr,
                     value: currencyFormat.format(controller.rxGrossAmount.value),
                     icon: Icons.attach_money_rounded,
                     color: Colors.orange,
                   ),
                   _SummaryItem(
-                    label: 'Discount',
+                    label: 'Discount'.tr,
                     value: currencyFormat.format(controller.rxDiscount.value),
                     icon: Icons.local_offer_rounded,
                     color: Colors.pink,
                   ),
                   _SummaryItem(
-                    label: 'Tax',
+                    label: 'Tax'.tr,
                     value: currencyFormat.format(controller.rxTax.value),
                     icon: Icons.account_balance_rounded,
                     color: Colors.amber.shade800,
                   ),
                   _SummaryItem(
-                    label: 'Net Amount',
+                    label: 'Net Amount'.tr,
                     value: currencyFormat.format(controller.rxNetAmount.value),
                     icon: Icons.trending_up_rounded,
                     color: Colors.green.shade700,
@@ -435,7 +435,7 @@ class FragHomeReport extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No report data',
+            'no_report_data'.tr,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -444,7 +444,7 @@ class FragHomeReport extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Select a report type, date range and click Generate',
+            'select_report_prompt'.tr,
             style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
           ),
         ],
@@ -469,7 +469,7 @@ class FragHomeReport extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            label,
+            label.tr,
             style: TextStyle(
               color: Colors.grey.shade700,
               fontWeight: FontWeight.bold,

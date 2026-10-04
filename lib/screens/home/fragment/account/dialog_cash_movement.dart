@@ -49,7 +49,7 @@ class _DialogCashMovementState extends State<DialogCashMovement> {
     if (isSubmitting) return;
     final amount = double.tryParse(amountCtrl.text.trim()) ?? 0.0;
     if (amount <= 0) {
-      SnackbarUtil.showError('Please enter a valid amount greater than 0');
+      SnackbarUtil.showError('valid_amount_error'.tr);
       return;
     }
 
@@ -82,7 +82,7 @@ class _DialogCashMovementState extends State<DialogCashMovement> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
-    final title = widget.isCashIn ? 'Cash In (Add Cash)' : 'Cash Out (Withdraw Cash)';
+    final title = widget.isCashIn ? 'cash_in_title'.tr : 'cash_out_title'.tr;
     final primaryColor = widget.isCashIn ? const Color(0xFF005963) : const Color(0xFFE53935);
 
     return Dialog(
@@ -134,7 +134,7 @@ class _DialogCashMovementState extends State<DialogCashMovement> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Amount (₹)',
+                    'amount_currency'.tr,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
@@ -203,7 +203,7 @@ class _DialogCashMovementState extends State<DialogCashMovement> {
                   const SizedBox(height: 16),
 
                   Text(
-                    'Reason / Remarks',
+                    'reason_remarks'.tr,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
@@ -217,8 +217,8 @@ class _DialogCashMovementState extends State<DialogCashMovement> {
                     style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
                     decoration: InputDecoration(
                       hintText: widget.isCashIn
-                          ? 'e.g. Added change float / Cash from vault'
-                          : 'e.g. Bank deposit / Petty expense',
+                          ? 'cash_in_hint'.tr
+                          : 'cash_out_hint'.tr,
                       hintStyle: TextStyle(
                         color: isDark ? colorScheme.onSurfaceVariant : Colors.grey.shade400,
                         fontSize: 13,
@@ -247,7 +247,7 @@ class _DialogCashMovementState extends State<DialogCashMovement> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           child: Text(
-                            'Cancel',
+                            'Cancel'.tr,
                             style: TextStyle(
                               color: isDark ? colorScheme.onSurface : null,
                             ),
@@ -271,7 +271,7 @@ class _DialogCashMovementState extends State<DialogCashMovement> {
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 )
                               : Text(
-                                  widget.isCashIn ? 'Record Cash In' : 'Record Cash Out',
+                                  widget.isCashIn ? 'record_cash_in'.tr : 'record_cash_out'.tr,
                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                 ),
                         ),

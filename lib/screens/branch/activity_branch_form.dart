@@ -628,7 +628,7 @@ class ActivityBranchForm extends StatelessWidget {
             (item) => DropdownMenuItem(
               value: item,
               child: Text(
-                item,
+                item.tr,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 13,

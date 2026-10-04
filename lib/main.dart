@@ -23,20 +23,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      smartManagement: SmartManagement.full,
-      debugShowCheckedModeBanner: false,
-      title: 'app_title'.tr,
-      translations: AppTranslation(),
-      locale: localeService.rxLocale.value,
-      fallbackLocale: const Locale('en', 'US'),
-      theme: AppThemes.light,
-      darkTheme: AppThemes.dark,
-      themeMode: themeService.rxIsDarkMode.value
-          ? ThemeMode.dark
-          : ThemeMode.light,
-      initialRoute: AppRoute.splash,
-      getPages: AppRoute.pages,
+    return Obx(
+      () => GetMaterialApp(
+        smartManagement: SmartManagement.full,
+        debugShowCheckedModeBanner: false,
+        title: 'app_title'.tr,
+        translations: AppTranslation(),
+        locale: localeService.rxLocale.value,
+        fallbackLocale: const Locale('en', 'US'),
+        theme: AppThemes.light,
+        darkTheme: AppThemes.dark,
+        themeMode: themeService.rxIsDarkMode.value
+            ? ThemeMode.dark
+            : ThemeMode.light,
+        initialRoute: AppRoute.splash,
+        getPages: AppRoute.pages,
+      ),
     );
   }
 }

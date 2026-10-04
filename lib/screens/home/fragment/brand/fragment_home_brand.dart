@@ -47,12 +47,12 @@ class FragmentHomeBrand extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Brand Management',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                Text(
+                  'brand_management'.tr,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 Text(
-                  'Manage brands & REST API integrations',
+                  'manage_brands_subtitle'.tr,
                   style: TextStyle(
                     fontSize: 11,
                     color: colorScheme.onSurfaceVariant,

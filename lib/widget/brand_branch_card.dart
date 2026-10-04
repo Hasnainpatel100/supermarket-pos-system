@@ -5,6 +5,7 @@ import '../model/model_branch.dart';
 import '../model/model_brand.dart';
 import '../screens/home/controller_home.dart';
 import '../service/service_brand_context.dart';
+import '../service/service_locale.dart';
 import 'app_dialog_components.dart';
 import 'dialog_plan_expiry.dart';
 
@@ -18,10 +19,12 @@ class BrandBranchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ControllerHome homeCtrl = Get.find();
     final ServiceBrandContext brandCtx = Get.find();
+    final ServiceLocale localeService = Get.find();
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Obx(() {
+      final _ = localeService.rxLocale.value;
       final collapsed = homeCtrl.isDrawerCollapsed.value;
       final brand = brandCtx.rxSelectedBrand.value;
       final branch = brandCtx.rxSelectedBranch.value;
@@ -140,7 +143,7 @@ class BrandBranchCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Brand',
+                              'brand'.tr,
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,
@@ -198,7 +201,7 @@ class BrandBranchCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Branch',
+                              'branch'.tr,
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,

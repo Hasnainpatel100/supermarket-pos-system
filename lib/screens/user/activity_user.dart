@@ -84,7 +84,7 @@ class ActivityUser extends StatelessWidget {
                             () => AppDropdown<String>(
                               label: "gender".tr,
                               value: controller.rxGender.value,
-                              items: Constant.listGender.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                              items: Constant.listGender.map((g) => DropdownMenuItem(value: g, child: Text(g.tr))).toList(),
                               onChanged: (v) => controller.rxGender.value = v,
                             ),
                           ),
@@ -124,7 +124,7 @@ class ActivityUser extends StatelessWidget {
                       () => AppDropdown<String>(
                         label: "gender".tr,
                         value: controller.rxGender.value,
-                        items: Constant.listGender.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                        items: Constant.listGender.map((g) => DropdownMenuItem(value: g, child: Text(g.tr))).toList(),
                         onChanged: (v) => controller.rxGender.value = v,
                       ),
                     ),
@@ -133,10 +133,10 @@ class ActivityUser extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   /// ── Contact & Identity ──
-                  const FormSection(
+                  FormSection(
                     icon: Icons.contact_phone_outlined,
                     color: Colors.teal,
-                    title: "Contact & Identity",
+                    title: "personal_information".tr,
                   ),
                   const SizedBox(height: 16),
                   if (isWide) ...[
@@ -168,7 +168,7 @@ class ActivityUser extends StatelessWidget {
                             () => AppDropdown<String>(
                               label: "id_proof_type".tr,
                               value: controller.rsListProofType.value,
-                              items: Constant.listProofType.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                              items: Constant.listProofType.map((p) => DropdownMenuItem(value: p, child: Text(p.tr))).toList(),
                               onChanged: (v) => controller.rsListProofType.value = v,
                             ),
                           ),
@@ -199,7 +199,7 @@ class ActivityUser extends StatelessWidget {
                       () => AppDropdown<String>(
                         label: "id_proof_type".tr,
                         value: controller.rsListProofType.value,
-                        items: Constant.listProofType.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                        items: Constant.listProofType.map((p) => DropdownMenuItem(value: p, child: Text(p.tr))).toList(),
                         onChanged: (v) => controller.rsListProofType.value = v,
                       ),
                     ),
@@ -220,10 +220,10 @@ class ActivityUser extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   /// ── Login & Security ──
-                  const FormSection(
+                  FormSection(
                     icon: Icons.lock_outline_rounded,
                     color: Colors.orange,
-                    title: "Login & Security",
+                    title: "login_and_security".tr,
                   ),
                   const SizedBox(height: 16),
                   if (isWide) ...[
@@ -286,10 +286,10 @@ class ActivityUser extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   /// ── Role & Status ──
-                  const FormSection(
+                  FormSection(
                     icon: Icons.admin_panel_settings_outlined,
                     color: Colors.deepPurple,
-                    title: "Role & Status",
+                    title: "role_and_status".tr,
                   ),
                   const SizedBox(height: 16),
                   if (isWide) ...[
@@ -301,7 +301,7 @@ class ActivityUser extends StatelessWidget {
                             () => AppDropdown<String>(
                               label: "role".tr,
                               value: controller.rxRole.value,
-                              items: Constant.listUserRole.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                              items: Constant.listUserRole.map((r) => DropdownMenuItem(value: r, child: Text(r.tr))).toList(),
                               onChanged: (v) => controller.rxRole.value = v,
                             ),
                           ),
@@ -330,7 +330,7 @@ class ActivityUser extends StatelessWidget {
                       () => AppDropdown<String>(
                         label: "role".tr,
                         value: controller.rxRole.value,
-                        items: Constant.listUserRole.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                        items: Constant.listUserRole.map((r) => DropdownMenuItem(value: r, child: Text(r.tr))).toList(),
                         onChanged: (v) => controller.rxRole.value = v,
                       ),
                     ),

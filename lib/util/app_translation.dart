@@ -15,7 +15,22 @@ class AppTranslation extends Translations {
       try {
         final String jsonString = await rootBundle.loadString('assets/translations/$lang.json');
         final Map<String, dynamic> jsonMap = json.decode(jsonString);
-        _translations[lang] = jsonMap.map((key, value) => MapEntry(key, value.toString()));
+        final Map<String, String> stringMap = {};
+        for (final entry in jsonMap.entries) {
+          final k = entry.key.toString();
+          final v = entry.value.toString();
+          stringMap[k] = v;
+          if (k.contains('_')) {
+            stringMap.putIfAbsent(k.replaceAll('_', ' '), () => v);
+          } else if (k.contains(' ')) {
+            stringMap.putIfAbsent(k.replaceAll(' ', '_'), () => v);
+          }
+          stringMap.putIfAbsent(k.toLowerCase(), () => v);
+          stringMap.putIfAbsent(k.toUpperCase(), () => v);
+        }
+        _translations[lang] = stringMap;
+        final baseCode = lang.split('_').first;
+        _translations[baseCode] = stringMap;
       } catch (e) {
         debugPrint('Failed to load translations for $lang: $e');
       }

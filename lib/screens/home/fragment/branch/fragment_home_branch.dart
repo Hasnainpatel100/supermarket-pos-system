@@ -45,9 +45,9 @@ class FragmentHomeBranch extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Branch Management', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('branch_management'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 Text(
-                  'Manage branches linked to your brands',
+                  'manage_branches_subtitle'.tr,
                   style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
                 ),
               ],

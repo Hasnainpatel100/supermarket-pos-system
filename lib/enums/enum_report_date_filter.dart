@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 enum ReportDateFilter {
   today,
@@ -8,11 +9,11 @@ enum ReportDateFilter {
   custom;
 
   String get label => switch (this) {
-    ReportDateFilter.today     => 'Today',
-    ReportDateFilter.yesterday => 'Yesterday',
-    ReportDateFilter.thisWeek  => 'This Week',
-    ReportDateFilter.thisMonth => 'This Month',
-    ReportDateFilter.custom    => 'Custom Range',
+    ReportDateFilter.today     => 'today'.tr,
+    ReportDateFilter.yesterday => 'yesterday'.tr,
+    ReportDateFilter.thisWeek  => 'this_week'.tr,
+    ReportDateFilter.thisMonth => 'this_month'.tr,
+    ReportDateFilter.custom    => 'custom_range'.tr,
   };
 
   IconData get icon => switch (this) {

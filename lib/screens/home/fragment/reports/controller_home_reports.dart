@@ -33,25 +33,25 @@ extension ReportTypeLabel on ReportType {
   String get label {
     switch (this) {
       case ReportType.daily:
-        return 'Daily';
+        return 'daily'.tr;
       case ReportType.weekly:
-        return 'Weekly';
+        return 'weekly'.tr;
       case ReportType.monthly:
-        return 'Monthly';
+        return 'monthly'.tr;
       case ReportType.yearly:
-        return 'Yearly';
+        return 'yearly'.tr;
       case ReportType.salesByCashier:
-        return 'Sales by Cashier';
+        return 'sales_by_cashier'.tr;
       case ReportType.customer:
-        return 'Customer';
+        return 'customer'.tr;
       case ReportType.category:
-        return 'Category';
+        return 'category'.tr;
       case ReportType.item:
-        return 'Item';
+        return 'item'.tr;
       case ReportType.hourWise:
-        return 'Hour-wise';
+        return 'hour_wise'.tr;
       case ReportType.paymentMethod:
-        return 'Payment Method';
+        return 'payment_method'.tr;
     }
   }
 }

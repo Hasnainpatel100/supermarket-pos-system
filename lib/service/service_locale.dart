@@ -26,6 +26,7 @@ class ServiceLocale {
         ? locale.languageCode
         : '${locale.languageCode}_${locale.countryCode}';
     await _storage.writeString(_key, code);
-    Get.updateLocale(locale);
+    await Get.updateLocale(locale);
+    rxLocale.refresh();
   }
 }

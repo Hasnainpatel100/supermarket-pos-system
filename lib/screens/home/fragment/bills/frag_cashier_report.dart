@@ -132,7 +132,7 @@ class FragCashierReport extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Cashier Reports',
+                'cashier_reports'.tr,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -608,7 +608,7 @@ class FragCashierReport extends StatelessWidget {
             child: Icon(icon, size: 14, color: color.withValues(alpha: 0.8)),
           ),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(label.tr, style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
         ],
       ),
     );
@@ -816,7 +816,7 @@ class _CashierSummaryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  data.label,
+                  data.label.tr,
                   style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.8)),
                 ),
               ],

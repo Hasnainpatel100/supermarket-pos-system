@@ -226,7 +226,7 @@ class _ProfileTab extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Active Organization Context',
+                                  'active_org_context'.tr,
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleMedium
@@ -234,7 +234,7 @@ class _ProfileTab extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Current operating brand and active branch outlet',
+                                  'current_org_desc'.tr,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -269,7 +269,7 @@ class _ProfileTab extends StatelessWidget {
                                       Icon(Icons.storefront_rounded, size: 16, color: colorScheme.primary),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'ACTIVE BRAND',
+                                        'active_brand'.tr,
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
@@ -329,9 +329,9 @@ class _ProfileTab extends StatelessWidget {
                                     children: [
                                       const Icon(Icons.location_on_rounded, size: 16, color: Colors.deepPurple),
                                       const SizedBox(width: 6),
-                                      const Text(
-                                        'ACTIVE BRANCH',
-                                        style: TextStyle(
+                                      Text(
+                                        'active_branch'.tr,
+                                        style: const TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w700,
                                           color: Colors.deepPurple,
@@ -421,7 +421,7 @@ class _ProfileTab extends StatelessWidget {
                             TextButton.icon(
                               onPressed: () => DialogPlanExpiry.show(context, branch: branch),
                               icon: const Icon(Icons.credit_card_rounded, size: 14),
-                              label: const Text('View Plan & Set Alarm', style: TextStyle(fontSize: 12)),
+                              label: Text('view_plan_set_alarm'.tr, style: const TextStyle(fontSize: 12)),
                             ),
                           ],
                         ),

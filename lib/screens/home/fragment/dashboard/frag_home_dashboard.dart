@@ -44,6 +44,15 @@ class _DashboardTheme {
 class FragHomeDashboard extends StatelessWidget {
   const FragHomeDashboard({super.key});
 
+  bool _isPlanBannerActive() {
+    if (!Get.isRegistered<ServiceBrandContext>()) return false;
+    final ServiceBrandContext brandCtx = Get.find();
+    final branch = brandCtx.rxSelectedBranch.value;
+    final plan = branch?.planDetails;
+    if (plan == null) return false;
+    return plan.isExpiringSoon || plan.isExpired;
+  }
+
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.isRegistered<ControllerHomeDashboard>()
@@ -58,35 +67,90 @@ class FragHomeDashboard extends StatelessWidget {
             child: CircularProgressIndicator(color: _DashboardTheme.purple),
           );
         }
+
+        final hasBanner = _isPlanBannerActive();
+
         return RefreshIndicator(
           color: _DashboardTheme.purple,
           backgroundColor: _DashboardTheme.cardBg(context),
           onRefresh: () async => ctrl.loadData(),
-          child: CustomScrollView(
-            slivers: [
-              // ── Header ──
-              SliverToBoxAdapter(child: _buildHeader(context, ctrl)),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final availableWidth = constraints.maxWidth;
+              final hasBoundedHeight = constraints.hasBoundedHeight;
+              final availableHeight =
+                  hasBoundedHeight ? constraints.maxHeight : 720.0;
 
-              // ── Plan Expiry Alert Banner ──
-              SliverToBoxAdapter(child: _buildPlanExpiryBanner(context)),
+              // Responsive scaling criteria:
+              // 14-inch display: ~1000-1280px wide & 650-750px tall
+              // 22-inch display: ~1680-1920px wide & 900-1080px tall
+              final isLarge = availableWidth >= 1400 || availableHeight >= 850;
+              final horizontalPadding = isLarge ? 24.0 : 16.0;
+              final sectionGap = isLarge ? 16.0 : 12.0;
 
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+              // Estimate height consumed by fixed elements
+              final headerHeight = isLarge ? 72.0 : 62.0;
+              final bannerHeight = hasBanner ? (isLarge ? 68.0 : 58.0) : 0.0;
+              final statCardsHeight = isLarge ? 106.0 : 88.0;
+              final bottomPadding = isLarge ? 20.0 : 14.0;
 
-              // ── Top Stat Cards ──
-              SliverToBoxAdapter(child: _buildStatCards(context, ctrl)),
+              // Total vertical gap spacing
+              final totalGaps =
+                  (hasBanner ? sectionGap : 0.0) + (sectionGap * 3) + bottomPadding;
+              final fixedConsumed =
+                  headerHeight + bannerHeight + statCardsHeight + totalGaps;
 
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              // Calculate available height for the two chart rows
+              final remainingForRows = availableHeight - fixedConsumed;
 
-              // ── Row 2: Total Sales line chart | CashFlow bar chart ──
-              SliverToBoxAdapter(child: _buildRow2(context, ctrl)),
+              // Row 2 takes ~54% of remaining space, Row 3 takes ~46%
+              // Clamped to sensible minimums and maximums so it never breaks on small windows
+              final row2Height = (remainingForRows * 0.54).clamp(240.0, 500.0);
+              final row3Height = (remainingForRows * 0.46).clamp(190.0, 420.0);
 
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: availableHeight,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // ── Header ──
+                        _buildHeader(context, ctrl, isLarge, horizontalPadding),
 
-              // ── Row 3: Top Selling Items | Weekly Overview | Payment Mode ──
-              SliverToBoxAdapter(child: _buildRow3(context, ctrl)),
+                        // ── Plan Expiry Alert Banner ──
+                        if (hasBanner) ...[
+                          _buildPlanExpiryBanner(
+                              context, isLarge, horizontalPadding),
+                          SizedBox(height: sectionGap),
+                        ],
 
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            ],
+                        // ── Top Stat Cards ──
+                        _buildStatCards(
+                            context, ctrl, isLarge, horizontalPadding),
+
+                        SizedBox(height: sectionGap),
+
+                        // ── Row 2: Total Sales line chart | CashFlow bar chart ──
+                        _buildRow2(context, ctrl, isLarge, horizontalPadding,
+                            row2Height),
+
+                        SizedBox(height: sectionGap),
+
+                        // ── Row 3: Top Selling Items | Weekly Overview | Payment Mode ──
+                        _buildRow3(context, ctrl, isLarge, horizontalPadding,
+                            row3Height),
+
+                        SizedBox(height: bottomPadding),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         );
       }),
@@ -96,7 +160,8 @@ class FragHomeDashboard extends StatelessWidget {
   // ──────────────────────────────────────────────────────
   //  Plan Expiry Alert Banner
   // ──────────────────────────────────────────────────────
-  Widget _buildPlanExpiryBanner(BuildContext context) {
+  Widget _buildPlanExpiryBanner(
+      BuildContext context, bool isLarge, double horizontalPadding) {
     if (!Get.isRegistered<ServiceBrandContext>()) return const SizedBox.shrink();
     final ServiceBrandContext brandCtx = Get.find();
 
@@ -111,28 +176,33 @@ class FragHomeDashboard extends StatelessWidget {
 
       final isExpired = plan.isExpired;
       final color = isExpired ? const Color(0xFFEF4444) : const Color(0xFFF59E0B);
-      final icon = isExpired ? Icons.error_outline_rounded : Icons.warning_amber_rounded;
+      final icon =
+          isExpired ? Icons.error_outline_rounded : Icons.warning_amber_rounded;
       final branchName = branch?.name.en ?? 'Branch';
 
       return Container(
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: EdgeInsets.fromLTRB(
+            horizontalPadding, 0, horizontalPadding, isLarge ? 12 : 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: isLarge ? 20 : 16,
+          vertical: isLarge ? 14 : 12,
+        ),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
           border: Border.all(color: color.withValues(alpha: 0.4), width: 1.2),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(isLarge ? 10 : 8),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(icon, color: color, size: isLarge ? 22 : 20),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: isLarge ? 14 : 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,7 +214,7 @@ class FragHomeDashboard extends StatelessWidget {
                         : 'Plan Expiring Soon: ${plan.expiryStatusText}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      fontSize: isLarge ? 14 : 13,
                       color: color,
                     ),
                   ),
@@ -154,8 +224,11 @@ class FragHomeDashboard extends StatelessWidget {
                         ? 'Your subscription expired on ${plan.formattedExpiry}. Contact administrator to renew.'
                         : 'Your branch subscription will expire on ${plan.formattedExpiry}. Please renew in advance.',
                     style: TextStyle(
-                      fontSize: 11.5,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                      fontSize: isLarge ? 12.5 : 11.5,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -167,9 +240,18 @@ class FragHomeDashboard extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: color.withValues(alpha: 0.2),
                 foregroundColor: color,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isLarge ? 16 : 12,
+                  vertical: isLarge ? 10 : 8,
+                ),
               ),
-              child: const Text('View Plan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              child: Text(
+                'View Plan',
+                style: TextStyle(
+                  fontSize: isLarge ? 13 : 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -180,25 +262,34 @@ class FragHomeDashboard extends StatelessWidget {
   // ──────────────────────────────────────────────────────
   //  Header
   // ──────────────────────────────────────────────────────
-  Widget _buildHeader(BuildContext context, ControllerHomeDashboard ctrl) {
+  Widget _buildHeader(BuildContext context, ControllerHomeDashboard ctrl,
+      bool isLarge, double horizontalPadding) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        isLarge ? 18 : 14,
+        horizontalPadding,
+        isLarge ? 12 : 8,
+      ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(isLarge ? 12 : 10),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [_DashboardTheme.purple, _DashboardTheme.teal],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
             ),
-            child: const Icon(Icons.dashboard_rounded,
-                color: Colors.white, size: 20),
+            child: Icon(
+              Icons.dashboard_rounded,
+              color: Colors.white,
+              size: isLarge ? 22 : 20,
+            ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: isLarge ? 14 : 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -206,13 +297,16 @@ class FragHomeDashboard extends StatelessWidget {
                 'dashboard'.tr,
                 style: TextStyle(
                   color: _DashboardTheme.textPrimary(context),
-                  fontSize: 20,
+                  fontSize: isLarge ? 22 : 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
                 DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
-                style: TextStyle(color: _DashboardTheme.textSecondary(context), fontSize: 12),
+                style: TextStyle(
+                  color: _DashboardTheme.textSecondary(context),
+                  fontSize: isLarge ? 13 : 12,
+                ),
               ),
             ],
           ),
@@ -221,6 +315,7 @@ class FragHomeDashboard extends StatelessWidget {
             label: 'refresh'.tr,
             icon: Icons.refresh_rounded,
             onTap: ctrl.loadData,
+            isLarge: isLarge,
           ),
         ],
       ),
@@ -230,41 +325,48 @@ class FragHomeDashboard extends StatelessWidget {
   // ──────────────────────────────────────────────────────
   //  Top Stat Cards
   // ──────────────────────────────────────────────────────
-  Widget _buildStatCards(BuildContext context, ControllerHomeDashboard ctrl) {
+  Widget _buildStatCards(BuildContext context, ControllerHomeDashboard ctrl,
+      bool isLarge, double horizontalPadding) {
     final fmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
+    final cardGap = isLarge ? 14.0 : 10.0;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Row(
         children: [
           _StatCard(
             title: 'todays_sales'.tr,
             value: fmt.format(ctrl.todaySales.value),
             subtitle: '${ctrl.todayOrders.value} ${'orders'.tr}',
+            isLarge: isLarge,
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: cardGap),
           _StatCard(
             title: 'todays_orders'.tr,
             value: '${ctrl.todayOrders.value}',
             subtitle: 'bills_today'.tr,
+            isLarge: isLarge,
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: cardGap),
           _StatCard(
             title: 'avg_bill'.tr,
             value: fmt.format(ctrl.averageBill.value),
             subtitle: 'per_order'.tr,
+            isLarge: isLarge,
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: cardGap),
           _StatCard(
             title: 'total_items'.tr,
             value: '${ctrl.totalItems.value}',
             subtitle: 'in_system'.tr,
+            isLarge: isLarge,
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: cardGap),
           _StatCard(
             title: 'total_customers'.tr,
             value: '${ctrl.totalCustomers.value}',
             subtitle: 'total'.tr,
             isGreenBadge: true,
+            isLarge: isLarge,
           ),
         ],
       ),
@@ -274,9 +376,11 @@ class FragHomeDashboard extends StatelessWidget {
   // ──────────────────────────────────────────────────────
   //  Row 2: Total Sales (line) + CashFlow (stacked bar)
   // ──────────────────────────────────────────────────────
-  Widget _buildRow2(BuildContext context, ControllerHomeDashboard ctrl) {
+  Widget _buildRow2(BuildContext context, ControllerHomeDashboard ctrl,
+      bool isLarge, double horizontalPadding, double rowHeight) {
+    final cardGap = isLarge ? 18.0 : 14.0;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -284,47 +388,72 @@ class FragHomeDashboard extends StatelessWidget {
           Expanded(
             flex: 55,
             child: _DashCard(
+              height: rowHeight,
+              isLarge: isLarge,
               title: 'total_sales'.tr,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _Legend(color: _DashboardTheme.textPrimary(context), label: 'this_week'.tr),
-                  const SizedBox(width: 12),
-                  _Legend(color: _DashboardTheme.lightTeal, label: 'last_week'.tr),
+                  _Legend(
+                    color: _DashboardTheme.textPrimary(context),
+                    label: 'this_week'.tr,
+                    isLarge: isLarge,
+                  ),
+                  SizedBox(width: isLarge ? 16 : 12),
+                  _Legend(
+                    color: _DashboardTheme.lightTeal,
+                    label: 'last_week'.tr,
+                    isLarge: isLarge,
+                  ),
                 ],
               ),
               child: _TotalSalesChart(
                 thisWeek: ctrl.thisWeekSales.toList(),
                 lastWeek: ctrl.lastWeekSales.toList(),
                 labels: ctrl.weekLabels.toList(),
+                isLarge: isLarge,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: cardGap),
           // CashFlow stacked bar chart
           Expanded(
             flex: 45,
             child: _DashCard(
+              height: rowHeight,
+              isLarge: isLarge,
               title: 'cashflow'.tr,
               trailing: _PillButton(
                 label: 'weekly'.tr,
                 icon: Icons.keyboard_arrow_down_rounded,
                 onTap: () {},
+                isLarge: isLarge,
               ),
               child: Column(
                 children: [
-                  _CashFlowChart(
-                    inflow: ctrl.cashInflow.toList(),
-                    outflow: ctrl.cashOutflow.toList(),
-                    labels: ctrl.cashflowLabels.toList(),
+                  Expanded(
+                    child: _CashFlowChart(
+                      inflow: ctrl.cashInflow.toList(),
+                      outflow: ctrl.cashOutflow.toList(),
+                      labels: ctrl.cashflowLabels.toList(),
+                      isLarge: isLarge,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: isLarge ? 10 : 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      _Legend(color: _DashboardTheme.lightPurple, label: 'inflow'.tr),
-                      const SizedBox(width: 16),
-                      _Legend(color: _DashboardTheme.blue, label: 'outflow'.tr),
+                      _Legend(
+                        color: _DashboardTheme.lightPurple,
+                        label: 'inflow'.tr,
+                        isLarge: isLarge,
+                      ),
+                      SizedBox(width: isLarge ? 20 : 16),
+                      _Legend(
+                        color: _DashboardTheme.blue,
+                        label: 'outflow'.tr,
+                        isLarge: isLarge,
+                      ),
                     ],
                   ),
                 ],
@@ -339,9 +468,11 @@ class FragHomeDashboard extends StatelessWidget {
   // ──────────────────────────────────────────────────────
   //  Row 3: Top Selling | Weekly Overview | Payment Mode
   // ──────────────────────────────────────────────────────
-  Widget _buildRow3(BuildContext context, ControllerHomeDashboard ctrl) {
+  Widget _buildRow3(BuildContext context, ControllerHomeDashboard ctrl,
+      bool isLarge, double horizontalPadding, double rowHeight) {
+    final cardGap = isLarge ? 18.0 : 14.0;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -349,43 +480,65 @@ class FragHomeDashboard extends StatelessWidget {
           Expanded(
             flex: 33,
             child: _DashCard(
+              height: rowHeight,
+              isLarge: isLarge,
               title: 'top_selling_items'.tr,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _PillButton(label: 'today'.tr, icon: Icons.keyboard_arrow_down_rounded, onTap: () {}),
-                  const SizedBox(width: 6),
-                  _PillButton(label: 'limit_5'.tr, icon: Icons.keyboard_arrow_down_rounded, onTap: () {}),
+                  _PillButton(
+                    label: 'today'.tr,
+                    icon: Icons.keyboard_arrow_down_rounded,
+                    onTap: () {},
+                    isLarge: isLarge,
+                  ),
+                  SizedBox(width: isLarge ? 8 : 6),
+                  _PillButton(
+                    label: 'limit_5'.tr,
+                    icon: Icons.keyboard_arrow_down_rounded,
+                    onTap: () {},
+                    isLarge: isLarge,
+                  ),
                 ],
               ),
-              child: _TopItemsDonut(items: ctrl.topSellingItems.toList()),
+              child: _TopItemsDonut(
+                items: ctrl.topSellingItems.toList(),
+                isLarge: isLarge,
+              ),
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: cardGap),
           // Weekly overview bar chart
           Expanded(
             flex: 34,
             child: _DashCard(
+              height: rowHeight,
+              isLarge: isLarge,
               title: 'dashboard_overview'.tr,
               trailing: _PillButton(
                 label: 'weekly'.tr,
                 icon: Icons.keyboard_arrow_down_rounded,
                 onTap: () {},
+                isLarge: isLarge,
               ),
               child: _WeeklyOverviewChart(
                 values: ctrl.weeklyOverview.toList(),
                 labels: ctrl.overviewLabels.toList(),
+                isLarge: isLarge,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: cardGap),
           // Payment Mode donut
           Expanded(
             flex: 33,
             child: _DashCard(
+              height: rowHeight,
+              isLarge: isLarge,
               title: 'payment_mode'.tr,
               child: _PaymentDonut(
                 breakdown: Map<String, double>.from(ctrl.paymentBreakdown),
+                isLarge: isLarge,
               ),
             ),
           ),
@@ -404,26 +557,32 @@ class _StatCard extends StatelessWidget {
   final String value;
   final String? subtitle;
   final bool isGreenBadge;
+  final bool isLarge;
 
   const _StatCard({
     required this.title,
     required this.value,
     this.subtitle,
     this.isGreenBadge = false,
+    this.isLarge = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: EdgeInsets.symmetric(
+          horizontal: isLarge ? 18 : 14,
+          vertical: isLarge ? 16 : 12,
+        ),
         decoration: BoxDecoration(
           color: _DashboardTheme.cardBg(context),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
           border: Border.all(color: _DashboardTheme.cardBorder(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
@@ -432,14 +591,19 @@ class _StatCard extends StatelessWidget {
                     title,
                     style: TextStyle(
                       color: _DashboardTheme.textSecondary(context),
-                      fontSize: 13,
+                      fontSize: isLarge ? 14 : 12.5,
                       fontWeight: FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (isGreenBadge)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isLarge ? 10 : 8,
+                      vertical: isLarge ? 4 : 3,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF6DE899),
                       borderRadius: BorderRadius.circular(12),
@@ -447,15 +611,16 @@ class _StatCard extends StatelessWidget {
                     child: Text(
                       'today'.tr,
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onTertiaryContainer,
-                        fontSize: 10,
+                        color:
+                            Theme.of(context).colorScheme.onTertiaryContainer,
+                        fontSize: isLarge ? 11 : 10,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   )
                 else
                   Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.all(isLarge ? 6 : 4),
                     decoration: const BoxDecoration(
                       color: Color(0xFF333742),
                       shape: BoxShape.circle,
@@ -463,25 +628,28 @@ class _StatCard extends StatelessWidget {
                     child: Icon(
                       Icons.trending_up_rounded,
                       color: _DashboardTheme.purple,
-                      size: 14,
+                      size: isLarge ? 16 : 14,
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: isLarge ? 12 : 8),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
               children: [
                 Expanded(
-                  child: Text(
-                    value,
-                    style: TextStyle(
-                      color: _DashboardTheme.textPrimary(context),
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        color: _DashboardTheme.textPrimary(context),
+                        fontSize: isLarge ? 26 : 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -490,7 +658,7 @@ class _StatCard extends StatelessWidget {
                     subtitle!,
                     style: TextStyle(
                       color: _DashboardTheme.textSecondary(context),
-                      fontSize: 11,
+                      fontSize: isLarge ? 12 : 11,
                     ),
                   ),
                 ],
@@ -507,20 +675,25 @@ class _DashCard extends StatelessWidget {
   final String title;
   final Widget? trailing;
   final Widget child;
+  final double? height;
+  final bool isLarge;
 
   const _DashCard({
     required this.title,
     required this.child,
     this.trailing,
+    this.height,
+    this.isLarge = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      height: height,
+      padding: EdgeInsets.all(isLarge ? 20 : 16),
       decoration: BoxDecoration(
         color: _DashboardTheme.cardBg(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isLarge ? 16 : 14),
         border: Border.all(color: _DashboardTheme.cardBorder(context)),
       ),
       child: Column(
@@ -532,7 +705,7 @@ class _DashCard extends StatelessWidget {
                 title,
                 style: TextStyle(
                   color: _DashboardTheme.textPrimary(context),
-                  fontSize: 14,
+                  fontSize: isLarge ? 15.5 : 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -540,8 +713,8 @@ class _DashCard extends StatelessWidget {
               if (trailing != null) trailing!,
             ],
           ),
-          const SizedBox(height: 16),
-          child,
+          SizedBox(height: isLarge ? 14 : 12),
+          Expanded(child: child),
         ],
       ),
     );
@@ -552,11 +725,13 @@ class _PillButton extends StatelessWidget {
   final String label;
   final IconData? icon;
   final VoidCallback onTap;
+  final bool isLarge;
 
   const _PillButton({
     required this.label,
     required this.onTap,
     this.icon,
+    this.isLarge = false,
   });
 
   @override
@@ -564,7 +739,10 @@ class _PillButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: EdgeInsets.symmetric(
+          horizontal: isLarge ? 12 : 10,
+          vertical: isLarge ? 6 : 5,
+        ),
         decoration: BoxDecoration(
           color: _DashboardTheme.green.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
@@ -575,15 +753,15 @@ class _PillButton extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: _DashboardTheme.green,
-                fontSize: 11,
+                fontSize: isLarge ? 12 : 11,
                 fontWeight: FontWeight.w600,
               ),
             ),
             if (icon != null) ...[
               const SizedBox(width: 2),
-              Icon(icon, color: _DashboardTheme.green, size: 14),
+              Icon(icon, color: _DashboardTheme.green, size: isLarge ? 16 : 14),
             ],
           ],
         ),
@@ -595,8 +773,13 @@ class _PillButton extends StatelessWidget {
 class _Legend extends StatelessWidget {
   final Color color;
   final String label;
+  final bool isLarge;
 
-  const _Legend({required this.color, required this.label});
+  const _Legend({
+    required this.color,
+    required this.label,
+    this.isLarge = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -604,14 +787,17 @@ class _Legend extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: isLarge ? 10 : 8,
+          height: isLarge ? 10 : 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 5),
+        SizedBox(width: isLarge ? 6 : 5),
         Text(
           label,
-          style: TextStyle(color: _DashboardTheme.textSecondary(context), fontSize: 11),
+          style: TextStyle(
+            color: _DashboardTheme.textSecondary(context),
+            fontSize: isLarge ? 12 : 11,
+          ),
         ),
       ],
     );
@@ -625,11 +811,13 @@ class _TotalSalesChart extends StatelessWidget {
   final List<double> thisWeek;
   final List<double> lastWeek;
   final List<String> labels;
+  final bool isLarge;
 
   const _TotalSalesChart({
     required this.thisWeek,
     required this.lastWeek,
     required this.labels,
+    this.isLarge = false,
   });
 
   @override
@@ -643,113 +831,112 @@ class _TotalSalesChart extends StatelessWidget {
     final maxVal = allValues.reduce((a, b) => a > b ? a : b);
     final maxY = maxVal <= 0 ? 1000.0 : maxVal * 1.3;
 
-    return SizedBox(
-      height: 200,
-      child: LineChart(
-        LineChartData(
-          minY: 0,
-          maxY: maxY,
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: maxY / 4,
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: _DashboardTheme.chartGrid(context),
-              strokeWidth: 1,
-            ),
+    return LineChart(
+      LineChartData(
+        minY: 0,
+        maxY: maxY,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxY / 4,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: _DashboardTheme.chartGrid(context),
+            strokeWidth: 1,
           ),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 44,
-                getTitlesWidget: (val, _) => Text(
-                  _compact(val),
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: _DashboardTheme.textSecondary(context),
-                  ),
-                ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (val, _) {
-                  final idx = val.toInt();
-                  if (idx < 0 || idx >= lbl.length) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      lbl[idx],
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: _DashboardTheme.textSecondary(context),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
-          ),
-          lineTouchData: LineTouchData(
-            touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) => _DashboardTheme.cardBg(context),
-              getTooltipItems: (spots) => spots
-                  .map((s) => LineTooltipItem(
-                        '₹${_compact(s.y)}',
-                        TextStyle(
-                          color: s.barIndex == 0 ? _DashboardTheme.textPrimary(context) : _DashboardTheme.lightTeal,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      ))
-                  .toList(),
-            ),
-          ),
-          lineBarsData: [
-            // This week – solid white
-            LineChartBarData(
-              spots: List.generate(7, (i) => FlSpot(i.toDouble(), tw[i])),
-              isCurved: true,
-              curveSmoothness: 0.4,
-              color: _DashboardTheme.textPrimary(context),
-              barWidth: 2.5,
-              isStrokeCapRound: true,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [
-                    _DashboardTheme.textPrimary(context).withValues(alpha: 0.12),
-                    _DashboardTheme.textPrimary(context).withValues(alpha: 0.0),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-            // Last week – dashed teal
-            LineChartBarData(
-              spots: List.generate(7, (i) => FlSpot(i.toDouble(), lw[i])),
-              isCurved: true,
-              curveSmoothness: 0.4,
-              color: _DashboardTheme.lightTeal,
-              barWidth: 2,
-              isStrokeCapRound: true,
-              dashArray: [6, 4],
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(show: false),
-            ),
-          ],
         ),
+        borderData: FlBorderData(show: false),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: isLarge ? 50 : 44,
+              getTitlesWidget: (val, _) => Text(
+                _compact(val),
+                style: TextStyle(
+                  fontSize: isLarge ? 10.5 : 9,
+                  color: _DashboardTheme.textSecondary(context),
+                ),
+              ),
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (val, _) {
+                final idx = val.toInt();
+                if (idx < 0 || idx >= lbl.length) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    lbl[idx],
+                    style: TextStyle(
+                      fontSize: isLarge ? 11 : 10,
+                      color: _DashboardTheme.textSecondary(context),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (_) => _DashboardTheme.cardBg(context),
+            getTooltipItems: (spots) => spots
+                .map((s) => LineTooltipItem(
+                      '₹${_compact(s.y)}',
+                      TextStyle(
+                        color: s.barIndex == 0
+                            ? _DashboardTheme.textPrimary(context)
+                            : _DashboardTheme.lightTeal,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isLarge ? 12 : 11,
+                      ),
+                    ))
+                .toList(),
+          ),
+        ),
+        lineBarsData: [
+          // This week – solid
+          LineChartBarData(
+            spots: List.generate(7, (i) => FlSpot(i.toDouble(), tw[i])),
+            isCurved: true,
+            curveSmoothness: 0.4,
+            color: _DashboardTheme.textPrimary(context),
+            barWidth: isLarge ? 3.0 : 2.5,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [
+                  _DashboardTheme.textPrimary(context).withValues(alpha: 0.12),
+                  _DashboardTheme.textPrimary(context).withValues(alpha: 0.0),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          // Last week – dashed teal
+          LineChartBarData(
+            spots: List.generate(7, (i) => FlSpot(i.toDouble(), lw[i])),
+            isCurved: true,
+            curveSmoothness: 0.4,
+            color: _DashboardTheme.lightTeal,
+            barWidth: isLarge ? 2.5 : 2,
+            isStrokeCapRound: true,
+            dashArray: [6, 4],
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(show: false),
+          ),
+        ],
       ),
     );
   }
@@ -762,17 +949,19 @@ class _TotalSalesChart extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────
-//  CashFlow: Stacked bar (Inflow purple | Outflow teal)
+//  CashFlow: Stacked bar (Inflow purple | Outflow blue)
 // ────────────────────────────────────────────────────────
 class _CashFlowChart extends StatelessWidget {
   final List<double> inflow;
   final List<double> outflow;
   final List<String> labels;
+  final bool isLarge;
 
   const _CashFlowChart({
     required this.inflow,
     required this.outflow,
     required this.labels,
+    this.isLarge = false,
   });
 
   @override
@@ -791,7 +980,7 @@ class _CashFlowChart extends StatelessWidget {
           BarChartRodData(
             toY: total > 0 ? total : 0.001,
             color: _DashboardTheme.lightPurple,
-            width: 18,
+            width: isLarge ? 24 : 18,
             borderRadius: BorderRadius.circular(4),
             rodStackItems: [
               if (outF > 0)
@@ -804,76 +993,73 @@ class _CashFlowChart extends StatelessWidget {
       );
     });
 
-    return SizedBox(
-      height: 200,
-      child: BarChart(
-        BarChartData(
-          maxY: maxY,
-          barGroups: groups,
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: maxY / 4,
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: _DashboardTheme.chartGrid(context),
-              strokeWidth: 1,
-            ),
+    return BarChart(
+      BarChartData(
+        maxY: maxY,
+        barGroups: groups,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxY / 4,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: _DashboardTheme.chartGrid(context),
+            strokeWidth: 1,
           ),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40,
-                getTitlesWidget: (val, _) => Text(
-                  _compact(val),
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: _DashboardTheme.textSecondary(context),
-                  ),
+        ),
+        borderData: FlBorderData(show: false),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: isLarge ? 48 : 40,
+              getTitlesWidget: (val, _) => Text(
+                _compact(val),
+                style: TextStyle(
+                  fontSize: isLarge ? 10.5 : 9,
+                  color: _DashboardTheme.textSecondary(context),
                 ),
               ),
             ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (val, _) {
-                  final idx = val.toInt();
-                  if (idx < 0 || idx >= labels.length) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      labels[idx],
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: _DashboardTheme.textSecondary(context),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
           ),
-          barTouchData: BarTouchData(
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => _DashboardTheme.cardBg(context),
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                return BarTooltipItem(
-                  '₹${_compact(rod.toY)}',
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (val, _) {
+                final idx = val.toInt();
+                if (idx < 0 || idx >= labels.length) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    labels[idx],
+                    style: TextStyle(
+                      fontSize: isLarge ? 11 : 10,
+                      color: _DashboardTheme.textSecondary(context),
+                    ),
                   ),
                 );
               },
             ),
+          ),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (_) => _DashboardTheme.cardBg(context),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              return BarTooltipItem(
+                '₹${_compact(rod.toY)}',
+                TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isLarge ? 12 : 11,
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -892,6 +1078,7 @@ class _CashFlowChart extends StatelessWidget {
 // ────────────────────────────────────────────────────────
 class _TopItemsDonut extends StatelessWidget {
   final List<Map<String, dynamic>> items;
+  final bool isLarge;
 
   static const _palette = [
     _DashboardTheme.purple,
@@ -901,22 +1088,32 @@ class _TopItemsDonut extends StatelessWidget {
     _DashboardTheme.lightTeal,
   ];
 
-  const _TopItemsDonut({required this.items});
+  const _TopItemsDonut({
+    required this.items,
+    this.isLarge = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return SizedBox(
-        height: 180,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-               Icon(Icons.pie_chart_outline, color: _DashboardTheme.chartGrid(context), size: 48),
-              SizedBox(height: 8),
-              Text('No sales data', style: TextStyle(color: _DashboardTheme.textSecondary(context), fontSize: 12)),
-            ],
-          ),
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.pie_chart_outline,
+              color: _DashboardTheme.chartGrid(context),
+              size: isLarge ? 56 : 48,
+            ),
+            SizedBox(height: isLarge ? 10 : 8),
+            Text(
+              'No sales data',
+              style: TextStyle(
+                color: _DashboardTheme.textSecondary(context),
+                fontSize: isLarge ? 13 : 12,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -924,83 +1121,91 @@ class _TopItemsDonut extends StatelessWidget {
     final totalQty =
         items.fold<int>(0, (sum, m) => sum + (m['qty'] as int? ?? 0));
 
-    return Row(
-      children: [
-        // Donut
-        SizedBox(
-          width: 140,
-          height: 160,
-          child: PieChart(
-            PieChartData(
-              sectionsSpace: 2,
-              centerSpaceRadius: 38,
-              sections: List.generate(items.length, (i) {
-                final qty = (items[i]['qty'] as int? ?? 0).toDouble();
-                final pct = totalQty > 0 ? qty / totalQty * 100 : 0;
-                return PieChartSectionData(
-                  color: _palette[i % _palette.length],
-                  value: qty,
-                  title: '${pct.toStringAsFixed(0)}%',
-                  radius: 42,
-                  titleStyle: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                );
-              }),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Legend
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(items.length, (i) {
-              final name = items[i]['name'] as String;
-              final qty = items[i]['qty'] as int? ?? 0;
-              final color = _palette[i % _palette.length];
-              final displayName =
-                  name.length > 14 ? '${name.substring(0, 12)}..' : name;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final donutSize = (constraints.maxHeight * 0.90).clamp(130.0, 220.0);
+        final centerSpaceRadius = (donutSize * 0.24).clamp(32.0, 52.0);
+        final sectionRadius = (donutSize * 0.26).clamp(36.0, 58.0);
+        final titleFontSize = (donutSize * 0.065).clamp(9.0, 12.0);
+
+        return Row(
+          children: [
+            // Donut
+            SizedBox(
+              width: donutSize,
+              height: donutSize,
+              child: PieChart(
+                PieChartData(
+                  sectionsSpace: 2,
+                  centerSpaceRadius: centerSpaceRadius,
+                  sections: List.generate(items.length, (i) {
+                    final qty = (items[i]['qty'] as int? ?? 0).toDouble();
+                    final pct = totalQty > 0 ? qty / totalQty * 100 : 0;
+                    return PieChartSectionData(
+                      color: _palette[i % _palette.length],
+                      value: qty,
+                      title: '${pct.toStringAsFixed(0)}%',
+                      radius: sectionRadius,
+                      titleStyle: TextStyle(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        displayName,
-                        style: TextStyle(
-                          color: _DashboardTheme.textPrimary(context),
-                          fontSize: 11,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      '$qty',
-                      style: TextStyle(
-                        color: _DashboardTheme.textPrimary(context),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
+                    );
+                  }),
                 ),
-              );
-            }),
-          ),
-        ),
-      ],
+              ),
+            ),
+            SizedBox(width: isLarge ? 14 : 10),
+            // Legend
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(items.length, (i) {
+                  final name = items[i]['name'] as String;
+                  final qty = items[i]['qty'] as int? ?? 0;
+                  final color = _palette[i % _palette.length];
+                  return Padding(
+                    padding: EdgeInsets.symmetric(vertical: isLarge ? 6 : 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: isLarge ? 11 : 10,
+                          height: isLarge ? 11 : 10,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        SizedBox(width: isLarge ? 8 : 6),
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: TextStyle(
+                              color: _DashboardTheme.textPrimary(context),
+                              fontSize: isLarge ? 12.5 : 11,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '$qty',
+                          style: TextStyle(
+                            color: _DashboardTheme.textPrimary(context),
+                            fontSize: isLarge ? 13 : 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1011,8 +1216,13 @@ class _TopItemsDonut extends StatelessWidget {
 class _WeeklyOverviewChart extends StatelessWidget {
   final List<double> values;
   final List<String> labels;
+  final bool isLarge;
 
-  const _WeeklyOverviewChart({required this.values, required this.labels});
+  const _WeeklyOverviewChart({
+    required this.values,
+    required this.labels,
+    this.isLarge = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1021,77 +1231,74 @@ class _WeeklyOverviewChart extends StatelessWidget {
         : values.reduce((a, b) => a > b ? a : b);
     final maxY = maxVal <= 0 ? 1000.0 : maxVal * 1.3;
 
-    return SizedBox(
-      height: 160,
-      child: BarChart(
-        BarChartData(
-          maxY: maxY,
-          barGroups: List.generate(values.length, (i) {
-            return BarChartGroupData(
-              x: i,
-              barRods: [
-                BarChartRodData(
-                  toY: values[i] > 0 ? values[i] : 0.001,
-                  color: _DashboardTheme.lightPurple, // Solid light purple
-                  width: 22,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ],
-            );
-          }),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: maxY / 4,
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: _DashboardTheme.chartGrid(context),
-              strokeWidth: 1,
-            ),
-          ),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (val, _) {
-                  final idx = val.toInt();
-                  if (idx < 0 || idx >= labels.length) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      labels[idx],
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: _DashboardTheme.textSecondary(context),
-                      ),
-                    ),
-                  );
-                },
+    return BarChart(
+      BarChartData(
+        maxY: maxY,
+        barGroups: List.generate(values.length, (i) {
+          return BarChartGroupData(
+            x: i,
+            barRods: [
+              BarChartRodData(
+                toY: values[i] > 0 ? values[i] : 0.001,
+                color: _DashboardTheme.lightPurple,
+                width: isLarge ? 28 : 22,
+                borderRadius: BorderRadius.circular(isLarge ? 6 : 5),
               ),
-            ),
+            ],
+          );
+        }),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxY / 4,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: _DashboardTheme.chartGrid(context),
+            strokeWidth: 1,
           ),
-          barTouchData: BarTouchData(
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => _DashboardTheme.cardBg(context),
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                return BarTooltipItem(
-                  '₹${_compact(rod.toY)}',
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
+        ),
+        borderData: FlBorderData(show: false),
+        titlesData: FlTitlesData(
+          leftTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (val, _) {
+                final idx = val.toInt();
+                if (idx < 0 || idx >= labels.length) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    labels[idx],
+                    style: TextStyle(
+                      fontSize: isLarge ? 11 : 10,
+                      color: _DashboardTheme.textSecondary(context),
+                    ),
                   ),
                 );
               },
             ),
+          ),
+        ),
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (_) => _DashboardTheme.cardBg(context),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              return BarTooltipItem(
+                '₹${_compact(rod.toY)}',
+                TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isLarge ? 12 : 11,
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -1110,6 +1317,7 @@ class _WeeklyOverviewChart extends StatelessWidget {
 // ────────────────────────────────────────────────────────
 class _PaymentDonut extends StatelessWidget {
   final Map<String, double> breakdown;
+  final bool isLarge;
 
   static const _palette = [
     _DashboardTheme.blue,
@@ -1120,22 +1328,32 @@ class _PaymentDonut extends StatelessWidget {
     _DashboardTheme.red,
   ];
 
-  const _PaymentDonut({required this.breakdown});
+  const _PaymentDonut({
+    required this.breakdown,
+    this.isLarge = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (breakdown.isEmpty) {
-      return SizedBox(
-        height: 160,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.pie_chart_outline, color: _DashboardTheme.cardBorder(context), size: 48),
-              const SizedBox(height: 8),
-              Text('No data today', style: TextStyle(color: _DashboardTheme.textSecondary(context), fontSize: 12)),
-            ],
-          ),
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.pie_chart_outline,
+              color: _DashboardTheme.cardBorder(context),
+              size: isLarge ? 56 : 48,
+            ),
+            SizedBox(height: isLarge ? 10 : 8),
+            Text(
+              'No data today',
+              style: TextStyle(
+                color: _DashboardTheme.textSecondary(context),
+                fontSize: isLarge ? 13 : 12,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -1143,77 +1361,85 @@ class _PaymentDonut extends StatelessWidget {
     final total = breakdown.values.fold(0.0, (a, b) => a + b);
     final entries = breakdown.entries.toList();
 
-    return Row(
-      children: [
-        // Donut
-        SizedBox(
-          width: 130,
-          height: 160,
-          child: PieChart(
-            PieChartData(
-              sectionsSpace: 2,
-              centerSpaceRadius: 36,
-              sections: List.generate(entries.length, (i) {
-                final color = _palette[i % _palette.length];
-                return PieChartSectionData(
-                  color: color,
-                  value: entries[i].value,
-                  title: '',
-                  radius: 40,
-                );
-              }),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        // Legend
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(entries.length, (i) {
-              final e = entries[i];
-              final color = _palette[i % _palette.length];
-              final pct = total > 0 ? e.value / total * 100 : 0;
-              final label = _modeLabel(e.key);
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: _DashboardTheme.textPrimary(context),
-                          fontSize: 11,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      '${_compactDouble(e.value)} (${pct.toStringAsFixed(0)}%)',
-                      style: TextStyle(
-                        color: _DashboardTheme.textPrimary(context),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final donutSize = (constraints.maxHeight * 0.90).clamp(130.0, 220.0);
+        final centerSpaceRadius = (donutSize * 0.24).clamp(32.0, 50.0);
+        final sectionRadius = (donutSize * 0.26).clamp(36.0, 56.0);
+
+        return Row(
+          children: [
+            // Donut
+            SizedBox(
+              width: donutSize,
+              height: donutSize,
+              child: PieChart(
+                PieChartData(
+                  sectionsSpace: 2,
+                  centerSpaceRadius: centerSpaceRadius,
+                  sections: List.generate(entries.length, (i) {
+                    final color = _palette[i % _palette.length];
+                    return PieChartSectionData(
+                      color: color,
+                      value: entries[i].value,
+                      title: '',
+                      radius: sectionRadius,
+                    );
+                  }),
                 ),
-              );
-            }),
-          ),
-        ),
-      ],
+              ),
+            ),
+            SizedBox(width: isLarge ? 12 : 8),
+            // Legend
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(entries.length, (i) {
+                  final e = entries[i];
+                  final color = _palette[i % _palette.length];
+                  final pct = total > 0 ? e.value / total * 100 : 0;
+                  final label = _modeLabel(e.key);
+                  return Padding(
+                    padding: EdgeInsets.symmetric(vertical: isLarge ? 6 : 5),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: isLarge ? 11 : 10,
+                          height: isLarge ? 11 : 10,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        SizedBox(width: isLarge ? 8 : 6),
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: _DashboardTheme.textPrimary(context),
+                              fontSize: isLarge ? 12 : 11,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '${_compactDouble(e.value)} (${pct.toStringAsFixed(0)}%)',
+                          style: TextStyle(
+                            color: _DashboardTheme.textPrimary(context),
+                            fontSize: isLarge ? 13 : 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

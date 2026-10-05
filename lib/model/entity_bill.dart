@@ -14,7 +14,10 @@ class EntityBill {
   @Unique()
   String objectId = ObjectId().hexString;  //mongo id
 
+  @Index()
   String? customerName;
+
+  @Index()
   String? customerPhone;
 
   double? totalAmount;
@@ -22,6 +25,7 @@ class EntityBill {
   double? tax;
   double? grandTotal;
 
+  @Index()
   String? status; // PAID, HOLD, CANCELLED
   String? paymentMode; // CASH, CARD, UPI, NETBANKING, SPLIT
 
@@ -34,6 +38,7 @@ class EntityBill {
   double? dueAmount; // Amount pending for DUE status
 
   /// Date-only field stored as "d/MM/yyyy" e.g. "22/02/2025"
+  @Index()
   String? billDate;
 
   String? note;

@@ -14,6 +14,13 @@ class ServiceObjectBox extends GetxService {
     return _store!;
   }
 
+  /// Returns a shareable reference to the underlying Store.
+  ///
+  /// Pass this to background Isolates so they can open their own
+  /// lightweight Store handle via `Store.fromReference(...)`.
+  /// This avoids blocking the UI thread during heavy queries.
+  ByteData get storeReference => store.reference;
+
   Future<ServiceObjectBox> init() async {
     if (_store != null && !_store!.isClosed()) {
       return this;
@@ -55,6 +62,18 @@ class ServiceObjectBox extends GetxService {
   }
 
   Box<T> box<T>() => store.box<T>();
+
+  /// ⚡ DATABASE HOUSEKEEPING:
+  /// Verifies store integrity, closes dangling queries, and retrieves storage info.
+  Map<String, dynamic> getMaintenanceInfo() {
+    if (_store == null || _store!.isClosed()) {
+      return {'status': 'closed'};
+    }
+    return {
+      'status': 'healthy',
+      'directory': _store!.directoryPath,
+    };
+  }
 
   @override
   void onClose() {

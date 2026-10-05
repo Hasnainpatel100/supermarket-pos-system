@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:super_market/core/performance/plan_expiry_guard.dart';
 import 'package:super_market/service/service_locale.dart';
 
 import '../core/network/dio_client.dart';
@@ -76,6 +77,12 @@ class StaticMethods {
     // 7. Brand + Branch Session Context (POS-wide)
     final brandContext = Get.put<ServiceBrandContext>(
       ServiceBrandContext(),
+      permanent: true,
+    );
+
+    // 7b. Plan Expiry Guard (precision one-shot timer + lifecycle observer)
+    Get.put<PlanExpiryGuard>(
+      PlanExpiryGuard(),
       permanent: true,
     );
 

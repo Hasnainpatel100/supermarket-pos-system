@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../service/service_bill_pdf.dart';
+import '../../../../util/snackbar_util.dart';
 import '../setting/controller_home_settings.dart';
 import '../pos/controller_home_pos.dart';
 
@@ -394,9 +396,26 @@ class DialogBillDetail extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                   ],
-                  // ── PDF & WhatsApp Row ──
+                  // ── Print, PDF & WhatsApp Row ──
                   Row(
                     children: [
+                      // Direct Print
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () => _printDirect(context, settings),
+                          icon: const Icon(Icons.print_rounded, size: 18),
+                          label: Text('print'.tr),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       // Preview PDF
                       Expanded(
                         child: OutlinedButton.icon(
@@ -411,10 +430,9 @@ class DialogBillDetail extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       // WhatsApp
                       Expanded(
-                        flex: 2,
                         child: FilledButton.icon(
                           onPressed: () => _shareWhatsApp(context, settings),
                           icon: const Icon(Icons.send_rounded, size: 18),
@@ -584,6 +602,39 @@ class DialogBillDetail extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // ── Thermal / Direct Print ──────────────────────────────────
+  Future<void> _printDirect(
+    BuildContext context,
+    ControllerHomeSettings settings,
+  ) async {
+    try {
+      final pdfFile = await ServiceBillPdf.generate(bill, settings);
+      final pdfBytes = await pdfFile.readAsBytes();
+
+      final defaultPrinterName = settings.rxDefaultPrinter.value.trim();
+      if (defaultPrinterName.isNotEmpty) {
+        final printers = await Printing.listPrinters();
+        final target = printers.firstWhereOrNull((p) => p.name == defaultPrinterName);
+        if (target != null) {
+          await Printing.directPrintPdf(
+            printer: target,
+            onLayout: (_) => pdfBytes,
+            name: 'Bill_${bill.billNo}',
+          );
+          SnackbarUtil.showSuccess('Sent to printer $defaultPrinterName');
+          return;
+        }
+      }
+
+      await Printing.layoutPdf(
+        onLayout: (_) => pdfBytes,
+        name: 'Bill_${bill.billNo}',
+      );
+    } catch (e) {
+      SnackbarUtil.showError('Printing failed: $e');
+    }
   }
 
   // ── PDF Preview ──────────────────────────────────────────────

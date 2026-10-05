@@ -58,11 +58,13 @@ class RepoAuditLog {
       fromUtcMs: fromUtcMs,
       toUtcMs: toUtcMs,
     );
-    return _box
+    final query = _box
         .query(condition)
         .order(EntityAuditLog_.createdAtUtcMs, flags: Order.descending)
-        .build()
-        .find();
+        .build();
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Returns all log entries for a given [module] string (e.g. "system").
@@ -78,11 +80,13 @@ class RepoAuditLog {
       fromUtcMs: fromUtcMs,
       toUtcMs: toUtcMs,
     );
-    return _box
+    final query = _box
         .query(condition)
         .order(EntityAuditLog_.createdAtUtcMs, flags: Order.descending)
-        .build()
-        .find();
+        .build();
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Typed overload — accepts an [AuditModule] enum value directly.
@@ -106,11 +110,13 @@ class RepoAuditLog {
       fromUtcMs: fromUtcMs,
       toUtcMs: toUtcMs,
     );
-    return _box
+    final query = _box
         .query(condition)
         .order(EntityAuditLog_.createdAtUtcMs, flags: Order.descending)
-        .build()
-        .find();
+        .build();
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Typed overload — accepts an [AuditAction] enum value directly.
@@ -129,25 +135,32 @@ class RepoAuditLog {
   /// repo.queryByEntity('EntityUser', '5');
   /// ```
   List<EntityAuditLog> queryByEntity(String entityType, String entityId) {
-    return _box
+    final query = _box
         .query(
           EntityAuditLog_.entityType.equals(entityType) &
               EntityAuditLog_.entityId.equals(entityId),
         )
         .order(EntityAuditLog_.createdAtUtcMs, flags: Order.descending)
-        .build()
-        .find();
+        .build();
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Returns the [limit] most-recent log entries across all modules.
+  ///
+  /// ⚡ PERFORMANCE: Uses ObjectBox query limit instead of loading all
+  ///    records into memory then calling .take(). With large audit tables
+  ///    (50k+ entries), the old approach was extremely wasteful.
   List<EntityAuditLog> queryRecent({int limit = 100}) {
-    return _box
+    final query = _box
         .query()
         .order(EntityAuditLog_.createdAtUtcMs, flags: Order.descending)
-        .build()
-        .find()
-        .take(limit)
-        .toList();
+        .build();
+    query.limit = limit;
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Returns the total number of audit log entries in the store.

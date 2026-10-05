@@ -186,8 +186,9 @@ class FragmentHomeItem extends StatelessWidget {
             : Column(
           children: [
             Expanded(
-              child: MyCard(
-                margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: RepaintBoundary(
+                child: MyCard(
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: SizedBox(
                   width: double.infinity,
                   child: SingleChildScrollView(
@@ -490,6 +491,7 @@ class FragmentHomeItem extends StatelessWidget {
                 ),
               ),
             ),
+          ),
             // ── Pagination Footer ──
             Obx(() => _buildPagination(context, controller)),
           ],

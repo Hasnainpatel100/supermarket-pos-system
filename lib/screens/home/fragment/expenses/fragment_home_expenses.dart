@@ -428,8 +428,9 @@ class FragmentHomeExpenses extends StatelessWidget {
                 );
               }
 
-              return MyCard(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              return RepaintBoundary(
+                child: MyCard(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: SizedBox(
                   width: double.infinity,
                   child: SingleChildScrollView(
@@ -548,6 +549,7 @@ class FragmentHomeExpenses extends StatelessWidget {
                           ],
                         );
                       }).toList(),
+                      ),
                     ),
                   ),
                 ),

@@ -6,6 +6,7 @@ class EntityCustomer {
   @Id()
   int? id;
 
+  @Index()
   String? name;
 
   @Index()

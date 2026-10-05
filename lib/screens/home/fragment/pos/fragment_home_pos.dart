@@ -303,11 +303,7 @@ class _SearchBar extends StatelessWidget {
           if (textEditingValue.text.isEmpty) {
             return const Iterable<EntityItem>.empty();
           }
-          final query = textEditingValue.text.toLowerCase();
-          return controller.rxListItems.where((item) =>
-              (item.name?.toLowerCase().contains(query) ?? false) ||
-              (item.sku?.toLowerCase().contains(query) ?? false) ||
-              (item.barcode?.toLowerCase().contains(query) ?? false));
+          return controller.searchOptions(textEditingValue.text);
         },
         displayStringForOption: (EntityItem option) =>
             "${option.name} | ${option.barcode ?? option.sku ?? ''}",
@@ -468,9 +464,10 @@ class _CartDataTable extends StatelessWidget {
           ),
         );
       }
-      return ListView(
-        children: [
-          DataTable(
+      return RepaintBoundary(
+        child: ListView(
+          children: [
+            DataTable(
             showCheckboxColumn: false,
             headingRowColor: WidgetStateProperty.resolveWith((_) => cs.surfaceContainerHighest),
             headingTextStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, color: cs.onSurface, letterSpacing: 0.3),
@@ -550,8 +547,9 @@ class _CartDataTable extends StatelessWidget {
             }),
           ),
         ],
-      );
-    });
+      ),
+    );
+  });
   }
 }
 
@@ -664,7 +662,9 @@ class _RightPanel extends StatelessWidget {
             // ── Summary ──
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: _SummaryCard(controller: controller),
+              child: RepaintBoundary(
+                child: _SummaryCard(controller: controller),
+              ),
             ),
 
             // ── Payment ──

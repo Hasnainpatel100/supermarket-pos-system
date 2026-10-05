@@ -15,6 +15,7 @@ class EntityItem {
   @Unique()
   String? mongoId;
 
+  @Index()
   String? name;
   String? unit;
 
@@ -23,6 +24,7 @@ class EntityItem {
   String objectId = ObjectId().hexString;  //mongo id
 
   /// Category (e.g. "Beverages", "Snacks")
+  @Index()
   String? category;
 
   double? costPrice;

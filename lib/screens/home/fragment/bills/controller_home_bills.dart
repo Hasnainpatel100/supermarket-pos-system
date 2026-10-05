@@ -194,15 +194,11 @@ class ControllerHomeBills extends GetxController {
     totalCount.value = allBillsCount;
 
     if (currentPage.value == 0) {
-      final allBills = query.find();
-      double totalSales = 0;
-      for (var bill in allBills) {
-        totalSales += (bill.grandTotal ?? 0);
-      }
+      final totalSales = query.property(EntityBill_.grandTotal).sum();
       filteredSales.value = totalSales;
-      filteredOrders.value = allBills.length;
-      averageBillValue.value = allBills.isNotEmpty
-          ? totalSales / allBills.length
+      filteredOrders.value = allBillsCount;
+      averageBillValue.value = allBillsCount > 0
+          ? totalSales / allBillsCount
           : 0;
     }
 

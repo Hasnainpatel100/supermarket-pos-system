@@ -59,51 +59,49 @@ class ControllerHomeExpenses extends GetxController {
   }
 
   void loadData() {
-    final all = _service.getAll();
-    _computeTotals(all);
+    _computeTotals();
     _applyFilter();
   }
 
-  void _computeTotals(List<EntityFinanceTransaction> all) {
-    totalExpense.value = all
-        .where((t) => t.type == 'expense')
-        .fold(0.0, (sum, t) => sum + (t.amount ?? 0.0));
-    totalBorrow.value = all
-        .where((t) => t.type == 'borrow')
-        .fold(0.0, (sum, t) => sum + (t.amount ?? 0.0));
-    totalLend.value = all
-        .where((t) => t.type == 'lend')
-        .fold(0.0, (sum, t) => sum + (t.amount ?? 0.0));
-  }
-
-  void _applyFilter() {
-    List<EntityFinanceTransaction> list;
-
+  void _computeTotals() {
+    String? from;
+    String? to;
     if (rxDateRangeActive.value &&
         rxFromDate.value != null &&
         rxToDate.value != null) {
-      final from = DateFormat('yyyy-MM-dd').format(rxFromDate.value!);
-      final to = DateFormat('yyyy-MM-dd').format(rxToDate.value!);
-      if (rxFilter.value == 'all') {
-        list = _service.getByDateRange(from, to);
-      } else {
-        list = _service.getByTypeAndDateRange(rxFilter.value, from, to);
-      }
-    } else {
-      if (rxFilter.value == 'all') {
-        list = _service.getAll();
-      } else {
-        list = _service.getByType(rxFilter.value);
-      }
+      from = DateFormat('yyyy-MM-dd').format(rxFromDate.value!);
+      to = DateFormat('yyyy-MM-dd').format(rxToDate.value!);
     }
 
-    totalCount.value = list.length;
-    final paged = list.skip(currentPage.value * _pageSize).take(_pageSize).toList();
-    rxList.assignAll(paged);
+    totalExpense.value = _service.getSumByType('expense', fromDate: from, toDate: to);
+    totalBorrow.value = _service.getSumByType('borrow', fromDate: from, toDate: to);
+    totalLend.value = _service.getSumByType('lend', fromDate: from, toDate: to);
+  }
+
+  void _applyFilter() {
+    String? from;
+    String? to;
+    if (rxDateRangeActive.value &&
+        rxFromDate.value != null &&
+        rxToDate.value != null) {
+      from = DateFormat('yyyy-MM-dd').format(rxFromDate.value!);
+      to = DateFormat('yyyy-MM-dd').format(rxToDate.value!);
+    }
+
+    final result = _service.getPaginated(
+      type: rxFilter.value,
+      fromDate: from,
+      toDate: to,
+      offset: currentPage.value * _pageSize,
+      limit: _pageSize,
+    );
+
+    totalCount.value = result.totalCount;
+    rxList.assignAll(result.items);
   }
 
   /// Pick a date range and re-apply filter
-  Future<void> pickDateRange(context) async {
+  Future<void> pickDateRange(BuildContext context) async {
     final now = DateTime.now();
     final result = await showDateRangePicker(
       context: context,
@@ -124,7 +122,7 @@ class ControllerHomeExpenses extends GetxController {
       rxToDate.value = result.end;
       rxDateRangeActive.value = true;
       currentPage.value = 0;
-      _applyFilter();
+      loadData();
     }
   }
 
@@ -134,7 +132,7 @@ class ControllerHomeExpenses extends GetxController {
     rxToDate.value = null;
     rxDateRangeActive.value = false;
     currentPage.value = 0;
-    _applyFilter();
+    loadData();
   }
 
   Future<void> delete(int id) async {

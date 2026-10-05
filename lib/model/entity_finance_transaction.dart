@@ -6,9 +6,11 @@ class EntityFinanceTransaction {
   @Id()
   int id = 0;
 
+  @Index()
   String? type;
   // expense, borrow, lend
 
+  @Index()
   String? category;
   // transportation, petrol, servicing
 
@@ -27,8 +29,10 @@ class EntityFinanceTransaction {
 
   String? note;
 
+  @Index()
   int? dateUtcMs;
 
   /// Date stored as yyyy-MM-dd (no time component)
+  @Index()
   String? createdDate;
 }

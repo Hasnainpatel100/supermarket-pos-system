@@ -11,12 +11,20 @@ import '../../../../model/entity_stock_transaction.dart';
 import '../../../../model/stock_txn_type.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_storage.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../../util/snackbar_util.dart';
 import '../bills/controller_home_bills.dart';
 import '../bills/dialog_bill_detail.dart';
 import '../item/controller_home_item.dart';
 import 'package:flutter/services.dart';
 import '../../../customer/activity_customer_form.dart';
+
+enum PosViewMode {
+  classicTable, // 1st view: Standard Table View with barcode scanner & table
+  catalogGrid,  // 2nd view: Compact Horizontal Cards Grid
+  photoGrid,    // 3rd view: Vertical Food Photo Cards Grid with Background Image
+}
 
 class BillSession {
   final String id;
@@ -42,7 +50,9 @@ class BillSession {
   void initSplitPayment(int count, double grandTotal) {
     rxSplitCount.value = count;
     // Clear existing
-    for (var c in splitControllers) c.dispose();
+    for (var c in splitControllers) {
+      c.dispose();
+    }
     splitControllers.clear();
     rxSplitAmounts.clear();
     rxSplitModes.clear();
@@ -78,7 +88,9 @@ class BillSession {
 
   void dispose() {
     amountController.dispose();
-    for (var c in splitControllers) c.dispose();
+    for (var c in splitControllers) {
+      c.dispose();
+    }
   }
 }
 
@@ -91,6 +103,14 @@ class ControllerHomePos extends GetxController {
   late Box<EntityStockTransaction> _boxStockTxn;
 
   final ServiceCurrency serviceCurrency = Get.find();
+
+  // ── Alternate View Mode (1: Classic Table, 2: Compact Cards, 3: Photo Cards Grid) ──
+  final rxViewMode = PosViewMode.classicTable.obs;
+  final rxSelectedCategory = 'All'.obs;
+  final rxCategories = <String>['All'].obs;
+
+  // Item images map { itemId: pathOrUrl } for Photo Cards Grid view
+  final rxItemImages = <int, String>{}.obs;
 
   // Search Items
   final searchController = TextEditingController();
@@ -121,12 +141,181 @@ class ControllerHomePos extends GetxController {
     _boxCustomer = ob.box<EntityCustomer>();
     _boxStockTxn = ob.box<EntityStockTransaction>();
 
+    // Load persisted view mode preference
+    try {
+      if (Get.isRegistered<ServiceStorage>()) {
+        final storage = Get.find<ServiceStorage>();
+        final savedMode = storage.readString('pos_view_mode');
+        if (savedMode == PosViewMode.photoGrid.name) {
+          rxViewMode.value = PosViewMode.photoGrid;
+        } else if (savedMode == PosViewMode.catalogGrid.name) {
+          rxViewMode.value = PosViewMode.catalogGrid;
+        } else {
+          rxViewMode.value = PosViewMode.classicTable;
+        }
+      }
+    } catch (_) {}
+
     addNewTab(); // Initialize first tab
+    loadCategories();
     loadItems();
     loadCustomers();
+    loadItemImages();
 
     debounce(rxSearchQuery, (_) => loadItems(), time: const Duration(milliseconds: 300));
     debounce(rxCustomerSearchQuery, (_) => loadCustomers(), time: const Duration(milliseconds: 300));
+  }
+
+  void loadCategories() {
+    final allItems = _boxItem.getAll();
+    final distinctCats = allItems
+        .map((e) => e.category?.trim())
+        .where((c) => c != null && c.isNotEmpty)
+        .cast<String>()
+        .toSet()
+        .toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    if (distinctCats.isEmpty) {
+      // Default supermarket categories matching the market app photo
+      rxCategories.assignAll([
+        'All',
+        'Beverages',
+        'Dairy',
+        'Electronics',
+        'Fruits',
+        'Groceries',
+        'Snacks',
+        'Stationeries',
+      ]);
+    } else {
+      final list = <String>['All'];
+      for (final cat in distinctCats) {
+        if (!list.contains(cat)) {
+          list.add(cat);
+        }
+      }
+      rxCategories.assignAll(list);
+    }
+  }
+
+  void selectCategory(String cat) {
+    rxSelectedCategory.value = cat;
+    loadItems();
+  }
+
+  void setViewMode(PosViewMode mode) {
+    rxViewMode.value = mode;
+    try {
+      if (Get.isRegistered<ServiceStorage>()) {
+        final storage = Get.find<ServiceStorage>();
+        storage.writeString('pos_view_mode', mode.name);
+      }
+    } catch (_) {}
+  }
+
+  void toggleNextViewMode() {
+    if (rxViewMode.value == PosViewMode.classicTable) {
+      setViewMode(PosViewMode.catalogGrid);
+    } else if (rxViewMode.value == PosViewMode.catalogGrid) {
+      setViewMode(PosViewMode.photoGrid);
+    } else {
+      setViewMode(PosViewMode.classicTable);
+    }
+  }
+
+  String get viewModeTitle {
+    switch (rxViewMode.value) {
+      case PosViewMode.classicTable:
+        return 'Table View';
+      case PosViewMode.catalogGrid:
+        return 'Compact Cards View';
+      case PosViewMode.photoGrid:
+        return 'Photo Cards View';
+    }
+  }
+
+  String get nextViewModeTooltip {
+    switch (rxViewMode.value) {
+      case PosViewMode.classicTable:
+        return 'Switch to Compact Cards View';
+      case PosViewMode.catalogGrid:
+        return 'Switch to Photo Cards View';
+      case PosViewMode.photoGrid:
+        return 'Switch to Table View';
+    }
+  }
+
+  IconData get currentViewModeIcon {
+    switch (rxViewMode.value) {
+      case PosViewMode.classicTable:
+        return Icons.table_chart_rounded;
+      case PosViewMode.catalogGrid:
+        return Icons.view_compact_rounded;
+      case PosViewMode.photoGrid:
+        return Icons.grid_view_rounded;
+    }
+  }
+
+  // ── Item Image Management for Photo Cards ──
+
+  void loadItemImages() {
+    try {
+      if (Get.isRegistered<ServiceStorage>()) {
+        final storage = Get.find<ServiceStorage>();
+        final allItems = _boxItem.getAll();
+        for (final item in allItems) {
+          if (item.id != null) {
+            final img = storage.readString('pos_item_img_${item.id}');
+            if (img != null && img.trim().isNotEmpty) {
+              rxItemImages[item.id!] = img.trim();
+            }
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  String? getItemImage(int? itemId) {
+    if (itemId == null) return null;
+    return rxItemImages[itemId];
+  }
+
+  Future<void> setItemImage(int itemId, String pathOrUrl) async {
+    try {
+      final trimmed = pathOrUrl.trim();
+      rxItemImages[itemId] = trimmed;
+      if (Get.isRegistered<ServiceStorage>()) {
+        final storage = Get.find<ServiceStorage>();
+        await storage.writeString('pos_item_img_$itemId', trimmed);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> removeItemImage(int itemId) async {
+    try {
+      rxItemImages.remove(itemId);
+      if (Get.isRegistered<ServiceStorage>()) {
+        final storage = Get.find<ServiceStorage>();
+        await storage.delete('pos_item_img_$itemId');
+      }
+    } catch (_) {}
+  }
+
+  Future<void> pickAndSetItemImage(int itemId) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+      if (result != null && result.files.isNotEmpty && result.files.single.path != null) {
+        final path = result.files.single.path!;
+        await setItemImage(itemId, path);
+        SnackbarUtil.showSuccess('Item card image set successfully');
+      }
+    } catch (e) {
+      SnackbarUtil.showError('Failed to pick image: $e');
+    }
   }
 
   void addNewTab() {
@@ -166,19 +355,29 @@ class ControllerHomePos extends GetxController {
 
   void loadItems() {
     final trimmed = rxSearchQuery.value.trim();
-    final query = _boxItem
-        .query(
-          trimmed.isEmpty
-              ? EntityItem_.isActive.equals(true)
-              : EntityItem_.name
-                  .contains(trimmed, caseSensitive: false)
-                  .or(EntityItem_.barcode.contains(trimmed, caseSensitive: false))
-                  .or(EntityItem_.sku.contains(trimmed, caseSensitive: false))
-                  .and(EntityItem_.isActive.equals(true)),
-        )
-        .order(EntityItem_.name)
-        .build()
-      ..limit = 50;
+    final selectedCat = rxSelectedCategory.value;
+
+    var condition = EntityItem_.isActive.equals(true);
+
+    if (selectedCat != 'All') {
+      final catSingular = selectedCat.endsWith('s')
+          ? selectedCat.substring(0, selectedCat.length - 1)
+          : selectedCat;
+      final catCond = EntityItem_.category
+          .equals(selectedCat, caseSensitive: false)
+          .or(EntityItem_.name.contains(catSingular, caseSensitive: false));
+      condition = condition.and(catCond);
+    }
+
+    if (trimmed.isNotEmpty) {
+      final searchCond = EntityItem_.name
+          .contains(trimmed, caseSensitive: false)
+          .or(EntityItem_.barcode.contains(trimmed, caseSensitive: false))
+          .or(EntityItem_.sku.contains(trimmed, caseSensitive: false));
+      condition = condition.and(searchCond);
+    }
+
+    final query = _boxItem.query(condition).order(EntityItem_.name).build()..limit = 250;
     rxListItems.assignAll(query.find());
     query.close();
   }

@@ -881,7 +881,12 @@ class FragmentHomeAccount extends StatelessWidget {
     final expenses = shift.expensesCash;
     final cashIn = shift.cashIn;
     final cashOut = shift.cashOut;
-    final username = shift.startedByUsername ?? 'Unknown';
+    final openedBy = shift.startedByUsername ?? 'Unknown';
+    final closedBy = shift.closedByUsername;
+    final isDifferentUser = !isOpen &&
+        closedBy != null &&
+        closedBy.trim().isNotEmpty &&
+        closedBy.trim().toLowerCase() != openedBy.trim().toLowerCase();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -921,15 +926,72 @@ class FragmentHomeAccount extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  '${'cashier'.tr}: $username',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 14,
+                          color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Opened by: $openedBy',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isDifferentUser)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF451A03) : const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFFD97706) : const Color(0xFFF59E0B),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.lock_clock,
+                              size: 11,
+                              color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Closed by: $closedBy',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (!isOpen && closedBy != null && closedBy.isNotEmpty)
+                      Text(
+                        '(Closed by $closedBy)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               Text(
@@ -982,15 +1044,52 @@ class FragmentHomeAccount extends StatelessWidget {
               ),
             ],
           ),
-          if (endMs != null && !isOpen) ...
-          [
-            const SizedBox(height: 6),
-            Text(
-              '${'closed'.tr}: ${controller.formatTimestamp(endMs)}',
-              style: TextStyle(
-                fontSize: 10,
-                color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8),
-              ),
+          if (endMs != null && !isOpen) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.access_time_rounded,
+                  size: 13,
+                  color: isDifferentUser
+                      ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309))
+                      : (isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8)),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  closedBy != null && closedBy.trim().isNotEmpty
+                      ? 'Closed by $closedBy on ${controller.formatTimestamp(endMs)}'
+                      : '${'closed'.tr}: ${controller.formatTimestamp(endMs)}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isDifferentUser ? FontWeight.w600 : FontWeight.normal,
+                    color: isDifferentUser
+                        ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309))
+                        : (isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8)),
+                  ),
+                ),
+                if (shift.comments != null && shift.comments!.trim().isNotEmpty) ...[
+                  const SizedBox(width: 12),
+                  Icon(
+                    Icons.comment_outlined,
+                    size: 12,
+                    color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Note: ${shift.comments}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                        color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ],

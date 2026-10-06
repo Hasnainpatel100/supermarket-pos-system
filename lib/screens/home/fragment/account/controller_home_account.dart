@@ -466,6 +466,11 @@ class ControllerHomeAccount extends GetxController {
       denominations.map((k, v) => MapEntry(k.toString(), v)),
     );
 
+    // Ensure we capture the currently logged-in user who is performing the closure
+    await loadDeviceAndOutletDetails();
+    final closedByName = rxUsername.value.isNotEmpty ? rxUsername.value : 'Cashier';
+    final closedById = rxUserId.value.isNotEmpty ? rxUserId.value : '0';
+
     shift.isOpen = false;
     shift.endTimestampMs = nowMs;
     shift.closingCash = countedTotal;
@@ -473,8 +478,8 @@ class ControllerHomeAccount extends GetxController {
     shift.cashOut = rxCashOutTotal.value;
     shift.salesCash = rxSalesCashTotal.value;
     shift.expensesCash = rxExpensesCashTotal.value;
-    shift.closedByUserId = rxUserId.value;
-    shift.closedByUsername = rxUsername.value;
+    shift.closedByUserId = closedById;
+    shift.closedByUsername = closedByName;
     shift.comments = comments;
     shift.closingDenominationsJson = denomJson;
     shift.paymentModesJson = jsonEncode(rxPaymentModes);
@@ -507,6 +512,11 @@ class ControllerHomeAccount extends GetxController {
       return;
     }
 
+    // Ensure we capture the currently logged-in user who is performing the closure
+    await loadDeviceAndOutletDetails();
+    final closedByName = rxUsername.value.isNotEmpty ? rxUsername.value : 'Cashier';
+    final closedById = rxUserId.value.isNotEmpty ? rxUserId.value : '0';
+
     // Auto-close shift if still active
     if (isShiftOpen) {
       final shift = rxActiveShift.value!;
@@ -517,8 +527,8 @@ class ControllerHomeAccount extends GetxController {
       shift.cashOut = rxCashOutTotal.value;
       shift.salesCash = rxSalesCashTotal.value;
       shift.expensesCash = rxExpensesCashTotal.value;
-      shift.closedByUserId = rxUserId.value;
-      shift.closedByUsername = rxUsername.value;
+      shift.closedByUserId = closedById;
+      shift.closedByUsername = closedByName;
       shift.comments = comments;
       shift.paymentModesJson = jsonEncode(rxPaymentModes);
       shift.fulfilledOrders = rxFulfilledOrders.value;
@@ -532,8 +542,8 @@ class ControllerHomeAccount extends GetxController {
     day.isOpen = false;
     day.endTimestampMs = nowMs;
     day.closingCash = rxClosingBalance.value;
-    day.closedByUserId = rxUserId.value;
-    day.closedByUsername = rxUsername.value;
+    day.closedByUserId = closedById;
+    day.closedByUsername = closedByName;
     day.closingComment = comments;
 
     _boxDay.put(day);

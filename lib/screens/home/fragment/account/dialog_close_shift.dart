@@ -137,6 +137,66 @@ class _DialogCloseShiftState extends State<DialogCloseShift> {
               ),
             ),
 
+            // ── Cashier & Shift Info Strip ──
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark ? colorScheme.outlineVariant.withValues(alpha: 0.5) : Colors.grey.shade300,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.person_pin,
+                    size: 16,
+                    color: Color(0xFF00796B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Shift Opened by: ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
+                    ),
+                  ),
+                  Text(
+                    controller.rxActiveShift.value?.startedByUsername ?? 'Unknown',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const Spacer(),
+                  const Icon(
+                    Icons.how_to_reg,
+                    size: 16,
+                    color: Color(0xFFD97706),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Closing as: ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
+                    ),
+                  ),
+                  Text(
+                    controller.rxUsername.value.isNotEmpty ? controller.rxUsername.value : 'Current Cashier',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFD97706),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             // ── Two Column Layout ──
             Expanded(
               child: Padding(

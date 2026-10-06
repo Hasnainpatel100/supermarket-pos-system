@@ -133,7 +133,9 @@ class FragmentHomeStock extends StatelessWidget {
                     onTap: () => controller.setTypeFilter(null),
                   ),
                   const SizedBox(width: 8),
-                  ...StockTxnType.values.map(
+                  ...StockTxnType.values
+                      .where((type) => type != StockTxnType.returnStock)
+                      .map(
                     (type) => Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: _FilterChip(
@@ -401,6 +403,8 @@ class FragmentHomeStock extends StatelessWidget {
         return 'txn_deduct'.tr;
       case StockTxnType.purchaseIn:
         return 'txn_purchase'.tr;
+      case StockTxnType.returnStock:
+        return 'Return';
       default:
         return 'all'.tr;
     }
@@ -416,8 +420,10 @@ class FragmentHomeStock extends StatelessWidget {
         return Colors.blue.shade600;
       case StockTxnType.deduct:
         return Colors.orange.shade700;
-        case StockTxnType.purchaseIn:
+      case StockTxnType.purchaseIn:
         return Colors.purple.shade600;
+      case StockTxnType.returnStock:
+        return Colors.teal.shade600;
       default:
         return Colors.grey.shade600;
     }
@@ -433,8 +439,10 @@ class FragmentHomeStock extends StatelessWidget {
         return Icons.tune_rounded;
       case StockTxnType.deduct:
         return Icons.remove_circle_outline_rounded;
-        case StockTxnType.purchaseIn:
+      case StockTxnType.purchaseIn:
         return Icons.shopping_cart_rounded;
+      case StockTxnType.returnStock:
+        return Icons.assignment_return_rounded;
       default:
         return Icons.circle_outlined;
     }

@@ -362,7 +362,7 @@ class _SearchBar extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         shrinkWrap: true,
                         itemCount: options.length,
-                        separatorBuilder: (_, __) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
+                        separatorBuilder: (_, _) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
                         itemBuilder: (context, index) {
                           final item = options.elementAt(index);
                           final isHighlighted = AutocompleteHighlightedOption.of(context) == index;
@@ -835,7 +835,7 @@ class _CustomerSection extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 6),
                             shrinkWrap: true,
                             itemCount: options.length,
-                            separatorBuilder: (_, __) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
+                            separatorBuilder: (_, _) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
                             itemBuilder: (context, index) {
                               final c = options.elementAt(index);
                               return ListTile(
@@ -1328,7 +1328,7 @@ class SplitPaymentSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("${'person_n'.trParams({'n': '${index + 1}'})}", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11, color: cs.onSurfaceVariant)),
+                    Text('person_n'.trParams({'n': '${index + 1}'}), style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11, color: cs.onSurfaceVariant)),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -1359,7 +1359,7 @@ class SplitPaymentSection extends StatelessWidget {
                         Expanded(
                           flex: 2,
                           child: Obx(() => DropdownButtonFormField<String>(
-                            value: session.rxSplitModes[index].value,
+                            initialValue: session.rxSplitModes[index].value,
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: cs.surfaceContainerLow,
@@ -1404,11 +1404,11 @@ class SplitPaymentSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isValid ? 'split_amounts_match'.tr : "${'difference_amount'.trParams({'currency': currency, 'amount': diff.toStringAsFixed(2)})}",
+                    isValid ? 'split_amounts_match'.tr : 'difference_amount'.trParams({'currency': currency, 'amount': diff.toStringAsFixed(2)}),
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isValid ? Colors.green.shade700 : Colors.red.shade700),
                   ),
                   Text(
-                    "${'total_split'.trParams({'currency': currency, 'amount': totalSplit.toStringAsFixed(2)})}",
+                    'total_split'.trParams({'currency': currency, 'amount': totalSplit.toStringAsFixed(2)}),
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: cs.onSurface),
                   ),
                 ],

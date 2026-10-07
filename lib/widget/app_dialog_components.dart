@@ -61,7 +61,7 @@ class AppDialog extends StatelessWidget {
                         Expanded(
                           child: body,
                         ),
-                        if (footer != null) footer!,
+                        if (footer != null) ...{footer!},
                       ],
                     ),
                   ),
@@ -100,7 +100,7 @@ class DialogHeader extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: colorScheme.outline.withOpacity(0.12),
+            color: colorScheme.outline.withValues(alpha:0.12),
           ),
         ),
       ),
@@ -110,7 +110,7 @@ class DialogHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: (iconColor ?? colorScheme.primary).withOpacity(0.08),
+                color: (iconColor ?? colorScheme.primary).withValues(alpha:0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: iconColor ?? colorScheme.primary, size: 20),
@@ -125,7 +125,7 @@ class DialogHeader extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          if (actions != null) ...actions!,
+          if (actions != null) ...?actions,
           const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.close_rounded),
@@ -185,7 +185,7 @@ class DialogFooter extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: colorScheme.outline.withOpacity(0.12),
+            color: colorScheme.outline.withValues(alpha:0.12),
           ),
         ),
       ),
@@ -247,7 +247,7 @@ class FormSection extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Divider(height: 1, color: themeColor.withOpacity(0.15)),
+          child: Divider(height: 1, color: themeColor.withValues(alpha:0.15)),
         ),
       ],
     );
@@ -477,7 +477,7 @@ class AppDropdown<T> extends StatelessWidget {
     final safeValue = (value != null && hasMatch) ? value : null;
 
     return DropdownButtonFormField<T>(
-      value: safeValue,
+      initialValue: safeValue,
       items: uniqueItems,
       onChanged: onChanged,
       validator: (val) {
@@ -595,7 +595,7 @@ class SecondaryButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
         side: BorderSide(
-          color: colorScheme.outline.withOpacity(0.24),
+          color: colorScheme.outline.withValues(alpha:0.24),
         ),
       ),
     );

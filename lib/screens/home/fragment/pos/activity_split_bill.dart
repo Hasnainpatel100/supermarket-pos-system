@@ -51,16 +51,24 @@ class _ActivitySplitBillState extends State<ActivitySplitBill>
   @override
   void dispose() {
     _tabController.dispose();
-    for (final c in _nameCtrl)   c.dispose();
-    for (final c in _amountCtrl) c.dispose();
+    for (final c in _nameCtrl) {
+      c.dispose();
+    }
+    for (final c in _amountCtrl) {
+      c.dispose();
+    }
     super.dispose();
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   void _initPersons(int n) {
-    for (final c in _nameCtrl)   c.dispose();
-    for (final c in _amountCtrl) c.dispose();
+    for (final c in _nameCtrl) {
+      c.dispose();
+    }
+    for (final c in _amountCtrl) {
+      c.dispose();
+    }
     _nameCtrl.clear();
     _amountCtrl.clear();
     _modes.clear();
@@ -122,7 +130,9 @@ class _ActivitySplitBillState extends State<ActivitySplitBill>
     // Populate BillSession split fields
     session.rxPaymentMode.value = 'Split';
     session.rxSplitCount.value  = _personCount;
-    for (final c in session.splitControllers) c.dispose();
+    for (final c in session.splitControllers) {
+      c.dispose();
+    }
     session.splitControllers.clear();
     session.rxSplitAmounts.clear();
     session.rxSplitModes.clear();
@@ -255,10 +265,10 @@ class _BottomBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(
         color: cs.surface,
-        border: Border(top: BorderSide(color: cs.outlineVariant.withOpacity(0.3))),
+        border: Border(top: BorderSide(color: cs.outlineVariant.withValues(alpha:0.3))),
         boxShadow: [
           BoxShadow(
-              color: cs.shadow.withOpacity(0.1),
+              color: cs.shadow.withValues(alpha:0.1),
               blurRadius: 12,
               offset: const Offset(0, -4)),
         ],
@@ -272,9 +282,9 @@ class _BottomBar extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                border: Border.all(color: Colors.orange.withValues(alpha:0.3)),
               ),
               child: Row(
                 children: [
@@ -402,10 +412,10 @@ class _CountCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.3)),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha:0.3)),
         boxShadow: [
           BoxShadow(
-              color: cs.shadow.withOpacity(0.05), blurRadius: 8)
+              color: cs.shadow.withValues(alpha:0.05), blurRadius: 8)
         ],
       ),
       child: Row(
@@ -430,7 +440,7 @@ class _CountCard extends StatelessWidget {
           // Stepper
           Container(
             decoration: BoxDecoration(
-              border: Border.all(color: cs.outlineVariant.withOpacity(0.4)),
+              border: Border.all(color: cs.outlineVariant.withValues(alpha:0.4)),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -489,7 +499,7 @@ class _StepBtn extends StatelessWidget {
             size: 18,
             color: enabled
                 ? cs.onSurface
-                : cs.onSurfaceVariant.withOpacity(0.3)),
+                : cs.onSurfaceVariant.withValues(alpha:0.3)),
       ),
     );
   }
@@ -529,9 +539,9 @@ class _PersonCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha:0.25)),
         boxShadow: [
-          BoxShadow(color: cs.shadow.withOpacity(0.05), blurRadius: 8)
+          BoxShadow(color: cs.shadow.withValues(alpha:0.05), blurRadius: 8)
         ],
       ),
       child: Column(
@@ -540,7 +550,7 @@ class _PersonCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha:0.08),
               borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(14)),
             ),
@@ -575,7 +585,7 @@ class _PersonCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(Icons.edit_rounded, size: 14, color: color.withOpacity(0.5)),
+                Icon(Icons.edit_rounded, size: 14, color: color.withValues(alpha:0.5)),
               ],
             ),
           ),
@@ -616,7 +626,7 @@ class _PersonCard extends StatelessWidget {
                           ),
                           enabledBorder: UnderlineInputBorder(
                               borderSide:
-                                  BorderSide(color: color.withOpacity(0.3),
+                                  BorderSide(color: color.withValues(alpha:0.3),
                                       width: 2)),
                           focusedBorder: UnderlineInputBorder(
                               borderSide:
@@ -643,7 +653,7 @@ class _PersonCard extends StatelessWidget {
                               fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
-                        value: mode,
+                        initialValue: mode,
                         isDense: true,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
@@ -651,7 +661,7 @@ class _PersonCard extends StatelessWidget {
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                                color: cs.outlineVariant.withOpacity(0.4)),
+                                color: cs.outlineVariant.withValues(alpha:0.4)),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 10),
@@ -720,7 +730,7 @@ class _ItemWiseTab extends StatelessWidget {
             children: [
               Icon(Icons.shopping_cart_outlined,
                   size: 48,
-                  color: cs.onSurfaceVariant.withOpacity(0.4)),
+                  color: cs.onSurfaceVariant.withValues(alpha:0.4)),
               const SizedBox(height: 12),
               Text('No items in cart',
                   style: TextStyle(
@@ -738,7 +748,7 @@ class _ItemWiseTab extends StatelessWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: personCount,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
               itemBuilder: (ctx, i) {
                 final col   = palette[i % palette.length];
                 final pName = names.length > i
@@ -749,9 +759,9 @@ class _ItemWiseTab extends StatelessWidget {
                   width: 130,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: col.withOpacity(0.08),
+                    color: col.withValues(alpha:0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: col.withOpacity(0.25)),
+                    border: Border.all(color: col.withValues(alpha:0.25)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -819,10 +829,10 @@ class _ItemWiseTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: cs.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: col.withOpacity(0.25)),
+                border: Border.all(color: col.withValues(alpha:0.25)),
                 boxShadow: [
                   BoxShadow(
-                      color: cs.shadow.withOpacity(0.04),
+                      color: cs.shadow.withValues(alpha:0.04),
                       blurRadius: 6)
                 ],
               ),
@@ -856,9 +866,9 @@ class _ItemWiseTab extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: col.withOpacity(0.08),
+                      color: col.withValues(alpha:0.08),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: col.withOpacity(0.3)),
+                      border: Border.all(color: col.withValues(alpha:0.3)),
                     ),
                     child: DropdownButton<int>(
                       value: assigned,

@@ -108,7 +108,7 @@ class PosItemCard extends StatelessWidget {
                               BoxShadow(
                                 color:
                                     (isOutOfStock ? Colors.red : Colors.green)
-                                        .withOpacity(0.3),
+                                        .withValues(alpha:0.3),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),

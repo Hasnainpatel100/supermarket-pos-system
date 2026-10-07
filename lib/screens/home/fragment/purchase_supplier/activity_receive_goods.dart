@@ -294,7 +294,6 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final status = PurchaseStatus.values[_purchase.status ?? 0];
 
     return AppDialog(
@@ -510,7 +509,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
                           color: locked
                               ? Colors.grey.shade100
                               : _invoiceDateMs != null
-                              ? Colors.indigo.withOpacity(0.04)
+                              ? Colors.indigo.withValues(alpha:0.04)
                               : Colors.transparent,
                         ),
                         child: Row(children: [
@@ -857,7 +856,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
                         ? 'Invoice exceeds PO'
                         : 'Invoice below PO',
                     style: TextStyle(
-                        fontSize: 10, color: diffColor.withOpacity(0.8)),
+                        fontSize: 10, color: diffColor.withValues(alpha:0.8)),
                   )
                       : null,
                 ),
@@ -902,9 +901,9 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
+        color: color.withValues(alpha:0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.15)),
+        border: Border.all(color: color.withValues(alpha:0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -991,7 +990,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(children: [
@@ -1083,7 +1082,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.12),
+              color: Colors.teal.withValues(alpha:0.12),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
@@ -1156,7 +1155,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
                     ),
                     borderRadius: BorderRadius.circular(8),
                     color: b.expiryDateMs != null
-                        ? Colors.green.withOpacity(0.04)
+                        ? Colors.green.withValues(alpha:0.04)
                         : null,
                   ),
                   child: Row(children: [
@@ -1222,10 +1221,10 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: isOver
-            ? Colors.red.withOpacity(0.06)
+            ? Colors.red.withValues(alpha:0.06)
             : isMatch
-            ? Colors.green.withOpacity(0.06)
-            : Colors.blue.withOpacity(0.04),
+            ? Colors.green.withValues(alpha:0.06)
+            : Colors.blue.withValues(alpha:0.04),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isOver
@@ -1343,7 +1342,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha:0.1),
             borderRadius: BorderRadius.circular(8)),
         child: Text(value,
             style: TextStyle(
@@ -1356,7 +1355,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha:0.08),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(text,

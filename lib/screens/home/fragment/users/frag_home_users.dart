@@ -518,7 +518,7 @@ Widget _permissionList(
                     ),
                   );
                 },
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     Divider(height: 1, color: Colors.grey.shade100),
               ),
             ),

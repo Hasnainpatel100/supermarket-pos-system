@@ -1,0 +1,25 @@
+﻿Analyzing 4 items...                                            
+
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialog_print_barcode.dart:285:71 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialog_print_barcode.dart:364:72 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialog_print_barcode.dart:485:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialog_print_barcode.dart:485:67 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\dialog_print_barcode.dart:516:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:37:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:65:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:96:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:134:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\home\fragment\item\fragment_home_item.dart:550:49 - deprecated_member_use
+
+flutter : 10 issues found. (ran in 3.5s)
+At line:1 char:1
++ flutter analyze lib/screens/home/fragment/it
+em/controller_home_item.d ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( 
+   10 issues found. (ran in 3.5s):String) []  
+  , RemoteException
+    + FullyQualifiedErrorId : NativeCommandEr 
+   ror
+ 

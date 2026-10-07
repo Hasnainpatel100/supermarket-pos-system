@@ -1,0 +1,17 @@
+{
+  "worktrees": {
+    "wt-1774691704663-1": {
+      "branch": "fortune-tune",
+      "path": "h:\\gate\\super_market-main\\.kilo\\worktrees\\fortune-tune",
+      "parentBranch": "feature/expenses",
+      "createdAt": "2026-03-28T09:55:04.663Z",
+      "remote": "origin"
+    }
+  },
+  "sessions": {
+    "ses_2cc219abcffePSUiq48JWHt6lq": {
+      "worktreeId": "wt-1774691704663-1",
+      "createdAt": "2026-03-28T09:55:06.228Z"
+    }
+  }
+}

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../model/model_brand.dart';
 import '../../../../service/service_brand_context.dart';
 import '../../../../util/snackbar_util.dart';
+import '../../../../widget/gradient_app_bar_title.dart';
 import 'controller_home_brand.dart';
 
 class FragmentHomeBrand extends StatelessWidget {
@@ -18,50 +19,11 @@ class FragmentHomeBrand extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.indigo.shade400, Colors.indigo.shade700],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.indigo.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.branding_watermark_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'brand_management'.tr,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                Text(
-                  'manage_brands_subtitle'.tr,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        title: GradientAppBarTitle(
+          icon: Icons.branding_watermark_rounded,
+          title: 'brand_management'.tr,
+          subtitle: 'manage_brands_subtitle'.tr,
+          gradientColors: [Colors.indigo.shade400, Colors.indigo.shade700],
         ),
         actions: [
           // ─── API Config Button ───

@@ -26,12 +26,9 @@ class AppThemes {
         onErrorContainer: Color(0xFF991B1B),
         surface: Colors.white,
         onSurface: Color(0xFF0F172A),        // Slate 900
-        surfaceVariant: Color(0xFFE2EBE5),
         onSurfaceVariant: Color(0xFF3F4E46),  // Muted dark slate-green
         outline: Color(0xFFCBD5E1),          // Slate 300
         outlineVariant: Color(0xFFE2E8F0),
-        background: Color(0xFFF4F7F5),       // Calm soft off-white background
-        onBackground: Color(0xFF1E293B),     // Slate 800
         surfaceContainerLowest: Color(0xFFFAFAFA), // Softest tinted white
         surfaceContainerLow: Color(0xFFF4F7F5),
         surfaceContainer: Color(0xFFEDF1EE),
@@ -59,12 +56,9 @@ class AppThemes {
         onErrorContainer: Color(0xFFFEE2E2),
         surface: Color(0xFF141A17),          // Dark teal-grey surface
         onSurface: Color(0xFFFAFAFA),
-        surfaceVariant: Color(0xFF202A25),
         onSurfaceVariant: Color(0xFFC0CDC6),
         outline: Color(0xFF3E4E46),
         outlineVariant: Color(0xFF2E3B35),
-        background: Color(0xFF0C110E),       // Elegant dark teal-grey background
-        onBackground: Color(0xFFF4F7F5),
         surfaceContainerLowest: Color(0xFF090D0B), // Darkest container surface
         surfaceContainerLow: Color(0xFF0F1412),
         surfaceContainer: Color(0xFF141A17),
@@ -467,7 +461,7 @@ class AppThemes {
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: brightness == Brightness.light
             ? baseColorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
-            : baseColorScheme.background,
+            : baseColorScheme.surface,
         selectedIconTheme: IconThemeData(color: baseColorScheme.primary),
         unselectedIconTheme: IconThemeData(color: baseColorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
         selectedLabelTextStyle: GoogleFonts.plusJakartaSans(

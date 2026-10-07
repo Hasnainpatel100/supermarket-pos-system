@@ -709,8 +709,10 @@ class _DashCard extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const Spacer(),
-              if (trailing != null) trailing!,
+              if (trailing != null) ...[
+                const Spacer(),
+                trailing!,
+              ],
             ],
           ),
           SizedBox(height: isLarge ? 14 : 12),

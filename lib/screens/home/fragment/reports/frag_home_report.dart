@@ -39,7 +39,7 @@ class FragHomeReport extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.teal.withOpacity(0.3),
+                        color: Colors.teal.withValues(alpha:0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -128,7 +128,7 @@ class FragHomeReport extends StatelessWidget {
                     width: 200,
                     child: Obx(
                       () => DropdownButtonFormField<ReportType>(
-                        value: controller.rxReportType.value,
+                        initialValue: controller.rxReportType.value,
                         decoration: InputDecoration(
                           labelText: 'report_type'.tr,
                           labelStyle: TextStyle(
@@ -427,7 +427,7 @@ class FragHomeReport extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.teal.withOpacity(0.1),
+                  color: Colors.teal.withValues(alpha:0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -464,10 +464,10 @@ class FragHomeReport extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Icon(icon, size: 16, color: color.withOpacity(0.8)),
+            child: Icon(icon, size: 16, color: color.withValues(alpha:0.8)),
           ),
           const SizedBox(width: 8),
           Text(
@@ -645,7 +645,7 @@ class _ActionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color.withOpacity(0.08),
+      color: color.withValues(alpha:0.08),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
@@ -695,7 +695,7 @@ class _SummaryItem extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: color.withOpacity(0.7)),
+            Icon(icon, size: 12, color: color.withValues(alpha:0.7)),
             const SizedBox(width: 4),
             Text(
               label,

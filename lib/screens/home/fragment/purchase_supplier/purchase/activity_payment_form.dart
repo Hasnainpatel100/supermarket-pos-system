@@ -296,7 +296,6 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
   // ─── build ─────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isFullyPaid = _outstanding <= 0;
 
     return AppDialog(
@@ -420,7 +419,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
         const SizedBox(width: 8),
         Switch.adaptive(
           value: _isSplitMode,
-          activeColor: Colors.green.shade600,
+          activeThumbColor: Colors.green.shade600,
           onChanged: (_) =>
           _isSplitMode ? _disableSplit() : _enableSplit(),
         ),
@@ -867,7 +866,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
               boxShadow: isSelected
                   ? [
                 BoxShadow(
-                  color: Colors.green.withOpacity(0.25),
+                  color: Colors.green.withValues(alpha:0.25),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 )
@@ -930,7 +929,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.04),
+        color: Colors.green.withValues(alpha:0.04),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.green.shade100),
       ),
@@ -938,7 +937,7 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
+            color: Colors.green.withValues(alpha:0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(_modeIcon(mode),
@@ -993,53 +992,6 @@ class _ActivityPaymentFormState extends State<ActivityPaymentForm> {
               color: Colors.green.shade700),
         ),
       ]),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────
-  //  SAVE BUTTON
-  // ─────────────────────────────────────────────────────────
-
-  Widget _buildSaveButton() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-            colors: [Colors.green.shade500, Colors.green.shade800]),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _isSaving ? null : _save,
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 24, vertical: 14),
-            child: Row(children: [
-              _isSaving
-                  ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2))
-                  : const Icon(Icons.check_rounded,
-                  color: Colors.white, size: 18),
-              const SizedBox(width: 8),
-              Text('Record Payment'.tr,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold)),
-            ]),
-          ),
-        ),
-      ),
     );
   }
 

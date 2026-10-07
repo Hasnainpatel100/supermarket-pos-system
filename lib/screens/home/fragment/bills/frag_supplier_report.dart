@@ -117,7 +117,7 @@ class FragSupplierReport extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blue.withOpacity(0.3),
+                  color: Colors.blue.withValues(alpha:0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -140,9 +140,9 @@ class FragSupplierReport extends StatelessWidget {
               Obx(() => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withOpacity(0.18) : Colors.indigo.shade50,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withValues(alpha:0.18) : Colors.indigo.shade50,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withOpacity(0.35) : Colors.indigo.shade100),
+                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withValues(alpha:0.35) : Colors.indigo.shade100),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -237,7 +237,7 @@ class FragSupplierReport extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         scrollDirection: Axis.horizontal,
         itemCount: SupplierReportType.values.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final type = SupplierReportType.values[index];
           return Obx(() {
@@ -295,7 +295,7 @@ class FragSupplierReport extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: isDark ? Border.all(color: colorScheme.outlineVariant) : null,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(isDark ? 0.2 : 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha:isDark ? 0.2 : 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: IconButton(
@@ -321,8 +321,8 @@ class FragSupplierReport extends StatelessWidget {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final effectiveColor = isDark && color is MaterialColor ? color.shade300 : color;
-    final effectiveBg = isDark ? color.withOpacity(0.18) : bgColor;
-    final effectiveBorder = isDark ? color.withOpacity(0.35) : borderColor;
+    final effectiveBg = isDark ? color.withValues(alpha:0.18) : bgColor;
+    final effectiveBorder = isDark ? color.withValues(alpha:0.35) : borderColor;
 
     return InkWell(
       onTap: onTap,
@@ -373,14 +373,14 @@ class FragSupplierReport extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.3),
+                    color: primaryColor.withValues(alpha:0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                    color: Colors.black.withValues(alpha:isDark ? 0.2 : 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -421,7 +421,7 @@ class FragSupplierReport extends StatelessWidget {
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                  BoxShadow(color: Colors.black.withValues(alpha:0.05), blurRadius: 10, offset: const Offset(0, 4)),
                 ],
               ),
               child: TextField(
@@ -485,7 +485,7 @@ class FragSupplierReport extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? colorScheme.outlineVariant : Colors.grey.shade200),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.black.withValues(alpha:0.05), blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
             child: Row(
@@ -522,7 +522,7 @@ class FragSupplierReport extends StatelessWidget {
     return DataTable(
       columnSpacing: 16,
       horizontalMargin: 16,
-      headingRowColor: WidgetStateProperty.all(colorScheme.primary.withOpacity(0.04)),
+      headingRowColor: WidgetStateProperty.all(colorScheme.primary.withValues(alpha:0.04)),
       headingTextStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: colorScheme.onSurface),
       dividerThickness: 0.5,
       dataRowMaxHeight: 52,
@@ -601,8 +601,8 @@ class FragSupplierReport extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: color.withOpacity(isDark ? 0.2 : 0.1), borderRadius: BorderRadius.circular(6)),
-            child: Icon(icon, size: 14, color: isDark && color is MaterialColor ? color.shade300 : color.withOpacity(0.8)),
+            decoration: BoxDecoration(color: color.withValues(alpha:isDark ? 0.2 : 0.1), borderRadius: BorderRadius.circular(6)),
+            child: Icon(icon, size: 14, color: isDark && color is MaterialColor ? color.shade300 : color.withValues(alpha:0.8)),
           ),
           const SizedBox(width: 6),
           Text(label, style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 12)),
@@ -616,9 +616,9 @@ class FragSupplierReport extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(isDark ? 0.2 : 0.1),
+        color: color.withValues(alpha:isDark ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(isDark ? 0.4 : 0.25)),
+        border: Border.all(color: color.withValues(alpha:isDark ? 0.4 : 0.25)),
       ),
       child: Text(text, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? color.shade300 : color.shade700)),
     );
@@ -651,9 +651,9 @@ class FragSupplierReport extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha:0.3)),
       ),
       child: Text(label.tr, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color.shade700)),
     );
@@ -679,7 +679,7 @@ class FragSupplierReport extends StatelessWidget {
               ),
               shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: Colors.blue.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
+                BoxShadow(color: Colors.blue.withValues(alpha:0.1), blurRadius: 20, offset: const Offset(0, 10)),
               ],
             ),
             child: Icon(Icons.supervisor_account_rounded, size: 64, color: Colors.blue.shade400),
@@ -717,7 +717,7 @@ class FragSupplierReport extends StatelessWidget {
               Obx(() => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.withOpacity(0.1),
+                  color: Colors.indigo.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -792,7 +792,7 @@ class _SupplierSummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: data.gradientColors.first.withOpacity(0.3),
+            color: data.gradientColors.first.withValues(alpha:0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -803,7 +803,7 @@ class _SupplierSummaryCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha:0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(data.icon, color: Colors.white, size: 18),
@@ -820,7 +820,7 @@ class _SupplierSummaryCard extends StatelessWidget {
                 ),
                 Text(
                   data.label.tr,
-                  style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.8)),
+                  style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha:0.8)),
                 ),
               ],
             ),

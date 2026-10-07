@@ -166,7 +166,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                               child: DropdownSearch<EntitySupplier>(
                                 selectedItem: _selectedSupplier,
                                 items: _suppliers,
-                                itemAsString: (s) => s?.name ?? '',
+                                itemAsString: (s) => s.name ?? '',
                                 popupProps: PopupProps.menu(
                                   showSearchBox: true, // 🔥 THIS ENABLES SEARCH
                                   searchFieldProps: TextFieldProps(
@@ -223,10 +223,10 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.primary.withOpacity(0.08),
+                                    color: colorScheme.primary.withValues(alpha:0.08),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                        color: colorScheme.primary.withOpacity(0.15)),
+                                        color: colorScheme.primary.withValues(alpha:0.15)),
                                   ),
                                   child: Icon(Icons.add_rounded,
                                       color: colorScheme.primary, size: 20),
@@ -442,7 +442,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                 selectedItem: row.selectedItem,
                 items: _items,
                 itemAsString: (item) =>
-                '${item?.name ?? ''} (${item?.unit ?? ''})',
+                '${item.name ?? ''} (${item.unit ?? ''})',
 
                 popupProps: PopupProps.menu(
                   showSearchBox: true,
@@ -528,9 +528,9 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 13),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple.withOpacity(0.06),
+                  color: Colors.deepPurple.withValues(alpha:0.06),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.deepPurple.withOpacity(0.2)),
+                  border: Border.all(color: Colors.deepPurple.withValues(alpha:0.2)),
                 ),
                 child: Text(
                   '₹ ${((double.tryParse(row.qtyCtrl.text) ?? 0) * (double.tryParse(row.costCtrl.text) ?? 0)).toStringAsFixed(2)}',

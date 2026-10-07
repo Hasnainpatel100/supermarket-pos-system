@@ -310,9 +310,9 @@ class DialogPrintBarcode extends StatelessWidget {
                                                 child: Container(
                                                   padding: const EdgeInsets.symmetric(vertical: 8),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.deepPurple.withOpacity(0.08),
+                                                    color: Colors.deepPurple.withValues(alpha:0.08),
                                                     borderRadius: BorderRadius.circular(8),
-                                                    border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
+                                                    border: Border.all(color: Colors.deepPurple.withValues(alpha:0.3)),
                                                   ),
                                                   alignment: Alignment.center,
                                                   child: Text(
@@ -349,9 +349,9 @@ class DialogPrintBarcode extends StatelessWidget {
                                                 child: Container(
                                                   padding: const EdgeInsets.symmetric(vertical: 8),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.indigo.withOpacity(0.08),
+                                                    color: Colors.indigo.withValues(alpha:0.08),
                                                     borderRadius: BorderRadius.circular(8),
-                                                    border: Border.all(color: Colors.indigo.withOpacity(0.3)),
+                                                    border: Border.all(color: Colors.indigo.withValues(alpha:0.3)),
                                                   ),
                                                   alignment: Alignment.center,
                                                   child: Text(
@@ -380,10 +380,10 @@ class DialogPrintBarcode extends StatelessWidget {
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
-                                            colors: [Colors.teal.withOpacity(0.1), Colors.green.withOpacity(0.1)],
+                                            colors: [Colors.teal.withValues(alpha:0.1), Colors.green.withValues(alpha:0.1)],
                                           ),
                                           borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: Colors.teal.withOpacity(0.3)),
+                                          border: Border.all(color: Colors.teal.withValues(alpha:0.3)),
                                         ),
                                         child: Row(
                                           children: [
@@ -428,7 +428,7 @@ class DialogPrintBarcode extends StatelessWidget {
                                                 borderRadius: BorderRadius.circular(6),
                                               ),
                                               child: Text(
-                                                '${cols}×${rows}',
+                                                '$cols×$rows',
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.bold,
@@ -537,7 +537,7 @@ class DialogPrintBarcode extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: Colors.grey.shade300),
                                       boxShadow: [
-                                        BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2)),
+                                        BoxShadow(color: Colors.black.withValues(alpha:0.06), blurRadius: 8, offset: const Offset(0, 2)),
                                       ],
                                     ),
                                     padding: const EdgeInsets.all(16),
@@ -628,7 +628,7 @@ class DialogPrintBarcode extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(colors: [Colors.deepPurple.shade400, Colors.indigo.shade600]),
                         borderRadius: BorderRadius.circular(10),
-                        boxShadow: [BoxShadow(color: Colors.deepPurple.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
+                        boxShadow: [BoxShadow(color: Colors.deepPurple.withValues(alpha:0.3), blurRadius: 8, offset: const Offset(0, 3))],
                       ),
                       child: ElevatedButton.icon(
                         onPressed: () => _printBarcode(ctrl, barcodeData),
@@ -1001,7 +1001,7 @@ class _OptionChip extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.10) : Colors.grey.withOpacity(0.05),
+          color: selected ? color.withValues(alpha:0.10) : Colors.grey.withValues(alpha:0.05),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: selected ? color : Colors.grey.shade300, width: selected ? 1.5 : 1),
         ),
@@ -1032,7 +1032,7 @@ class _SizeChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? Colors.deepPurple.withOpacity(0.10) : Colors.transparent,
+          color: selected ? Colors.deepPurple.withValues(alpha:0.10) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: selected ? Colors.deepPurple.shade400 : Colors.grey.shade300, width: selected ? 1.5 : 1),
         ),

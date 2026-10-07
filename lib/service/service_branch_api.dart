@@ -282,7 +282,7 @@ class ServiceBranchApi {
     try {
       // 1. If a specific valid brandId is requested, query it directly
       if (brandId != null && RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(brandId)) {
-        return getBranchesByBrand(brandId, page: page, limit: limit);
+        return await getBranchesByBrand(brandId, page: page, limit: limit);
       }
 
       // 2. Fetch all brands first

@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:excel/excel.dart';
+import 'package:flutter/foundation.dart';
 
 void main() {
-  print('Starting 10,000 items Excel dataset generation via package:excel...');
+  debugPrint('Starting 10,000 items Excel dataset generation via package:excel...');
 
   final random = Random(42);
 
@@ -216,7 +217,7 @@ void main() {
     skuCounter++;
   }
 
-  print('Generated ${items.length} distinct products in memory. Creating Excel files...');
+  debugPrint('Generated ${items.length} distinct products in memory. Creating Excel files...');
 
   // 1. Current Stock (10,000 items)
   {
@@ -244,7 +245,7 @@ void main() {
     final bytes = excel.encode()!;
     final path = 'h:/POS/super_market-main/inventory_report_current_stock_10000.xlsx';
     File(path).writeAsBytesSync(bytes);
-    print('Created $path (${bytes.length} bytes)');
+    debugPrint('Created $path (${bytes.length} bytes)');
   }
 
   // 2. Stock Valuation (10,000 items)
@@ -273,7 +274,7 @@ void main() {
     final bytes = excel.encode()!;
     final path = 'h:/POS/super_market-main/inventory_report_stock_valuation_10000.xlsx';
     File(path).writeAsBytesSync(bytes);
-    print('Created $path (${bytes.length} bytes)');
+    debugPrint('Created $path (${bytes.length} bytes)');
   }
 
   // 3. Item Master (10,000 items)
@@ -309,11 +310,11 @@ void main() {
     final bytes = excel.encode()!;
     final path = 'h:/POS/super_market-main/sample_items_10000.xlsx';
     File(path).writeAsBytesSync(bytes);
-    print('Created $path (${bytes.length} bytes)');
+    debugPrint('Created $path (${bytes.length} bytes)');
   }
 
-  print('All 3 files generated successfully! Testing decoding with package:excel...');
+  debugPrint('All 3 files generated successfully! Testing decoding with package:excel...');
   final testBytes = File('h:/POS/super_market-main/inventory_report_current_stock_10000.xlsx').readAsBytesSync();
   final testDecoded = Excel.decodeBytes(testBytes);
-  print('Decoded Current Stock table count: ${testDecoded.tables.length}, sheet rows: ${testDecoded.tables.values.first.rows.length}');
+  debugPrint('Decoded Current Stock table count: ${testDecoded.tables.length}, sheet rows: ${testDecoded.tables.values.first.rows.length}');
 }

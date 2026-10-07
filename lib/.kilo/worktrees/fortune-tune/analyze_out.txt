@@ -1,0 +1,29 @@
+﻿Analyzing activity_item_form.dart...                            
+
+warning - Unused import: '../../model/entity_tax.dart' - lib\screens\item_form\activity_item_form.dart:7:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:51:70 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\item_form\activity_item_form.dart:115:31 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:297:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:299:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:310:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:312:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:363:82 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\item_form\activity_item_form.dart:414:7 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\item_form\activity_item_form.dart:516:11 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:669:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:671:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\item_form\activity_item_form.dart:702:35 - deprecated_member_use
+
+flutter : 13 issues found. (ran in 2.0s)
+At line:1 char:1
++ flutter analyze 
+lib/screens/item_form/activity_item_form.dart 
+2>&1 |  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( 
+   13 issues found. (ran in 2.0s):String) []  
+  , RemoteException
+    + FullyQualifiedErrorId : NativeCommandEr 
+   ror
+ 

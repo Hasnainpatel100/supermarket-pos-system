@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:super_market/widget/gradient_action_button.dart';
+import 'package:super_market/widget/gradient_app_bar_title.dart';
+import 'package:super_market/widget/generic_empty_state.dart';
+import 'package:super_market/widget/search_app_bar_field.dart';
 import 'package:super_market/widget/my_card.dart';
 
 import '../../../../model/entity_item.dart';
@@ -22,35 +26,11 @@ class FragmentHomeItem extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue.shade400, Colors.blue.shade700],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2)),
-                ],
-              ),
-              child: const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('item_list_title'.tr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                Text(
-                  'manage_inventory'.tr,
-                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
-          ],
+        title: GradientAppBarTitle(
+          icon: Icons.inventory_2_rounded,
+          title: 'item_list_title'.tr,
+          subtitle: 'manage_inventory'.tr,
+          gradientColors: [Colors.blue.shade400, Colors.blue.shade700],
         ),
         actions: [
           TextButton.icon(
@@ -62,100 +42,34 @@ class FragmentHomeItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
             ),
           ),
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.orange.shade400, Colors.orange.shade700],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => controller.importExcel(),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children:[
-                      Icon(Icons.file_upload_outlined, size: 18, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text('import'.tr, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          GradientActionButton(
+            icon: Icons.file_upload_outlined,
+            label: 'import'.tr,
+            gradientColors: [Colors.orange.shade400, Colors.orange.shade700],
+            onTap: controller.importExcel,
           ),
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.teal.shade400, Colors.teal.shade700],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.teal.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  await Get.dialog(
-                    const ActivityItemForm(),
-                    barrierDismissible: false,
-                  );
-                  controller.loadItems();
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.add_circle_outline_rounded, size: 18, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text('add_item'.tr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          GradientActionButton(
+            icon: Icons.add_circle_outline_rounded,
+            label: 'add_item'.tr,
+            gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
+            onTap: () async {
+              await Get.dialog(
+                const ActivityItemForm(),
+                barrierDismissible: false,
+              );
+              controller.loadItems();
+            },
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-            ),
-            child: TextField(
+          child: Obx(
+            () => SearchAppBarField(
               controller: controller.searchController,
-              decoration: InputDecoration(
-                hintText: 'search_item'.tr,
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                prefixIcon: Icon(Icons.search_rounded, color: Colors.blue.shade600, size: 22),
-                suffixIcon: Obx(
-                      () => controller.searchQuery.value.isNotEmpty
-                      ? IconButton(
-                    icon: Icon(Icons.close_rounded, color: Colors.red.shade400, size: 20),
-                    onPressed: controller.clearSearch,
-                  )
-                      : const SizedBox.shrink(),
-                ),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                filled: true,
-                fillColor: Theme.of(context).cardColor,
-              ),
+              hint: 'search_item'.tr,
               onChanged: controller.updateSearch,
+              onClear: controller.clearSearch,
+              hasQuery: controller.searchQuery.isNotEmpty,
             ),
           ),
         ),
@@ -163,26 +77,12 @@ class FragmentHomeItem extends StatelessWidget {
 
       body: Obx(
             () => controller.rxListItem.isEmpty
-            ? Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [Colors.blue.shade100, Colors.cyan.shade100]),
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
-                ),
-                child: Icon(Icons.inventory_2_outlined, size: 64, color: Colors.blue.shade400),
-              ),
-              const SizedBox(height: 16),
-              Text('No items found'.tr, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
-              const SizedBox(height: 6),
-              Text('Add a new item to get started'.tr, style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
-            ],
-          ),
-        )
+            ? const GenericEmptyState(
+                icon: Icons.inventory_2_outlined,
+                title: 'No items found',
+                subtitle: 'Add a new item to get started',
+                gradientColors: [Color(0xFFBFDBFE), Color(0xFFA5F3FC)],
+              )
             : Column(
           children: [
             Expanded(
@@ -524,7 +424,7 @@ class FragmentHomeItem extends StatelessWidget {
               const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: Colors.blue.withValues(alpha:0.1), borderRadius: BorderRadius.circular(10)),
                 child: Text('page_number'.trParams({'number': '${controller.currentPage.value + 1}'}),
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
                 ),
@@ -651,7 +551,7 @@ class _SortableHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isSelected ? iconColor.withOpacity(0.15) : bgColor,
+                  color: isSelected ? iconColor.withValues(alpha:0.15) : bgColor,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Icon(icon, size: 16, color: iconColor),

@@ -6,7 +6,6 @@ import '../../../../../model/entity_payment_schedule.dart';
 import '../../../../../model/entity_purchase.dart';
 import '../../../../../util/snackbar_util.dart';
 import '../../../../../widget/my_card.dart';
-import '../../../../../model/entity_payment_schedule.dart';
 import 'controller_home_purchase.dart';
 
 /// Screen to schedule future partial payments for a Purchase Order.
@@ -61,9 +60,6 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
 
   // ── computed ──
   double get _outstanding => _purchase.outstandingAmount;
-
-  double get _scheduledTotal =>
-      _schedules.fold(0, (s, e) => s + (e.amount ?? 0));
 
   double get _pendingScheduled => _schedules
       .where((e) => !e.isPaid)
@@ -208,7 +204,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.orange.withOpacity(0.3),
+                      color: Colors.orange.withValues(alpha:0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2)),
                 ],
@@ -296,9 +292,9 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
+        color: color.withValues(alpha:0.07),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha:0.2)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Icon(icon, size: 18, color: color),
@@ -418,7 +414,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.orange.withOpacity(0.3),
+                        color: Colors.orange.withValues(alpha:0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2)),
                   ],
@@ -495,10 +491,10 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
     dueDate != null ? DateFormat('dd MMM yyyy').format(dueDate) : '-';
 
     Color tileColor = isPaid
-        ? Colors.green.withOpacity(0.05)
+        ? Colors.green.withValues(alpha:0.05)
         : isOverdue
-        ? Colors.red.withOpacity(0.05)
-        : Colors.orange.withOpacity(0.04);
+        ? Colors.red.withValues(alpha:0.05)
+        : Colors.orange.withValues(alpha:0.04);
     Color borderColor = isPaid
         ? Colors.green.shade100
         : isOverdue
@@ -523,7 +519,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: accentColor.withOpacity(0.12),
+            color: accentColor.withValues(alpha:0.12),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -651,7 +647,7 @@ class _ActivityPartialScheduleState extends State<ActivityPartialSchedule> {
           style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: color.withOpacity(0.9))),
+              color: color.withValues(alpha:0.9))),
     ]);
   }
 }

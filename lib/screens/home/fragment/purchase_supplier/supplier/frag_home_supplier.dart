@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:super_market/widget/gradient_action_button.dart';
+import 'package:super_market/widget/gradient_app_bar_title.dart';
+import 'package:super_market/widget/my_card.dart';
+import 'package:super_market/widget/search_app_bar_field.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../util/snackbar_util.dart';
-import '../../../../../widget/my_card.dart';
 import 'activity_supplier_form.dart';
 import 'controller_home_supplier.dart';
 
@@ -19,145 +22,34 @@ class FragmentHomeSupplier extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.indigo.shade400, Colors.indigo.shade700],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.indigo.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.local_shipping_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Suppliers'.tr,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                Text(
-                  'Manage your vendor base'.tr,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        title: GradientAppBarTitle(
+          icon: Icons.local_shipping_rounded,
+          title: 'Suppliers'.tr,
+          subtitle: 'Manage your vendor base'.tr,
+          gradientColors: [Colors.indigo.shade400, Colors.indigo.shade700],
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.indigo.shade400, Colors.indigo.shade700],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.indigo.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  await Get.dialog(
-                    const ActivitySupplierForm(),
-                    barrierDismissible: false,
-                  );
-                  controller.loadSuppliers();
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.add_business_rounded,
-                          size: 18, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Text(
-                        'New Supplier'.tr,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          GradientActionButton(
+            icon: Icons.add_business_rounded,
+            label: 'New Supplier'.tr,
+            gradientColors: [Colors.indigo.shade400, Colors.indigo.shade700],
+            onTap: () async {
+              await Get.dialog(
+                const ActivitySupplierForm(),
+                barrierDismissible: false,
+              );
+              controller.loadSuppliers();
+            },
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: controller.searchController,
-              decoration: InputDecoration(
-                hintText: 'Search by name, phone or code...'.tr,
-                hintStyle:
-                TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                prefixIcon: Icon(Icons.search_rounded,
-                    color: Colors.indigo.shade600, size: 22),
-                suffixIcon: Obx(
-                      () => controller.searchQuery.value.isNotEmpty
-                      ? IconButton(
-                    icon: Icon(Icons.close_rounded,
-                        color: Colors.red.shade400, size: 20),
-                    onPressed: controller.clearSearch,
-                  )
-                      : const SizedBox.shrink(),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                    vertical: 14, horizontal: 20),
-                filled: true,
-                fillColor: Theme.of(context).cardColor,
-              ),
-              onChanged: controller.updateSearch,
-            ),
+          child: SearchAppBarField(
+            controller: controller.searchController,
+            hint: 'Search by name, phone or code...'.tr,
+            onChanged: controller.updateSearch,
+            onClear: controller.clearSearch,
+            hasQuery: controller.searchQuery.isNotEmpty,
           ),
         ),
       ),
@@ -473,7 +365,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.withOpacity(0.1),
+                  color: Colors.indigo.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -521,7 +413,7 @@ class FragmentHomeSupplier extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.indigo.withOpacity(0.1),
+                  color: Colors.indigo.withValues(alpha:0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -660,8 +552,8 @@ class FragmentHomeSupplier extends StatelessWidget {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: (s.totalOutstanding ?? 0) > 0.001
-                      ? Colors.red.withOpacity(0.06)
-                      : Colors.green.withOpacity(0.06),
+                      ? Colors.red.withValues(alpha:0.06)
+                      : Colors.green.withValues(alpha:0.06),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: (s.totalOutstanding ?? 0) > 0.001

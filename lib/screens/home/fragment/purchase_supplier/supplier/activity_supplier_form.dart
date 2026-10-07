@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../util/snackbar_util.dart';
-import '../../../../../widget/my_card.dart';
 import '../../../../../widget/app_dialog_components.dart';
 import 'controller_home_supplier.dart';
 
@@ -87,8 +86,6 @@ class _ActivitySupplierFormState extends State<ActivitySupplierForm> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return AppDialog(
       maxWidth: 600,
       maxHeight: 700,

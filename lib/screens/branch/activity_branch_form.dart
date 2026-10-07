@@ -484,7 +484,7 @@ class ActivityBranchForm extends StatelessWidget {
       }
 
       return DropdownButtonFormField<ModelBrand>(
-        value: selectedBrand,
+        initialValue: selectedBrand,
         decoration: InputDecoration(
           labelText: 'Brand *',
           hintText: 'Select a Brand',
@@ -613,7 +613,7 @@ class ActivityBranchForm extends StatelessWidget {
     );
 
     return DropdownButtonFormField<String>(
-      value: normalizedValue,
+      initialValue: normalizedValue,
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),

@@ -156,7 +156,7 @@ class ControllerHomePurchase extends GetxController {
     required String supplierName,
     required DateTime purchaseDate,
     DateTime? expectedDate,
-    required List<_PurchaseItemInput> items,
+    required List<PurchaseItemInput> items,
     String? notes,
     int? createdByUserId,
   }) {
@@ -594,10 +594,10 @@ class _PurchaseItemInput {
   final double orderedQty;
   final double unitCost;
 
-  _PurchaseItemInput({
+  const _PurchaseItemInput({
     required this.itemId,
     required this.itemName,
-    this.itemUnit,
+    required this.itemUnit,
     required this.orderedQty,
     required this.unitCost,
   });
@@ -611,13 +611,13 @@ class _ReceiveItemInput {
   final String? batchNo;
   final int? expiryDateUtcMs;
 
-  _ReceiveItemInput({
+  const _ReceiveItemInput({
     required this.itemId,
     required this.receivedQty,
     required this.unitCost,
     required this.purchaseItemId,
-    this.batchNo,
-    this.expiryDateUtcMs,
+    required this.batchNo,
+    required this.expiryDateUtcMs,
   });
 }
 

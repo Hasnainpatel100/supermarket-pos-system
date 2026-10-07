@@ -88,14 +88,16 @@ class ActivityItemForm extends StatelessWidget {
                               prefixIcon: Icons.unfold_more_rounded,
                               items: [
                                 ...controller.rxUnits.map((String u) {
-                                  String label = u;
-                                  if (u == 'pcs') label = 'unit_pcs'.tr;
-                                  else if (u == 'KG') label = 'unit_kg'.tr;
-                                  else if (u == 'g') label = 'unit_g'.tr;
-                                  else if (u == 'L') label = 'unit_l'.tr;
-                                  else if (u == 'ML') label = 'unit_ml'.tr;
+                                  final unitLabels = {
+                                    'pcs': 'unit_pcs'.tr,
+                                    'KG': 'unit_kg'.tr,
+                                    'g': 'unit_g'.tr,
+                                    'L': 'unit_l'.tr,
+                                    'ML': 'unit_ml'.tr,
+                                  };
+                                  final label = unitLabels[u] ?? u;
                                   return DropdownMenuItem(value: u, child: Text(label));
-                                }).toList(),
+                                }),
                                 DropdownMenuItem(
                                   value: '+ Create New',
                                   child: Row(
@@ -140,14 +142,16 @@ class ActivityItemForm extends StatelessWidget {
                         prefixIcon: Icons.unfold_more_rounded,
                         items: [
                           ...controller.rxUnits.map((String u) {
-                            String label = u;
-                            if (u == 'pcs') label = 'unit_pcs'.tr;
-                            else if (u == 'KG') label = 'unit_kg'.tr;
-                            else if (u == 'g') label = 'unit_g'.tr;
-                            else if (u == 'L') label = 'unit_l'.tr;
-                            else if (u == 'ML') label = 'unit_ml'.tr;
+                            final unitLabels2 = {
+                              'pcs': 'unit_pcs'.tr,
+                              'KG': 'unit_kg'.tr,
+                              'g': 'unit_g'.tr,
+                              'L': 'unit_l'.tr,
+                              'ML': 'unit_ml'.tr,
+                            };
+                            final label = unitLabels2[u] ?? u;
                             return DropdownMenuItem(value: u, child: Text(label));
-                          }).toList(),
+                          }),
                           DropdownMenuItem(
                             value: '+ Create New',
                             child: Row(
@@ -620,7 +624,7 @@ class _TaxSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           DropdownButtonFormField<int?>(
-            value: presets.any((t) => t.id == selectedId) ? selectedId : null,
+            initialValue: presets.any((t) => t.id == selectedId) ? selectedId : null,
             decoration: InputDecoration(
               labelText: 'tax_rate'.tr,
               prefixIcon: Icon(Icons.percent_rounded, color: Colors.indigo.shade400, size: 20),
@@ -719,7 +723,7 @@ class _TaxSection extends StatelessWidget {
               controller: rateTc,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                labelText: 'rate'.tr + ' (%)',
+                labelText: '${'rate'.tr} (%)',
                 hintText: 'rate_hint'.tr,
                 suffixText: '%',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -735,7 +739,7 @@ class _TaxSection extends StatelessWidget {
               final tax = await controller.createTaxPreset(nameTc.text, rate);
               Get.back();
               if (tax != null) {
-                Get.snackbar('tax_created'.tr, '${tax.name} ${tax.rate}% ' + 'add'.tr, duration: const Duration(seconds: 2));
+                Get.snackbar('tax_created'.tr, '${tax.name} ${tax.rate}% ${'add'.tr}', duration: const Duration(seconds: 2));
               }
             },
             child: Text('create_and_apply'.tr),
@@ -773,9 +777,9 @@ class _TaxInfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha:0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha:0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -805,9 +809,9 @@ class _TaxTypeSelector extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: theme.colorScheme.secondaryContainer.withOpacity(0.25),
+          color: theme.colorScheme.secondaryContainer.withValues(alpha:0.25),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.4)),
+          border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha:0.4)),
         ),
         child: Row(
           children: [

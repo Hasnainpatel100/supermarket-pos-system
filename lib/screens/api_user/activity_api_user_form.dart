@@ -259,7 +259,7 @@ class ActivityApiUserForm extends StatelessWidget {
                           Expanded(
                             child: Obx(
                               () => DropdownButtonFormField<String>(
-                                value: controller.rxUserType.value,
+                                initialValue: controller.rxUserType.value,
                                 decoration: const InputDecoration(
                                   labelText: 'User Type *',
                                   prefixIcon: Icon(
@@ -288,7 +288,7 @@ class ActivityApiUserForm extends StatelessWidget {
                           Expanded(
                             child: Obx(
                               () => DropdownButtonFormField<String>(
-                                value: controller.rxRole.value,
+                                initialValue: controller.rxRole.value,
                                 decoration: const InputDecoration(
                                   labelText: 'Role *',
                                   prefixIcon: Icon(
@@ -327,7 +327,7 @@ class ActivityApiUserForm extends StatelessWidget {
                               final selectedBrand = controller.rxSelectedBrand.value;
 
                               return DropdownButtonFormField<ModelBrand>(
-                                value: brands.firstWhereOrNull((b) => b.id == selectedBrand?.id),
+                                initialValue: brands.firstWhereOrNull((b) => b.id == selectedBrand?.id),
                                 isExpanded: true,
                                 decoration: InputDecoration(
                                   labelText: 'Brand (MARKET) *',
@@ -386,7 +386,7 @@ class ActivityApiUserForm extends StatelessWidget {
                               final hasBrandSelected = controller.rxSelectedBrand.value != null;
 
                               return DropdownButtonFormField<ModelBranch>(
-                                value: branches.firstWhereOrNull((b) => b.id == selectedBranch?.id),
+                                initialValue: branches.firstWhereOrNull((b) => b.id == selectedBranch?.id),
                                 isExpanded: true,
                                 decoration: InputDecoration(
                                   labelText: 'Branch (MARKET) *',

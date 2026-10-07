@@ -38,7 +38,7 @@ class FragHomeBills extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.indigo.withOpacity(0.3),
+                        color: Colors.indigo.withValues(alpha:0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -70,9 +70,9 @@ class FragHomeBills extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withOpacity(0.18) : Colors.indigo.shade50,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withValues(alpha:0.18) : Colors.indigo.shade50,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withOpacity(0.35) : Colors.indigo.shade100),
+                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.indigo.withValues(alpha:0.35) : Colors.indigo.shade100),
                 ),
                         child: Row(
                           children: [
@@ -103,7 +103,7 @@ class FragHomeBills extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha:0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -136,7 +136,7 @@ class FragHomeBills extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha:0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -200,8 +200,8 @@ class FragHomeBills extends StatelessWidget {
                           boxShadow: [
                             BoxShadow(
                               color: isCustom
-                                  ? Colors.indigo.withOpacity(0.3)
-                                  : Colors.black.withOpacity(0.05),
+                                  ? Colors.indigo.withValues(alpha:0.3)
+                                  : Colors.black.withValues(alpha:0.05),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -384,7 +384,7 @@ class FragHomeBills extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.indigo.withOpacity(0.1),
+                  color: Colors.indigo.withValues(alpha:0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),

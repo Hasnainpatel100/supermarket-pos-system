@@ -893,7 +893,7 @@ class _PrinterTab extends StatelessWidget {
                               : 'select_a_printer'.tr,
                         ),
                         isExpanded: true,
-                        value: safeValue,
+                        initialValue: safeValue,
                         hint: Text(
                           printers.isEmpty
                               ? 'no_printers_tap_refresh'.tr
@@ -1005,7 +1005,7 @@ class _PrinterTab extends StatelessWidget {
                             icon: Icons.qr_code_scanner_outlined,
                           ),
                           isExpanded: true,
-                          value: controller.rxBarcodeType.value,
+                          initialValue: controller.rxBarcodeType.value,
                           items: const [
                             DropdownMenuItem(
                               value: '1D',
@@ -1056,7 +1056,7 @@ class _PrinterTab extends StatelessWidget {
                             icon: Icons.straighten_outlined,
                           ),
                           isExpanded: true,
-                          value: controller.rxPaperSize.value,
+                          initialValue: controller.rxPaperSize.value,
                           items: [
                             DropdownMenuItem(
                               value: '58mm',
@@ -1493,7 +1493,7 @@ class _PrinterTab extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  '${cols}×${rows}',
+                                  '$cols×$rows',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,

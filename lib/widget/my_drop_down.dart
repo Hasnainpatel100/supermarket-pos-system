@@ -20,7 +20,7 @@ class MyDropDown extends StatelessWidget {
     final safeValue = (value != null && uniqueItems.contains(value)) ? value : null;
 
     return DropdownButtonFormField<String>(
-      value: safeValue,
+      initialValue: safeValue,
       items: uniqueItems
           .map((e) => DropdownMenuItem(value: e, child: Text(e)))
           .toList(),

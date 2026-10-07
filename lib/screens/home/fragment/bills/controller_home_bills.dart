@@ -235,7 +235,7 @@ class ControllerHomeBills extends GetxController {
             Text("Pending Due: \u20B9${bill.dueAmount!.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Obx(() => DropdownButtonFormField<String>(
-              value: rxMode.value,
+              initialValue: rxMode.value,
               decoration: const InputDecoration(labelText: "Payment Mode", border: OutlineInputBorder()),
               items: const [
                 DropdownMenuItem(value: 'CASH', child: Text('CASH')),

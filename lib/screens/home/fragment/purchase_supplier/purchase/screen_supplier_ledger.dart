@@ -3,18 +3,16 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../enums/enum_payement_mode.dart';
-import '../../../../../model/entity_payment.dart';
 import '../../../../../model/entity_purchase.dart';
 import '../../../../../widget/my_card.dart';
 import 'controller_home_purchase.dart';
-import 'service_payment_receipt.dart'; // for export
 
 /// Full ledger / running-balance statement for one supplier.
 ///
 /// Pass supplierId (String) as Get.arguments.
 /// The controller must expose:
-///   - getPurchasesForSupplier(supplierId) → List<EntityPurchase>
-///   - getPaymentsForPurchase(purchaseId) → List<EntityPayment>
+///   - getPurchasesForSupplier(supplierId) -> List<`EntityPurchase`
+///   - getPaymentsForPurchase(purchaseId) -> List<`EntityPayment`
 class ScreenSupplierLedger extends StatefulWidget {
   const ScreenSupplierLedger({super.key});
 
@@ -111,10 +109,12 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
   // ── filtered entries ─────────────────────────────────────
   List<_LedgerEntry> get _filtered {
     return _ledgerEntries.where((e) {
-      if (_activeFilter == _LedgerFilter.invoices &&
-          e.type != _EntryType.invoice) return false;
-      if (_activeFilter == _LedgerFilter.payments &&
-          e.type != _EntryType.payment) return false;
+      if (_activeFilter == _LedgerFilter.invoices) {
+        if (e.type != _EntryType.invoice) return false;
+      }
+      if (_activeFilter == _LedgerFilter.payments) {
+        if (e.type != _EntryType.payment) return false;
+      }
       if (_dateFilter != null) {
         if (e.date.isBefore(_dateFilter!.start) ||
             e.date.isAfter(_dateFilter!.end.add(const Duration(days: 1)))) {
@@ -480,7 +480,6 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
     final totalPOs = _purchases.length;
     final unpaidPOs =
         _purchases.where((p) => p.outstandingAmount > 0.01).length;
-    final fullyPaidPOs = totalPOs - unpaidPOs;
     final oldestUnpaid = _purchases
         .where((p) => p.outstandingAmount > 0.01)
         .map((p) => p.createdAtUtcMs ?? double.maxFinite.toInt())
@@ -503,7 +502,7 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                  color: Colors.indigo.withOpacity(0.4),
+                  color: Colors.indigo.withValues(alpha:0.4),
                   blurRadius: 16,
                   offset: const Offset(0, 4)),
             ],
@@ -689,9 +688,9 @@ class _ScreenSupplierLedgerState extends State<ScreenSupplierLedger>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
+        color: color.withValues(alpha:0.07),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha:0.2)),
       ),
       child: Row(children: [
         Icon(icon, color: color, size: 22),

@@ -4,11 +4,11 @@ import 'package:intl/intl.dart';
 
 import '../../../../enums/enum_main_menu.dart';
 import '../../../../model/entity_shift_session.dart';
+import '../../../../util/app_colors.dart';
+import '../../../../util/app_spacing.dart';
 import '../../../../util/snackbar_util.dart';
-import '../../../expenses_form/activity_expenses_from.dart';
 import '../../controller_home.dart';
 import 'controller_home_account.dart';
-import 'dialog_cash_movement.dart';
 import 'dialog_close_day.dart';
 import 'dialog_close_shift.dart';
 import 'dialog_start_day_shift.dart';
@@ -18,118 +18,76 @@ class FragmentHomeAccount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ControllerHomeAccount controller = Get.put(ControllerHomeAccount());
+    final controller = Get.put(ControllerHomeAccount());
+    final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: isDark ? colorScheme.surface : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? cs.surface : AppColors.backgroundLight,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl, vertical: AppSpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Header Bar ──
-              _buildHeader(context, controller),
-
-              const SizedBox(height: 24),
-
-              // ── 6 KPI Cards ──
-              _buildKpiCards(context, controller),
-
-              const SizedBox(height: 24),
-
-              // ── 2 Big Primary Action Buttons (Close Shift / Close Day) ──
-              _buildActionButtons(context, controller),
-
-              const SizedBox(height: 24),
-
-              // ── Shift History ──
-              _buildShiftHistory(context, controller),
-
-              const SizedBox(height: 24),
-
-              // ── Outlet Details Card ──
-              _buildOutletDetailsCard(context, controller),
-
-              const SizedBox(height: 24),
-
-              // ── Bottom Sync Data Bar ──
-              _buildSyncDataBar(context, controller),
+              _Header(controller: controller, isDark: isDark, cs: cs),
+              const SizedBox(height: AppSpacing.xl),
+              _KpiCards(controller: controller, isDark: isDark, cs: cs),
+              const SizedBox(height: AppSpacing.xl),
+              _ActionButtons(controller: controller, isDark: isDark, cs: cs),
+              const SizedBox(height: AppSpacing.xl),
+              _ShiftHistory(controller: controller, isDark: isDark, cs: cs),
+              const SizedBox(height: AppSpacing.xl),
+              _OutletDetails(controller: controller, isDark: isDark, cs: cs),
+              const SizedBox(height: AppSpacing.xl),
+              _SyncBar(controller: controller, isDark: isDark, cs: cs),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  // ── 1. Top Header ──
-  Widget _buildHeader(BuildContext context, ControllerHomeAccount controller) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+// ─── 1. Header ────────────────────────────────────────────────────────────────
 
+class _Header extends StatelessWidget {
+  final ControllerHomeAccount controller;
+  final bool isDark;
+  final ColorScheme cs;
+
+  const _Header({required this.controller, required this.isDark, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Brand/Outlet Title + Logo
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00796B),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Row(
-                children: [
-                  Text(
-                    'RH',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(Icons.point_of_sale, color: Colors.white, size: 16),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Obx(() => Text(
-                  controller.rxOutletName.value,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                )),
-          ],
-        ),
-
-        // User Pill with avatar and logout
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
           decoration: BoxDecoration(
-            color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: isDark ? colorScheme.outlineVariant : Colors.grey.shade200,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
+            color: AppColors.brandTealDark,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+          ),
+          child: const Row(
+            children: [
+              Text('RH', style: TextStyle(color: AppColors.textWhite, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1)),
+              SizedBox(width: 4),
+              Icon(Icons.point_of_sale, color: AppColors.textWhite, size: 16),
             ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+          decoration: BoxDecoration(
+            color: isDark ? cs.surfaceContainerHigh : AppColors.textWhite,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusRound),
+            border: Border.all(color: isDark ? cs.outlineVariant : AppColors.borderLight),
+            boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 6, offset: const Offset(0, 2))],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Logout button
               InkWell(
                 onTap: () {
                   if (Get.isRegistered<ControllerHome>()) {
@@ -137,45 +95,31 @@ class FragmentHomeAccount extends StatelessWidget {
                   }
                 },
                 child: const Padding(
-                  padding: EdgeInsets.all(4.0),
-                  child: Icon(Icons.logout, color: Color(0xFFEF4444), size: 18),
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.logout, color: AppColors.error, size: 18),
                 ),
               ),
               const SizedBox(width: 10),
               Obx(() => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        controller.rxUsername.value.isNotEmpty
-                            ? controller.rxUsername.value
-                            : 'Cashier',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        controller.rxUserRole.value.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  )),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    controller.rxUsername.value.isNotEmpty ? controller.rxUsername.value : 'Cashier',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: cs.onSurface),
+                  ),
+                  Text(
+                    controller.rxUserRole.value.toUpperCase(),
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
+                      color: isDark ? cs.onSurfaceVariant : AppColors.textSecondary, letterSpacing: 0.5),
+                  ),
+                ],
+              )),
               const SizedBox(width: 8),
               CircleAvatar(
                 radius: 14,
-                backgroundColor: isDark ? colorScheme.surfaceContainerHighest : Colors.grey.shade200,
-                child: Icon(
-                  Icons.person,
-                  color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF475569),
-                  size: 18,
-                ),
+                backgroundColor: isDark ? cs.surfaceContainerHighest : AppColors.dividerLight,
+                child: Icon(Icons.person, color: isDark ? cs.onSurfaceVariant : AppColors.textSecondaryDark, size: 18),
               ),
             ],
           ),
@@ -183,987 +127,590 @@ class FragmentHomeAccount extends StatelessWidget {
       ],
     );
   }
+}
 
-  // ── 2. The 6 KPI Cards ──
-  Widget _buildKpiCards(BuildContext context, ControllerHomeAccount controller) {
+// ─── 2. KPI Cards ─────────────────────────────────────────────────────────────
+
+class _KpiCards extends StatelessWidget {
+  final ControllerHomeAccount controller;
+  final bool isDark;
+  final ColorScheme cs;
+
+  const _KpiCards({required this.controller, required this.isDark, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <_KpiItem>[
+      _KpiItem.opening(controller.rxOpeningBalance.value, controller.rxOpeningTxnCount.value, isDark),
+      _KpiItem.cashIn(controller.rxCashInTotal.value, controller.rxCashInTxnCount.value, isDark),
+      _KpiItem.sales(controller.rxSalesCashTotal.value, controller.rxSalesCashTxnCount.value, isDark),
+      _KpiItem.cashOut(controller.rxCashOutTotal.value, controller.rxCashOutTxnCount.value, isDark),
+      _KpiItem.expenses(controller.rxExpensesCashTotal.value, controller.rxExpensesCashTxnCount.value, isDark),
+      _KpiItem.closing(controller.rxClosingBalance.value, controller.rxClosingTxnCount.value, isDark),
+    ];
+
     return LayoutBuilder(builder: (ctx, constraints) {
-      final bool isWide = constraints.maxWidth > 900;
-
-      if (!isWide) {
-        // Fallback for smaller screens: 3 columns x 2 rows
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _buildOpeningCard(context, controller, width: (constraints.maxWidth - 24) / 3),
-            _buildCashInCard(context, controller, width: (constraints.maxWidth - 24) / 3),
-            _buildSalesCard(context, controller, width: (constraints.maxWidth - 24) / 3),
-            _buildCashOutCard(context, controller, width: (constraints.maxWidth - 24) / 3),
-            _buildExpensesCard(context, controller, width: (constraints.maxWidth - 24) / 3),
-            _buildClosingCard(context, controller, width: (constraints.maxWidth - 24) / 3),
-          ],
+      if (constraints.maxWidth > 900) {
+        return Row(
+          children: List.generate(items.length, (i) {
+            final spacing = (items.length - 1) * AppSpacing.md;
+            return Expanded(child: _KpiCard(item: items[i], width: (constraints.maxWidth - spacing) / items.length, isDark: isDark, cs: cs));
+          }),
         );
       }
-
-      return Row(
-        children: [
-          Expanded(child: _buildOpeningCard(context, controller)),
-          const SizedBox(width: 14),
-          Expanded(child: _buildCashInCard(context, controller)),
-          const SizedBox(width: 14),
-          Expanded(child: _buildSalesCard(context, controller)),
-          const SizedBox(width: 14),
-          Expanded(child: _buildCashOutCard(context, controller)),
-          const SizedBox(width: 14),
-          Expanded(child: _buildExpensesCard(context, controller)),
-          const SizedBox(width: 14),
-          Expanded(child: _buildClosingCard(context, controller)),
-        ],
+      return Column(
+        children: List.generate(3, (row) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: row < 2 ? AppSpacing.sm : 0),
+            child: Row(
+              children: [
+                Expanded(child: _KpiCard(item: items[row * 2], width: (constraints.maxWidth - AppSpacing.sm) / 2, isDark: isDark, cs: cs)),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: _KpiCard(item: items[row * 2 + 1], width: (constraints.maxWidth - AppSpacing.sm) / 2, isDark: isDark, cs: cs)),
+              ],
+            ),
+          );
+        }),
       );
     });
   }
+}
 
-  // Card 1: Opening Balance
-  Widget _buildOpeningCard(BuildContext context, ControllerHomeAccount controller, {double? width}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7);
-    return Obx(() => _buildSummaryCard(
-          context: context,
-          title: 'opening_balance_cash'.tr,
-          amount: controller.rxOpeningBalance.value,
-          txnCount: controller.rxOpeningTxnCount.value,
-          icon: Icons.account_balance_wallet_outlined,
-          iconBg: isDark ? const Color(0xFF0369A1).withValues(alpha: 0.2) : const Color(0xFFE0F2FE),
-          iconColor: iconColor,
-          actionWidget: Icon(Icons.arrow_outward, color: iconColor, size: 16),
-          width: width,
-        ));
-  }
+class _KpiItem {
+  final String title;
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+  final double amount;
+  final int txnCount;
+  final bool isHighlighted;
+  final Widget? action;
 
-  // Card 2: Cash In
-  Widget _buildCashInCard(BuildContext context, ControllerHomeAccount controller, {double? width}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A);
-    return Obx(() => _buildSummaryCard(
-          context: context,
-          title: 'cash_in_cash'.tr,
-          amount: controller.rxCashInTotal.value,
-          txnCount: controller.rxCashInTxnCount.value,
-          icon: Icons.add,
-          iconBg: isDark ? const Color(0xFF16A34A).withValues(alpha: 0.2) : const Color(0xFFDCFCE7),
-          iconColor: iconColor,
-          onTap: () => DialogCashMovement.show(context, isCashIn: true),
-          actionWidget: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => DialogCashMovement.show(context, isCashIn: true),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF00796B) : const Color(0xFF005963),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    'cash_in'.tr,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          width: width,
-        ));
-  }
+  const _KpiItem._({
+    required this.title, required this.icon, required this.iconBg, required this.iconColor,
+    required this.amount, required this.txnCount, this.isHighlighted = false, this.action,
+  });
 
-  // Card 3: Sales (Cash)
-  Widget _buildSalesCard(BuildContext context, ControllerHomeAccount controller, {double? width}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A);
-    return Obx(() => _buildSummaryCard(
-          context: context,
-          title: 'sales_cash'.tr,
-          amount: controller.rxSalesCashTotal.value,
-          txnCount: controller.rxSalesCashTxnCount.value,
-          icon: Icons.payments_outlined,
-          iconBg: isDark ? const Color(0xFF16A34A).withValues(alpha: 0.2) : const Color(0xFFDCFCE7),
-          iconColor: iconColor,
-          actionWidget: Icon(Icons.arrow_outward, color: iconColor, size: 16),
-          width: width,
-        ));
-  }
+  factory _KpiItem.opening(double amount, int count, bool isDark) => _KpiItem._(
+    title: 'opening_balance_cash'.tr, icon: Icons.account_balance_wallet_outlined,
+    iconColor: AppColors.info, iconBg: isDark ? AppColors.info.withValues(alpha: 0.2) : AppColors.infoLight,
+    amount: amount, txnCount: count,
+    action: Icon(Icons.arrow_outward, color: AppColors.info, size: 16),
+  );
 
-  // Card 4: Cash Out
-  Widget _buildCashOutCard(BuildContext context, ControllerHomeAccount controller, {double? width}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626);
-    return Obx(() => _buildSummaryCard(
-          context: context,
-          title: 'cash_out_cash'.tr,
-          amount: controller.rxCashOutTotal.value,
-          txnCount: controller.rxCashOutTxnCount.value,
-          icon: Icons.upload,
-          iconBg: isDark ? const Color(0xFFDC2626).withValues(alpha: 0.2) : const Color(0xFFFEE2E2),
-          iconColor: iconColor,
-          onTap: () => DialogCashMovement.show(context, isCashIn: false),
-          actionWidget: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => DialogCashMovement.show(context, isCashIn: false),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF00796B) : const Color(0xFF005963),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    'cash_out'.tr,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          width: width,
-        ));
-  }
+  factory _KpiItem.cashIn(double amount, int count, bool isDark) => _KpiItem._(
+    title: 'cash_in_cash'.tr, icon: Icons.add,
+    iconColor: AppColors.success, iconBg: isDark ? AppColors.success.withValues(alpha: 0.2) : AppColors.successLight,
+    amount: amount, txnCount: count,
+  );
 
-  // Card 5: Expenses (Cash) — tappable, opens ActivityExpensesFrom dialog
-  Widget _buildExpensesCard(BuildContext context, ControllerHomeAccount controller, {double? width}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626);
-    return Obx(() => _buildSummaryCard(
-          context: context,
-          title: 'expenses_cash'.tr,
-          amount: controller.rxExpensesCashTotal.value,
-          txnCount: controller.rxExpensesCashTxnCount.value,
-          icon: Icons.credit_card,
-          iconBg: isDark ? const Color(0xFFDC2626).withValues(alpha: 0.2) : const Color(0xFFFEE2E2),
-          iconColor: iconColor,
-          onTap: () async {
-            final result = await Get.dialog(
-              const ActivityExpensesFrom(),
-              barrierDismissible: false,
-            );
-            if (result == true) {
-              controller.refreshAll();
-            }
-          },
-          actionWidget: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  final result = await Get.dialog(
-                    const ActivityExpensesFrom(),
-                    barrierDismissible: false,
-                  );
-                  if (result == true) {
-                    controller.refreshAll();
-                  }
-                },
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDC2626),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    'Add'.tr,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          width: width,
-        ));
-  }
+  factory _KpiItem.sales(double amount, int count, bool isDark) => _KpiItem._(
+    title: 'sales_cash'.tr, icon: Icons.payments_outlined,
+    iconColor: AppColors.success, iconBg: isDark ? AppColors.success.withValues(alpha: 0.2) : AppColors.successLight,
+    amount: amount, txnCount: count,
+    action: Icon(Icons.arrow_outward, color: AppColors.success, size: 16),
+  );
 
-  // Card 6: Closing Balance (Cash)
-  Widget _buildClosingCard(BuildContext context, ControllerHomeAccount controller, {double? width}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488);
-    return Obx(() => _buildSummaryCard(
-          context: context,
-          title: 'closing_balance_cash'.tr,
-          amount: controller.rxClosingBalance.value,
-          txnCount: controller.rxClosingTxnCount.value,
-          icon: Icons.account_balance,
-          iconBg: isDark ? const Color(0xFF0D9488).withValues(alpha: 0.2) : const Color(0xFFCCFBF1),
-          iconColor: iconColor,
-          actionWidget: Icon(Icons.arrow_outward, color: iconColor, size: 16),
-          isHighlighted: true,
-          width: width,
-        ));
-  }
+  factory _KpiItem.cashOut(double amount, int count, bool isDark) => _KpiItem._(
+    title: 'cash_out_cash'.tr, icon: Icons.upload,
+    iconColor: AppColors.error, iconBg: isDark ? AppColors.error.withValues(alpha: 0.2) : AppColors.errorLight,
+    amount: amount, txnCount: count,
+  );
 
-  // Base Summary Card UI
-  Widget _buildSummaryCard({
-    required BuildContext context,
-    required String title,
-    required double amount,
-    required int txnCount,
-    required IconData icon,
-    required Color iconBg,
-    required Color iconColor,
-    required Widget actionWidget,
-    bool isHighlighted = false,
-    double? width,
-    VoidCallback? onTap,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+  factory _KpiItem.expenses(double amount, int count, bool isDark) => _KpiItem._(
+    title: 'expenses_cash'.tr, icon: Icons.credit_card,
+    iconColor: AppColors.error, iconBg: isDark ? AppColors.error.withValues(alpha: 0.2) : AppColors.errorLight,
+    amount: amount, txnCount: count, isHighlighted: false,
+  );
 
-    Widget cardContent = Container(
+  factory _KpiItem.closing(double amount, int count, bool isDark) => _KpiItem._(
+    title: 'closing_balance_cash'.tr, icon: Icons.account_balance,
+    iconColor: AppColors.teal, iconBg: isDark ? AppColors.teal.withValues(alpha: 0.2) : AppColors.tealLight,
+    amount: amount, txnCount: count, isHighlighted: true,
+    action: Icon(Icons.arrow_outward, color: AppColors.teal, size: 16),
+  );
+}
+
+class _KpiCard extends StatelessWidget {
+  final _KpiItem item;
+  final double width;
+  final bool isDark;
+  final ColorScheme cs;
+
+  const _KpiCard({required this.item, required this.width, required this.isDark, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Container(
       width: width,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? cs.surfaceContainerHigh : AppColors.textWhite,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(
-          color: isHighlighted
-              ? (isDark ? colorScheme.primary : const Color(0xFF00796B))
-              : (isDark ? colorScheme.outlineVariant.withValues(alpha: 0.6) : Colors.grey.shade200),
-          width: isHighlighted ? 1.8 : 1.0,
+          color: item.isHighlighted
+              ? (isDark ? cs.primary : AppColors.brandTealDark)
+              : (isDark ? cs.outlineVariant.withValues(alpha: 0.6) : AppColors.borderLight),
+          width: item.isHighlighted ? 1.8 : 1.0,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Row: Icon + Action
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(icon, color: iconColor, size: 16),
+              Container(width: 28, height: 28,
+                decoration: BoxDecoration(color: item.iconBg, borderRadius: BorderRadius.circular(6)),
+                child: Icon(item.icon, color: item.iconColor, size: 16),
               ),
-              actionWidget,
+              if (item.action != null) item.action!,
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          const SizedBox(height: AppSpacing.sm),
+          Text(item.title,
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500,
+              color: isDark ? cs.onSurfaceVariant : AppColors.textSecondary),
+            maxLines: 1, overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          Text(
-            '₹${NumberFormat('#,##0.00').format(amount)}',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: colorScheme.onSurface,
-            ),
+          Text('₹${NumberFormat('#,##0.00').format(item.amount)}',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: cs.onSurface),
           ),
           const SizedBox(height: 2),
-          Text(
-            '$txnCount ${txnCount == 1 ? 'transaction'.tr : 'Transactions'.tr}',
-            style: TextStyle(
-              fontSize: 10,
-              color: isDark ? colorScheme.onSurfaceVariant.withValues(alpha: 0.7) : const Color(0xFF94A3B8),
-            ),
+          Text('${item.txnCount} ${item.txnCount == 1 ? 'transaction'.tr : 'Transactions'.tr}',
+            style: TextStyle(fontSize: 10,
+              color: isDark ? cs.onSurfaceVariant.withValues(alpha: 0.7) : AppColors.textSecondaryLight),
           ),
         ],
       ),
     );
 
-    if (onTap != null) {
-      return MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: cardContent,
-          ),
-        ),
-      );
-    }
-
-    return cardContent;
+    return content;
   }
+}
 
-  // ── 3. Big Action Buttons: Close Shift & Close Day ──
-  Widget _buildActionButtons(BuildContext context, ControllerHomeAccount controller) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+// ─── 3. Action Buttons ────────────────────────────────────────────────────────
 
+class _ActionButtons extends StatelessWidget {
+  final ControllerHomeAccount controller;
+  final bool isDark;
+  final ColorScheme cs;
+
+  const _ActionButtons({required this.controller, required this.isDark, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
-        // Left Button: Shift Action (Close or Start)
-        Expanded(
-          child: Obx(() {
-            final isShiftOpen = controller.isShiftOpen;
-            final isDayOpen = controller.isDayOpen;
-
-            return InkWell(
-              onTap: () {
-                if (isShiftOpen) {
-                  DialogCloseShift.show(context);
-                } else {
-                  DialogStartDayShift.show(context, isShiftOnly: isDayOpen);
-                }
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF004D56) : const Color(0xFF005963),
-                  borderRadius: BorderRadius.circular(12),
-                  border: isDark ? Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)) : null,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF005963).withValues(alpha: isDark ? 0.4 : 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isShiftOpen ? Icons.hourglass_top_rounded : Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isShiftOpen ? 'close_shift'.tr : 'start_shift'.tr,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            isShiftOpen
-                                ? '${'start_date'.tr}: ${controller.formatTimestamp(controller.rxActiveShift.value?.startTimestampMs)}'
-                                : 'shift_closed_msg'.tr,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ),
-
+        Expanded(child: _ShiftButton(controller: controller, isDark: isDark, cs: cs)),
         const SizedBox(width: 18),
-
-        // Right Button: Day Action (Close or Start)
-        Expanded(
-          child: Obx(() {
-            final isDayOpen = controller.isDayOpen;
-
-            return InkWell(
-              onTap: () {
-                if (isDayOpen) {
-                  DialogCloseDay.show(context);
-                } else {
-                  DialogStartDayShift.show(context, isShiftOnly: false);
-                }
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFFDC2626) : const Color(0xFFEF4444),
-                  borderRadius: BorderRadius.circular(12),
-                  border: isDark ? Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)) : null,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFEF4444).withValues(alpha: isDark ? 0.4 : 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isDayOpen ? Icons.power_settings_new : Icons.wb_sunny_rounded,
-                        color: Colors.white,
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isDayOpen ? 'close_day'.tr : 'start_day'.tr,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            isDayOpen
-                                ? '${'start_date'.tr}: ${controller.formatTimestamp(controller.rxActiveDay.value?.startTimestampMs)}'
-                                : 'day_closed_msg'.tr,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ),
+        Expanded(child: _DayButton(controller: controller, isDark: isDark, cs: cs)),
       ],
     );
   }
+}
 
-  // ── 4. Outlet Details Card ──
-  Widget _buildOutletDetailsCard(BuildContext context, ControllerHomeAccount controller) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+class _ShiftButton extends StatelessWidget {
+  final ControllerHomeAccount controller;
+  final bool isDark;
+  final ColorScheme cs;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
+  const _ShiftButton({required this.controller, required this.isDark, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() => _actionBtn(
+      context,
+      icon: controller.isShiftOpen ? Icons.hourglass_top_rounded : Icons.play_arrow_rounded,
+      label: controller.isShiftOpen ? 'close_shift'.tr : 'start_shift'.tr,
+      sub: controller.isShiftOpen
+          ? '${'start_date'.tr}: ${controller.formatTimestamp(controller.rxActiveShift.value?.startTimestampMs)}'
+          : 'shift_closed_msg'.tr,
+      bg: AppColors.brandTealDark,
+      onTap: () {
+        if (controller.isShiftOpen) {
+          DialogCloseShift.show(context);
+        } else {
+          DialogStartDayShift.show(context, isShiftOnly: controller.isDayOpen);
+        }
+      },
+    ));
+  }
+}
+
+class _DayButton extends StatelessWidget {
+  final ControllerHomeAccount controller;
+  final bool isDark;
+  final ColorScheme cs;
+
+  const _DayButton({required this.controller, required this.isDark, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() => _actionBtn(
+      context,
+      icon: controller.isDayOpen ? Icons.power_settings_new : Icons.wb_sunny_rounded,
+      label: controller.isDayOpen ? 'close_day'.tr : 'start_day'.tr,
+      sub: controller.isDayOpen
+          ? '${'start_date'.tr}: ${controller.formatTimestamp(controller.rxActiveDay.value?.startTimestampMs)}'
+          : 'day_closed_msg'.tr,
+      bg: AppColors.error,
+      onTap: () {
+        if (controller.isDayOpen) {
+          DialogCloseDay.show(context);
+        } else {
+          DialogStartDayShift.show(context, isShiftOnly: false);
+        }
+      },
+    ));
+  }
+}
+
+Widget _actionBtn(BuildContext context, {
+  required IconData icon, required String label, required String sub,
+  required Color bg, required VoidCallback onTap,
+}) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
       decoration: BoxDecoration(
-        color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? colorScheme.outlineVariant.withValues(alpha: 0.6) : Colors.grey.shade200,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+        color: bg,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        boxShadow: [BoxShadow(color: bg.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
+      ),
+      child: Row(
+        children: [
+          Container(width: 44, height: 44,
+            decoration: const BoxDecoration(color: AppColors.textWhiteOverlay18, shape: BoxShape.circle),
+            child: Icon(icon, color: AppColors.textWhite, size: 26),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(color: AppColors.textWhite, fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 2),
+                Text(sub, style: TextStyle(color: AppColors.textWhite.withValues(alpha: 0.85), fontSize: 11)),
+              ],
+            ),
           ),
         ],
       ),
+    ),
+  );
+}
+
+// ─── 4. Shift History ─────────────────────────────────────────────────────────
+
+class _ShiftHistory extends StatelessWidget {
+  final ControllerHomeAccount controller;
+  final bool isDark;
+  final ColorScheme cs;
+
+  const _ShiftHistory({required this.controller, required this.isDark, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return _ScaffoldCard(
+      isDark: isDark, cs: cs,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'outlet_details'.tr,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
+          Row(
+            children: [
+              Container(padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.info.withValues(alpha: 0.2) : AppColors.infoLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.history_rounded, color: isDark ? AppColors.infoLight : AppColors.info, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Text('shift_history'.tr, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: cs.onSurface)),
+              const Spacer(),
+              Obx(() => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark ? cs.surfaceContainerHighest : AppColors.backgroundLight,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('${controller.rxShiftHistory.length} ${'shifts'.tr}',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                    color: isDark ? cs.onSurfaceVariant : AppColors.textSecondaryDark),
+                ),
+              )),
+            ],
           ),
           const SizedBox(height: 16),
-          Obx(() => Column(
-                children: [
-                  _buildDetailRow(context, 'ip_address'.tr, controller.rxIpAddress.value),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(
-                    context,
-                    'outlet_phone'.tr,
-                    controller.rxOutletPhone.value.isNotEmpty
-                        ? controller.rxOutletPhone.value
-                        : '+91 9876543210',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(
-                    context,
-                    'Address'.tr,
-                    controller.rxOutletAddress.value.isNotEmpty
-                        ? controller.rxOutletAddress.value
-                        : 'Latur, Maharashtra, India',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(context, 'user_id'.tr, controller.rxUserId.value),
-                ],
-              )),
+          Obx(() {
+            final shifts = controller.rxShiftHistory;
+            if (shifts.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text('no_shift_history'.tr,
+                    style: TextStyle(fontSize: 13, color: isDark ? cs.onSurfaceVariant : AppColors.textSecondaryLight)),
+                ),
+              );
+            }
+            return Column(children: shifts.map((s) => _ShiftRow(shift: s, controller: controller, isDark: isDark, cs: cs)).toList());
+          }),
         ],
       ),
     );
   }
+}
 
-  Widget _buildDetailRow(BuildContext context, String label, String value) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+class _ShiftRow extends StatelessWidget {
+  final EntityShiftSession shift;
+  final ControllerHomeAccount controller;
+  final bool isDark;
+  final ColorScheme cs;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 140,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  const _ShiftRow({required this.shift, required this.controller, required this.isDark, required this.cs});
 
-  // ── 5. Shift History ──
-  Widget _buildShiftHistory(BuildContext context, ControllerHomeAccount controller) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Obx(() {
-      final shifts = controller.rxShiftHistory;
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? colorScheme.surfaceContainerHigh : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark ? colorScheme.outlineVariant.withValues(alpha: 0.6) : Colors.grey.shade200,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.02),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0369A1).withValues(alpha: 0.2) : const Color(0xFFE0F2FE),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.history_rounded, color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7), size: 18),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'shift_history'.tr,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isDark ? colorScheme.surfaceContainerHighest : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${shifts.length} ${'shifts'.tr}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF475569),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (shifts.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'no_shift_history'.tr,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8),
-                    ),
-                  ),
-                ),
-              )
-            else
-              Column(
-                children: shifts.map((shift) => _buildShiftHistoryRow(context, shift, controller)).toList(),
-              ),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildShiftHistoryRow(BuildContext context, EntityShiftSession shift, ControllerHomeAccount controller) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
-    final fmt = NumberFormat('#,##0.00');
+  @override
+  Widget build(BuildContext context) {
     final isOpen = shift.isOpen;
-    final startMs = shift.startTimestampMs;
-    final endMs = shift.endTimestampMs;
-    final opening = shift.openingCash;
-    final closing = shift.closingCash;
-    final sales = shift.salesCash;
-    final expenses = shift.expensesCash;
-    final cashIn = shift.cashIn;
-    final cashOut = shift.cashOut;
     final openedBy = shift.startedByUsername ?? 'Unknown';
     final closedBy = shift.closedByUsername;
-    final isDifferentUser = !isOpen &&
-        closedBy != null &&
-        closedBy.trim().isNotEmpty &&
-        closedBy.trim().toLowerCase() != openedBy.trim().toLowerCase();
+    final isDiffUser = !isOpen && closedBy != null && closedBy.trim().isNotEmpty && closedBy.trim().toLowerCase() != openedBy.trim().toLowerCase();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isOpen
-            ? (isDark ? const Color(0xFF003830) : const Color(0xFFECFDF5))
-            : (isDark ? colorScheme.surfaceContainer : const Color(0xFFF8FAFC)),
+            ? (isDark ? AppColors.success.withValues(alpha: 0.1) : AppColors.successLight)
+            : (isDark ? cs.surfaceContainer : AppColors.backgroundLight),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isOpen
-              ? (isDark ? colorScheme.primary : const Color(0xFF00796B))
-              : (isDark ? colorScheme.outlineVariant.withValues(alpha: 0.5) : Colors.grey.shade200),
+              ? (isDark ? cs.primary : AppColors.brandTealDark)
+              : (isDark ? cs.outlineVariant.withValues(alpha: 0.5) : AppColors.borderLight),
           width: isOpen ? 1.5 : 1.0,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isOpen
-                      ? (isDark ? const Color(0xFF0D9488) : const Color(0xFF00796B))
-                      : (isDark ? colorScheme.surfaceContainerHighest : const Color(0xFF64748B)),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  isOpen ? 'ACTIVE'.tr : 'closed'.tr.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 14,
-                          color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Opened by: $openedBy',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (isDifferentUser)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF451A03) : const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFFD97706) : const Color(0xFFF59E0B),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.lock_clock,
-                              size: 11,
-                              color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Closed by: $closedBy',
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else if (!isOpen && closedBy != null && closedBy.isNotEmpty)
-                      Text(
-                        '(Closed by $closedBy)',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Text(
-                controller.formatTimestamp(startMs),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _buildShiftStat(
-                context,
-                'opening'.tr,
-                '₹${fmt.format(opening)}',
-                isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7),
-              ),
-              _buildShiftStat(
-                context,
-                'Sales'.tr,
-                '₹${fmt.format(sales)}',
-                isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A),
-              ),
-              _buildShiftStat(
-                context,
-                'cash_in'.tr,
-                '₹${fmt.format(cashIn)}',
-                isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488),
-              ),
-              _buildShiftStat(
-                context,
-                'Expenses'.tr,
-                '₹${fmt.format(expenses)}',
-                isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
-              ),
-              _buildShiftStat(
-                context,
-                'cash_out'.tr,
-                '₹${fmt.format(cashOut)}',
-                isDark ? const Color(0xFFF87171) : const Color(0xFFEF4444),
-              ),
-              _buildShiftStat(
-                context,
-                isOpen ? 'calculated'.tr : 'closing'.tr,
-                '₹${fmt.format(closing)}',
-                isDark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED),
-              ),
-            ],
-          ),
-          if (endMs != null && !isOpen) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time_rounded,
-                  size: 13,
-                  color: isDifferentUser
-                      ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309))
-                      : (isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8)),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  closedBy != null && closedBy.trim().isNotEmpty
-                      ? 'Closed by $closedBy on ${controller.formatTimestamp(endMs)}'
-                      : '${'closed'.tr}: ${controller.formatTimestamp(endMs)}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isDifferentUser ? FontWeight.w600 : FontWeight.normal,
-                    color: isDifferentUser
-                        ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309))
-                        : (isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8)),
-                  ),
-                ),
-                if (shift.comments != null && shift.comments!.trim().isNotEmpty) ...[
-                  const SizedBox(width: 12),
-                  Icon(
-                    Icons.comment_outlined,
-                    size: 12,
-                    color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      'Note: ${shift.comments}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                        color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF64748B),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+          Row(children: [
+            _statusBadge(isOpen, isDark, cs),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8, runSpacing: 4,
+                children: [
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.person_outline, size: 14, color: isDark ? cs.onSurfaceVariant : AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text('Opened by: $openedBy',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurface)),
+                  ]),
+                  if (isDiffUser) _closedByChip(closedBy, isDark, cs)
+                  else if (closedBy != null && closedBy.isNotEmpty)
+                    Text('(Closed by $closedBy)',
+                      style: TextStyle(fontSize: 11, color: isDark ? cs.onSurfaceVariant : AppColors.textSecondary)),
                 ],
-              ],
+              ),
             ),
+            Text(controller.formatTimestamp(shift.startTimestampMs),
+              style: TextStyle(fontSize: 11, color: isDark ? cs.onSurfaceVariant : AppColors.textSecondaryLight)),
+          ]),
+          const SizedBox(height: 10),
+          Row(children: [
+            _shiftStat(context, 'opening'.tr, '₹${NumberFormat('#,##0.00').format(shift.openingCash)}', AppColors.info),
+            _shiftStat(context, 'Sales'.tr, '₹${NumberFormat('#,##0.00').format(shift.salesCash)}', AppColors.success),
+            _shiftStat(context, 'cash_in'.tr, '₹${NumberFormat('#,##0.00').format(shift.cashIn)}', AppColors.teal),
+            _shiftStat(context, 'Expenses'.tr, '₹${NumberFormat('#,##0.00').format(shift.expensesCash)}', AppColors.error),
+            _shiftStat(context, 'cash_out'.tr, '₹${NumberFormat('#,##0.00').format(shift.cashOut)}', AppColors.errorRed),
+            _shiftStat(context, isOpen ? 'calculated'.tr : 'closing'.tr, '₹${NumberFormat('#,##0.00').format(shift.closingCash)}', AppColors.purple),
+          ]),
+          if (shift.endTimestampMs != null && !isOpen) ...[
+            const SizedBox(height: 8),
+            Row(children: [
+              Icon(Icons.access_time_rounded, size: 13,
+                color: isDiffUser ? AppColors.warningDark : (isDark ? cs.onSurfaceVariant : AppColors.textSecondaryLight)),
+              const SizedBox(width: 5),
+              Text(closedBy != null && closedBy.trim().isNotEmpty
+                  ? 'Closed by $closedBy on ${controller.formatTimestamp(shift.endTimestampMs)}'
+                  : '${'closed'.tr}: ${controller.formatTimestamp(shift.endTimestampMs)}',
+                style: TextStyle(
+                  fontSize: 11, fontWeight: isDiffUser ? FontWeight.w600 : FontWeight.normal,
+                  color: isDiffUser ? AppColors.warningDark : (isDark ? cs.onSurfaceVariant : AppColors.textSecondaryLight),
+                ),
+              ),
+              if (shift.comments != null && shift.comments!.trim().isNotEmpty) ...[
+                const SizedBox(width: 12),
+                Icon(Icons.comment_outlined, size: 12,
+                  color: isDark ? cs.onSurfaceVariant : AppColors.textSecondaryLight),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text('Note: ${shift.comments}',
+                    style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic,
+                      color: isDark ? cs.onSurfaceVariant : AppColors.textSecondary),
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ]),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildShiftStat(BuildContext context, String label, String value, Color color) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _statusBadge(bool isOpen, bool isDark, ColorScheme cs) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isOpen
+            ? (isDark ? AppColors.teal : AppColors.brandTealDark)
+            : (isDark ? cs.surfaceContainerHighest : AppColors.textSecondary),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(isOpen ? 'ACTIVE'.tr : 'closed'.tr.toUpperCase(),
+        style: const TextStyle(color: AppColors.textWhite, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+      ),
+    );
+  }
 
+  Widget _closedByChip(String closedBy, bool isDark, ColorScheme cs) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.warningDark.withValues(alpha: 0.2) : AppColors.warningLight,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: isDark ? AppColors.warning : AppColors.warningDark, width: 0.8),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.lock_clock, size: 11, color: isDark ? AppColors.warningLight : AppColors.warningDark),
+        const SizedBox(width: 4),
+        Text('Closed by: $closedBy',
+          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.warningLight : AppColors.warningDark),
+        ),
+      ]),
+    );
+  }
+
+  Widget _shiftStat(BuildContext context, String label, String value, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+    final labelColor = isDark ? cs.onSurfaceVariant : AppColors.textSecondaryLight;
     return Expanded(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: TextStyle(fontSize: 9, color: labelColor, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 2),
+        Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+      ]),
+    );
+  }
+}
+
+// ─── 5. Outlet Details ────────────────────────────────────────────────────────
+
+class _OutletDetails extends StatelessWidget {
+  final ControllerHomeAccount controller;
+  final bool isDark;
+  final ColorScheme cs;
+
+  const _OutletDetails({required this.controller, required this.isDark, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return _ScaffoldCard(
+      isDark: isDark, cs: cs,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF94A3B8),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
-          ),
+          Text('outlet_details'.tr, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: cs.onSurface)),
+          const SizedBox(height: 16),
+          Obx(() => Column(children: [
+            _detailRow('ip_address'.tr, controller.rxIpAddress.value, isDark, cs),
+            const SizedBox(height: 12),
+            _detailRow('outlet_phone'.tr, controller.rxOutletPhone.value.isNotEmpty ? controller.rxOutletPhone.value : '+91 9876543210', isDark, cs),
+            const SizedBox(height: 12),
+            _detailRow('Address'.tr, controller.rxOutletAddress.value.isNotEmpty ? controller.rxOutletAddress.value : 'Latur, Maharashtra, India', isDark, cs),
+            const SizedBox(height: 12),
+            _detailRow('user_id'.tr, controller.rxUserId.value, isDark, cs),
+          ])),
         ],
       ),
     );
   }
+}
 
-  // ── 6. Bottom Sync Data Bar ──
-  Widget _buildSyncDataBar(BuildContext context, ControllerHomeAccount controller) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+Widget _detailRow(String label, String value, bool isDark, ColorScheme cs) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      SizedBox(width: 140, child: Text(label, style: TextStyle(fontSize: 13,
+        color: isDark ? cs.onSurfaceVariant : AppColors.textSecondary, fontWeight: FontWeight.w500))),
+      Expanded(child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.onSurface))),
+    ],
+  );
+}
 
+// ─── 6. Sync Bar ──────────────────────────────────────────────────────────────
+
+class _SyncBar extends StatelessWidget {
+  final ControllerHomeAccount controller;
+  final bool isDark;
+  final ColorScheme cs;
+
+  const _SyncBar({required this.controller, required this.isDark, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
         controller.refreshAll();
-        SnackbarUtil.showSuccess('Data synced and metrics refreshed successfully');
+        SnackbarUtil.showSuccess('sync_success'.tr);
       },
       borderRadius: BorderRadius.circular(10),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: isDark ? colorScheme.surfaceContainerHigh : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isDark ? colorScheme.outlineVariant : Colors.grey.shade300,
-          ),
-        ),
+      child: _ScaffoldCard(
+        isDark: isDark, cs: cs, center: true,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.sync,
-              color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF475569),
-              size: 18,
-            ),
+            Icon(Icons.sync, color: isDark ? cs.onSurfaceVariant : AppColors.textSecondaryDark, size: 18),
             const SizedBox(width: 8),
-            Text(
-              'sync_data'.tr,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: colorScheme.onSurface,
-              ),
-            ),
+            Text('sync_data'.tr, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: cs.onSurface)),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─── Shared Card Wrapper ──────────────────────────────────────────────────────
+
+class _ScaffoldCard extends StatelessWidget {
+  final bool isDark;
+  final ColorScheme cs;
+  final Widget child;
+  final bool center;
+
+  const _ScaffoldCard({required this.isDark, required this.cs, required this.child, this.center = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(center ? AppSpacing.md : AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: isDark ? cs.surfaceContainerHigh : AppColors.textWhite,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: isDark ? cs.outlineVariant.withValues(alpha: 0.6) : AppColors.borderLight),
+        boxShadow: [BoxShadow(color: AppColors.shadowSubtle, blurRadius: 6, offset: const Offset(0, 2))],
+      ),
+      child: child,
     );
   }
 }

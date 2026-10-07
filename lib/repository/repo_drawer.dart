@@ -208,8 +208,8 @@ class RepoDrawer {
   // REPORTS CONFIGURATION
   // -------------------------------------------------------------------
 
-  static const List<_ReportCategory> reportCategories = [
-    _ReportCategory(
+  static const List<ReportCategory> reportCategories = [
+    ReportCategory(
       menu: EnumMainMenu.reportGroupSales,
       titleKey: 'sales reports',
       icon: Icons.point_of_sale_outlined,
@@ -217,7 +217,7 @@ class RepoDrawer {
       reports: [],
     ),
 
-    _ReportCategory(
+    ReportCategory(
       menu: EnumMainMenu.reportGroupInventory,
       titleKey: 'inventory reports',
       icon: Icons.inventory_2_outlined,
@@ -225,7 +225,7 @@ class RepoDrawer {
       reports: [],
     ),
 
-    _ReportCategory(
+    ReportCategory(
       menu: EnumMainMenu.reportGroupPurchase,
       titleKey: 'purchase reports',
       icon: Icons.shopping_cart_outlined,
@@ -233,7 +233,7 @@ class RepoDrawer {
       reports: [],
     ),
 
-    _ReportCategory(
+    ReportCategory(
       menu: EnumMainMenu.reportGroupProfit,
       titleKey: 'profit reports',
       icon: Icons.trending_up,
@@ -241,7 +241,7 @@ class RepoDrawer {
       reports: [],
     ),
 
-    _ReportCategory(
+    ReportCategory(
       menu: EnumMainMenu.reportGroupReturn,
       titleKey: 'return reports',
       icon: Icons.assignment_return_outlined,
@@ -249,7 +249,7 @@ class RepoDrawer {
       reports: [],
     ),
 
-    // _ReportCategory(
+    // ReportCategory(
     //   menu: EnumMainMenu.reportGroupCustomer,
     //   titleKey: 'customer',
     //   icon: Icons.people_outline,
@@ -273,7 +273,7 @@ class RepoDrawer {
     //   ],
     // ),
 
-    _ReportCategory(
+    ReportCategory(
       menu: EnumMainMenu.reportGroupSupplier,
       titleKey: 'supplier reports',
       icon: Icons.local_shipping_outlined,
@@ -281,7 +281,7 @@ class RepoDrawer {
       reports: [],
     ),
 
-    _ReportCategory(
+    ReportCategory(
       menu: EnumMainMenu.reportGroupCashier,
       titleKey: 'cashier reports',
       icon: Icons.badge_outlined,
@@ -289,7 +289,7 @@ class RepoDrawer {
       reports: [],
     ),
 
-    _ReportCategory(
+    ReportCategory(
       menu: EnumMainMenu.reportGroupFinancial,
       titleKey: 'financial reports',
       icon: Icons.account_balance_outlined,
@@ -333,26 +333,26 @@ class RepoDrawer {
   */
 }
 
-class _ReportPage {
+class ReportPage {
   final EnumMainMenu menu;
   final String titleKey;
   final IconData icon;
 
-  const _ReportPage({
+  const ReportPage({
     required this.menu,
     required this.titleKey,
     required this.icon,
   });
 }
 
-class _ReportCategory {
+class ReportCategory {
   final EnumMainMenu menu;
   final String titleKey;
   final IconData icon;
   final EnumPermission permission;
-  final List<_ReportPage> reports;
+  final List<ReportPage> reports;
 
-  const _ReportCategory({
+  const ReportCategory({
     required this.menu,
     required this.titleKey,
     required this.icon,

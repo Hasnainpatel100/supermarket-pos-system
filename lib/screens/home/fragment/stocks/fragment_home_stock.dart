@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../model/stock_txn_type.dart';
+import '../../../../widget/gradient_app_bar_title.dart';
 import '../../../../widget/my_card.dart';
+import '../../../../widget/search_app_bar_field.dart';
 import 'controller_home_stock.dart';
 
 class FragmentHomeStock extends StatelessWidget {
@@ -17,101 +19,21 @@ class FragmentHomeStock extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.orange.shade400, Colors.deepOrange.shade600],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.orange.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.inventory_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'stock_ledger'.tr,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                Text(
-                  'track_inventory_movements'.tr,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        title: GradientAppBarTitle(
+          icon: Icons.inventory_rounded,
+          title: 'stock_ledger'.tr,
+          subtitle: 'track_inventory_movements'.tr,
+          gradientColors: [Colors.orange.shade400, Colors.deepOrange.shade600],
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: controller.searchController,
-              decoration: InputDecoration(
-                hintText: 'search_stock_hint'.tr,
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  color: Colors.orange.shade600,
-                  size: 22,
-                ),
-                suffixIcon: Obx(
-                  () => controller.searchQuery.value.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.close_rounded,
-                            color: Colors.red.shade400,
-                            size: 20,
-                          ),
-                          onPressed: controller.clearSearch,
-                        )
-                      : const SizedBox.shrink(),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                  horizontal: 20,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).cardColor,
-              ),
-              onChanged: controller.updateSearch,
-            ),
+          child: SearchAppBarField(
+            controller: controller.searchController,
+            hint: 'search_stock_hint'.tr,
+            onChanged: controller.updateSearch,
+            onClear: controller.clearSearch,
+            hasQuery: controller.searchQuery.isNotEmpty,
+            iconColor: Colors.orange.shade600,
           ),
         ),
       ),
@@ -133,9 +55,7 @@ class FragmentHomeStock extends StatelessWidget {
                     onTap: () => controller.setTypeFilter(null),
                   ),
                   const SizedBox(width: 8),
-                  ...StockTxnType.values
-                      .where((type) => type != StockTxnType.returnStock)
-                      .map(
+                  ...StockTxnType.values.map(
                     (type) => Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: _FilterChip(
@@ -173,7 +93,7 @@ class FragmentHomeStock extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.orange.withOpacity(0.1),
+                              color: Colors.orange.withValues(alpha:0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -365,7 +285,7 @@ class FragmentHomeStock extends StatelessWidget {
               const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: Colors.orange.withValues(alpha:0.1), borderRadius: BorderRadius.circular(10)),
                 child: Text('${'page'.tr} ${controller.currentPage.value + 1}',
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange.shade700),
                 ),
@@ -403,8 +323,6 @@ class FragmentHomeStock extends StatelessWidget {
         return 'txn_deduct'.tr;
       case StockTxnType.purchaseIn:
         return 'txn_purchase'.tr;
-      case StockTxnType.returnStock:
-        return 'Return';
       default:
         return 'all'.tr;
     }
@@ -420,10 +338,8 @@ class FragmentHomeStock extends StatelessWidget {
         return Colors.blue.shade600;
       case StockTxnType.deduct:
         return Colors.orange.shade700;
-      case StockTxnType.purchaseIn:
+        case StockTxnType.purchaseIn:
         return Colors.purple.shade600;
-      case StockTxnType.returnStock:
-        return Colors.teal.shade600;
       default:
         return Colors.grey.shade600;
     }
@@ -439,10 +355,8 @@ class FragmentHomeStock extends StatelessWidget {
         return Icons.tune_rounded;
       case StockTxnType.deduct:
         return Icons.remove_circle_outline_rounded;
-      case StockTxnType.purchaseIn:
+        case StockTxnType.purchaseIn:
         return Icons.shopping_cart_rounded;
-      case StockTxnType.returnStock:
-        return Icons.assignment_return_rounded;
       default:
         return Icons.circle_outlined;
     }

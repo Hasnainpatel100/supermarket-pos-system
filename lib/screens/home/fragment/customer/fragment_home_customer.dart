@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:super_market/widget/gradient_action_button.dart';
+import 'package:super_market/widget/gradient_app_bar_title.dart';
+import 'package:super_market/widget/generic_empty_state.dart';
+import 'package:super_market/widget/my_card.dart';
+import 'package:super_market/widget/search_app_bar_field.dart';
 import '../../../../model/entity_customer.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../customer/activity_customer_form.dart';
-import '../../../../widget/my_card.dart';
 import 'controller_home_customer.dart';
 
 class FragmentHomeCustomer extends StatelessWidget {
@@ -20,214 +24,46 @@ class FragmentHomeCustomer extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue.shade400, Colors.blue.shade700],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.people_alt_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'customers'.tr,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                Text(
-                  'manage_customer_base'.tr,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        title: GradientAppBarTitle(
+          icon: Icons.people_alt_rounded,
+          title: 'customers'.tr,
+          subtitle: 'manage_customer_base'.tr,
+          gradientColors: [Colors.blue.shade400, Colors.blue.shade700],
         ),
         actions: [
-          /// ── Button: New Customer ──
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.teal.shade400, Colors.teal.shade700],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.teal.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () async {
-                  await Get.dialog(
-                    const ActivityCustomerForm(),
-                    barrierDismissible: false,
-                  );
-                  controller.loadCustomers();
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children:[
-                      Icon(
-                        Icons.person_add_rounded,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'new_customer'.tr,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          GradientActionButton(
+            icon: Icons.person_add_rounded,
+            label: 'new_customer'.tr,
+            gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
+            onTap: () async {
+              await Get.dialog(
+                const ActivityCustomerForm(),
+                barrierDismissible: false,
+              );
+              controller.loadCustomers();
+            },
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: controller.searchController,
-              decoration: InputDecoration(
-                hintText: 'search_customer_hint'.tr,
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  color: Colors.blue.shade600,
-                  size: 22,
-                ),
-                suffixIcon: Obx(
-                      () => controller.searchQuery.value.isNotEmpty
-                      ? IconButton(
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: Colors.red.shade400,
-                      size: 20,
-                    ),
-                    onPressed: controller.clearSearch,
-                  )
-                      : const SizedBox.shrink(),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                  horizontal: 20,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).cardColor,
-              ),
-              onChanged: controller.updateSearch,
-            ),
+          child: SearchAppBarField(
+            controller: controller.searchController,
+            hint: 'search_customer_hint'.tr,
+            onChanged: controller.updateSearch,
+            onClear: controller.clearSearch,
+            hasQuery: controller.searchQuery.isNotEmpty,
           ),
         ),
       ),
 
       body: Obx(
             () => controller.rxListCustomer.isEmpty
-            ? Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.blue.shade100,
-                      Colors.purple.shade100,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.person_off_rounded,
-                  size: 64,
-                  color: Colors.blue.shade400,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'no_customers_found'.tr,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'add_new_customer_to_get_started'.tr,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade400,
-                ),
-              ),
-            ],
-          ),
-        )
+            ? const GenericEmptyState(
+                icon: Icons.person_off_rounded,
+                title: 'no_customers_found',
+                subtitle: 'add_new_customer_to_get_started',
+                gradientColors: [Color(0xFFBFDBFE), Color(0xFFDDD6FE)],
+              )
             : Column(
           children: [
             Expanded(
@@ -618,7 +454,7 @@ class FragmentHomeCustomer extends StatelessWidget {
               const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: Colors.blue.withValues(alpha:0.1), borderRadius: BorderRadius.circular(10)),
                 child: Text('page_number'.trParams({'number': '${controller.currentPage.value + 1}'}),
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
                 ),

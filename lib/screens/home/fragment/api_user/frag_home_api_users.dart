@@ -146,7 +146,7 @@ class FragHomeApiUsers extends StatelessWidget {
                   () => SizedBox(
                     width: 160,
                     child: DropdownButtonFormField<String>(
-                      value: controller.rxUserTypeFilter.value,
+                      initialValue: controller.rxUserTypeFilter.value,
                       decoration: InputDecoration(
                         labelText: 'User Type',
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -168,7 +168,7 @@ class FragHomeApiUsers extends StatelessWidget {
                   () => SizedBox(
                     width: 170,
                     child: DropdownButtonFormField<String>(
-                      value: controller.rxRoleFilter.value,
+                      initialValue: controller.rxRoleFilter.value,
                       decoration: InputDecoration(
                         labelText: 'Role',
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

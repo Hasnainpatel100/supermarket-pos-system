@@ -1,4 +1,11 @@
 {
+  "sales": "Sales",
+  "sales_invoices": "Sales Invoices",
+  "quotation_estimate": "Quotation / Estimate",
+  "sales_return": "Sales Return",
+  "create_sales_invoice": "Create Sales Invoice",
+  "create_quotation": "Create Quotation",
+  "create_sales_return": "Create Sales Return",
   "sign_in": "Sign In",
   "sign_in_subtitle": "Enter your credentials to continue",
   "username_hint": "Enter your username",

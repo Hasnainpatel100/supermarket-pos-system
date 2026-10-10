@@ -36,6 +36,13 @@ enum EnumPermission {
   customerEdit,
   customerDelete,
 
+  // Sales / Invoicing
+  salesInvoiceView,
+  salesInvoiceCreate,
+  quotationView,
+  quotationCreate,
+  salesReturnView,
+  salesReturnCreate,
 
   // Reports
   // Report category permissions (gate an entire report category + its pages)

@@ -43,6 +43,24 @@ class EntityBill {
 
   String? note;
 
+  // ── Sales Invoice Specific Fields ──
+  String? invoicePrefix;
+  int? paymentTerms; // Days, e.g. 30
+  String? dueDate; // "dd/MM/yyyy"
+  String? poNo;
+  String? ewayBillNo;
+  String? vehicleNo;
+  double? taxableAmount;
+  double? cgstAmount;
+  double? sgstAmount;
+  double? igstAmount;
+  double? additionalCharges;
+  double? roundOff;
+  String? customerAddress;
+  String? customerGstin;
+  String? termsConditions;
+  String? quotationNo; // If converted from quotation
+
   int? createdAtUtcMs;
   int? updatedAtUtcMs;
 
@@ -67,6 +85,23 @@ class EntityBill {
     this.splitOnline,
     this.dueAmount,
     this.billDate,
+    this.note,
+    this.invoicePrefix,
+    this.paymentTerms,
+    this.dueDate,
+    this.poNo,
+    this.ewayBillNo,
+    this.vehicleNo,
+    this.taxableAmount,
+    this.cgstAmount,
+    this.sgstAmount,
+    this.igstAmount,
+    this.additionalCharges,
+    this.roundOff,
+    this.customerAddress,
+    this.customerGstin,
+    this.termsConditions,
+    this.quotationNo,
     this.createdAtUtcMs,
     this.updatedAtUtcMs,
   });

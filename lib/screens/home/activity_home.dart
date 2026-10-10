@@ -39,6 +39,9 @@ import 'fragment/system/frag_audit_logs.dart';
 import 'fragment/brand/fragment_home_brand.dart';
 import 'fragment/branch/fragment_home_branch.dart';
 import 'fragment/account/fragment_home_account.dart';
+import '../sales/invoice/frag_sales_invoices.dart';
+import '../sales/quotation/frag_quotations.dart';
+import '../sales/returns/frag_sales_returns.dart';
 
 class ActivityHome extends StatelessWidget {
   const ActivityHome({super.key});
@@ -100,6 +103,16 @@ class ActivityHome extends StatelessWidget {
               }
               if (controller.selectedMainMenu.value == EnumMainMenu.customer) {
                 return FragmentHomeCustomer();
+              }
+              if (controller.selectedMainMenu.value == EnumMainMenu.salesInvoices ||
+                  controller.selectedMainMenu.value == EnumMainMenu.salesGroup) {
+                return const FragSalesInvoices();
+              }
+              if (controller.selectedMainMenu.value == EnumMainMenu.quotationEstimate) {
+                return const FragQuotations();
+              }
+              if (controller.selectedMainMenu.value == EnumMainMenu.salesReturn) {
+                return const FragSalesReturns();
               }
               if (controller.selectedMainMenu.value == EnumMainMenu.reports) {
                 return const FragSalesReport();

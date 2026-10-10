@@ -101,6 +101,45 @@ class RepoDrawer {
     ),
 
     ModelDrawerMenu(
+      menu: EnumMainMenu.salesGroup,
+      titleKey: 'sales',
+      icon: Icons.receipt_long_rounded,
+      permissions: [
+        EnumPermission.posBillCreate,
+        EnumPermission.salesInvoiceView,
+      ],
+      children: [
+        ModelDrawerMenu(
+          menu: EnumMainMenu.salesInvoices,
+          titleKey: 'sales_invoices',
+          icon: Icons.description_outlined,
+          permissions: [
+            EnumPermission.posBillCreate,
+            EnumPermission.salesInvoiceView,
+          ],
+        ),
+        ModelDrawerMenu(
+          menu: EnumMainMenu.quotationEstimate,
+          titleKey: 'quotation_estimate',
+          icon: Icons.request_quote_outlined,
+          permissions: [
+            EnumPermission.posBillCreate,
+            EnumPermission.quotationView,
+          ],
+        ),
+        ModelDrawerMenu(
+          menu: EnumMainMenu.salesReturn,
+          titleKey: 'sales_return',
+          icon: Icons.assignment_return_outlined,
+          permissions: [
+            EnumPermission.posBillCreate,
+            EnumPermission.salesReturnView,
+          ],
+        ),
+      ],
+    ),
+
+    ModelDrawerMenu(
       menu: EnumMainMenu.stocks,
       titleKey: 'stocks history',
       icon: Icons.inventory,

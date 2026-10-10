@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
 
 /// Unified wrapper for all desktop forms in dialog mode.
 /// Standardizes dialog size, responsiveness, padding, and handles the ESC key.
@@ -24,50 +23,52 @@ class AppDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FocusScope(
-      autofocus: true,
-      child: KeyboardListener(
-        focusNode: FocusNode(),
-        onKeyEvent: (KeyEvent event) {
-          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
-            final hasChanges = hasUnsavedChanges?.call() ?? false;
-            if (!hasChanges) {
-              Get.back();
-            }
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          final hasChanges = hasUnsavedChanges?.call() ?? false;
+          if (!hasChanges) {
+            Navigator.of(context).pop();
           }
         },
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Center(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final effectiveWidth = constraints.maxWidth < maxWidth ? constraints.maxWidth : maxWidth;
-                final effectiveHeight = constraints.maxHeight < maxHeight ? constraints.maxHeight : maxHeight;
-                return SizedBox(
-                  width: effectiveWidth,
-                  height: effectiveHeight,
-                  child: Card(
-                    elevation: 12,
-                    margin: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        header,
-                        Expanded(
-                          child: body,
-                        ),
-                        if (footer != null) ...{footer!},
-                      ],
-                    ),
+      },
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Center(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final mediaSize = MediaQuery.sizeOf(context);
+              final availW = constraints.maxWidth.isFinite ? constraints.maxWidth : (mediaSize.width - 40);
+              final availH = constraints.maxHeight.isFinite ? constraints.maxHeight : (mediaSize.height - 40);
+
+              final targetW = availW < maxWidth ? availW : maxWidth;
+              final targetH = availH < maxHeight ? availH : maxHeight;
+
+              final effectiveWidth = targetW.clamp(280.0, availW > 280.0 ? availW : 280.0);
+              final effectiveHeight = targetH.clamp(200.0, availH > 200.0 ? availH : 200.0);
+
+              return SizedBox(
+                width: effectiveWidth,
+                height: effectiveHeight,
+                child: Card(
+                  elevation: 12,
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                );
-              },
-            ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      header,
+                      Expanded(child: body),
+                      if (footer != null) ...{footer!},
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -100,7 +101,7 @@ class DialogHeader extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: colorScheme.outline.withValues(alpha:0.12),
+            color: colorScheme.outline.withValues(alpha: 0.12),
           ),
         ),
       ),
@@ -110,19 +111,22 @@ class DialogHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: (iconColor ?? colorScheme.primary).withValues(alpha:0.08),
+                color: (iconColor ?? colorScheme.primary).withValues(
+                  alpha: 0.08,
+                ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: iconColor ?? colorScheme.primary, size: 20),
+              child: Icon(
+                icon,
+                color: iconColor ?? colorScheme.primary,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
           ],
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const Spacer(),
           if (actions != null) ...?actions,
@@ -130,7 +134,7 @@ class DialogHeader extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.close_rounded),
             splashRadius: 20,
-            onPressed: onClose ?? () => Get.back(),
+            onPressed: onClose ?? () => Navigator.of(context).pop(),
           ),
         ],
       ),
@@ -153,7 +157,10 @@ class DialogBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: padding,
-      child: child,
+      child: SizedBox(
+        width: double.infinity,
+        child: child,
+      ),
     );
   }
 }
@@ -184,18 +191,13 @@ class DialogFooter extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(
-            color: colorScheme.outline.withValues(alpha:0.12),
-          ),
+          top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.12)),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (extraWidget != null) ...[
-            extraWidget!,
-            const Spacer(),
-          ],
+          if (extraWidget != null) ...[extraWidget!, const Spacer()],
           SecondaryButton(
             label: 'Cancel',
             onPressed: onCancel,
@@ -220,36 +222,69 @@ class FormSection extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color? color;
+  final bool showDivider;
 
   const FormSection({
     super.key,
     required this.title,
     required this.icon,
     this.color,
+    this.showDivider = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final themeColor = color ?? colorScheme.primary;
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: themeColor),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            color: themeColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            letterSpacing: 0.5,
+
+    if (!showDivider) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: themeColor),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              color: themeColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Divider(height: 1, color: themeColor.withValues(alpha:0.15)),
-        ),
-      ],
+        ],
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final hasFiniteWidth = constraints.hasBoundedWidth && constraints.maxWidth.isFinite;
+        return Row(
+          mainAxisSize: hasFiniteWidth ? MainAxisSize.max : MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: themeColor),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: themeColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                letterSpacing: 0.5,
+              ),
+            ),
+            if (hasFiniteWidth) ...[
+              const SizedBox(width: 8),
+              Expanded(
+                child: Divider(
+                  height: 1,
+                  color: themeColor.withValues(alpha: 0.15),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -311,7 +346,7 @@ class AppTextField extends StatelessWidget {
 
         if (trimmed.isNotEmpty) {
           final cleanLabel = label.toLowerCase();
-          
+
           // 1. Phone number validation — must be exactly 10 digits
           if (cleanLabel.contains('phone') || cleanLabel.contains('mobile')) {
             final digitsOnly = trimmed.replaceAll(RegExp(r'\D'), '');
@@ -322,45 +357,49 @@ class AppTextField extends StatelessWidget {
               return 'Phone number contains invalid characters';
             }
           }
-          
+
           // 2. Email validation (valid email format, and gmail ends with @gmail.com)
           if (cleanLabel.contains('email') || cleanLabel.contains('mail')) {
-            final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+            final emailRegex = RegExp(
+              r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+            );
             if (!emailRegex.hasMatch(trimmed)) {
               return "Please enter a valid email address";
             }
-            if (trimmed.toLowerCase().contains('gmail') && !trimmed.toLowerCase().endsWith('@gmail.com')) {
+            if (trimmed.toLowerCase().contains('gmail') &&
+                !trimmed.toLowerCase().endsWith('@gmail.com')) {
               return "Gmail address must end with @gmail.com";
             }
           }
 
           // 3. Cost/Price/Amount validation (must not exceed 99,999,999 or 8 digits before decimal)
-          final isNonMonetary = cleanLabel.contains('phone') ||
-                                cleanLabel.contains('mobile') ||
-                                cleanLabel.contains('proof') ||
-                                cleanLabel.contains('id') ||
-                                cleanLabel.contains('aadhaar') ||
-                                cleanLabel.contains('pan') ||
-                                cleanLabel.contains('pincode') ||
-                                cleanLabel.contains('zip') ||
-                                cleanLabel.contains('barcode') ||
-                                cleanLabel.contains('sku') ||
-                                cleanLabel.contains('serial') ||
-                                keyboardType == TextInputType.phone;
+          final isNonMonetary =
+              cleanLabel.contains('phone') ||
+              cleanLabel.contains('mobile') ||
+              cleanLabel.contains('proof') ||
+              cleanLabel.contains('id') ||
+              cleanLabel.contains('aadhaar') ||
+              cleanLabel.contains('pan') ||
+              cleanLabel.contains('pincode') ||
+              cleanLabel.contains('zip') ||
+              cleanLabel.contains('barcode') ||
+              cleanLabel.contains('sku') ||
+              cleanLabel.contains('serial') ||
+              keyboardType == TextInputType.phone;
 
-          final isMonetary = !isNonMonetary && (
-                             cleanLabel.contains('cost') ||
-                             cleanLabel.contains('price') ||
-                             cleanLabel.contains('amount') ||
-                             cleanLabel.contains('mrp') ||
-                             cleanLabel.contains('rate') ||
-                             cleanLabel.contains('tax') ||
-                             cleanLabel.contains('discount') ||
-                             cleanLabel.contains('total') ||
-                             cleanLabel.contains('subtotal') ||
-                             cleanLabel.contains('balance') ||
-                             cleanLabel.contains('paid')
-                             );
+          final isMonetary =
+              !isNonMonetary &&
+              (cleanLabel.contains('cost') ||
+                  cleanLabel.contains('price') ||
+                  cleanLabel.contains('amount') ||
+                  cleanLabel.contains('mrp') ||
+                  cleanLabel.contains('rate') ||
+                  cleanLabel.contains('tax') ||
+                  cleanLabel.contains('discount') ||
+                  cleanLabel.contains('total') ||
+                  cleanLabel.contains('subtotal') ||
+                  cleanLabel.contains('balance') ||
+                  cleanLabel.contains('paid'));
 
           if (isMonetary) {
             final numVal = double.tryParse(trimmed);
@@ -400,7 +439,10 @@ class AppTextField extends StatelessWidget {
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
         prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 20) : null,
         suffixIcon: suffixIcon,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
     );
   }
@@ -434,9 +476,7 @@ class AppNumberField extends StatelessWidget {
       required: required,
       prefixIcon: prefixIcon,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-      ],
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
       validator: validator,
     );
   }
@@ -489,10 +529,11 @@ class AppDropdown<T> extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 20) : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         errorStyle: const TextStyle(height: 0, fontSize: 0),
       ),
     );
@@ -561,9 +602,7 @@ class PrimaryButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         backgroundColor: backgroundColor,
         minimumSize: const Size(120, 46),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -591,12 +630,8 @@ class SecondaryButton extends StatelessWidget {
       label: Text(label),
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(120, 46),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        side: BorderSide(
-          color: colorScheme.outline.withValues(alpha:0.24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.24)),
       ),
     );
   }

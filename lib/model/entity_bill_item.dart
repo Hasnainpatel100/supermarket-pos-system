@@ -16,8 +16,11 @@ class EntityBillItem {
   @Unique()
   String objectId = ObjectId().hexString;  //mongo id
 
+  String? hsnCode;
+  double? mrp;
   double? price;
   int? qty;
+  double? taxRate;
   double? tax;
   double? discount;
   double? total;
@@ -29,9 +32,12 @@ class EntityBillItem {
     this.id = 0,
     this.itemName,
     this.itemBarcode,
+    this.hsnCode,
     this.unit,
+    this.mrp,
     this.price,
     this.qty,
+    this.taxRate,
     this.tax,
     this.discount,
     this.total,

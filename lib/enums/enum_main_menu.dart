@@ -13,6 +13,12 @@ enum EnumMainMenu {
   customer,
   bills,
 
+  // ===== Sales =====
+  salesGroup,
+  salesInvoices,
+  quotationEstimate,
+  salesReturn,
+
   system,
   systemUsers, // 1. system
   apiUser, // API User management

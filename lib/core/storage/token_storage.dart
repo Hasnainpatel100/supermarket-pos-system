@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import '../../model/model_registered_device.dart';
 import '../../service/service_storage.dart';
 
 /// Secure token & session context storage abstraction.
@@ -17,6 +19,8 @@ class TokenStorage {
   static const String keyBrandJson = 'auth_session_brand_json';
   /// Full branch model JSON saved after login for offline session restore.
   static const String keyBranchJson = 'auth_session_branch_json';
+  /// Key for registered POS devices list
+  static const String keyRegisteredDevices = 'registered_devices';
 
   TokenStorage(this._storage);
 
@@ -130,5 +134,52 @@ class TokenStorage {
       debugPrint('🔑 [TokenStorage] Tokens and session cleared.');
     }
   }
+
+  String _deviceStorageKey(String? branchId) =>
+      (branchId != null && branchId.trim().isNotEmpty)
+          ? '${keyRegisteredDevices}_${branchId.trim()}'
+          : keyRegisteredDevices;
+
+  /// Get list of registered devices for the branch (or globally).
+  List<ModelRegisteredDevice> getRegisteredDevices([String? branchId]) {
+    final key = _deviceStorageKey(branchId);
+    final rawJson = _storage.readString(key) ??
+        (branchId != null ? _storage.readString(keyRegisteredDevices) : null);
+    if (rawJson == null || rawJson.trim().isEmpty) {
+      return [];
+    }
+    try {
+      final decoded = jsonDecode(rawJson);
+      if (decoded is List) {
+        return decoded
+            .whereType<Map<String, dynamic>>()
+            .map((item) => ModelRegisteredDevice.fromJson(item))
+            .toList();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ [TokenStorage] Failed to decode registered devices: $e');
+      }
+    }
+    return [];
+  }
+
+  /// Save list of registered devices for the branch (and mirror to global key).
+  Future<void> saveRegisteredDevices(List<ModelRegisteredDevice> devices, [String? branchId]) async {
+    final key = _deviceStorageKey(branchId);
+    final encoded = jsonEncode(devices.map((d) => d.toJson()).toList());
+    await _storage.writeString(key, encoded);
+    if (branchId != null && branchId.trim().isNotEmpty) {
+      await _storage.writeString(keyRegisteredDevices, encoded);
+    }
+  }
+
+  /// Delete / unregister a device by deviceId.
+  Future<void> removeRegisteredDevice(String deviceId, [String? branchId]) async {
+    final list = getRegisteredDevices(branchId);
+    final filtered = list.where((d) => d.deviceId != deviceId).toList();
+    await saveRegisteredDevices(filtered, branchId);
+  }
 }
+
 

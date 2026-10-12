@@ -7,16 +7,20 @@ import 'package:get/get.dart';
 import '../../commons/loader.dart';
 import '../../core/storage/token_storage.dart';
 import '../../features/authentication/data/auth_repository.dart';
+import '../../model/entity_user.dart';
 import '../../model/model_branch.dart';
+import '../../model/model_registered_device.dart';
 import '../../repository/repo_storage.dart';
 import '../../service/service_brand_context.dart';
 import '../../util/app_route.dart';
 import '../../util/snackbar_util.dart';
 import '../../util/my_date_time.dart';
 import '../../util/util_device.dart';
+import '../../widget/dialog_device_limit.dart';
 import '../../widget/dialog_plan_expired_block.dart';
 import '../home/controller_home.dart';
 import '../home/fragment/account/controller_home_account.dart';
+
 
 class ControllerLogin extends GetxController {
   final RepoStorage _repoStorage = Get.find();
@@ -104,6 +108,91 @@ class ControllerLogin extends GetxController {
 
     final user = result.user!;
 
+    // ── Enforce POS Device Limit Check ──
+    final deviceAllowed = await _checkAndEnforceDeviceLimit(
+      branch: branchToCheck,
+      plan: plan,
+      user: user,
+    );
+    if (!deviceAllowed) {
+      Loader.hideLoader();
+      return;
+    }
+
+    await _proceedToHome(user);
+  }
+
+  /// Checks whether this device is registered for the branch or if an available
+  /// device slot allows auto-registration. If limit reached, hard-blocks login
+  /// and presents [DialogDeviceLimit].
+  Future<bool> _checkAndEnforceDeviceLimit({
+    required ModelBranch? branch,
+    required BranchPlanDetails? plan,
+    required EntityUser user,
+  }) async {
+    if (!Get.isRegistered<TokenStorage>()) {
+      return true;
+    }
+
+    final tokenStorage = Get.find<TokenStorage>();
+    final branchId = branch?.id ?? branch?.remoteId;
+    final currentDeviceId = await UtilDevice.getDeviceId();
+    final currentDeviceName = await UtilDevice.getDeviceName();
+    final registeredDevices = tokenStorage.getRegisteredDevices(branchId);
+
+    // 1. If this device is already registered, allow login
+    final alreadyRegistered =
+        registeredDevices.any((d) => d.deviceId == currentDeviceId);
+    if (alreadyRegistered) {
+      return true;
+    }
+
+    // 2. Check maximum allowed POS devices (default to 2 if not configured)
+    final maxDevices = (plan?.maxPosDevices != null && plan!.maxPosDevices > 0)
+        ? plan.maxPosDevices
+        : 2;
+
+    // 3. If slot is available, automatically register this device and proceed
+    if (registeredDevices.length < maxDevices) {
+      final newDevice = ModelRegisteredDevice(
+        deviceId: currentDeviceId,
+        deviceName: currentDeviceName,
+        registeredAt: DateTime.now().toIso8601String(),
+        ipAddress: await UtilDevice.getIpAddress(),
+      );
+      await tokenStorage.saveRegisteredDevices(
+        [...registeredDevices, newDevice],
+        branchId,
+      );
+      return true;
+    }
+
+    // 4. Limit reached -> Hard block login and display device management dialog
+    Loader.hideLoader();
+    if (Get.context != null) {
+      DialogDeviceLimit.show(
+        Get.context!,
+        branch: branch,
+        maxPosDevices: maxDevices,
+        currentDeviceId: currentDeviceId,
+        currentDeviceName: currentDeviceName,
+        onDeviceActivated: () async {
+          Loader.showLoader();
+          await _proceedToHome(user);
+        },
+        onCancel: () async {
+          if (Get.isRegistered<AuthRepository>()) {
+            await Get.find<AuthRepository>().logout();
+          }
+          await _repoStorage.logout();
+        },
+      );
+    }
+    return false;
+  }
+
+  /// Updates login metadata, persists session, resets controllers, and routes to home.
+  Future<void> _proceedToHome(EntityUser user) async {
     // Update login metadata
     user.lastLoginAt = MyDateTime.getCurrentDateTimeUtc();
     user.lastLoginDevice = await UtilDevice.getDeviceName();
@@ -123,6 +212,7 @@ class ControllerLogin extends GetxController {
     Loader.hideLoader();
     Get.offAllNamed(AppRoute.home);
   }
+
 
   @override
   void onClose() {

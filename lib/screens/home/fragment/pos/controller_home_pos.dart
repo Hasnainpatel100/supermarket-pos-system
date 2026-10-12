@@ -441,6 +441,44 @@ class ControllerHomePos extends GetxController {
   }
 
   void addToCart(EntityItem item) {
+    // ── Expiry Prevention: Block selling expired stock ──
+    if (item.hasExpiry == true && (item.id ?? 0) > 0) {
+      final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+      final activeBatches = _boxBatch
+          .query(EntityItemBatch_.itemId.equals(item.id!)
+              .and(EntityItemBatch_.quantity.greaterThan(0)))
+          .order(EntityItemBatch_.expiryDateUtcMs)
+          .build()
+          .find();
+
+      if (activeBatches.isNotEmpty) {
+        // 1. Hard-block if ALL batches are expired
+        final hasValidBatch = activeBatches.any(
+          (b) => b.expiryDateUtcMs == null || b.expiryDateUtcMs! > nowMs,
+        );
+        if (!hasValidBatch) {
+          SnackbarUtil.showError(
+            "Cannot add ${item.name}! All active stock batches have expired.",
+          );
+          return;
+        }
+
+        // 2. Near-expiry notice if closest batch expires in <= 3 days
+        final nearestValid = activeBatches.firstWhere(
+          (b) => b.expiryDateUtcMs != null && b.expiryDateUtcMs! > nowMs,
+          orElse: () => activeBatches.first,
+        );
+        if (nearestValid.expiryDateUtcMs != null) {
+          final diffDays = ((nearestValid.expiryDateUtcMs! - nowMs) / (1000 * 60 * 60 * 24)).ceil();
+          if (diffDays <= 3) {
+            SnackbarUtil.showWarning(
+              "⚠️ Notice: Nearest batch of ${item.name} expires in $diffDays day(s)!",
+            );
+          }
+        }
+      }
+    }
+
     final availableStock = item.totalQty ?? 0;
     final session = activeSession;
     final index = session.rxCartItems.indexWhere((element) => element.item.target?.id == item.id);
@@ -864,9 +902,11 @@ class ControllerHomePos extends GetxController {
   }
 
   void _deductFromBatches(int itemId, int qty) {
+    // FEFO (First Expired, First Out): deduct from earliest expiring batches first
     final query = _boxBatch
-        .query(EntityItemBatch_.itemId.equals(itemId))
-        .order(EntityItemBatch_.receivedAtUtcMs)
+        .query(EntityItemBatch_.itemId.equals(itemId)
+            .and(EntityItemBatch_.quantity.greaterThan(0)))
+        .order(EntityItemBatch_.expiryDateUtcMs)
         .build();
     final batches = query.find();
     query.close();

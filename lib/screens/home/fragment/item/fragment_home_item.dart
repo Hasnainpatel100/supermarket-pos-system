@@ -3,8 +3,6 @@ import 'package:get/get.dart';
 import 'package:super_market/widget/gradient_action_button.dart';
 import 'package:super_market/widget/gradient_app_bar_title.dart';
 import 'package:super_market/widget/generic_empty_state.dart';
-import 'package:super_market/widget/search_app_bar_field.dart';
-import 'package:super_market/widget/my_card.dart';
 
 import '../../../../model/entity_item.dart';
 import '../../../../util/snackbar_util.dart';
@@ -21,11 +19,16 @@ class FragmentHomeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ControllerHomeItem controller = Get.put(ControllerHomeItem());
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
+        backgroundColor: colorScheme.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: GradientAppBarTitle(
           icon: Icons.inventory_2_rounded,
           title: 'item_list_title'.tr,
@@ -36,10 +39,10 @@ class FragmentHomeItem extends StatelessWidget {
           TextButton.icon(
             onPressed: () => controller.exportExcel(),
             icon: const Icon(Icons.download_rounded, size: 18),
-            label: Text('export'.tr, style: TextStyle(fontWeight: FontWeight.bold)),
+            label: Text('export'.tr, style: const TextStyle(fontWeight: FontWeight.bold)),
             style: TextButton.styleFrom(
               foregroundColor: Colors.blue.shade700,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
             ),
           ),
           GradientActionButton(
@@ -60,357 +63,466 @@ class FragmentHomeItem extends StatelessWidget {
               controller.loadItems();
             },
           ),
+          const SizedBox(width: 8),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Obx(
-            () => SearchAppBarField(
-              controller: controller.searchController,
-              hint: 'search_item'.tr,
-              onChanged: controller.updateSearch,
-              onClear: controller.clearSearch,
-              hasQuery: controller.searchQuery.isNotEmpty,
-            ),
-          ),
-        ),
       ),
 
-      body: Obx(
-            () => controller.rxListItem.isEmpty
-            ? const GenericEmptyState(
-                icon: Icons.inventory_2_outlined,
-                title: 'No items found',
-                subtitle: 'Add a new item to get started',
-                gradientColors: [Color(0xFFBFDBFE), Color(0xFFA5F3FC)],
-              )
-            : Column(
-          children: [
-            Expanded(
-              child: RepaintBoundary(
-                child: MyCard(
-                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: SingleChildScrollView(
-                    child: DataTable(
-                      columnSpacing: 18,
-                      horizontalMargin: 18,
-                      headingRowColor: WidgetStateProperty.all(colorScheme.primary.withValues(alpha: 0.04)),
-                      headingTextStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: colorScheme.onSurface),
-                      dividerThickness: 0.5,
-                      columns: [
-                        // ── NAME (sortable) ──
-                        DataColumn(
-                          label: _SortableHeader(
-                            controller: controller,
-                            field: SortField.name,
-                            label: 'name'.tr,
-                            icon: Icons.label_outlined,
-                            iconColor: Colors.blue.shade600,
-                            bgColor: Colors.blue.shade50,
-                          ),
-                        ),
-                        DataColumn(
-                          label: Text('SKU'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
-                        ),
-                        DataColumn(
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(color: Colors.deepPurple.shade50, borderRadius: BorderRadius.circular(6)),
-                                child: Icon(Icons.qr_code_2_rounded, size: 16, color: Colors.deepPurple.shade400),
-                              ),
-                              const SizedBox(width: 8),
-                              Text('barcode'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        DataColumn(
-                          label: Text('unit'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
-                        ),
-                        DataColumn(
-                          numeric: true,
-                          label: Text('cost'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
-                        ),
-                        // ── PRICE (sortable) ──
-                        DataColumn(
-                          numeric: true,
-                          label: _SortableHeader(
-                            controller: controller,
-                            field: SortField.price,
-                            label: 'price'.tr,
-                            icon: Icons.arrow_upward_rounded,
-                            iconColor: Colors.teal.shade600,
-                            bgColor: Colors.teal.shade50,
-                          ),
-                        ),
-                        // ── STOCK (sortable) ──
-                        DataColumn(
-                          numeric: true,
-                          label: _SortableHeader(
-                            controller: controller,
-                            field: SortField.stock,
-                            label: 'stock'.tr,
-                            icon: Icons.warehouse_outlined,
-                            iconColor: Colors.blue.shade600,
-                            bgColor: Colors.blue.shade50,
-                          ),
-                        ),
-                        DataColumn(
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(color: Colors.purple.shade50, borderRadius: BorderRadius.circular(6)),
-                                child: Icon(Icons.toggle_on_rounded, size: 16, color: Colors.purple.shade600),
-                              ),
-                              const SizedBox(width: 8),
-                              Text('status'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        DataColumn(
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
-                                child: Icon(Icons.settings_rounded, size: 16, color: Colors.grey.shade700),
-                              ),
-                              const SizedBox(width: 8),
-                              Text('actions'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                      ],
-                      rows: controller.rxListItem.map((EntityItem item) {
-                        final isActive = item.isActive ?? true;
-
-                        return DataRow(
-                          color: WidgetStateProperty.resolveWith<Color?>((states) {
-                            if (!isActive) return Colors.grey.withValues(alpha: 0.05);
-                            return null;
-                          }),
-                          cells: [
-                            // Name
-                            DataCell(Text(
-                              item.name ?? '-',
-                              style: TextStyle(
-                                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                                color: isActive ? null : Colors.grey,
-                                fontStyle: isActive ? FontStyle.normal : FontStyle.italic,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            )),
-
-                            // SKU
-                            DataCell(Text(
-                              item.sku ?? '-',
-                              style: TextStyle(fontSize: 12, color: isActive ? Colors.grey.shade700 : Colors.grey),
-                              overflow: TextOverflow.ellipsis,
-                            )),
-
-                            // Barcode
-                            DataCell(Text(
-                              item.barcode?.isNotEmpty == true ? item.barcode! : '-',
-                              style: TextStyle(fontFamily: 'monospace', fontSize: 12, color: isActive ? Colors.deepPurple.shade400 : Colors.grey),
-                              overflow: TextOverflow.ellipsis,
-                            )),
-
-                            // Unit
-                            DataCell(Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: isActive ? Colors.blueGrey.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(item.unit ?? '-', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isActive ? colorScheme.onSurface : Colors.grey)),
-                            )),
-
-                            // Cost
-                            DataCell(Text(
-                              item.costPrice != null ? '${controller.serviceCurrency.rxCurrency.value}${item.costPrice!.toStringAsFixed(2)}' : '-',
-                              style: TextStyle(fontSize: 13, color: isActive ? (Theme.of(context).brightness == Brightness.dark ? Colors.amber.shade300 : Colors.orange.shade800) : Colors.grey),
-                            )),
-
-                            // Price
-                            DataCell(Text(
-                              item.sellingPrice != null ? '${controller.serviceCurrency.rxCurrency.value}${item.sellingPrice!.toStringAsFixed(2)}' : '-',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isActive ? (Theme.of(context).brightness == Brightness.dark ? Colors.teal.shade300 : Colors.teal.shade700) : Colors.grey),
-                            )),
-
-                            // Stock
-                            DataCell(Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? ((item.totalQty ?? 0) <= 0 ? Colors.red.withValues(alpha: 0.08) : Colors.green.withValues(alpha: 0.08))
-                                    : Colors.grey.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '${item.totalQty ?? 0}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: isActive ? ((item.totalQty ?? 0) <= 0 ? (Theme.of(context).brightness == Brightness.dark ? Colors.red.shade300 : Colors.red.shade700) : (Theme.of(context).brightness == Brightness.dark ? Colors.green.shade300 : Colors.green.shade700)) : Colors.grey,
-                                ),
-                              ),
-                            )),
-
-                            // Status badge
-                            DataCell(Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 7,
-                                    height: 7,
-                                    decoration: BoxDecoration(
-                                      color: isActive ? Colors.green.shade600 : Colors.red.shade500,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    isActive ? 'active'.tr : 'inactive'.tr,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: isActive ? Colors.green.shade700 : Colors.red.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )),
-
-                            // Actions
-                            DataCell(
-                              PopupMenuButton<String>(
-                                icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500),
-                                tooltip: 'Actions'.tr,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                onSelected: (value) {
-                                  switch (value) {
-                                    case 'edit':
-                                      _onEdit(item, controller);
-                                      break;
-                                    case 'print_barcode':
-                                      Get.dialog(DialogPrintBarcode(item: item));
-                                      break;
-                                    case 'adjust_stock':
-                                      _onAdjustStock(item);
-                                      break;
-                                    case 'view_batches':
-                                      _onViewBatches(item);
-                                      break;
-                                    case 'details':
-                                      _onDetails(item);
-                                      break;
-                                    case 'toggle':
-                                      _confirmToggleActive(context, item, controller);
-                                      break;
-                                  }
-                                },
-                                itemBuilder: (_) => [
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Row(children: [
-                                      Icon(Icons.edit_outlined, size: 20, color: colorScheme.primary),
-                                      const SizedBox(width: 12),
-                                      Text('edit'.tr),
-                                    ]),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'print_barcode',
-                                    child: Row(children: [
-                                      Icon(Icons.print_rounded, size: 20, color: Colors.deepPurple.shade400),
-                                      const SizedBox(width: 12),
-                                      Text('print_barcode'.tr),
-                                    ]),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'adjust_stock',
-                                    child: Row(children: [
-                                      Icon(Icons.tune_rounded, size: 20, color: Colors.teal.shade600),
-                                      const SizedBox(width: 12),
-                                      Text('adjust_stock'.tr),
-                                    ]),
-                                  ),
-                                  if (item.hasExpiry == true)
-                                    PopupMenuItem(
-                                      value: 'view_batches',
-                                      child: Row(children: [
-                                        Icon(Icons.history_edu_rounded, size: 20, color: Colors.blue.shade600),
-                                        const SizedBox(width: 12),
-                                        Text('view_batches'.tr),
-                                      ]),
-                                    ),
-                                  PopupMenuItem(
-                                    value: 'details',
-                                    child: Row(children: [
-                                      Icon(Icons.visibility_outlined, size: 20, color: Colors.deepPurple.shade400),
-                                      const SizedBox(width: 12),
-                                      Text('view_details'.tr),
-                                    ]),
-                                  ),
-                                  const PopupMenuDivider(),
-                                  PopupMenuItem(
-                                    value: 'toggle',
-                                    child: Row(children: [
-                                      Icon(
-                                        isActive ? Icons.toggle_off_rounded : Icons.toggle_on_rounded,
-                                        size: 22,
-                                        color: isActive ? Colors.red.shade400 : Colors.green.shade500,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        isActive ? 'deactivate'.tr : 'activate'.tr,
-                                        style: TextStyle(color: isActive ? Colors.red.shade400 : Colors.green.shade600),
-                                      ),
-                                    ]),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                      dataRowMaxHeight: 52,
+      body: Column(
+        children: [
+          // ── Compact Search & Filter Toolbar ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.45) : Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: controller.searchController,
+                      onChanged: controller.updateSearch,
+                      style: const TextStyle(fontSize: 13.5),
+                      decoration: InputDecoration(
+                        hintText: 'search_item'.tr,
+                        hintStyle: TextStyle(fontSize: 13, color: isDark ? Colors.grey.shade400 : Colors.grey.shade500),
+                        prefixIcon: Icon(Icons.search_rounded, size: 20, color: Colors.blue.shade600),
+                        suffixIcon: Obx(() => controller.searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                onPressed: controller.clearSearch,
+                                splashRadius: 16,
+                              )
+                            : const SizedBox.shrink()),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 9),
+                      ),
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                _buildFilterBar(context, controller),
+              ],
             ),
           ),
-            // ── Pagination Footer ──
-            Obx(() => _buildPagination(context, controller)),
-          ],
-        ),
+
+          // ── Full-Width Responsive Table Card & Docked Pagination ──
+          Expanded(
+            child: Obx(
+              () => controller.rxListItem.isEmpty
+                  ? GenericEmptyState(
+                      icon: controller.rxExpiryFilter.value == ItemExpiryFilter.expired
+                          ? Icons.event_busy_rounded
+                          : (controller.rxExpiryFilter.value == ItemExpiryFilter.expiringSoon
+                              ? Icons.schedule_rounded
+                              : Icons.inventory_2_outlined),
+                      title: controller.rxExpiryFilter.value == ItemExpiryFilter.expired
+                          ? 'No expired items'
+                          : (controller.rxExpiryFilter.value == ItemExpiryFilter.expiringSoon
+                              ? 'No items expiring soon'
+                              : 'No items found'),
+                      subtitle: controller.rxExpiryFilter.value == ItemExpiryFilter.all
+                          ? 'Add a new item to get started'
+                          : 'All tracked item batches are currently fresh',
+                      gradientColors: const [Color(0xFFBFDBFE), Color(0xFFA5F3FC)],
+                    )
+                  : Container(
+                      margin: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? colorScheme.surfaceContainerLow : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final availableWidth = constraints.maxWidth;
+                                  const baseTableWidth = 900.0;
+                                  final extraWidth = (availableWidth - baseTableWidth).clamp(0.0, 1600.0);
+                                  final nameColWidth = (180.0 + (extraWidth * 0.28)).clamp(180.0, 380.0);
+                                  final dynamicSpacing = (16.0 + (extraWidth * 0.075)).clamp(16.0, 48.0);
+
+                                  return SizedBox(
+                                    width: double.infinity,
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: ConstrainedBox(
+                                        constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                                        child: SingleChildScrollView(
+                                          child: DataTable(
+                                            columnSpacing: dynamicSpacing,
+                                            horizontalMargin: 16,
+                                            headingRowColor: WidgetStateProperty.all(
+                                              isDark
+                                                  ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
+                                                  : colorScheme.primary.withValues(alpha: 0.05),
+                                            ),
+                                            headingTextStyle: TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13,
+                                              color: colorScheme.onSurface,
+                                            ),
+                                            dividerThickness: 0.5,
+                                            dataRowMinHeight: 46,
+                                            dataRowMaxHeight: 50,
+                                            columns: [
+                                              // ── NAME (sortable) ──
+                                              DataColumn(
+                                                label: SizedBox(
+                                                  width: nameColWidth,
+                                                  child: _SortableHeader(
+                                                    controller: controller,
+                                                    field: SortField.name,
+                                                    label: 'name'.tr,
+                                                    icon: Icons.label_outlined,
+                                                    iconColor: Colors.blue.shade600,
+                                                    bgColor: Colors.blue.shade50,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataColumn(
+                                                label: Text('SKU'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                                              ),
+                                              DataColumn(
+                                                label: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets.all(4),
+                                                      decoration: BoxDecoration(color: Colors.deepPurple.shade50, borderRadius: BorderRadius.circular(6)),
+                                                      child: Icon(Icons.qr_code_2_rounded, size: 15, color: Colors.deepPurple.shade400),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text('barcode'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                                                  ],
+                                                ),
+                                              ),
+                                              DataColumn(
+                                                label: Text('unit'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                                              ),
+                                              DataColumn(
+                                                numeric: true,
+                                                label: Text('cost'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                                              ),
+                                              // ── PRICE (sortable) ──
+                                              DataColumn(
+                                                numeric: true,
+                                                label: _SortableHeader(
+                                                  controller: controller,
+                                                  field: SortField.price,
+                                                  label: 'price'.tr,
+                                                  icon: Icons.arrow_upward_rounded,
+                                                  iconColor: Colors.teal.shade600,
+                                                  bgColor: Colors.teal.shade50,
+                                                ),
+                                              ),
+                                              // ── STOCK (sortable) ──
+                                              DataColumn(
+                                                numeric: true,
+                                                label: _SortableHeader(
+                                                  controller: controller,
+                                                  field: SortField.stock,
+                                                  label: 'stock'.tr,
+                                                  icon: Icons.warehouse_outlined,
+                                                  iconColor: Colors.blue.shade600,
+                                                  bgColor: Colors.blue.shade50,
+                                                ),
+                                              ),
+                                              DataColumn(
+                                                label: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets.all(4),
+                                                      decoration: BoxDecoration(color: Colors.purple.shade50, borderRadius: BorderRadius.circular(6)),
+                                                      child: Icon(Icons.toggle_on_rounded, size: 15, color: Colors.purple.shade600),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text('status'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                                                  ],
+                                                ),
+                                              ),
+                                              DataColumn(
+                                                label: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets.all(4),
+                                                      decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
+                                                      child: Icon(Icons.settings_rounded, size: 15, color: Colors.grey.shade700),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text('actions'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                            rows: controller.rxListItem.map((EntityItem item) {
+                                              final isActive = item.isActive ?? true;
+
+                                              return DataRow(
+                                                color: WidgetStateProperty.resolveWith<Color?>((states) {
+                                                  if (!isActive) return Colors.grey.withValues(alpha: 0.05);
+                                                  return null;
+                                                }),
+                                                cells: [
+                                                  // Name
+                                                  DataCell(
+                                                    SizedBox(
+                                                      width: nameColWidth,
+                                                      child: Text(
+                                                        item.name ?? '-',
+                                                        style: TextStyle(
+                                                          fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                                                          color: isActive ? null : Colors.grey,
+                                                          fontStyle: isActive ? FontStyle.normal : FontStyle.italic,
+                                                        ),
+                                                        overflow: TextOverflow.ellipsis,
+                                                        maxLines: 1,
+                                                      ),
+                                                    ),
+                                                  ),
+
+                                                  // SKU
+                                                  DataCell(Text(
+                                                    item.sku ?? '-',
+                                                    style: TextStyle(fontSize: 12, color: isActive ? Colors.grey.shade700 : Colors.grey),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  )),
+
+                                                  // Barcode
+                                                  DataCell(Text(
+                                                    item.barcode?.isNotEmpty == true ? item.barcode! : '-',
+                                                    style: TextStyle(fontFamily: 'monospace', fontSize: 12, color: isActive ? Colors.deepPurple.shade400 : Colors.grey),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  )),
+
+                                                  // Unit
+                                                  DataCell(Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                    decoration: BoxDecoration(
+                                                      color: isActive ? Colors.blueGrey.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.06),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                    ),
+                                                    child: Text(item.unit ?? '-', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: isActive ? colorScheme.onSurface : Colors.grey)),
+                                                  )),
+
+                                                  // Cost
+                                                  DataCell(Text(
+                                                    item.costPrice != null ? '${controller.serviceCurrency.rxCurrency.value}${item.costPrice!.toStringAsFixed(2)}' : '-',
+                                                    style: TextStyle(fontSize: 13, color: isActive ? (Theme.of(context).brightness == Brightness.dark ? Colors.amber.shade300 : Colors.orange.shade800) : Colors.grey),
+                                                  )),
+
+                                                  // Price
+                                                  DataCell(Text(
+                                                    item.sellingPrice != null ? '${controller.serviceCurrency.rxCurrency.value}${item.sellingPrice!.toStringAsFixed(2)}' : '-',
+                                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isActive ? (Theme.of(context).brightness == Brightness.dark ? Colors.teal.shade300 : Colors.teal.shade700) : Colors.grey),
+                                                  )),
+
+                                                  // Stock
+                                                  DataCell(Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                    decoration: BoxDecoration(
+                                                      color: isActive
+                                                          ? ((item.totalQty ?? 0) <= 0 ? Colors.red.withValues(alpha: 0.08) : Colors.green.withValues(alpha: 0.08))
+                                                          : Colors.grey.withValues(alpha: 0.06),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                    ),
+                                                    child: Text(
+                                                      '${item.totalQty ?? 0}',
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 13,
+                                                        color: isActive ? ((item.totalQty ?? 0) <= 0 ? (Theme.of(context).brightness == Brightness.dark ? Colors.red.shade300 : Colors.red.shade700) : (Theme.of(context).brightness == Brightness.dark ? Colors.green.shade300 : Colors.green.shade700)) : Colors.grey,
+                                                      ),
+                                                    ),
+                                                  )),
+
+                                                  // Status badge
+                                                  DataCell(Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                    decoration: BoxDecoration(
+                                                      color: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.08),
+                                                      borderRadius: BorderRadius.circular(20),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Container(
+                                                          width: 7,
+                                                          height: 7,
+                                                          decoration: BoxDecoration(
+                                                            color: isActive ? Colors.green.shade600 : Colors.red.shade500,
+                                                            shape: BoxShape.circle,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 5),
+                                                        Text(
+                                                          isActive ? 'active'.tr : 'inactive'.tr,
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            fontWeight: FontWeight.w600,
+                                                            color: isActive ? Colors.green.shade700 : Colors.red.shade700,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  )),
+
+                                                  // Actions
+                                                  DataCell(
+                                                    PopupMenuButton<String>(
+                                                      icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500),
+                                                      tooltip: 'Actions'.tr,
+                                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                      onSelected: (value) {
+                                                        switch (value) {
+                                                          case 'edit':
+                                                            _onEdit(item, controller);
+                                                            break;
+                                                          case 'print_barcode':
+                                                            Get.dialog(DialogPrintBarcode(item: item));
+                                                            break;
+                                                          case 'adjust_stock':
+                                                            _onAdjustStock(item);
+                                                            break;
+                                                          case 'view_batches':
+                                                            _onViewBatches(item);
+                                                            break;
+                                                          case 'details':
+                                                            _onDetails(item);
+                                                            break;
+                                                          case 'toggle':
+                                                            _confirmToggleActive(context, item, controller);
+                                                            break;
+                                                        }
+                                                      },
+                                                      itemBuilder: (_) => [
+                                                        PopupMenuItem(
+                                                          value: 'edit',
+                                                          child: Row(children: [
+                                                            Icon(Icons.edit_outlined, size: 20, color: colorScheme.primary),
+                                                            const SizedBox(width: 12),
+                                                            Text('edit'.tr),
+                                                          ]),
+                                                        ),
+                                                        PopupMenuItem(
+                                                          value: 'print_barcode',
+                                                          child: Row(children: [
+                                                            Icon(Icons.print_rounded, size: 20, color: Colors.deepPurple.shade400),
+                                                            const SizedBox(width: 12),
+                                                            Text('print_barcode'.tr),
+                                                          ]),
+                                                        ),
+                                                        PopupMenuItem(
+                                                          value: 'adjust_stock',
+                                                          child: Row(children: [
+                                                            Icon(Icons.tune_rounded, size: 20, color: Colors.teal.shade600),
+                                                            const SizedBox(width: 12),
+                                                            Text('adjust_stock'.tr),
+                                                          ]),
+                                                        ),
+                                                        if (item.hasExpiry == true)
+                                                          PopupMenuItem(
+                                                            value: 'view_batches',
+                                                            child: Row(children: [
+                                                            Icon(Icons.history_edu_rounded, size: 20, color: Colors.blue.shade600),
+                                                            const SizedBox(width: 12),
+                                                            Text('view_batches'.tr),
+                                                          ]),
+                                                        ),
+                                                        PopupMenuItem(
+                                                          value: 'details',
+                                                          child: Row(children: [
+                                                            Icon(Icons.visibility_outlined, size: 20, color: Colors.deepPurple.shade400),
+                                                            const SizedBox(width: 12),
+                                                            Text('view_details'.tr),
+                                                          ]),
+                                                        ),
+                                                        const PopupMenuDivider(),
+                                                        PopupMenuItem(
+                                                          value: 'toggle',
+                                                          child: Row(children: [
+                                                            Icon(
+                                                              isActive ? Icons.toggle_off_rounded : Icons.toggle_on_rounded,
+                                                              size: 22,
+                                                              color: isActive ? Colors.red.shade400 : Colors.green.shade500,
+                                                            ),
+                                                            const SizedBox(width: 12),
+                                                            Text(
+                                                              isActive ? 'deactivate'.tr : 'activate'.tr,
+                                                              style: TextStyle(color: isActive ? Colors.red.shade400 : Colors.green.shade600),
+                                                            ),
+                                                          ]),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: isDark ? Colors.white.withValues(alpha: 0.07) : Colors.grey.shade200,
+                            ),
+                            _buildPagination(context, controller),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildPagination(BuildContext context, ControllerHomeItem controller) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.25) : Colors.grey.shade50,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'total_items_count'.trParams({'count': '${controller.totalCount.value}'}),
-            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
-          ),
+          Obx(() {
+            final count = controller.totalCount.value;
+            final start = count == 0 ? 0 : (controller.currentPage.value * controller.pageSize) + 1;
+            final end = ((controller.currentPage.value + 1) * controller.pageSize).clamp(0, count);
+            return Text(
+              count > 0 ? 'Showing $start-$end of $count items' : 'No items',
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: colorScheme.onSurfaceVariant),
+            );
+          }),
           Row(
             children: [
               OutlinedButton.icon(
@@ -418,24 +530,27 @@ class FragmentHomeItem extends StatelessWidget {
                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
                 label: Text('prev'.tr),
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: Colors.blue.withValues(alpha:0.1), borderRadius: BorderRadius.circular(10)),
-                child: Text('page_number'.trParams({'number': '${controller.currentPage.value + 1}'}),
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+                child: Text(
+                  'page_number'.trParams({'number': '${controller.currentPage.value + 1}'}),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.blue.shade700),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: controller.hasNext ? controller.nextPage : null,
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
                 label: Text('next'.tr),
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ],
@@ -497,6 +612,98 @@ class FragmentHomeItem extends StatelessWidget {
         ),
         onPressed: () => Get.back(),
         child: Text('cancel'.tr),
+      ),
+    );
+  }
+
+  Widget _buildFilterBar(BuildContext context, ControllerHomeItem controller) {
+    return Obx(() {
+      final selected = controller.rxExpiryFilter.value;
+      final expiredCnt = controller.expiredCount;
+      final soonCnt = controller.expiringSoonCount;
+
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _filterChip(
+            context,
+            label: 'All Items',
+            icon: Icons.inventory_2_rounded,
+            isSelected: selected == ItemExpiryFilter.all,
+            onTap: () => controller.setExpiryFilter(ItemExpiryFilter.all),
+          ),
+          const SizedBox(width: 8),
+          _filterChip(
+            context,
+            label: 'Expired ($expiredCnt)',
+            icon: Icons.event_busy_rounded,
+            isSelected: selected == ItemExpiryFilter.expired,
+            activeColor: const Color(0xFFEF4444),
+            onTap: () => controller.setExpiryFilter(ItemExpiryFilter.expired),
+          ),
+          const SizedBox(width: 8),
+          _filterChip(
+            context,
+            label: 'Expiring in 30d ($soonCnt)',
+            icon: Icons.schedule_rounded,
+            isSelected: selected == ItemExpiryFilter.expiringSoon,
+            activeColor: const Color(0xFFD97706),
+            onTap: () => controller.setExpiryFilter(ItemExpiryFilter.expiringSoon),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _filterChip(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    Color? activeColor,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primary = activeColor ?? theme.colorScheme.primary;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? primary.withValues(alpha: isDark ? 0.25 : 0.12)
+              : (isDark ? theme.colorScheme.surfaceContainerHigh : Colors.grey.shade100),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? primary.withValues(alpha: 0.6)
+                : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade300),
+            width: isSelected ? 1.4 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? primary : (isDark ? Colors.grey.shade400 : Colors.grey.shade700),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? primary : (isDark ? Colors.grey.shade200 : Colors.grey.shade800),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

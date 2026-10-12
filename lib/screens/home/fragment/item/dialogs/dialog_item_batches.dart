@@ -134,28 +134,36 @@ class DialogItemBatches extends StatelessWidget {
                                   ),
                                 ),
 
-                                /// Expiry
+                                /// Expiry & Status
                                 Expanded(
-                                  flex: 2,
+                                  flex: 3,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        'Qty: ${batch.quantity ?? 0}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            'Qty: ${batch.quantity ?? 0}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          _buildExpiryBadge(expiry),
+                                        ],
                                       ),
-                                      if (expiry != null)
+                                      if (expiry != null) ...[
+                                        const SizedBox(height: 3),
                                         Text(
                                           'Exp: ${dateFormat.format(expiry)}',
                                           style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.red.shade400,
+                                            fontSize: 11.5,
+                                            color: Colors.grey.shade600,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -170,5 +178,109 @@ class DialogItemBatches extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildExpiryBadge(DateTime? expiry) {
+    if (expiry == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.grey.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+        ),
+        child: const Text(
+          'No Expiry',
+          style: TextStyle(fontSize: 10.5, color: Colors.grey, fontWeight: FontWeight.w600),
+        ),
+      );
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expDate = DateTime(expiry.year, expiry.month, expiry.day);
+    final diffDays = expDate.difference(today).inDays;
+
+    if (diffDays < 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline_rounded, size: 12, color: Color(0xFFEF4444)),
+            const SizedBox(width: 3),
+            Text(
+              diffDays == -1 ? 'Expired yesterday' : 'Expired ${-diffDays}d ago',
+              style: const TextStyle(fontSize: 10.5, color: Color(0xFFEF4444), fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      );
+    } else if (diffDays <= 7) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.warning_amber_rounded, size: 12, color: Color(0xFFEF4444)),
+            const SizedBox(width: 3),
+            Text(
+              diffDays == 0 ? 'Expires TODAY' : 'Expires in ${diffDays}d',
+              style: const TextStyle(fontSize: 10.5, color: Color(0xFFEF4444), fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      );
+    } else if (diffDays <= 30) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.schedule_rounded, size: 12, color: Color(0xFFD97706)),
+            const SizedBox(width: 3),
+            Text(
+              'Expires in ${diffDays}d',
+              style: const TextStyle(fontSize: 10.5, color: Color(0xFFD97706), fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10B981).withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_outline_rounded, size: 12, color: Color(0xFF10B981)),
+            const SizedBox(width: 3),
+            Text(
+              'Fresh (${diffDays}d)',
+              style: const TextStyle(fontSize: 10.5, color: Color(0xFF059669), fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

@@ -59,6 +59,7 @@ class ItemService {
     bool sortAsc = true,
     int offset = 0,
     int limit = 20,
+    List<int>? itemIdsFilter,
   }) {
     final trimmed = query.trim();
     Condition<EntityItem>? condition;
@@ -67,6 +68,11 @@ class ItemService {
           .contains(trimmed, caseSensitive: false)
           .or(EntityItem_.barcode.contains(trimmed, caseSensitive: false))
           .or(EntityItem_.sku.contains(trimmed, caseSensitive: false));
+    }
+
+    if (itemIdsFilter != null) {
+      final idCond = EntityItem_.id.oneOf(itemIdsFilter);
+      condition = condition != null ? condition.and(idCond) : idCond;
     }
 
     final queryBuilder = itemBox.query(condition);

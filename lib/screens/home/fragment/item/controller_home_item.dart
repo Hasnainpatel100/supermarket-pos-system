@@ -31,6 +31,16 @@ class SortField {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Expiry Filter enum
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ItemExpiryFilter {
+  all,
+  expired,
+  expiringSoon,
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Controller
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -48,8 +58,41 @@ class ControllerHomeItem extends GetxController {
   /// Debounce search input to avoid querying ObjectBox on every keystroke.
   final _searchDebouncer = Debouncer(milliseconds: PerfConfig.searchDebounceMs);
 
+  // ── Expiry Filter ─────────────────────────────────────────────────────────
+  final Rx<ItemExpiryFilter> rxExpiryFilter = ItemExpiryFilter.all.obs;
+
+  void setExpiryFilter(ItemExpiryFilter filter) {
+    rxExpiryFilter.value = filter;
+    currentPage.value = 0;
+    _fetchPagedItems();
+  }
+
+  int get expiredCount {
+    final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final q = _boxBatch
+        .query(EntityItemBatch_.expiryDateUtcMs.lessThan(nowMs)
+            .and(EntityItemBatch_.quantity.greaterThan(0)))
+        .build();
+    final count = q.property(EntityItemBatch_.itemId).find().whereType<int>().toSet().length;
+    q.close();
+    return count;
+  }
+
+  int get expiringSoonCount {
+    final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final thirtyDaysMs = nowMs + (30 * 24 * 60 * 60 * 1000);
+    final q = _boxBatch
+        .query(EntityItemBatch_.expiryDateUtcMs.between(nowMs, thirtyDaysMs)
+            .and(EntityItemBatch_.quantity.greaterThan(0)))
+        .build();
+    final count = q.property(EntityItemBatch_.itemId).find().whereType<int>().toSet().length;
+    q.close();
+    return count;
+  }
+
   // ── Pagination ────────────────────────────────────────────────────────────
   static const int _pageSize = 20;
+  int get pageSize => _pageSize;
   final RxInt currentPage = 0.obs;
   final RxInt totalCount  = 0.obs;
 
@@ -105,12 +148,35 @@ class ControllerHomeItem extends GetxController {
   }
 
   void _fetchPagedItems() {
+    List<int>? idsFilter;
+    final nowMs = DateTime.now().toUtc().millisecondsSinceEpoch;
+
+    if (rxExpiryFilter.value == ItemExpiryFilter.expired) {
+      final q = _boxBatch
+          .query(EntityItemBatch_.expiryDateUtcMs.lessThan(nowMs)
+              .and(EntityItemBatch_.quantity.greaterThan(0)))
+          .build();
+      final ids = q.property(EntityItemBatch_.itemId).find().whereType<int>().toSet().toList();
+      q.close();
+      idsFilter = ids.isNotEmpty ? ids : [-1];
+    } else if (rxExpiryFilter.value == ItemExpiryFilter.expiringSoon) {
+      final thirtyDaysMs = nowMs + (30 * 24 * 60 * 60 * 1000);
+      final q = _boxBatch
+          .query(EntityItemBatch_.expiryDateUtcMs.between(nowMs, thirtyDaysMs)
+              .and(EntityItemBatch_.quantity.greaterThan(0)))
+          .build();
+      final ids = q.property(EntityItemBatch_.itemId).find().whereType<int>().toSet().toList();
+      q.close();
+      idsFilter = ids.isNotEmpty ? ids : [-1];
+    }
+
     final result = _itemService.getItemsPaged(
       query: searchQuery.value,
       sortField: rxSortField.value,
       sortAsc: rxSortAsc.value,
       offset: currentPage.value * _pageSize,
       limit: _pageSize,
+      itemIdsFilter: idsFilter,
     );
     totalCount.value = result.totalCount;
     rxListItem.assignAll(result.items);

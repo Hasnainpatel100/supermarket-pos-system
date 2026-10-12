@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../model/entity_bill.dart';
 import '../../../model/entity_item.dart';
+import '../../../model/entity_sales_return.dart';
 import '../../../service/service_currency.dart';
 import '../../../widget/app_dialog_components.dart';
 import '../../../widget/my_card.dart';
@@ -11,8 +12,9 @@ import 'controller_create_sales_return.dart';
 
 class ActivityCreateSalesReturn extends StatefulWidget {
   final EntityBill? linkedBill;
+  final EntitySalesReturn? editingReturn;
 
-  const ActivityCreateSalesReturn({super.key, this.linkedBill});
+  const ActivityCreateSalesReturn({super.key, this.linkedBill, this.editingReturn});
 
   @override
   State<ActivityCreateSalesReturn> createState() => _ActivityCreateSalesReturnState();
@@ -27,7 +29,10 @@ class _ActivityCreateSalesReturnState extends State<ActivityCreateSalesReturn> {
     if (Get.isRegistered<ControllerCreateSalesReturn>()) {
       Get.delete<ControllerCreateSalesReturn>();
     }
-    controller = Get.put(ControllerCreateSalesReturn(linkedBill: widget.linkedBill));
+    controller = Get.put(ControllerCreateSalesReturn(
+      linkedBill: widget.linkedBill,
+      editingReturn: widget.editingReturn,
+    ));
   }
 
   @override
@@ -53,7 +58,9 @@ class _ActivityCreateSalesReturnState extends State<ActivityCreateSalesReturn> {
       maxWidth: 1020,
       maxHeight: 820,
       header: DialogHeader(
-        title: 'New Sales Return / Credit Note'.tr,
+        title: widget.editingReturn != null
+            ? 'Edit Sales Return / Credit Note'.tr
+            : 'New Sales Return / Credit Note'.tr,
         icon: Icons.assignment_return_rounded,
         iconColor: isDark ? Colors.red.shade400 : Colors.red.shade700,
       ),
@@ -258,25 +265,32 @@ class _ActivityCreateSalesReturnState extends State<ActivityCreateSalesReturn> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Header
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: (isDark ? Colors.red.shade400 : Colors.red.shade700).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(width: 32, child: Text('#', style: _headerStyle(colorScheme))),
-                        Expanded(flex: 4, child: Text('ITEM / PRODUCT'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 90, child: Text('QTY'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 110, child: Text('REFUND RATE'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 90, child: Text('TAX %'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 120, child: Text('TOTAL REFUND'.tr, style: _headerStyle(colorScheme), textAlign: TextAlign.right)),
-                        const SizedBox(width: 40),
-                      ],
-                    ),
-                  ),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: 780,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Header
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: (isDark ? Colors.red.shade400 : Colors.red.shade700).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(width: 32, child: Text('#', style: _headerStyle(colorScheme))),
+                                Expanded(flex: 4, child: Text('ITEM / PRODUCT'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 90, child: Text('QTY'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 110, child: Text('REFUND RATE'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 90, child: Text('TAX %'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 120, child: Text('TOTAL REFUND'.tr, style: _headerStyle(colorScheme), textAlign: TextAlign.right)),
+                                const SizedBox(width: 40),
+                              ],
+                            ),
+                          ),
 
                   // Rows
                   Obx(
@@ -427,6 +441,10 @@ class _ActivityCreateSalesReturnState extends State<ActivityCreateSalesReturn> {
                       }),
                     ),
                   ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -488,14 +506,23 @@ class _ActivityCreateSalesReturnState extends State<ActivityCreateSalesReturn> {
                             Text('Refund Mode:'.tr, style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant)),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: DropdownButtonFormField<String>(
-                                initialValue: controller.rxRefundMode.value,
-                                isDense: true,
-                                decoration: const InputDecoration(isDense: true),
-                                onChanged: (v) => controller.rxRefundMode.value = v ?? 'Cash',
-                                items: ['Cash', 'UPI', 'Card', 'Store Credit']
-                                    .map((m) => DropdownMenuItem(value: m, child: Text(m.tr)))
-                                    .toList(),
+                              child: Obx(
+                                () {
+                                  final current = ControllerCreateSalesReturn.normalizeRefundMode(controller.rxRefundMode.value);
+                                  return DropdownButtonFormField<String>(
+                                    initialValue: current,
+                                    isDense: true,
+                                    isExpanded: true,
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    ),
+                                    onChanged: (v) => controller.rxRefundMode.value = v ?? 'Cash',
+                                    items: ['Cash', 'UPI', 'Card', 'Store Credit']
+                                        .map((m) => DropdownMenuItem(value: m, child: Text(m.tr, overflow: TextOverflow.ellipsis)))
+                                        .toList(),
+                                  );
+                                },
                               ),
                             ),
                           ],
@@ -512,10 +539,14 @@ class _ActivityCreateSalesReturnState extends State<ActivityCreateSalesReturn> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Total Refund:'.tr,
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                              Expanded(
+                                child: Text(
+                                  'Total Refund:'.tr,
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               Obx(
                                 () => Text(
                                   currencyFmt.format(controller.rxRefundTotal.value),
@@ -553,7 +584,7 @@ class _ActivityCreateSalesReturnState extends State<ActivityCreateSalesReturn> {
             );
           }
         },
-        saveLabel: 'Save Return'.tr,
+        saveLabel: widget.editingReturn != null ? 'Update Return'.tr : 'Save Return'.tr,
         saveButtonColor: isDark ? Colors.red.shade600 : Colors.red.shade700,
       ),
     );

@@ -13,8 +13,9 @@ import '../invoice/controller_create_sales_invoice.dart';
 
 class ControllerCreateSalesReturn extends GetxController {
   final EntityBill? linkedBill;
+  final EntitySalesReturn? editingReturn;
 
-  ControllerCreateSalesReturn({this.linkedBill});
+  ControllerCreateSalesReturn({this.linkedBill, this.editingReturn});
 
   late final Box<EntitySalesReturn> _boxReturn;
   late final Box<EntitySalesReturnItem> _boxReturnItem;
@@ -46,6 +47,25 @@ class ControllerCreateSalesReturn extends GetxController {
   final RxDouble rxRefundTotal = 0.0.obs;
   final RxBool isSaving = false.obs;
 
+  static String normalizeRefundMode(String? mode) {
+    if (mode == null || mode.trim().isEmpty) return 'Cash';
+    final m = mode.trim().toUpperCase();
+    switch (m) {
+      case 'CASH':
+        return 'Cash';
+      case 'UPI':
+        return 'UPI';
+      case 'CARD':
+        return 'Card';
+      case 'STORE CREDIT':
+      case 'CREDIT':
+      case 'CREDIT_NOTE':
+        return 'Store Credit';
+      default:
+        return 'Cash';
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -61,14 +81,55 @@ class ControllerCreateSalesReturn extends GetxController {
 
     final now = DateTime.now();
     returnDateCtrl.text = DateFormat('dd MMM yyyy').format(now);
-    returnNoCtrl.text = _generateNextReturnNo();
 
-    if (linkedBill != null) {
+    if (editingReturn != null) {
+      _loadExistingReturn(editingReturn!);
+    } else if (linkedBill != null) {
+      returnNoCtrl.text = _generateNextReturnNo();
       onBillSelected(linkedBill!);
     } else {
+      returnNoCtrl.text = _generateNextReturnNo();
       addRow();
     }
 
+    calculateTotals();
+  }
+
+  void _loadExistingReturn(EntitySalesReturn ret) {
+    prefixCtrl.text = ret.prefix ?? 'KI/26-27/';
+    final fullNo = ret.returnNo ?? '${ret.id}';
+    final pfx = prefixCtrl.text.trim();
+    if (pfx.isNotEmpty && fullNo.startsWith(pfx)) {
+      returnNoCtrl.text = fullNo.substring(pfx.length);
+    } else {
+      returnNoCtrl.text = fullNo;
+    }
+    returnDateCtrl.text = ret.returnDate ?? '';
+    originalBillNoCtrl.text = ret.originalBillNo ?? '';
+
+    customerNameCtrl.text = ret.customerName ?? '';
+    customerPhoneCtrl.text = ret.customerPhone ?? '';
+    customerAddressCtrl.text = ret.customerAddress ?? '';
+    customerGstinCtrl.text = ret.customerGstin ?? '';
+
+    returnReasonCtrl.text = ret.returnReason ?? 'Customer Request';
+    rxRefundMode.value = normalizeRefundMode(ret.paymentMode);
+    notesCtrl.text = ret.note ?? '';
+    if (ret.termsConditions != null) termsCtrl.text = ret.termsConditions!;
+
+    rxRows.clear();
+    for (var it in ret.items) {
+      final row = InvoiceItemRow();
+      row.nameCtrl.text = it.itemName ?? '';
+      row.hsnCtrl.text = it.hsnCode ?? '';
+      row.priceCtrl.text = '${it.price ?? 0}';
+      row.qtyCtrl.text = '${it.qty ?? 1}';
+      row.taxRateCtrl.text = '0';
+      row.selectedItem = it.item.target;
+      row.calculate();
+      rxRows.add(row);
+    }
+    if (rxRows.isEmpty) addRow();
     calculateTotals();
   }
 
@@ -174,6 +235,7 @@ class ControllerCreateSalesReturn extends GetxController {
     rxSubtotal.value = sub;
     rxTaxAmount.value = tax;
     rxRefundTotal.value = sub + tax;
+    rxRows.refresh();
   }
 
   Future<bool> saveReturn() async {
@@ -197,12 +259,13 @@ class ControllerCreateSalesReturn extends GetxController {
         : rawNo;
 
     // Check duplicate return number before ObjectBox throws UniqueViolationException
+    final targetId = editingReturn?.id ?? 0;
     final existingWithSameNo = _boxReturn
         .query(EntitySalesReturn_.returnNo.equals(finalReturnNo))
         .build()
         .findFirst();
 
-    if (existingWithSameNo != null) {
+    if (existingWithSameNo != null && existingWithSameNo.id != targetId) {
       Get.snackbar(
         'Duplicate Return Number'.tr,
         'Return number "$finalReturnNo" already exists. Please choose a different number.'.tr,
@@ -218,31 +281,37 @@ class ControllerCreateSalesReturn extends GetxController {
 
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
-      final ret = EntitySalesReturn(
-        prefix: prefix,
-        returnNo: finalReturnNo,
-        returnDate: returnDateCtrl.text.trim(),
-        originalBillNo: originalBillNoCtrl.text.trim(),
-        customerName: customerNameCtrl.text.trim().isEmpty ? 'Walk-in Customer' : customerNameCtrl.text.trim(),
-        customerPhone: customerPhoneCtrl.text.trim(),
-        customerAddress: customerAddressCtrl.text.trim(),
-        customerGstin: customerGstinCtrl.text.trim(),
-        returnReason: returnReasonCtrl.text.trim(),
-        paymentMode: rxRefundMode.value,
-        subtotal: rxSubtotal.value,
-        tax: rxTaxAmount.value,
-        refundAmount: rxRefundTotal.value,
-        status: 'Paid',
-        note: notesCtrl.text.trim(),
-        termsConditions: termsCtrl.text.trim(),
-        createdAtUtcMs: now,
-        updatedAtUtcMs: now,
-      );
+      final ret = editingReturn ?? EntitySalesReturn();
+      ret.prefix = prefix;
+      ret.returnNo = finalReturnNo;
+      ret.returnDate = returnDateCtrl.text.trim();
+      ret.originalBillNo = originalBillNoCtrl.text.trim();
+      ret.customerName = customerNameCtrl.text.trim().isEmpty ? 'Walk-in Customer' : customerNameCtrl.text.trim();
+      ret.customerPhone = customerPhoneCtrl.text.trim();
+      ret.customerAddress = customerAddressCtrl.text.trim();
+      ret.customerGstin = customerGstinCtrl.text.trim();
+      ret.returnReason = returnReasonCtrl.text.trim();
+      ret.paymentMode = rxRefundMode.value.toUpperCase();
+      ret.subtotal = rxSubtotal.value;
+      ret.tax = rxTaxAmount.value;
+      ret.refundAmount = rxRefundTotal.value;
+      ret.status = ret.status ?? 'Paid';
+      ret.note = notesCtrl.text.trim();
+      ret.termsConditions = termsCtrl.text.trim();
+      ret.createdAtUtcMs ??= now;
+      ret.updatedAtUtcMs = now;
 
       final retId = _boxReturn.put(ret);
       final savedRet = _boxReturn.get(retId)!;
 
-      // Add stock back into inventory!
+      // Clean up previous items if editing
+      if (savedRet.items.isNotEmpty) {
+        final oldItemIds = savedRet.items.map((i) => i.id).toList();
+        _boxReturnItem.removeMany(oldItemIds);
+        savedRet.items.clear();
+      }
+
+      // Add stock back into inventory if new return
       for (var r in validRows) {
         final returnQty = int.tryParse(r.qtyCtrl.text) ?? 1;
         final price = double.tryParse(r.priceCtrl.text) ?? 0.0;
@@ -262,21 +331,23 @@ class ControllerCreateSalesReturn extends GetxController {
         if (r.selectedItem != null) {
           retItem.item.target = r.selectedItem;
 
-          // RESTOCK INVENTORY
-          final stockItem = r.selectedItem!;
-          stockItem.totalQty = (stockItem.totalQty ?? 0) + returnQty;
-          stockItem.updatedAtUtcMs = now;
-          _boxItem.put(stockItem);
+          // RESTOCK INVENTORY only if new return
+          if (editingReturn == null) {
+            final stockItem = r.selectedItem!;
+            stockItem.totalQty = (stockItem.totalQty ?? 0) + returnQty;
+            stockItem.updatedAtUtcMs = now;
+            _boxItem.put(stockItem);
 
-          _boxStockTxn.put(EntityStockTransaction(
-            itemId: stockItem.id ?? 0,
-            type: StockTxnType.returnStock.index,
-            quantity: returnQty,
-            referenceType: 'sales_return',
-            referenceId: savedRet.returnNo ?? '',
-            remarks: 'Restocked from Sales Return #${savedRet.returnNo}',
-            createdAtUtcMs: now,
-          ));
+            _boxStockTxn.put(EntityStockTransaction(
+              itemId: stockItem.id ?? 0,
+              type: StockTxnType.returnStock.index,
+              quantity: returnQty,
+              referenceType: 'sales_return',
+              referenceId: savedRet.returnNo ?? '',
+              remarks: 'Restocked from Sales Return #${savedRet.returnNo}',
+              createdAtUtcMs: now,
+            ));
+          }
         }
 
         _boxReturnItem.put(retItem);

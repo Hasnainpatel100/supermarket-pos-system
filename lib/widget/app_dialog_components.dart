@@ -124,11 +124,13 @@ class DialogHeader extends StatelessWidget {
             ),
             const SizedBox(width: 12),
           ],
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          const Spacer(),
           if (actions != null) ...?actions,
           const SizedBox(width: 8),
           IconButton(
@@ -243,13 +245,16 @@ class FormSection extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: themeColor),
           const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(
-              color: themeColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              letterSpacing: 0.5,
+          Flexible(
+            child: Text(
+              title,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: themeColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ],
@@ -264,13 +269,16 @@ class FormSection extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: themeColor),
             const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                color: themeColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                letterSpacing: 0.5,
+            Flexible(
+              child: Text(
+                title,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: themeColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
             if (hasFiniteWidth) ...[

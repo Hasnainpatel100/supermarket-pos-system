@@ -101,9 +101,9 @@ class ControllerSalesReturns extends GetxController {
     updateSearch(q);
   }
 
-  void openCreateReturn() async {
+  void openCreateReturn({EntitySalesReturn? editReturn}) async {
     await Get.dialog(
-      const ActivityCreateSalesReturn(),
+      ActivityCreateSalesReturn(editingReturn: editReturn),
       barrierDismissible: false,
     );
     loadReturns();

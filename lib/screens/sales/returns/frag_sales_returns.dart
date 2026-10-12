@@ -328,6 +328,9 @@ class FragSalesReturns extends StatelessWidget {
                                             case 'view':
                                               controller.openDocumentView(ret);
                                               break;
+                                            case 'edit':
+                                              controller.openCreateReturn(editReturn: ret);
+                                              break;
                                             case 'delete':
                                               controller.deleteReturn(ret);
                                               break;
@@ -341,6 +344,16 @@ class FragSalesReturns extends StatelessWidget {
                                                 Icon(Icons.visibility_outlined, size: 18, color: colorScheme.primary),
                                                 const SizedBox(width: 10),
                                                 Text('View Credit Note'.tr),
+                                              ],
+                                            ),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'edit',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.edit_outlined, size: 18, color: Colors.blue.shade600),
+                                                const SizedBox(width: 10),
+                                                Text('edit'.tr),
                                               ],
                                             ),
                                           ),

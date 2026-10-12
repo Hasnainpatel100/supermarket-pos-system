@@ -155,6 +155,28 @@ class ControllerCreateSalesInvoice extends GetxController {
     }
   }
 
+  static String normalizePaymentMode(String? mode) {
+    if (mode == null || mode.trim().isEmpty) return 'Cash';
+    final m = mode.trim().toUpperCase();
+    switch (m) {
+      case 'CASH':
+        return 'Cash';
+      case 'UPI':
+        return 'UPI';
+      case 'CARD':
+        return 'Card';
+      case 'NETBANKING':
+      case 'BANK':
+      case 'BANK TRANSFER':
+        return 'Netbanking';
+      case 'CREDIT':
+      case 'STORE CREDIT':
+        return 'Credit';
+      default:
+        return 'Cash';
+    }
+  }
+
   void _loadExistingBill(EntityBill bill) {
     invoiceNoCtrl.text = bill.billNo ?? '${bill.id}';
     invoiceDateCtrl.text = bill.billDate ?? '';
@@ -172,8 +194,13 @@ class ControllerCreateSalesInvoice extends GetxController {
     notesCtrl.text = bill.note ?? '';
     if (bill.termsConditions != null) termsCtrl.text = bill.termsConditions!;
     additionalChargesCtrl.text = '${bill.additionalCharges ?? 0}';
-    amountReceivedCtrl.text = '${bill.amountReceived ?? 0}';
-    rxPaymentMode.value = bill.paymentMode ?? 'Cash';
+    final grand = bill.grandTotal ?? 0.0;
+    final rec = bill.amountReceived ?? (bill.status == 'PAID' ? grand : 0.0);
+    final due = bill.dueAmount ?? (grand - rec).clamp(0.0, double.infinity);
+
+    amountReceivedCtrl.text = rec.toStringAsFixed(2);
+    rxMarkFullyPaid.value = due <= 0 && rec >= grand && grand > 0;
+    rxPaymentMode.value = normalizePaymentMode(bill.paymentMode);
 
     rxRows.clear();
     for (var item in bill.items) {
@@ -185,6 +212,7 @@ class ControllerCreateSalesInvoice extends GetxController {
       row.priceCtrl.text = '${item.price ?? 0}';
       row.discountCtrl.text = '${item.discount ?? 0}';
       row.taxRateCtrl.text = '${item.taxRate ?? 0}';
+      row.selectedItem = item.item.target;
       row.calculate();
       rxRows.add(row);
     }
@@ -263,6 +291,7 @@ class ControllerCreateSalesInvoice extends GetxController {
       final rec = double.tryParse(amountReceivedCtrl.text) ?? 0.0;
       rxBalanceAmount.value = (grand - rec).clamp(0.0, double.infinity);
     }
+    rxRows.refresh();
   }
 
   void onAmountReceivedChanged(String val) {

@@ -301,28 +301,35 @@ class _ActivityCreateQuotationState extends State<ActivityCreateQuotation> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Header
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: (isDark ? Colors.amber.shade400 : Colors.amber.shade800).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(width: 32, child: Text('#', style: _headerStyle(colorScheme))),
-                        Expanded(flex: 4, child: Text('ITEM / SERVICE'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 85, child: Text('HSN'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 80, child: Text('MRP'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 70, child: Text('QTY'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 95, child: Text('RATE'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 80, child: Text('DISC'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 75, child: Text('TAX %'.tr, style: _headerStyle(colorScheme))),
-                        SizedBox(width: 100, child: Text('TOTAL'.tr, style: _headerStyle(colorScheme), textAlign: TextAlign.right)),
-                        const SizedBox(width: 40),
-                      ],
-                    ),
-                  ),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: 860,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Header
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: (isDark ? Colors.amber.shade400 : Colors.amber.shade800).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(width: 32, child: Text('#', style: _headerStyle(colorScheme))),
+                                Expanded(flex: 4, child: Text('ITEM / SERVICE'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 85, child: Text('HSN'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 80, child: Text('MRP'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 70, child: Text('QTY'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 95, child: Text('RATE'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 80, child: Text('DISC'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 75, child: Text('TAX %'.tr, style: _headerStyle(colorScheme))),
+                                SizedBox(width: 100, child: Text('TOTAL'.tr, style: _headerStyle(colorScheme), textAlign: TextAlign.right)),
+                                const SizedBox(width: 40),
+                              ],
+                            ),
+                          ),
 
                   // Rows
                   Obx(
@@ -515,6 +522,10 @@ class _ActivityCreateQuotationState extends State<ActivityCreateQuotation> {
                           ],
                         );
                       }),
+                    ),
+                  ),
+                        ],
+                      ),
                     ),
                   ),
 

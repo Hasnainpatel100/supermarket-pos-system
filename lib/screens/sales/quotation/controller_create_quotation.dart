@@ -151,6 +151,7 @@ class ControllerCreateQuotation extends GetxController {
     notesCtrl.text = q.note ?? '';
     if (q.termsConditions != null) termsCtrl.text = q.termsConditions!;
     additionalChargesCtrl.text = '${q.additionalCharges ?? 0}';
+    extraDiscountCtrl.text = '${q.discount ?? 0}';
 
     rxRows.clear();
     for (var item in q.items) {
@@ -162,6 +163,7 @@ class ControllerCreateQuotation extends GetxController {
       row.priceCtrl.text = '${item.price ?? 0}';
       row.discountCtrl.text = '${item.discount ?? 0}';
       row.taxRateCtrl.text = '${item.taxRate ?? 0}';
+      row.selectedItem = item.item.target;
       row.calculate();
       rxRows.add(row);
     }
@@ -235,6 +237,7 @@ class ControllerCreateQuotation extends GetxController {
     rxTotalDiscount.value = totalDisc;
     rxTaxAmount.value = tax;
     rxGrandTotal.value = grand;
+    rxRows.refresh();
   }
 
   Future<bool> saveQuotation() async {

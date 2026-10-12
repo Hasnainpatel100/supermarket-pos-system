@@ -76,7 +76,10 @@ class FragPurchaseReport extends StatelessWidget {
                 child: SizedBox(
                   width: double.infinity,
                   child: SingleChildScrollView(
-                    child: _buildDataTable(context, controller, colorScheme, currFmt),
+                    scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                      child: _buildDataTable(context, controller, colorScheme, currFmt),
+                    ),
                   ),
                 ),
               );
@@ -161,84 +164,97 @@ class FragPurchaseReport extends StatelessWidget {
             ],
           ),
 
-          const Spacer(),
+          const SizedBox(width: 12),
 
-          // Date Filter Dropdown
-          Obx(() => ReportDateFilterDropdown(
-            selectedFilter: controller.rxDateFilter.value,
-            onFilterChanged: (filter) => controller.setDateFilter(filter),
-            onPickCustomRange: () => _pickDateRange(context, controller),
-            themeColor: Colors.purple.shade600,
-          )),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Date Filter Dropdown
+                    Obx(() => ReportDateFilterDropdown(
+                      selectedFilter: controller.rxDateFilter.value,
+                      onFilterChanged: (filter) => controller.setDateFilter(filter),
+                      onPickCustomRange: () => _pickDateRange(context, controller),
+                      themeColor: Colors.purple.shade600,
+                    )),
 
-          const SizedBox(width: 10),
+                    const SizedBox(width: 10),
 
-          // Refresh
-          _headerAction(
-            context,
-            icon: Icons.refresh_rounded,
-            tooltip: 'Refresh',
-            color: Colors.purple.shade600,
-            onTap: controller.loadData,
-          ),
+                    // Refresh
+                    _headerAction(
+                      context,
+                      icon: Icons.refresh_rounded,
+                      tooltip: 'Refresh',
+                      color: Colors.purple.shade600,
+                      onTap: controller.loadData,
+                    ),
 
-          const SizedBox(width: 6),
+                    const SizedBox(width: 6),
 
-          // Excel
-          _exportButton(
-            context,
-            icon: Icons.table_chart_rounded,
-            label: 'Excel',
-            color: Colors.green.shade600,
-            bgColor: Colors.green.shade50,
-            borderColor: Colors.green.shade200,
-            onTap: controller.exportExcel,
-          ),
+                    // Excel
+                    _exportButton(
+                      context,
+                      icon: Icons.table_chart_rounded,
+                      label: 'Excel',
+                      color: Colors.green.shade600,
+                      bgColor: Colors.green.shade50,
+                      borderColor: Colors.green.shade200,
+                      onTap: controller.exportExcel,
+                    ),
 
-          if (kDebugMode) ...[
-            const SizedBox(width: 6),
-            _exportButton(
-              context,
-              icon: Icons.file_upload_rounded,
-              label: 'Import Excel',
-              color: Colors.amber.shade900,
-              bgColor: Colors.amber.shade50,
-              borderColor: Colors.amber.shade200,
-              onTap: controller.importTestExcel,
+                    if (kDebugMode) ...[
+                      const SizedBox(width: 6),
+                      _exportButton(
+                        context,
+                        icon: Icons.file_upload_rounded,
+                        label: 'Import Excel',
+                        color: Colors.amber.shade900,
+                        bgColor: Colors.amber.shade50,
+                        borderColor: Colors.amber.shade200,
+                        onTap: controller.importTestExcel,
+                      ),
+                      const SizedBox(width: 6),
+                      _exportButton(
+                        context,
+                        icon: Icons.bolt_rounded,
+                        label: '+ 30k Purchases',
+                        color: Colors.deepPurple.shade700,
+                        bgColor: Colors.deepPurple.shade50,
+                        borderColor: Colors.deepPurple.shade200,
+                        onTap: controller.seed30kTestPurchases,
+                      ),
+                      const SizedBox(width: 6),
+                      _exportButton(
+                        context,
+                        icon: Icons.delete_sweep_rounded,
+                        label: 'Clear Seeded',
+                        color: Colors.red.shade700,
+                        bgColor: Colors.red.shade50,
+                        borderColor: Colors.red.shade200,
+                        onTap: controller.clearSeededPurchases,
+                      ),
+                    ],
+
+                    const SizedBox(width: 6),
+
+                    // PDF
+                    _exportButton(
+                      context,
+                      icon: Icons.picture_as_pdf_rounded,
+                      label: 'PDF',
+                      color: Colors.red.shade600,
+                      bgColor: Colors.red.shade50,
+                      borderColor: Colors.red.shade200,
+                      onTap: controller.exportPdf,
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(width: 6),
-            _exportButton(
-              context,
-              icon: Icons.bolt_rounded,
-              label: '+ 30k Purchases',
-              color: Colors.deepPurple.shade700,
-              bgColor: Colors.deepPurple.shade50,
-              borderColor: Colors.deepPurple.shade200,
-              onTap: controller.seed30kTestPurchases,
-            ),
-            const SizedBox(width: 6),
-            _exportButton(
-              context,
-              icon: Icons.delete_sweep_rounded,
-              label: 'Clear Seeded',
-              color: Colors.red.shade700,
-              bgColor: Colors.red.shade50,
-              borderColor: Colors.red.shade200,
-              onTap: controller.clearSeededPurchases,
-            ),
-          ],
-
-          const SizedBox(width: 6),
-
-          // PDF
-          _exportButton(
-            context,
-            icon: Icons.picture_as_pdf_rounded,
-            label: 'PDF',
-            color: Colors.red.shade600,
-            bgColor: Colors.red.shade50,
-            borderColor: Colors.red.shade200,
-            onTap: controller.exportPdf,
           ),
         ],
       ),
@@ -478,9 +494,13 @@ class FragPurchaseReport extends StatelessWidget {
               children: [
                 Icon(Icons.warehouse_outlined, size: 16, color: Colors.purple.shade600),
                 const SizedBox(width: 8),
-                Obx(() => Text(
-                  controller.rxBranch.value,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
+                Obx(() => ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 160),
+                  child: Text(
+                    controller.rxBranch.value,
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 )),
                 const SizedBox(width: 4),
                 Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey.shade400),

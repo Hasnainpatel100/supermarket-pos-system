@@ -126,10 +126,10 @@ class _DialogApiUserConfigState extends State<DialogApiUserConfig> {
               controller: _urlController,
               decoration: const InputDecoration(
                 labelText: 'API Base URL *',
-                hintText: 'http://172.19.112.1:8080',
+                hintText: 'https://srv1159639.hstgr.cloud',
                 prefixIcon: Icon(Icons.link_rounded),
                 border: OutlineInputBorder(),
-                helperText: 'e.g. http://172.19.112.1:8080',
+                helperText: 'e.g. https://srv1159639.hstgr.cloud',
               ),
             ),
             const SizedBox(height: 16),

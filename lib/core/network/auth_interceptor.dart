@@ -31,7 +31,7 @@ class AuthInterceptor extends Interceptor {
 
   AuthInterceptor({
     required TokenStorage tokenStorage,
-    String baseUrl = 'http://172.19.112.1:8080',
+    String baseUrl = 'https://srv1159639.hstgr.cloud',
   })  : _tokenStorage = tokenStorage,
         _baseUrl = baseUrl;
 

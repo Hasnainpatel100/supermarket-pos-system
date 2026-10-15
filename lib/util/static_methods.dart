@@ -35,10 +35,10 @@ class StaticMethods {
       permanent: true,
     );
 
-    // 3. Centralized Dio Client (load saved URL from storage or default to 127.0.0.1:8080)
+    // 3. Centralized Dio Client (load saved URL from storage or default to DioClient.defaultBaseUrl)
     final savedBaseUrl = storage.readString('brand_api_base_url') ??
         storage.readString('api_base_url') ??
-        'http://127.0.0.1:8080';
+        DioClient.defaultBaseUrl;
 
     final dioClient = Get.put<DioClient>(
       DioClient(tokenStorage: tokenStorage, baseUrl: savedBaseUrl),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/network/dio_client.dart';
 import '../model/model_api_user.dart';
 import 'service_storage.dart';
 
@@ -46,7 +47,7 @@ class ServiceApiUser {
   final ServiceStorage _storage;
   static const String storageKeyBaseUrl = 'brand_api_base_url';
   static const String storageKeyAuthToken = 'brand_api_auth_token';
-  static const String defaultBaseUrl = 'http://172.19.112.1:8080';
+  static const String defaultBaseUrl = DioClient.defaultBaseUrl;
 
   late final Dio _dio;
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/network/dio_client.dart';
 import '../model/model_branch.dart';
 import 'service_storage.dart';
 
@@ -44,11 +45,11 @@ class BranchApiResponse<T> {
 }
 
 /// Dio-powered REST API service for Branch entities.
-/// Base URL: http://172.19.112.1:8080 (same backend as Brand).
+/// Base URL defaults to [DioClient.defaultBaseUrl] (same backend as Brand).
 class ServiceBranchApi {
   final ServiceStorage _storage;
   static const String storageKeyAuthToken = 'brand_api_auth_token'; // reuse same auth token
-  static const String defaultBaseUrl = 'http://172.19.112.1:8080';
+  static const String defaultBaseUrl = DioClient.defaultBaseUrl;
   static const String storageKeyBaseUrl = 'brand_api_base_url'; // shared with brand service
 
   late final Dio _dio;

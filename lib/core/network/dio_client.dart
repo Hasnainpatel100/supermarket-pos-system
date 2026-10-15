@@ -4,10 +4,13 @@ import '../storage/token_storage.dart';
 import 'auth_interceptor.dart';
 
 /// Centralized Dio client manager for the application.
-/// Provides a configured Dio singleton pointing to http://172.19.112.1:8080
+/// Provides a configured Dio singleton pointing to the backend API
 /// with automatic token injection and 401 refresh interceptor.
 class DioClient {
-  static const String defaultBaseUrl = 'http://127.0.0.1:8080';
+  static const String defaultBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://srv1159639.hstgr.cloud',
+  );
 
   final TokenStorage tokenStorage;
   String baseUrl;

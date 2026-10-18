@@ -8,18 +8,33 @@ import '../../../widget/gradient_action_button.dart';
 import '../../../widget/gradient_app_bar_title.dart';
 import '../../../widget/my_card.dart';
 import '../../../widget/search_app_bar_field.dart';
+import '../../home/fragment/bills/dialog_bill_detail.dart';
 import '../returns/activity_create_sales_return.dart';
 import 'controller_sales_invoices.dart';
 
-class FragSalesInvoices extends StatelessWidget {
+class FragSalesInvoices extends StatefulWidget {
   const FragSalesInvoices({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.isRegistered<ControllerSalesInvoices>()
+  State<FragSalesInvoices> createState() => _FragSalesInvoicesState();
+}
+
+class _FragSalesInvoicesState extends State<FragSalesInvoices> {
+  late final ControllerSalesInvoices controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.isRegistered<ControllerSalesInvoices>()
         ? Get.find<ControllerSalesInvoices>()
         : Get.put(ControllerSalesInvoices());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.loadInvoices();
+    });
+  }
 
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -83,44 +98,33 @@ class FragSalesInvoices extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
 
-          // Bulk Actions
-          PopupMenuButton<String>(
-            tooltip: 'Bulk Actions'.tr,
-            onSelected: (val) {
-              Get.snackbar('Bulk Action'.tr, 'Performed $val on selected invoices', snackPosition: SnackPosition.BOTTOM);
-            },
-            itemBuilder: (ctx) => [
-              PopupMenuItem(value: 'export', child: Text('Export to Excel'.tr)),
-              PopupMenuItem(value: 'print', child: Text('Print Selected'.tr)),
-            ],
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
-                    : colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+          // Refresh Invoices Button (Replaces non-functional Bulk Actions)
+          IconButton(
+            tooltip: 'Refresh Invoices'.tr,
+            style: IconButton.styleFrom(
+              backgroundColor: isDark
+                  ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.layers_outlined, size: 15, color: colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Bulk Actions'.tr,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: colorScheme.onSurfaceVariant),
-                ],
+                side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2)),
               ),
             ),
+            icon: Icon(Icons.refresh_rounded, size: 18, color: colorScheme.primary),
+            onPressed: () {
+              controller.loadInvoices();
+              Get.snackbar(
+                'Invoices Refreshed'.tr,
+                'Latest bills and invoices loaded'.tr,
+                snackPosition: SnackPosition.BOTTOM,
+                duration: const Duration(seconds: 1),
+                margin: const EdgeInsets.all(12),
+              );
+            },
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
 
           // Create Sales Invoice Button
           GradientActionButton(
@@ -371,13 +375,62 @@ class FragSalesInvoices extends StatelessWidget {
                                     )),
 
                                     // Invoice Number
-                                    DataCell(Text(
-                                      bill.billNo ?? '${bill.id}',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: isCancelled ? Colors.grey : colorScheme.primary,
-                                      ),
+                                    DataCell(Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          bill.billNo ?? '${bill.id}',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: isCancelled ? Colors.grey : colorScheme.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                              decoration: BoxDecoration(
+                                                color: (bill.billNo?.startsWith('POS') == true || bill.invoicePrefix == null)
+                                                    ? Colors.teal.withValues(alpha: 0.12)
+                                                    : Colors.blue.withValues(alpha: 0.12),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                (bill.billNo?.startsWith('POS') == true || bill.invoicePrefix == null) ? 'POS' : 'INV',
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: (bill.billNo?.startsWith('POS') == true || bill.invoicePrefix == null)
+                                                      ? (isDark ? Colors.teal.shade300 : Colors.teal.shade700)
+                                                      : (isDark ? Colors.blue.shade300 : Colors.blue.shade700),
+                                                ),
+                                              ),
+                                            ),
+                                            if (bill.paymentMode?.isNotEmpty == true) ...[
+                                              const SizedBox(width: 4),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.withValues(alpha: 0.12),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  bill.paymentMode!.toUpperCase(),
+                                                  style: TextStyle(
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: colorScheme.onSurfaceVariant,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
                                     )),
 
                                     // Customer
@@ -439,6 +492,12 @@ class FragSalesInvoices extends StatelessWidget {
                                             case 'view':
                                               controller.openDocumentView(bill);
                                               break;
+                                            case 'print_thermal':
+                                              Get.dialog(
+                                                DialogBillDetail(bill: bill),
+                                                barrierDismissible: true,
+                                              );
+                                              break;
                                             case 'edit':
                                               controller.openCreateInvoice(editBill: bill);
                                               break;
@@ -467,6 +526,16 @@ class FragSalesInvoices extends StatelessWidget {
                                                 Icon(Icons.visibility_outlined, size: 18, color: colorScheme.primary),
                                                 const SizedBox(width: 10),
                                                 Text('View Tax Invoice'.tr),
+                                              ],
+                                            ),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'print_thermal',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.receipt_long_outlined, size: 18, color: Colors.teal.shade600),
+                                                const SizedBox(width: 10),
+                                                Text('Print Thermal Bill'.tr),
                                               ],
                                             ),
                                           ),

@@ -18,24 +18,20 @@ class DialogBrandApiConfig extends StatefulWidget {
 class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
   final ServiceBrandApi _api = Get.find<ServiceBrandApi>();
   late final TextEditingController _urlController;
-  late final TextEditingController _tokenController;
 
   bool _isTesting = false;
   String? _testResult;
   bool? _testSuccess;
-  bool _obscureToken = true;
 
   @override
   void initState() {
     super.initState();
     _urlController = TextEditingController(text: _api.baseUrl);
-    _tokenController = TextEditingController(text: _api.authToken ?? '');
   }
 
   @override
   void dispose() {
     _urlController.dispose();
-    _tokenController.dispose();
     super.dispose();
   }
 
@@ -52,8 +48,7 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
       _testSuccess = null;
     });
 
-    final token = _tokenController.text.trim();
-    final res = await _api.testConnection(url, token);
+    final res = await _api.testConnection(url, _api.authToken ?? '');
 
     setState(() {
       _isTesting = false;
@@ -69,18 +64,13 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
       return;
     }
 
-    final token = _tokenController.text.trim();
-
     await _api.setBaseUrl(url);
-    await _api.setAuthToken(token);
 
     if (Get.isRegistered<ServiceBranchApi>()) {
       await Get.find<ServiceBranchApi>().setBaseUrl(url);
-      await Get.find<ServiceBranchApi>().setAuthToken(token);
     }
     if (Get.isRegistered<ServiceApiUser>()) {
       await Get.find<ServiceApiUser>().setBaseUrl(url);
-      await Get.find<ServiceApiUser>().setAuthToken(token);
     }
     if (Get.isRegistered<DioClient>()) {
       Get.find<DioClient>().setBaseUrl(url);
@@ -96,7 +86,7 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
 
     return AppDialog(
       maxWidth: 550,
-      maxHeight: 520,
+      maxHeight: 400,
       header: DialogHeader(
         title: 'Brand API Server Settings',
         icon: Icons.dns_rounded,
@@ -119,7 +109,7 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Configure the backend REST API endpoint for creating and syncing brands (e.g. POST {{baseUrl}}/api/brands).',
+                      'Configure the backend REST API base URL endpoint (e.g. http://localhost:5000 or https://api.myserver.com).',
                       style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
                     ),
                   ),
@@ -135,40 +125,7 @@ class _DialogBrandApiConfigState extends State<DialogBrandApiConfig> {
               prefixIcon: Icons.cloud_queue_rounded,
               required: true,
             ),
-            const SizedBox(height: 16),
-
-            AppTextField(
-              controller: _tokenController,
-              label: 'Bearer Auth Token (Optional)',
-              hint: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-              prefixIcon: Icons.key_rounded,
-              obscure: _obscureToken,
-              suffixIcon: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      _obscureToken ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      size: 20,
-                    ),
-                    tooltip: _obscureToken ? 'Show token' : 'Hide token',
-                    onPressed: () => setState(() => _obscureToken = !_obscureToken),
-                  ),
-                  if (_tokenController.text.isNotEmpty)
-                    IconButton(
-                      icon: const Icon(Icons.clear_rounded, size: 20),
-                      tooltip: 'Clear token',
-                      onPressed: () => setState(() => _tokenController.clear()),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Tip: Redundant "Bearer " prefixes and surrounding quotes are automatically stripped.',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
-            ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
 
             // Test Connection button
             OutlinedButton.icon(

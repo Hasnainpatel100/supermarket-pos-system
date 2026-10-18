@@ -1,14 +1,16 @@
 import 'dart:io';
-import 'package:printing/printing.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../service/service_bill_pdf.dart';
 import '../../../../util/snackbar_util.dart';
 import '../setting/controller_home_settings.dart';
 import '../pos/controller_home_pos.dart';
+import 'dialog_bill_print_preview.dart';
 
 class DialogBillDetail extends StatelessWidget {
   final EntityBill bill;
@@ -287,6 +289,11 @@ class DialogBillDetail extends StatelessWidget {
                         label: 'Discount',
                         value: '- ${currencyFormat.format(bill.discount ?? 0)}',
                         isRed: true,
+                      ),
+                    if (bill.roundOff != null && bill.roundOff!.abs() > 0.001)
+                      _TotalRow(
+                        label: 'Round Off',
+                        value: '${bill.roundOff! >= 0 ? '+' : ''}${currencyFormat.format(bill.roundOff!)}',
                       ),
 
                     const SizedBox(height: 8),
@@ -610,10 +617,13 @@ class DialogBillDetail extends StatelessWidget {
     ControllerHomeSettings settings,
   ) async {
     try {
-      final pdfFile = await ServiceBillPdf.generate(bill, settings);
+      final paperSize = settings.rxThermalPaperSize.value.isNotEmpty
+          ? settings.rxThermalPaperSize.value
+          : '80mm';
+      final pdfFile = await ServiceBillPdf.generate(bill, settings, paperSize: paperSize);
       final pdfBytes = await pdfFile.readAsBytes();
 
-      final defaultPrinterName = settings.rxDefaultPrinter.value.trim();
+      final defaultPrinterName = settings.rxDefaultThermalPrinter.value.trim();
       if (defaultPrinterName.isNotEmpty) {
         final printers = await Printing.listPrinters();
         final target = printers.firstWhereOrNull((p) => p.name == defaultPrinterName);
@@ -623,7 +633,7 @@ class DialogBillDetail extends StatelessWidget {
             onLayout: (_) => pdfBytes,
             name: 'Bill_${bill.billNo}',
           );
-          SnackbarUtil.showSuccess('Sent to printer $defaultPrinterName');
+          SnackbarUtil.showSuccess('Sent to printer $defaultPrinterName ($paperSize)');
           return;
         }
       }
@@ -637,32 +647,20 @@ class DialogBillDetail extends StatelessWidget {
     }
   }
 
-  // ── PDF Preview ──────────────────────────────────────────────
-  Future<void> _previewPdf(
+  // ── PDF & Receipt Preview ─────────────────────────────────────
+  void _previewPdf(
     BuildContext context,
     ControllerHomeSettings settings,
-  ) async {
-    try {
-      final pdfFile = await ServiceBillPdf.generate(bill, settings);
-      // Open PDF with the system default viewer
-      await Process.run('cmd', ['/c', 'start', '', pdfFile.path]);
-      Get.snackbar(
-        'pdf_saved'.tr,
-        'bill_pdf_saved_at'.trParams({'path': pdfFile.path}),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
-    } catch (e) {
-      Get.snackbar(
-        'error'.tr,
-        'could_not_generate_pdf'.trParams({'error': '$e'}),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
+  ) {
+    Get.dialog(
+      DialogBillPrintPreview(
+        bill: bill,
+        initialPaperSize: settings.rxPaperSize.value.isNotEmpty
+            ? settings.rxPaperSize.value
+            : '80mm',
+      ),
+      barrierDismissible: true,
+    );
   }
 
   // ── WhatsApp Share ──────────────────────────────────────────
@@ -695,48 +693,81 @@ class DialogBillDetail extends StatelessWidget {
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('send_bill_on_whatsapp'.tr),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: Color(0xFF25D366),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.chat_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text('Send Bill PDF on WhatsApp', style: TextStyle(fontSize: 16)),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF25D366),
-                shape: BoxShape.circle,
+                color: const Color(0xFF25D366).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.2)),
               ),
-              child: const Icon(
-                Icons.chat_rounded,
-                color: Colors.white,
-                size: 32,
+              child: Row(
+                children: [
+                  const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 30),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Bill #${bill.billNo ?? "N/A"}.pdf',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        Text(
+                          'Total: ₹${(bill.grandTotal ?? 0).toStringAsFixed(2)}',
+                          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
               isFromBill
                   ? 'send_bill_to_customer_q'.tr
                   : 'send_bill_to_number_q'.tr,
               textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 6),
             Text(
               '+91 $phone',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
               textAlign: TextAlign.center,
             ),
           ],
         ),
         actions: [
           TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
-          FilledButton(
+          FilledButton.icon(
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               Get.back();
               _launchWhatsApp(context, settings, phone);
             },
-            child: Text('send'.tr),
+            icon: const Icon(Icons.send_rounded, size: 16),
+            label: const Text('Send PDF'),
           ),
         ],
       ),
@@ -830,66 +861,63 @@ class DialogBillDetail extends StatelessWidget {
     String phone,
   ) async {
     try {
-      // ── 1. Build formatted text receipt ──────────────────────
+      SnackbarUtil.showSuccess('Preparing Bill PDF for WhatsApp...');
+
+      final paperSize = settings.rxThermalPaperSize.value.isNotEmpty
+          ? settings.rxThermalPaperSize.value
+          : '80mm';
+      final pdfFile = await ServiceBillPdf.generate(bill, settings, paperSize: paperSize);
+
       final storeName = settings.rxStoreName.value;
-      final storePhone = settings.rxStorePhone.value;
-      final date = bill.createdAtUtcMs != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              bill.createdAtUtcMs!,
-              isUtc: true,
-            ).toLocal()
-          : DateTime.now();
-      final dateStr =
-          '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}  '
-          '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+      final billNo = bill.billNo ?? '${bill.id}';
+      final customerName = bill.customerName?.isNotEmpty == true
+          ? bill.customerName!
+          : 'Valued Customer';
+      final total = (bill.grandTotal ?? 0).toStringAsFixed(2);
 
-      final buffer = StringBuffer();
-      buffer.writeln('🏪 *$storeName*');
-      if (storePhone.isNotEmpty) buffer.writeln('📞 $storePhone');
-      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
-      buffer.writeln('🧾 *Bill #${bill.billNo ?? "N/A"}*');
-      buffer.writeln('📅 $dateStr');
-      buffer.writeln('👤 ${bill.customerName ?? "Walk-in"}');
-      buffer.writeln(
-        '💳 ${bill.paymentMode ?? "CASH"} | ${bill.status ?? "PAID"}',
+      final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+      final targetPhone = cleanPhone.startsWith('91') && cleanPhone.length == 12
+          ? cleanPhone
+          : (cleanPhone.length == 10 ? '91$cleanPhone' : cleanPhone);
+
+      final caption = '🧾 *Tax Invoice / Bill #$billNo*\n'
+          '🏪 *$storeName*\n'
+          '👤 *Customer:* $customerName\n'
+          '💰 *Net Payable:* ₹$total\n'
+          '⭐ *Thank you for shopping with us!* Please find attached your bill PDF.';
+
+      // 1. Share PDF file via system share (attaches actual PDF document)
+      // ignore: deprecated_member_use
+      await Share.shareXFiles(
+        [
+          XFile(
+            pdfFile.path,
+            mimeType: 'application/pdf',
+            name: 'Bill_$billNo.pdf',
+          ),
+        ],
+        text: caption,
+        subject: 'Bill #$billNo from $storeName',
       );
-      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
 
-      // Items
-      for (final item in bill.items) {
-        final name = item.itemName ?? '-';
-        final qty = item.qty ?? 0;
-        final price = (item.price ?? 0).toStringAsFixed(2);
-        final total = (item.total ?? 0).toStringAsFixed(2);
-        buffer.writeln('• $name');
-        buffer.writeln('  $qty × ₹$price = ₹$total');
-      }
+      // 2. On Windows Desktop, copy PDF directly to clipboard and open WhatsApp
+      if (Platform.isWindows) {
+        try {
+          await Process.run('powershell', [
+            '-NoProfile',
+            '-Command',
+            'Set-Clipboard -Path "${pdfFile.path}"',
+          ]);
+        } catch (_) {}
 
-      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
-      buffer.writeln(
-        '  Subtotal  : ₹${(bill.totalAmount ?? 0).toStringAsFixed(2)}',
-      );
-      if ((bill.tax ?? 0) > 0) {
-        buffer.writeln('  Tax       : ₹${(bill.tax ?? 0).toStringAsFixed(2)}');
-      }
-      if ((bill.discount ?? 0) > 0) {
-        buffer.writeln(
-          '  Discount  : -₹${(bill.discount ?? 0).toStringAsFixed(2)}',
-        );
-      }
-      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
-      buffer.writeln(
-        '*GRAND TOTAL : ₹${(bill.grandTotal ?? 0).toStringAsFixed(2)}*',
-      );
-      buffer.writeln();
-      buffer.writeln('⭐ Thank you for shopping with us!');
+        final waUrl = Uri.parse('https://wa.me/$targetPhone');
+        await launchUrl(waUrl, mode: LaunchMode.externalApplication);
 
-      // ── 2. Launch WhatsApp with pre-filled text ───────────────
-      final encoded = Uri.encodeComponent(buffer.toString());
-      final whatsappUrl = Uri.parse('https://wa.me/91$phone?text=$encoded');
+        try {
+          await Process.run('explorer.exe', ['/select,', pdfFile.path]);
+        } catch (_) {}
 
-      if (!await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication)) {
-        throw Exception('Could not open WhatsApp. Is it installed?');
+        SnackbarUtil.showSuccess('PDF copied to clipboard! Press Ctrl+V in WhatsApp to attach.');
       }
     } catch (e) {
       Get.snackbar(

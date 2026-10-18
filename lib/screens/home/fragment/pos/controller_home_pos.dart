@@ -13,10 +13,14 @@ import '../../../../objectbox.g.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_storage.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:printing/printing.dart';
 import '../../../../util/snackbar_util.dart';
+import '../../../../service/service_bill_pdf.dart';
 import '../bills/controller_home_bills.dart';
 import '../bills/dialog_bill_detail.dart';
 import '../item/controller_home_item.dart';
+import '../setting/controller_home_settings.dart';
+import '../../../sales/invoice/controller_sales_invoices.dart';
 import 'package:flutter/services.dart';
 import '../../../customer/activity_customer_form.dart';
 
@@ -40,6 +44,31 @@ class BillSession {
   final rxAmountReceived = 0.0.obs;
   final rxChangeReturned = 0.0.obs;
   final rxDueAmount = 0.0.obs;
+
+  // Auto round off fields
+  final rxAutoRoundOff = true.obs;
+  final rxRoundOffAmount = 0.0.obs;
+
+  // UPI payment fields
+  final rxUtrNumber = ''.obs;
+  final utrController = TextEditingController();
+  final rxUpiVerified = false.obs;
+  
+  // UPI Account Selection: 'primary' | 'alternate' | 'custom'
+  final rxSelectedUpiType = 'primary'.obs;
+  final rxCustomUpiId = ''.obs;
+  final customUpiController = TextEditingController();
+
+  String getEffectiveUpi(ControllerHomeSettings settings) {
+    if (rxSelectedUpiType.value == 'alternate' && settings.rxStoreAlternateUpiId.value.trim().isNotEmpty) {
+      return settings.rxStoreAlternateUpiId.value.trim();
+    }
+    if (rxSelectedUpiType.value == 'custom' && rxCustomUpiId.value.trim().isNotEmpty) {
+      return rxCustomUpiId.value.trim();
+    }
+    final primary = settings.rxStoreUpiId.value.trim();
+    return primary.isNotEmpty ? primary : 'patelhusnain02-1@oksbi';
+  }
   
   // Split payment fields
   final rxSplitCount = 2.obs;
@@ -88,6 +117,7 @@ class BillSession {
 
   void dispose() {
     amountController.dispose();
+    utrController.dispose();
     for (var c in splitControllers) {
       c.dispose();
     }
@@ -533,11 +563,24 @@ class ControllerHomePos extends GetxController {
 
     session.rxSubTotal.value = subTotal;
     session.rxTaxAmount.value = (subTotal * (session.rxTaxRate.value / 100));
-    double grand = subTotal + session.rxTaxAmount.value - session.rxDiscountAmount.value;
-    if (grand < 0) grand = 0;
-    session.rxGrandTotal.value = grand;
+    double rawGrand = subTotal + session.rxTaxAmount.value - session.rxDiscountAmount.value;
+    if (rawGrand < 0) rawGrand = 0;
+
+    if (session.rxAutoRoundOff.value) {
+      double rounded = rawGrand.roundToDouble();
+      session.rxRoundOffAmount.value = double.parse((rounded - rawGrand).toStringAsFixed(2));
+      session.rxGrandTotal.value = rounded;
+    } else {
+      session.rxRoundOffAmount.value = 0.0;
+      session.rxGrandTotal.value = double.parse(rawGrand.toStringAsFixed(2));
+    }
 
     calculateChange();
+  }
+
+  void toggleAutoRoundOff() {
+    activeSession.rxAutoRoundOff.value = !activeSession.rxAutoRoundOff.value;
+    calculateTotals();
   }
 
   void onAmountChanged(String val) {
@@ -593,6 +636,7 @@ class ControllerHomePos extends GetxController {
     session.rxDiscountAmount.value = 0;
     session.rxTaxRate.value = 0;
     session.rxTaxAmount.value = 0;
+    session.rxRoundOffAmount.value = 0;
     session.rxGrandTotal.value = 0;
     session.rxSubTotal.value = 0;
     session.rxSelectedCustomer.value = null;
@@ -600,6 +644,12 @@ class ControllerHomePos extends GetxController {
     session.rxRemark.value = '';
     session.amountController.clear();
     session.rxAmountReceived.value = 0.0;
+    session.rxUtrNumber.value = '';
+    session.utrController.clear();
+    session.rxUpiVerified.value = false;
+    session.rxSelectedUpiType.value = 'primary';
+    session.rxCustomUpiId.value = '';
+    session.customUpiController.clear();
     calculateTotals();
   }
 
@@ -789,12 +839,17 @@ class ControllerHomePos extends GetxController {
       totalAmount: session.rxSubTotal.value,
       discount: session.rxDiscountAmount.value,
       tax: session.rxTaxAmount.value,
+      roundOff: session.rxRoundOffAmount.value,
       grandTotal: session.rxGrandTotal.value,
       status: session.rxDueAmount.value > 0.01 ? "DUE" : "PAID",
       paymentMode: session.rxPaymentMode.value,
-      amountReceived: session.rxAmountReceived.value,
-      changeReturned: session.rxChangeReturned.value,
-      utrNumber: "",
+      amountReceived: (session.rxPaymentMode.value == 'UPI' || session.rxPaymentMode.value == 'Card')
+          ? session.rxGrandTotal.value
+          : session.rxAmountReceived.value,
+      changeReturned: (session.rxPaymentMode.value == 'UPI' || session.rxPaymentMode.value == 'Card')
+          ? 0.0
+          : session.rxChangeReturned.value,
+      utrNumber: session.rxPaymentMode.value == 'UPI' ? session.rxUtrNumber.value : "",
       splitCash: 0,
       splitOnline: 0,
       dueAmount: session.rxDueAmount.value,
@@ -859,8 +914,49 @@ class ControllerHomePos extends GetxController {
     if (Get.isRegistered<ControllerHomeBills>()) {
       Get.find<ControllerHomeBills>().loadData();
     }
+    if (Get.isRegistered<ControllerSalesInvoices>()) {
+      Get.find<ControllerSalesInvoices>().loadInvoices();
+    }
+
+    final settings = Get.isRegistered<ControllerHomeSettings>()
+        ? Get.find<ControllerHomeSettings>()
+        : Get.put(ControllerHomeSettings());
+
+    if (settings.rxAutoPrintBill.value) {
+      _autoPrintThermalReceipt(savedBill, settings);
+    }
 
     Get.dialog(DialogBillDetail(bill: savedBill), barrierDismissible: false);
+  }
+
+  Future<void> _autoPrintThermalReceipt(EntityBill bill, ControllerHomeSettings settings) async {
+    try {
+      final paperSize = settings.rxThermalPaperSize.value.isNotEmpty
+          ? settings.rxThermalPaperSize.value
+          : '80mm';
+      final pdfFile = await ServiceBillPdf.generate(bill, settings, paperSize: paperSize);
+      final pdfBytes = await pdfFile.readAsBytes();
+
+      final printerName = settings.rxDefaultThermalPrinter.value.trim();
+      if (printerName.isNotEmpty) {
+        final printers = await Printing.listPrinters();
+        final target = printers.firstWhereOrNull((p) => p.name == printerName);
+        if (target != null) {
+          await Printing.directPrintPdf(
+            printer: target,
+            onLayout: (_) => pdfBytes,
+            name: 'Bill_${bill.billNo}',
+          );
+          return;
+        }
+      }
+      await Printing.layoutPdf(
+        onLayout: (_) => pdfBytes,
+        name: 'Bill_${bill.billNo}',
+      );
+    } catch (e) {
+      debugPrint('Auto thermal print error: $e');
+    }
   }
 
   void _deductFromBatches(int itemId, int qty) {
@@ -945,6 +1041,9 @@ class ControllerHomePos extends GetxController {
     }
     if (Get.isRegistered<ControllerHomeBills>()) {
       Get.find<ControllerHomeBills>().loadData();
+    }
+    if (Get.isRegistered<ControllerSalesInvoices>()) {
+      Get.find<ControllerSalesInvoices>().loadInvoices();
     }
 
     SnackbarUtil.showSuccess('Bill ${bill.billNo} has been cancelled');

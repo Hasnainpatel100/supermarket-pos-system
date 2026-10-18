@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:barcode_widget/barcode_widget.dart';
 import '../../../../model/entity_item.dart';
 import '../../../../model/entity_customer.dart';
+import '../../../../model/entity_bill.dart';
 import '../../../../util/snackbar_util.dart';
 import '../account/controller_home_account.dart';
 import '../account/dialog_start_day_shift.dart';
+import '../setting/controller_home_settings.dart';
+import '../bills/dialog_bill_print_preview.dart';
 import 'activity_split_bill.dart';
 import 'controller_home_pos.dart';
 
@@ -985,7 +989,68 @@ class _SummaryCard extends StatelessWidget {
               const SizedBox(height: 6),
               _SummaryRow(label: 'discount'.tr, value: "-$currency${session.rxDiscountAmount.value.toStringAsFixed(2)}", cs: cs, valueColor: Colors.green.shade600),
             ],
-            const SizedBox(height: 10),
+            if (session.rxRoundOffAmount.value.abs() > 0.001) ...[
+              const SizedBox(height: 6),
+              _SummaryRow(
+                label: 'Round Off',
+                value: "${session.rxRoundOffAmount.value >= 0 ? '+' : ''}$currency${session.rxRoundOffAmount.value.toStringAsFixed(2)}",
+                cs: cs,
+                valueColor: session.rxRoundOffAmount.value > 0 ? Colors.teal.shade700 : Colors.indigo.shade600,
+              ),
+            ],
+            const SizedBox(height: 8),
+            // Auto Round Off Toggle
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      session.rxAutoRoundOff.value ? Icons.auto_fix_high_rounded : Icons.auto_fix_off_rounded,
+                      size: 14,
+                      color: session.rxAutoRoundOff.value ? cs.primary : cs.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Auto Round Off',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: session.rxAutoRoundOff.value ? cs.primary : cs.onSurfaceVariant,
+                      ),
+                    ),
+                    if (session.rxAutoRoundOff.value && session.rxRoundOffAmount.value.abs() > 0.001) ...[
+                      const SizedBox(width: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          "${session.rxRoundOffAmount.value >= 0 ? '+' : ''}₹${session.rxRoundOffAmount.value.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: cs.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Transform.scale(
+                  scale: 0.75,
+                  child: Switch(
+                    value: session.rxAutoRoundOff.value,
+                    activeThumbColor: cs.primary,
+                    onChanged: (_) => controller.toggleAutoRoundOff(),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
             Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.2)),
             const SizedBox(height: 10),
 
@@ -1052,6 +1117,220 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
+// ─── UPI Helper Dialog & Current Bill Preview ──────────────────────────────
+
+void _showCustomUpiDialog(BuildContext context, BillSession session) {
+  final textController = TextEditingController(text: session.rxCustomUpiId.value);
+  Get.dialog(
+    AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Row(
+        children: [
+          Icon(Icons.edit_note_rounded, color: Colors.purple),
+          SizedBox(width: 8),
+          Text('Custom / Alternate UPI ID', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Enter an alternate UPI ID (VPA) for this transaction. The dynamic QR code will update immediately.',
+            style: TextStyle(fontSize: 12),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: textController,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: 'Alternate UPI ID / VPA',
+              hintText: 'e.g. patelhusnain@okhdfcbank',
+              prefixIcon: const Icon(Icons.alternate_email_rounded, size: 18),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final val = textController.text.trim();
+            if (val.isNotEmpty) {
+              session.rxCustomUpiId.value = val;
+              session.rxSelectedUpiType.value = 'custom';
+            }
+            Get.back();
+          },
+          child: const Text('Use this UPI ID'),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showCustomerUpiQrDialog(
+  BuildContext context,
+  String upiUrl,
+  double amount,
+  String upiId,
+  String storeName,
+) {
+  final cs = Theme.of(context).colorScheme;
+  Get.dialog(
+    Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 360,
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 30,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.qr_code_2_rounded, color: Colors.purple, size: 22),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Scan & Pay via UPI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        Text(storeName, style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant)),
+                      ],
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade300, width: 2),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
+                ],
+              ),
+              child: BarcodeWidget(
+                barcode: Barcode.qrCode(),
+                data: upiUrl,
+                width: 210,
+                height: 210,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.purple.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  Text('AMOUNT TO PAY', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.purple.shade700, letterSpacing: 0.5)),
+                  const SizedBox(height: 2),
+                  Text('₹${amount.toStringAsFixed(2)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.purple.shade900)),
+                  Text('UPI VPA: $upiId', style: TextStyle(fontSize: 11, color: Colors.purple.shade800)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Accepts Google Pay, PhonePe, Paytm, BHIM & any UPI App',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => Get.back(),
+                icon: const Icon(Icons.check_circle_outline_rounded, size: 17),
+                label: const Text('Close QR'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.purple.shade700,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _previewCurrentBill(ControllerHomePos controller, ControllerHomeSettings settings) {
+  final session = controller.activeSession;
+  if (session.rxCartItems.isEmpty) {
+    SnackbarUtil.showError('Cart is empty. Add items to preview receipt.');
+    return;
+  }
+  final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+  final todayDate = DateFormat('d/MM/yyyy').format(DateTime.now());
+  final tempBill = EntityBill(
+    billNo: "PREVIEW-${session.id.replaceAll(' ', '')}",
+    customerName: session.rxSelectedCustomer.value?.name ??
+        (session.rxQuickCustomerName.value.isNotEmpty ? session.rxQuickCustomerName.value : "Walk-in"),
+    customerPhone: session.rxSelectedCustomer.value?.phone ?? session.rxQuickCustomerPhone.value,
+    totalAmount: session.rxSubTotal.value,
+    discount: session.rxDiscountAmount.value,
+    tax: session.rxTaxAmount.value,
+    roundOff: session.rxRoundOffAmount.value,
+    grandTotal: session.rxGrandTotal.value,
+    status: session.rxDueAmount.value > 0.01 ? "DUE" : "PAID",
+    paymentMode: session.rxPaymentMode.value,
+    amountReceived: session.rxAmountReceived.value,
+    changeReturned: session.rxChangeReturned.value,
+    utrNumber: session.rxUtrNumber.value,
+    billDate: todayDate,
+    createdAtUtcMs: now,
+  );
+  for (var ci in session.rxCartItems) {
+    tempBill.items.add(ci);
+  }
+  Get.dialog(
+    DialogBillPrintPreview(
+      bill: tempBill,
+      initialPaperSize: settings.rxThermalPaperSize.value.isNotEmpty ? settings.rxThermalPaperSize.value : '80mm',
+    ),
+    barrierDismissible: true,
+  );
+}
+
 // ─── Payment Section ─────────────────────────────────────────────────────────
 
 class _PaymentSection extends StatelessWidget {
@@ -1061,23 +1340,45 @@ class _PaymentSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final settings = Get.isRegistered<ControllerHomeSettings>()
+        ? Get.find<ControllerHomeSettings>()
+        : Get.put(ControllerHomeSettings());
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Payment Mode
-        Text('payment_mode'.tr, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
+        Text(
+          'payment_mode'.tr,
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant),
+        ),
         const SizedBox(height: 8),
         Obx(() {
           final session = controller.activeSession;
-          return SegmentedButton<String>(
-            segments: [
-              ButtonSegment(value: 'Cash', label: Text('cash'.tr), icon: const Icon(Icons.payments_outlined, size: 16)),
-              ButtonSegment(value: 'UPI', label: Text('upi'.tr), icon: const Icon(Icons.qr_code_rounded, size: 16)),
-              ButtonSegment(value: 'Split', label: Text('split'.tr), icon: const Icon(Icons.call_split_rounded, size: 16)),
-            ],
-            selected: {session.rxPaymentMode.value},
-            onSelectionChanged: (selected) {
-              if (selected.first == 'Split') {
+          final mode = session.rxPaymentMode.value;
+
+          return Row(
+            children: [
+              _buildModeChip('Cash', Icons.payments_outlined, mode == 'Cash', () {
+                session.rxPaymentMode.value = 'Cash';
+                session.rxAmountReceived.value = session.rxGrandTotal.value;
+                session.amountController.text = session.rxGrandTotal.value.toStringAsFixed(2);
+                controller.calculateChange();
+              }, cs),
+              const SizedBox(width: 4),
+              _buildModeChip('UPI', Icons.qr_code_2_rounded, mode == 'UPI', () {
+                session.rxPaymentMode.value = 'UPI';
+                session.rxAmountReceived.value = session.rxGrandTotal.value;
+                controller.calculateChange();
+              }, cs),
+              const SizedBox(width: 4),
+              _buildModeChip('Card', Icons.credit_card_rounded, mode == 'Card', () {
+                session.rxPaymentMode.value = 'Card';
+                session.rxAmountReceived.value = session.rxGrandTotal.value;
+                controller.calculateChange();
+              }, cs),
+              const SizedBox(width: 4),
+              _buildModeChip('Split', Icons.call_split_rounded, mode == 'Split', () {
                 if (session.rxCartItems.isEmpty) {
                   Get.snackbar('cart_empty_title'.tr, 'add_items_before_split'.tr,
                       snackPosition: SnackPosition.TOP);
@@ -1087,60 +1388,376 @@ class _PaymentSection extends StatelessWidget {
                   const ActivitySplitBill(),
                   barrierDismissible: false,
                 );
-                return;
-              }
-              session.rxPaymentMode.value = selected.first;
-            },
-            showSelectedIcon: false,
-            style: ButtonStyle(
-              visualDensity: VisualDensity.compact,
-              textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-              padding: WidgetStatePropertyAll(const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-              shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-            ),
-          );
-        }),
-
-        const SizedBox(height: 16),
-
-
-        // Amount Received (hidden when Split mode)
-        Obx(() {
-          final session = controller.activeSession;
-          if (session.rxPaymentMode.value == 'Split') return const SizedBox.shrink();
-          
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('amount_received'.tr, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: session.amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  prefixText: "${controller.serviceCurrency.rxCurrency.value} ",
-                  prefixStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: cs.primary),
-                  filled: true,
-                  fillColor: cs.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: cs.primary, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                ),
-                onChanged: controller.onAmountChanged,
-              ),
+              }, cs),
             ],
           );
         }),
 
-        const Spacer(),
+        const SizedBox(height: 12),
+
+        // Dynamic Payment Content based on Mode
+        Expanded(
+          child: SingleChildScrollView(
+            child: Obx(() {
+              final session = controller.activeSession;
+              final mode = session.rxPaymentMode.value;
+              final grandTotal = session.rxGrandTotal.value;
+
+              if (mode == 'Split') {
+                return const SizedBox.shrink();
+              }
+
+              if (mode == 'UPI') {
+                final storeUpi = session.getEffectiveUpi(settings);
+                final storeName = settings.rxStoreName.value.trim().isNotEmpty
+                    ? settings.rxStoreName.value.trim()
+                    : 'Super Market';
+                final upiUrl =
+                    'upi://pay?pa=$storeUpi&pn=${Uri.encodeComponent(storeName)}&am=${grandTotal.toStringAsFixed(2)}&cu=INR&tn=${Uri.encodeComponent("Bill ${session.id}")}';
+
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.purple.shade700.withValues(alpha: 0.08),
+                        Colors.indigo.shade700.withValues(alpha: 0.04),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.purple.withValues(alpha: 0.25)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          InkWell(
+                            onTap: () => _showCustomerUpiQrDialog(
+                              context,
+                              upiUrl,
+                              grandTotal,
+                              storeUpi,
+                              storeName,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.purple.shade200),
+                              ),
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  BarcodeWidget(
+                                    barcode: Barcode.qrCode(),
+                                    data: upiUrl,
+                                    width: 68,
+                                    height: 68,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.purple,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.fullscreen_rounded, size: 10, color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Scan & Pay (UPI)',
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.purple.shade900,
+                                      ),
+                                    ),
+                                    InkWell(
+                                      onTap: () => _showCustomerUpiQrDialog(
+                                        context,
+                                        upiUrl,
+                                        grandTotal,
+                                        storeUpi,
+                                        storeName,
+                                      ),
+                                      child: Text(
+                                        'Enlarge ↗',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: cs.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  storeUpi,
+                                  style: TextStyle(fontSize: 10.5, color: cs.onSurfaceVariant),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                InkWell(
+                                  onTap: () {
+                                    session.rxUpiVerified.value = true;
+                                    session.rxAmountReceived.value = grandTotal;
+                                    session.amountController.text = grandTotal.toStringAsFixed(2);
+                                    controller.calculateChange();
+                                    SnackbarUtil.showSuccess('UPI Payment Verified');
+                                  },
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: session.rxUpiVerified.value
+                                          ? Colors.green.shade600
+                                          : Colors.purple.shade700,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          session.rxUpiVerified.value
+                                              ? Icons.check_circle_rounded
+                                              : Icons.check_rounded,
+                                          size: 13,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          session.rxUpiVerified.value ? 'Paid Verified ✓' : 'Mark as Paid',
+                                          style: const TextStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Alternate & Custom UPI Account Switcher Chips
+                      const SizedBox(height: 8),
+                      Obx(() {
+                        final primaryUpi = settings.rxStoreUpiId.value.trim().isNotEmpty
+                            ? settings.rxStoreUpiId.value.trim()
+                            : 'patelhusnain02-1@oksbi';
+                        final altUpi = settings.rxStoreAlternateUpiId.value.trim();
+                        final selectedType = session.rxSelectedUpiType.value;
+
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              InkWell(
+                                onTap: () => session.rxSelectedUpiType.value = 'primary',
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: selectedType == 'primary' ? Colors.purple.shade700 : cs.surface,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: selectedType == 'primary' ? Colors.purple.shade700 : Colors.purple.shade200,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.verified_user_outlined, size: 11, color: selectedType == 'primary' ? Colors.white : Colors.purple),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Primary ($primaryUpi)',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: selectedType == 'primary' ? FontWeight.bold : FontWeight.w500,
+                                          color: selectedType == 'primary' ? Colors.white : Colors.purple.shade900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (altUpi.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                InkWell(
+                                  onTap: () => session.rxSelectedUpiType.value = 'alternate',
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: selectedType == 'alternate' ? Colors.purple.shade700 : cs.surface,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: selectedType == 'alternate' ? Colors.purple.shade700 : Colors.purple.shade200,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.swap_horiz_rounded, size: 11, color: selectedType == 'alternate' ? Colors.white : Colors.purple),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Alternate ($altUpi)',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: selectedType == 'alternate' ? FontWeight.bold : FontWeight.w500,
+                                            color: selectedType == 'alternate' ? Colors.white : Colors.purple.shade900,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(width: 6),
+                              InkWell(
+                                onTap: () => _showCustomUpiDialog(context, session),
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: selectedType == 'custom' ? Colors.purple.shade700 : cs.surface,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: selectedType == 'custom' ? Colors.purple.shade700 : Colors.purple.shade200,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.edit_note_rounded, size: 11, color: selectedType == 'custom' ? Colors.white : Colors.purple),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        selectedType == 'custom' && session.rxCustomUpiId.value.isNotEmpty
+                                            ? 'Custom: ${session.rxCustomUpiId.value}'
+                                            : '+ Alternate / Custom UPI',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: selectedType == 'custom' ? FontWeight.bold : FontWeight.w500,
+                                          color: selectedType == 'custom' ? Colors.white : Colors.purple.shade900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: session.utrController,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          labelText: 'UPI Ref / UTR No. (optional)',
+                          labelStyle: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                          hintText: 'e.g. 427819034812',
+                          hintStyle: TextStyle(fontSize: 11, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                          prefixIcon: const Icon(Icons.tag_rounded, size: 16, color: Colors.purple),
+                          filled: true,
+                          fillColor: cs.surface,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.purple.withValues(alpha: 0.3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Colors.purple, width: 1.5),
+                          ),
+                        ),
+                        onChanged: (val) {
+                          session.rxUtrNumber.value = val.trim();
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Default Cash Mode
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'amount_received'.tr,
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: session.amountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    decoration: InputDecoration(
+                      prefixText: "${controller.serviceCurrency.rxCurrency.value} ",
+                      prefixStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: cs.primary),
+                      filled: true,
+                      fillColor: cs.surface,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: cs.primary, width: 1.5),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    onChanged: controller.onAmountChanged,
+                  ),
+                  const SizedBox(height: 8),
+                  // Quick tender chips
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _quickTenderBtn(session, 'Exact', grandTotal, controller, cs),
+                        const SizedBox(width: 4),
+                        _quickTenderBtn(session, '₹100', 100, controller, cs),
+                        const SizedBox(width: 4),
+                        _quickTenderBtn(session, '₹200', 200, controller, cs),
+                        const SizedBox(width: 4),
+                        _quickTenderBtn(session, '₹500', 500, controller, cs),
+                        const SizedBox(width: 4),
+                        _quickTenderBtn(session, '₹2000', 2000, controller, cs),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ),
+
+        const SizedBox(height: 8),
 
         // Due / Change
         Obx(() {
@@ -1150,38 +1767,48 @@ class _PaymentSection extends StatelessWidget {
           final amount = isDue ? session.rxDueAmount.value : session.rxChangeReturned.value;
 
           return Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: isDue ? Colors.orange.withValues(alpha: 0.08) : Colors.green.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isDue ? Colors.orange.withValues(alpha: 0.25) : Colors.green.withValues(alpha: 0.25)),
+              border: Border.all(
+                color: isDue ? Colors.orange.withValues(alpha: 0.25) : Colors.green.withValues(alpha: 0.25),
+              ),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: (isDue ? Colors.orange : Colors.green).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     isDue ? Icons.warning_amber_rounded : Icons.check_circle_outline_rounded,
-                    size: 18,
+                    size: 16,
                     color: isDue ? Colors.orange.shade700 : Colors.green.shade700,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         isDue ? 'amount_due'.tr : 'change_to_return'.tr,
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isDue ? Colors.orange.shade700 : Colors.green.shade700),
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDue ? Colors.orange.shade700 : Colors.green.shade700,
+                        ),
                       ),
                       Text(
                         "$currency${amount.toStringAsFixed(2)}",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: isDue ? Colors.orange.shade800 : Colors.green.shade800),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: isDue ? Colors.orange.shade800 : Colors.green.shade800,
+                        ),
                       ),
                     ],
                   ),
@@ -1191,6 +1818,85 @@ class _PaymentSection extends StatelessWidget {
           );
         }),
       ],
+    );
+  }
+
+  Widget _buildModeChip(
+    String label,
+    IconData icon,
+    bool isSelected,
+    VoidCallback onTap,
+    ColorScheme cs,
+  ) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? cs.primary : cs.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected ? cs.primary : cs.outlineVariant.withValues(alpha: 0.4),
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: cs.primary.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: isSelected ? Colors.white : cs.onSurfaceVariant),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  color: isSelected ? Colors.white : cs.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _quickTenderBtn(
+    BillSession session,
+    String label,
+    double value,
+    ControllerHomePos controller,
+    ColorScheme cs,
+  ) {
+    return InkWell(
+      onTap: () {
+        session.rxAmountReceived.value = value;
+        session.amountController.text = value.toStringAsFixed(2);
+        controller.calculateChange();
+      },
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: cs.primary),
+        ),
+      ),
     );
   }
 }
@@ -1204,19 +1910,28 @@ class _SettleButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final settings = Get.isRegistered<ControllerHomeSettings>()
+        ? Get.find<ControllerHomeSettings>()
+        : Get.put(ControllerHomeSettings());
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Settle & Print Button
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.green.shade500, Colors.green.shade700],
+              colors: [Colors.green.shade600, Colors.green.shade800],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
-              BoxShadow(color: Colors.green.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: Colors.green.withValues(alpha: 0.28),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
             ],
           ),
           child: ElevatedButton.icon(
@@ -1224,29 +1939,76 @@ class _SettleButtons extends StatelessWidget {
             icon: const Icon(Icons.print_rounded, size: 18, color: Colors.white),
             label: Text(
               'save_print_bill'.tr,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 18),
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        OutlinedButton.icon(
-          onPressed: () {},
-          icon: Icon(Icons.account_balance_wallet_outlined, size: 16, color: cs.primary),
-          label: Text(
-            'other_credit_payments'.tr,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.primary),
-          ),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
-          ),
+        const SizedBox(height: 8),
+
+        // Preview Receipt & Paper Size Quick Row
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _previewCurrentBill(controller, settings),
+                icon: Icon(Icons.visibility_outlined, size: 15, color: cs.primary),
+                label: Text(
+                  'Preview Receipt',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: cs.primary),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  side: BorderSide(color: cs.primary.withValues(alpha: 0.4)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Paper Size Quick Indicator / Switch
+            Obx(() {
+              final paperSize = settings.rxThermalPaperSize.value.isNotEmpty ? settings.rxThermalPaperSize.value : '80mm';
+              final is80 = paperSize.toLowerCase() == '80mm';
+              return Tooltip(
+                message: 'Active Print Paper Format (Click to toggle 80mm / 56mm)',
+                child: InkWell(
+                  onTap: () {
+                    settings.rxThermalPaperSize.value = is80 ? '58mm' : '80mm';
+                    settings.savePrinterSettings();
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.straighten_rounded, size: 14, color: cs.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          is80 ? '80mm' : '56mm',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: cs.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
         ),
       ],
     );
@@ -2581,6 +3343,9 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final settings = Get.isRegistered<ControllerHomeSettings>()
+        ? Get.find<ControllerHomeSettings>()
+        : Get.put(ControllerHomeSettings());
 
     return Obx(() {
       final session = controller.activeSession;
@@ -3221,6 +3986,83 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                       ],
                     ),
                   ],
+
+                  // Round Off Row if applicable
+                  if (session.rxRoundOffAmount.value.abs() > 0.001) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Round Off',
+                          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                        ),
+                        Text(
+                          "${session.rxRoundOffAmount.value >= 0 ? '+' : ''}₹${session.rxRoundOffAmount.value.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: session.rxRoundOffAmount.value > 0 ? const Color(0xFF16A34A) : Colors.teal.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  // Auto Round Off Toggle Row
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            session.rxAutoRoundOff.value ? Icons.auto_fix_high_rounded : Icons.auto_fix_off_rounded,
+                            size: 14,
+                            color: session.rxAutoRoundOff.value ? const Color(0xFF006D77) : cs.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Auto Round Off',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: session.rxAutoRoundOff.value ? const Color(0xFF006D77) : cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                      InkWell(
+                        onTap: controller.toggleAutoRoundOff,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: session.rxAutoRoundOff.value
+                                ? const Color(0xFF006D77).withValues(alpha: 0.12)
+                                : cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: session.rxAutoRoundOff.value
+                                  ? const Color(0xFF006D77)
+                                  : cs.outlineVariant.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Text(
+                            session.rxAutoRoundOff.value
+                                ? 'ON (±₹${session.rxRoundOffAmount.value.abs().toStringAsFixed(2)})'
+                                : 'OFF',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: session.rxAutoRoundOff.value ? const Color(0xFF006D77) : cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
 
                   // ── Grand Total Banner (Deep Teal Gradient) ──
@@ -3301,7 +4143,11 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                         mode: 'Card',
                         icon: Icons.credit_card_rounded,
                         isSelected: paymentMode.toLowerCase() == 'card',
-                        onTap: () => session.rxPaymentMode.value = 'Card',
+                        onTap: () {
+                          session.rxPaymentMode.value = 'Card';
+                          session.rxAmountReceived.value = grandTotal;
+                          controller.calculateChange();
+                        },
                         cs: cs,
                       ),
                       const SizedBox(width: 4),
@@ -3309,7 +4155,11 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                         mode: 'UPI',
                         icon: Icons.qr_code_2_rounded,
                         isSelected: paymentMode.toLowerCase() == 'upi',
-                        onTap: () => session.rxPaymentMode.value = 'UPI',
+                        onTap: () {
+                          session.rxPaymentMode.value = 'UPI';
+                          session.rxAmountReceived.value = grandTotal;
+                          controller.calculateChange();
+                        },
                         cs: cs,
                       ),
                       const SizedBox(width: 4),
@@ -3374,36 +4224,406 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                       ),
                     ],
                   ],
+
+                  // Modern Dynamic UPI Card in Catalog View
+                  if (paymentMode.toLowerCase() == 'upi' && cartItems.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Builder(builder: (context) {
+                      final storeUpi = session.getEffectiveUpi(settings);
+                      final storeName = settings.rxStoreName.value.trim().isNotEmpty
+                          ? settings.rxStoreName.value.trim()
+                          : 'Super Market';
+                      final upiUrl =
+                          'upi://pay?pa=$storeUpi&pn=${Uri.encodeComponent(storeName)}&am=${grandTotal.toStringAsFixed(2)}&cu=INR&tn=${Uri.encodeComponent("Bill ${session.id}")}';
+
+                      return Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade700.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.purple.withValues(alpha: 0.25)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              children: [
+                                InkWell(
+                                  onTap: () => _showCustomerUpiQrDialog(
+                                    context,
+                                    upiUrl,
+                                    grandTotal,
+                                    storeUpi,
+                                    storeName,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.purple.shade200),
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.bottomRight,
+                                      children: [
+                                        BarcodeWidget(
+                                          barcode: Barcode.qrCode(),
+                                          data: upiUrl,
+                                          width: 54,
+                                          height: 54,
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.all(1.5),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.purple,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.fullscreen_rounded, size: 8, color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Scan & Pay (UPI)',
+                                            style: TextStyle(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.purple.shade900,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () => _showCustomerUpiQrDialog(
+                                              context,
+                                              upiUrl,
+                                              grandTotal,
+                                              storeUpi,
+                                              storeName,
+                                            ),
+                                            child: Text(
+                                              'Enlarge ↗',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: cs.primary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Text(
+                                        storeUpi,
+                                        style: TextStyle(fontSize: 9.5, color: cs.onSurfaceVariant),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          InkWell(
+                                            onTap: () {
+                                              Clipboard.setData(ClipboardData(text: upiUrl));
+                                              SnackbarUtil.showSuccess('UPI Link Copied');
+                                            },
+                                            borderRadius: BorderRadius.circular(4),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: cs.surface,
+                                                borderRadius: BorderRadius.circular(4),
+                                                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(Icons.copy_rounded, size: 9, color: cs.onSurfaceVariant),
+                                                  const SizedBox(width: 2),
+                                                  Text('Copy', style: TextStyle(fontSize: 8.5, color: cs.onSurfaceVariant)),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () {
+                                                session.rxUpiVerified.value = true;
+                                                session.rxAmountReceived.value = grandTotal;
+                                                session.amountController.text = grandTotal.toStringAsFixed(2);
+                                                controller.calculateChange();
+                                                SnackbarUtil.showSuccess('UPI Payment Verified');
+                                              },
+                                              borderRadius: BorderRadius.circular(4),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
+                                                decoration: BoxDecoration(
+                                                  color: session.rxUpiVerified.value
+                                                      ? Colors.green.shade600
+                                                      : Colors.purple.shade700,
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      session.rxUpiVerified.value
+                                                          ? Icons.check_circle_rounded
+                                                          : Icons.check_rounded,
+                                                      size: 10,
+                                                      color: Colors.white,
+                                                    ),
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      session.rxUpiVerified.value ? 'Verified ✓' : 'Mark Paid',
+                                                      style: const TextStyle(
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Catalog View UPI Account Switcher Chips
+                            const SizedBox(height: 6),
+                            Obx(() {
+                              final primaryUpi = settings.rxStoreUpiId.value.trim().isNotEmpty
+                                  ? settings.rxStoreUpiId.value.trim()
+                                  : 'patelhusnain02-1@oksbi';
+                              final altUpi = settings.rxStoreAlternateUpiId.value.trim();
+                              final selectedType = session.rxSelectedUpiType.value;
+
+                              return SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    InkWell(
+                                      onTap: () => session.rxSelectedUpiType.value = 'primary',
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: selectedType == 'primary' ? Colors.purple.shade700 : cs.surface,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(
+                                            color: selectedType == 'primary' ? Colors.purple.shade700 : Colors.purple.shade200,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Primary: $primaryUpi',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: selectedType == 'primary' ? FontWeight.bold : FontWeight.w500,
+                                            color: selectedType == 'primary' ? Colors.white : Colors.purple.shade900,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if (altUpi.isNotEmpty) ...[
+                                      const SizedBox(width: 4),
+                                      InkWell(
+                                        onTap: () => session.rxSelectedUpiType.value = 'alternate',
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: selectedType == 'alternate' ? Colors.purple.shade700 : cs.surface,
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(
+                                              color: selectedType == 'alternate' ? Colors.purple.shade700 : Colors.purple.shade200,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Alt: $altUpi',
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: selectedType == 'alternate' ? FontWeight.bold : FontWeight.w500,
+                                              color: selectedType == 'alternate' ? Colors.white : Colors.purple.shade900,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(width: 4),
+                                    InkWell(
+                                      onTap: () => _showCustomUpiDialog(context, session),
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: selectedType == 'custom' ? Colors.purple.shade700 : cs.surface,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(
+                                            color: selectedType == 'custom' ? Colors.purple.shade700 : Colors.purple.shade200,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          selectedType == 'custom' && session.rxCustomUpiId.value.isNotEmpty
+                                              ? 'Custom: ${session.rxCustomUpiId.value}'
+                                              : '+ Custom',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: selectedType == 'custom' ? FontWeight.bold : FontWeight.w500,
+                                            color: selectedType == 'custom' ? Colors.white : Colors.purple.shade900,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: session.utrController,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                labelText: 'UPI Ref / UTR No. (optional)',
+                                labelStyle: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
+                                hintText: 'e.g. 427819034812',
+                                hintStyle: TextStyle(fontSize: 10, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                                prefixIcon: const Icon(Icons.tag_rounded, size: 13, color: Colors.purple),
+                                filled: true,
+                                fillColor: cs.surface,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: BorderSide(color: Colors.purple.withValues(alpha: 0.3)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(color: Colors.purple, width: 1.2),
+                                ),
+                              ),
+                              onChanged: (val) {
+                                session.rxUtrNumber.value = val.trim();
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
                   const SizedBox(height: 10),
 
-                  // ── 6. Complete & Print Bill Button ──
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: FilledButton.icon(
-                      onPressed: cartItems.isEmpty
-                          ? null
-                          : () async {
-                              await controller.settleBill();
+                  // ── 6. Complete & Print Bill & Preview Row ──
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: FilledButton.icon(
+                            onPressed: cartItems.isEmpty
+                                ? null
+                                : () async {
+                                    await controller.settleBill();
+                                  },
+                            icon: const Icon(Icons.print_rounded, size: 18),
+                            label: Text(
+                              'COMPLETE & PRINT (₹${grandTotal.toStringAsFixed(0)})',
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF005963),
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Tooltip(
+                        message: 'Preview Bill Receipt',
+                        child: SizedBox(
+                          height: 44,
+                          width: 44,
+                          child: OutlinedButton(
+                            onPressed: cartItems.isEmpty
+                                ? null
+                                : () => _previewCurrentBill(controller, settings),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              side: BorderSide(
+                                color: const Color(0xFF005963).withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.visibility_outlined,
+                              size: 19,
+                              color: Color(0xFF005963),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // Paper Size Toggle Pill
+                      Obx(() {
+                        final paperSize = settings.rxThermalPaperSize.value.isNotEmpty
+                            ? settings.rxThermalPaperSize.value
+                            : '80mm';
+                        final is80 = paperSize.toLowerCase() == '80mm';
+                        return Tooltip(
+                          message: 'Print Paper Size: $paperSize (Tap to toggle 80mm / 56mm)',
+                          child: InkWell(
+                            onTap: () {
+                              settings.rxThermalPaperSize.value = is80 ? '58mm' : '80mm';
+                              settings.savePrinterSettings();
                             },
-                      icon: const Icon(Icons.print_rounded, size: 19),
-                      label: Text(
-                        'COMPLETE & PRINT BILL (₹${grandTotal.toStringAsFixed(0)})',
-                        style: const TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF005963),
-                        foregroundColor: Colors.white,
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              height: 44,
+                              padding: const EdgeInsets.symmetric(horizontal: 7),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: cs.outlineVariant.withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: Text(
+                                is80 ? '80mm' : '56mm',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF005963),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
                   ),
                 ],
               ),

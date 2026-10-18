@@ -488,7 +488,7 @@ class _ActivityCreateSalesInvoiceState
                                     textAlign: TextAlign.right,
                                   ),
                                 ),
-                                const SizedBox(width: 40),
+                                if (!isEditing) const SizedBox(width: 40),
                               ],
                             ),
                           ),
@@ -762,20 +762,21 @@ class _ActivityCreateSalesInvoiceState
                                             ),
                                           ),
 
-                                          // Remove button
-                                          SizedBox(
-                                            width: 40,
-                                            child: IconButton(
-                                              icon: const Icon(
-                                                Icons.delete_outline_rounded,
-                                                size: 18,
-                                                color: Colors.red,
+                                          // Remove button (only available for new sales invoice creation)
+                                          if (!isEditing)
+                                            SizedBox(
+                                              width: 40,
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete_outline_rounded,
+                                                  size: 18,
+                                                  color: Colors.red,
+                                                ),
+                                                onPressed: () =>
+                                                    controller.removeRow(i),
+                                                tooltip: 'remove'.tr,
                                               ),
-                                              onPressed: () =>
-                                                  controller.removeRow(i),
-                                              tooltip: 'remove'.tr,
                                             ),
-                                          ),
                                         ],
                                       ),
                                     ),

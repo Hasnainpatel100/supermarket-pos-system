@@ -531,14 +531,115 @@ class _ProfileTab extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _buildTextField(
-                      context: context,
-                      controller: controllerSettings.storeEmailController,
-                      label: 'email'.tr,
-                      icon: Icons.email_outlined,
-                      isDark: isDark,
-                      colorScheme: colorScheme,
-                      required: true,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                            context: context,
+                            controller: controllerSettings.storeEmailController,
+                            label: 'email'.tr,
+                            icon: Icons.email_outlined,
+                            isDark: isDark,
+                            colorScheme: colorScheme,
+                            required: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    // UPI & Digital Payments Card
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(Icons.qr_code_2_rounded, size: 18, color: colorScheme.primary),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'UPI & Digital Payments (POS QR Billing)',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Configure UPI IDs for dynamic customer QR code generation at checkout.',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _buildTextField(
+                                  context: context,
+                                  controller: controllerSettings.storeUpiIdController,
+                                  label: 'Primary UPI ID / VPA (Default: patelhusnain02-1@oksbi)',
+                                  icon: Icons.verified_user_outlined,
+                                  isDark: isDark,
+                                  colorScheme: colorScheme,
+                                  required: false,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: _buildTextField(
+                                  context: context,
+                                  controller: controllerSettings.storeAlternateUpiIdController,
+                                  label: 'Alternate UPI ID / VPA (Backup Account)',
+                                  icon: Icons.swap_horiz_rounded,
+                                  isDark: isDark,
+                                  colorScheme: colorScheme,
+                                  required: false,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(Icons.info_outline_rounded, size: 14, color: colorScheme.primary),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Cashiers can switch between Primary and Alternate UPI ID with 1 tap during billing if bank servers are busy.',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: colorScheme.primary.withValues(alpha: 0.85),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
@@ -791,8 +892,8 @@ class _PrinterTab extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // ── Default Printer ───────────────────────────────────────────
-              _sectionHeader(context, 'default_printer'.tr),
+              // ── 1. Thermal Receipt Printer (POS Checkout) ────────────────
+              _sectionHeader(context, 'Thermal Receipt Printer (POS Checkout)'),
               const SizedBox(height: 4),
               MyCard(
                 padding: const EdgeInsets.all(20),
@@ -804,12 +905,11 @@ class _PrinterTab extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(9),
                           decoration: BoxDecoration(
-                            color:
-                                colorScheme.primary.withValues(alpha: 0.08),
+                            color: Colors.teal.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(Icons.print_outlined,
-                              color: colorScheme.primary, size: 20),
+                          child: const Icon(Icons.receipt_long_rounded,
+                              color: Colors.teal, size: 22),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -817,14 +917,14 @@ class _PrinterTab extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'select_printer'.tr,
+                                'Default Thermal Receipt Printer',
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.w600),
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                               Text(
-                                'choose_printer_for_barcode'.tr,
+                                'Used for printing customer receipts & thermal slips at checkout',
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodySmall
@@ -852,19 +952,26 @@ class _PrinterTab extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Printer Dropdown
+                    // Thermal Printer Dropdown
+                    Text(
+                      'Select Thermal Receipt Printer',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     Obx(() {
                       final printers = controller.rxAvailablePrinters;
-                      final selected = controller.rxDefaultPrinter.value;
-
-                      // Build a safe value: if selected not in list use null
+                      final selected = controller.rxDefaultThermalPrinter.value;
                       final safeValue =
                           printers.contains(selected) ? selected : null;
 
                       return DropdownButtonFormField<String>(
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.print_outlined,
-                              size: 20, color: colorScheme.primary),
+                          prefixIcon: const Icon(Icons.receipt_outlined,
+                              size: 20, color: Colors.teal),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
@@ -879,8 +986,8 @@ class _PrinterTab extends StatelessWidget {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                                color: colorScheme.primary, width: 1.5),
+                            borderSide: const BorderSide(
+                                color: Colors.teal, width: 1.5),
                           ),
                           filled: true,
                           fillColor: isDark
@@ -890,7 +997,249 @@ class _PrinterTab extends StatelessWidget {
                               horizontal: 16, vertical: 14),
                           hintText: printers.isEmpty
                               ? 'no_printers_found'.tr
-                              : 'select_a_printer'.tr,
+                              : 'Select Thermal Printer',
+                        ),
+                        isExpanded: true,
+                        initialValue: safeValue,
+                        hint: Text(
+                          printers.isEmpty
+                              ? 'no_printers_tap_refresh'.tr
+                              : 'System Default Printer (Auto-detect)',
+                          style: TextStyle(
+                              color: colorScheme.onSurface
+                                  .withValues(alpha: 0.5),
+                              fontSize: 14),
+                        ),
+                        items: [
+                          DropdownMenuItem<String>(
+                            value: '',
+                            child: Row(
+                              children: [
+                                Icon(Icons.computer_outlined,
+                                    size: 18,
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.5)),
+                                const SizedBox(width: 8),
+                                const Text('System Default Printer'),
+                              ],
+                            ),
+                          ),
+                          ...printers.map(
+                            (name) => DropdownMenuItem<String>(
+                              value: name,
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.print_rounded,
+                                      size: 18, color: Colors.teal),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          controller.rxDefaultThermalPrinter.value = value ?? '';
+                        },
+                      );
+                    }),
+                    const SizedBox(height: 16),
+                    // Default Receipt Paper Size (80mm vs 56mm/58mm vs A4)
+                    Text(
+                      'Default Thermal Paper Size',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Obx(() => DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.straighten_rounded,
+                                size: 20, color: Colors.teal),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                  color: colorScheme.outline
+                                      .withValues(alpha: 0.2)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                  color: colorScheme.outline
+                                      .withValues(alpha: 0.2)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                  color: Colors.teal, width: 1.5),
+                            ),
+                            filled: true,
+                            fillColor: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : colorScheme.surfaceContainerLowest,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                          ),
+                          isExpanded: true,
+                          initialValue: controller.rxThermalPaperSize.value,
+                          items: const [
+                            DropdownMenuItem(
+                              value: '80mm',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.receipt_long_rounded,
+                                      size: 18, color: Colors.teal),
+                                  SizedBox(width: 10),
+                                  Text('80mm Thermal (3") - Standard Supermarket Roll'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: '58mm',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.receipt_outlined,
+                                      size: 18, color: Colors.teal),
+                                  SizedBox(width: 10),
+                                  Text('56mm / 58mm Thermal (2") - Compact Roll'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'A4',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.article_outlined,
+                                      size: 18, color: Colors.blue),
+                                  SizedBox(width: 10),
+                                  Text('A4 Full Page Tax Invoice'),
+                                ],
+                              ),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              controller.rxThermalPaperSize.value = val;
+                            }
+                          },
+                        )),
+                    const SizedBox(height: 12),
+                    // Auto-print switch
+                    Obx(() => SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text(
+                            'Auto-print receipt on bill settlement',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Automatically send receipt to printer when cashier clicks Settle / Complete',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: colorScheme.onSurface.withValues(alpha: 0.55),
+                            ),
+                          ),
+                          value: controller.rxAutoPrintBill.value,
+                          activeThumbColor: Colors.teal,
+                          onChanged: (v) => controller.rxAutoPrintBill.value = v,
+                        )),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── 2. Barcode & Label Sticker Printer ─────────────────────────
+              _sectionHeader(context, 'Barcode & Label Printer (Product Stickers)'),
+              const SizedBox(height: 4),
+              MyCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(9),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.qr_code_scanner_rounded,
+                              color: Colors.deepPurple, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Barcode Label Printer',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              Text(
+                                'Used exclusively by Barcode Generator to print price tags & stickers',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                        color: colorScheme.onSurface
+                                            .withValues(alpha: 0.5)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Barcode Printer Dropdown
+                    Obx(() {
+                      final printers = controller.rxAvailablePrinters;
+                      final selected = controller.rxDefaultPrinter.value;
+                      final safeValue =
+                          printers.contains(selected) ? selected : null;
+
+                      return DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.qr_code_scanner_rounded,
+                              size: 20, color: Colors.deepPurple),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color:
+                                    colorScheme.outline.withValues(alpha: 0.2)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color:
+                                    colorScheme.outline.withValues(alpha: 0.2)),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                            borderSide: BorderSide(
+                                color: Colors.deepPurple, width: 1.5),
+                          ),
+                          filled: true,
+                          fillColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : colorScheme.surfaceContainerLowest,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          hintText: printers.isEmpty
+                              ? 'no_printers_found'.tr
+                              : 'Select Barcode Printer',
                         ),
                         isExpanded: true,
                         initialValue: safeValue,
@@ -904,7 +1253,6 @@ class _PrinterTab extends StatelessWidget {
                               fontSize: 14),
                         ),
                         items: [
-                          // "System Default" option (empty string = no override)
                           DropdownMenuItem<String>(
                             value: '',
                             child: Row(
@@ -923,8 +1271,8 @@ class _PrinterTab extends StatelessWidget {
                               value: name,
                               child: Row(
                                 children: [
-                                  Icon(Icons.print_rounded,
-                                      size: 18, color: colorScheme.primary),
+                                  const Icon(Icons.print_rounded,
+                                      size: 18, color: Colors.deepPurple),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -1062,10 +1410,10 @@ class _PrinterTab extends StatelessWidget {
                               value: '58mm',
                               child: Row(
                                 children: [
-                                  Icon(Icons.receipt_long_outlined,
+                                  const Icon(Icons.receipt_long_outlined,
                                       size: 18, color: Colors.teal),
-                                  SizedBox(width: 10),
-                                  Text('paper_size_58mm'.tr),
+                                  const SizedBox(width: 10),
+                                  Text('${'paper_size_58mm'.tr} (56mm/58mm Thermal - 2")'),
                                 ],
                               ),
                             ),
@@ -1073,10 +1421,10 @@ class _PrinterTab extends StatelessWidget {
                               value: '80mm',
                               child: Row(
                                 children: [
-                                  Icon(Icons.receipt_long_outlined,
+                                  const Icon(Icons.receipt_long_outlined,
                                       size: 18, color: Colors.green),
-                                  SizedBox(width: 10),
-                                  Text('paper_size_80mm'.tr),
+                                  const SizedBox(width: 10),
+                                  Text('${'paper_size_80mm'.tr} (80mm Thermal - 3")'),
                                 ],
                               ),
                             ),

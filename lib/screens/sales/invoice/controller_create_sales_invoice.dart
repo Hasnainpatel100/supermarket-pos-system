@@ -234,8 +234,14 @@ class ControllerCreateSalesInvoice extends GetxController {
   }
 
   void removeRow(int index) {
-    if (rxRows.length > 1) {
-      rxRows.removeAt(index);
+    if (index >= 0 && index < rxRows.length) {
+      if (rxRows.length > 1) {
+        rxRows.removeAt(index);
+      } else {
+        // If it's the only row, reset it cleanly so user can start fresh
+        rxRows.clear();
+        rxRows.add(InvoiceItemRow());
+      }
       calculateTotals();
     }
   }

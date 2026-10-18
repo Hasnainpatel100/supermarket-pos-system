@@ -14,6 +14,7 @@ import '../setting/controller_home_settings.dart';
 import '../bills/dialog_bill_print_preview.dart';
 import 'activity_split_bill.dart';
 import 'controller_home_pos.dart';
+import 'dialog_parked_bills.dart';
 
 class FragmentHomePos extends StatelessWidget {
   const FragmentHomePos({super.key});
@@ -117,16 +118,25 @@ class FragmentHomePos extends StatelessWidget {
           autofocus: true,
           onKeyEvent: (node, event) {
             if (event is KeyDownEvent) {
-              if (event.logicalKey == LogicalKeyboardKey.f2 ||
-                  event.logicalKey == LogicalKeyboardKey.f3 ||
-                  event.logicalKey == LogicalKeyboardKey.f4 ||
-                  event.logicalKey == LogicalKeyboardKey.f5 ||
-                  event.logicalKey == LogicalKeyboardKey.delete ||
-                  (event.logicalKey == LogicalKeyboardKey.keyP &&
+              final key = event.logicalKey;
+              if (key == LogicalKeyboardKey.f1 ||
+                  key == LogicalKeyboardKey.f2 ||
+                  key == LogicalKeyboardKey.f3 ||
+                  key == LogicalKeyboardKey.f4 ||
+                  key == LogicalKeyboardKey.f5 ||
+                  key == LogicalKeyboardKey.f6 ||
+                  key == LogicalKeyboardKey.f7 ||
+                  key == LogicalKeyboardKey.f8 ||
+                  key == LogicalKeyboardKey.f9 ||
+                  key == LogicalKeyboardKey.f10 ||
+                  key == LogicalKeyboardKey.f11 ||
+                  key == LogicalKeyboardKey.f12 ||
+                  key == LogicalKeyboardKey.delete ||
+                  (key == LogicalKeyboardKey.keyP &&
                       HardwareKeyboard.instance.isControlPressed) ||
-                  (event.logicalKey == LogicalKeyboardKey.keyT &&
+                  (key == LogicalKeyboardKey.keyT &&
                       HardwareKeyboard.instance.isControlPressed)) {
-                controller.handleShortcut(event.logicalKey);
+                controller.handleShortcut(key);
                 return KeyEventResult.handled;
               }
             }
@@ -297,6 +307,46 @@ class _TabBar extends StatelessWidget {
             ),
           ),
           Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Tooltip(
+              message: 'Hold / Suspend Current Order (F5)',
+              child: OutlinedButton.icon(
+                onPressed: controller.parkCurrentBill,
+                icon: const Icon(Icons.pause_rounded, size: 16),
+                label: const Text('Hold (F5)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ),
+          Obx(() {
+            final count = controller.rxParkedBills.length;
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Tooltip(
+                message: 'View & Recall Parked Orders (F6)',
+                child: FilledButton.tonalIcon(
+                  onPressed: () => DialogParkedBills.show(context, controller),
+                  icon: Badge(
+                    isLabelVisible: count > 0,
+                    label: Text('$count'),
+                    backgroundColor: Colors.amber.shade900,
+                    child: const Icon(Icons.inventory_2_outlined, size: 16),
+                  ),
+                  label: Text('Parked ($count)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: count > 0 ? Colors.amber.withValues(alpha: 0.2) : cs.surfaceContainerHighest,
+                    foregroundColor: count > 0 ? Colors.amber.shade900 : cs.onSurface,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            );
+          }),
+          Padding(
             padding: const EdgeInsets.only(right: 8),
             child: _ViewModeSwitcherButton(controller: controller),
           ),
@@ -437,7 +487,13 @@ class _SearchBar extends StatelessWidget {
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-            onSubmitted: (val) => onFieldSubmitted(),
+            onSubmitted: (val) {
+              if (val.trim().isNotEmpty) {
+                controller.handleBarcodeScan(val.trim());
+              } else {
+                onFieldSubmitted();
+              }
+            },
             onChanged: (val) {
               controller.rxSearchQuery.value = val;
             },
@@ -596,9 +652,14 @@ class _ActionBar extends StatelessWidget {
         children: [
           _ActionChip(icon: Icons.pin_rounded, label: 'qty_f2'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f2)),
           _ActionChip(icon: Icons.discount_outlined, label: 'item_disc_f3'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f3)),
+          _ActionChip(icon: Icons.person_search_rounded, label: 'Customer (F4)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f4)),
+          _ActionChip(icon: Icons.pause_circle_outline_rounded, label: 'Hold (F5)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f5)),
+          _ActionChip(icon: Icons.inventory_2_outlined, label: 'Parked (F6)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f6)),
+          _ActionChip(icon: Icons.percent_rounded, label: 'Discount (F7)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f7)),
+          _ActionChip(icon: Icons.flash_on_rounded, label: 'Quick Cash (F8)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f8)),
+          _ActionChip(icon: Icons.note_alt_outlined, label: 'Remarks (F11)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f11)),
+          _ActionChip(icon: Icons.point_of_sale_rounded, label: 'Drawer (F12)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f12)),
           _ActionChip(icon: Icons.delete_outline_rounded, label: 'remove_del'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.delete), isDestructive: true),
-          _ActionChip(icon: Icons.percent_rounded, label: 'bill_disc_f4'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f4)),
-          _ActionChip(icon: Icons.note_alt_outlined, label: 'remarks_f5'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f5)),
         ],
       ),
     );
@@ -1917,6 +1978,38 @@ class _SettleButtons extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Quick Retail Cashier Actions Row
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton.tonalIcon(
+                onPressed: controller.quickCashSettle,
+                icon: const Icon(Icons.flash_on_rounded, size: 16),
+                label: const Text('Quick Cash (F8)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  foregroundColor: const Color(0xFF047857),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: controller.parkCurrentBill,
+                icon: const Icon(Icons.pause_circle_outline_rounded, size: 16),
+                label: const Text('Hold Bill (F5)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
         // Settle & Print Button
         Container(
           decoration: BoxDecoration(

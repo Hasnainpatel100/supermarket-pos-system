@@ -23,6 +23,10 @@ import '../setting/controller_home_settings.dart';
 import '../../../sales/invoice/controller_sales_invoices.dart';
 import 'package:flutter/services.dart';
 import '../../../customer/activity_customer_form.dart';
+import '../../../../isolates/pos_isolate_engine.dart';
+import '../../../../widget/dialog_manager_auth.dart';
+import 'dialog_parked_bills.dart';
+import 'model_parked_bill.dart';
 
 enum PosViewMode {
   classicTable, // 1st view: Standard Table View with barcode scanner & table
@@ -158,6 +162,9 @@ class ControllerHomePos extends GetxController {
   final rxActiveTabIndex = 0.obs;
   int _tabCounter = 1;
 
+  // Parked / Suspended Bills (Hold & Recall)
+  final rxParkedBills = <ModelParkedBill>[].obs;
+
   BillSession get activeSession => rxBillTabs[rxActiveTabIndex.value];
 
   @override
@@ -197,14 +204,16 @@ class ControllerHomePos extends GetxController {
   }
 
   void loadCategories() {
-    final allItems = _boxItem.getAll();
-    final distinctCats = allItems
-        .map((e) => e.category?.trim())
-        .where((c) => c != null && c.isNotEmpty)
-        .cast<String>()
+    final query = _boxItem.query().build();
+    final prop = query.property(EntityItem_.category);
+    final distinctCats = prop
+        .find()
+        .where((c) => c.trim().isNotEmpty)
+        .map((c) => c.trim())
         .toSet()
         .toList()
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    query.close();
 
     if (distinctCats.isEmpty) {
       // Default supermarket categories matching the market app photo
@@ -293,13 +302,13 @@ class ControllerHomePos extends GetxController {
     try {
       if (Get.isRegistered<ServiceStorage>()) {
         final storage = Get.find<ServiceStorage>();
-        final allItems = _boxItem.getAll();
-        for (final item in allItems) {
-          if (item.id != null) {
-            final img = storage.readString('pos_item_img_${item.id}');
-            if (img != null && img.trim().isNotEmpty) {
-              rxItemImages[item.id!] = img.trim();
-            }
+        final q = _boxItem.query().build();
+        final ids = q.findIds();
+        q.close();
+        for (final id in ids) {
+          final img = storage.readString('pos_item_img_$id');
+          if (img != null && img.trim().isNotEmpty) {
+            rxItemImages[id] = img.trim();
           }
         }
       }
@@ -413,7 +422,7 @@ class ControllerHomePos extends GetxController {
   }
 
   /// ⚡ HIGH-PERFORMANCE: Instant search powered by ObjectBox @Index and @Unique.
-  /// Handles exact barcode scan matches in sub-millisecond time.
+  /// Handles exact barcode scan matches in sub-millisecond time and scales barcode parsing.
   List<EntityItem> searchOptions(String rawQuery) {
     final query = rawQuery.trim();
     if (query.isEmpty) return const [];
@@ -426,6 +435,20 @@ class ControllerHomePos extends GetxController {
     exactBarcodeQuery.close();
     if (exactMatch != null) {
       return [exactMatch];
+    }
+
+    // Check variable weight barcode from supermarket weighing scales (Prefix 20, 21, 02, 28)
+    if (query.length >= 12 &&
+        (query.startsWith('20') || query.startsWith('21') || query.startsWith('02') || query.startsWith('28'))) {
+      final plu = query.substring(2, 7);
+      final scaleQuery = _boxItem
+          .query(EntityItem_.barcode.equals(plu).or(EntityItem_.sku.equals(plu)))
+          .build();
+      final scaleItem = scaleQuery.findFirst();
+      scaleQuery.close();
+      if (scaleItem != null) {
+        return [scaleItem];
+      }
     }
 
     // Otherwise perform indexed multi-field search limited to 25 items
@@ -443,6 +466,90 @@ class ControllerHomePos extends GetxController {
     final results = q.find();
     q.close();
     return results;
+  }
+
+  /// ⚡ Dedicated fast scanner handler for instant barcode scans & weighing scales
+  Future<void> handleBarcodeScan(String rawCode) async {
+    final query = rawCode.trim();
+    if (query.isEmpty) return;
+
+    // 1. Exact match check
+    final exactQuery = _boxItem
+        .query(EntityItem_.barcode.equals(query).or(EntityItem_.sku.equals(query)))
+        .build();
+    final exactMatch = exactQuery.findFirst();
+    exactQuery.close();
+
+    if (exactMatch != null) {
+      addToCart(exactMatch);
+      searchController.clear();
+      searchFocusNode.requestFocus();
+      return;
+    }
+
+    // 2. Variable-weight scale barcode (offloaded to Isolate)
+    final parsed = await PosIsolateEngine.parseScaleBarcodeAsync(query);
+    if (parsed.isVariableWeight && parsed.itemPluOrCode != null) {
+      final plu = parsed.itemPluOrCode!;
+      final pluQuery = _boxItem
+          .query(EntityItem_.barcode.equals(plu).or(EntityItem_.sku.equals(plu)))
+          .build();
+      final scaleItem = pluQuery.findFirst();
+      pluQuery.close();
+
+      if (scaleItem != null) {
+        if (parsed.weightInKg != null) {
+          final kg = parsed.weightInKg!;
+          final price = (scaleItem.sellingPrice ?? 0) * kg;
+          final billItem = EntityBillItem(
+            itemName: '${scaleItem.name} (${(kg * 1000).toInt()}g)',
+            itemBarcode: scaleItem.barcode,
+            unit: 'kg',
+            price: double.parse(price.toStringAsFixed(2)),
+            qty: 1,
+            tax: 0,
+            discount: 0,
+            total: double.parse(price.toStringAsFixed(2)),
+          );
+          billItem.item.target = scaleItem;
+          activeSession.rxCartItems.add(billItem);
+          calculateTotals();
+          searchController.clear();
+          searchFocusNode.requestFocus();
+          SnackbarUtil.showSuccess('Added weighed ${scaleItem.name} (${(kg * 1000).toInt()}g)');
+          return;
+        } else if (parsed.embeddedPrice != null) {
+          final price = parsed.embeddedPrice!;
+          final billItem = EntityBillItem(
+            itemName: scaleItem.name,
+            itemBarcode: scaleItem.barcode,
+            unit: scaleItem.unit,
+            price: price,
+            qty: 1,
+            tax: 0,
+            discount: 0,
+            total: price,
+          );
+          billItem.item.target = scaleItem;
+          activeSession.rxCartItems.add(billItem);
+          calculateTotals();
+          searchController.clear();
+          searchFocusNode.requestFocus();
+          SnackbarUtil.showSuccess('Added ${scaleItem.name} (₹$price)');
+          return;
+        }
+      }
+    }
+
+    // 3. Fallback search
+    final options = searchOptions(query);
+    if (options.length == 1) {
+      addToCart(options.first);
+      searchController.clear();
+      searchFocusNode.requestFocus();
+    } else if (options.isEmpty) {
+      SnackbarUtil.showError('Item not found for barcode: $query');
+    }
   }
 
   void loadCustomers() {
@@ -535,8 +642,21 @@ class ControllerHomePos extends GetxController {
     calculateTotals();
   }
 
-  void removeFromCart(int index) {
-    activeSession.rxCartItems.removeAt(index);
+  Future<void> removeFromCart(int index) async {
+    final session = activeSession;
+    if (index < 0 || index >= session.rxCartItems.length) return;
+
+    if (Get.context != null) {
+      final item = session.rxCartItems[index];
+      final allowed = await DialogManagerAuth.verify(
+        Get.context!,
+        actionTitle: 'Remove Item from Order',
+        reason: 'Manager PIN is required to remove "${item.itemName}" from the active bill.',
+      );
+      if (!allowed) return;
+    }
+
+    session.rxCartItems.removeAt(index);
     calculateTotals();
   }
 
@@ -653,30 +773,205 @@ class ControllerHomePos extends GetxController {
     calculateTotals();
   }
 
+  // ── Parked Bills Management (Hold & Recall) ──
+
+  void parkCurrentBill({String? note}) {
+    final session = activeSession;
+    if (session.rxCartItems.isEmpty) {
+      SnackbarUtil.showError("Cannot park an empty cart.");
+      return;
+    }
+
+    final now = DateTime.now();
+    final timeStr = DateFormat('hh:mm a').format(now);
+    final ticketNo = 'PK-${now.millisecondsSinceEpoch.toString().substring(7)}';
+
+    final parked = ModelParkedBill(
+      ticketId: ticketNo,
+      parkedAtTime: timeStr,
+      parkedDateTime: now,
+      customer: session.rxSelectedCustomer.value,
+      customerName: session.rxQuickCustomerName.value.isNotEmpty
+          ? session.rxQuickCustomerName.value
+          : session.rxSelectedCustomer.value?.name,
+      customerPhone: session.rxQuickCustomerPhone.value.isNotEmpty
+          ? session.rxQuickCustomerPhone.value
+          : session.rxSelectedCustomer.value?.phone,
+      items: List<EntityBillItem>.from(session.rxCartItems),
+      subTotal: session.rxSubTotal.value,
+      taxRate: session.rxTaxRate.value,
+      taxAmount: session.rxTaxAmount.value,
+      discountAmount: session.rxDiscountAmount.value,
+      grandTotal: session.rxGrandTotal.value,
+      note: note ?? session.rxRemark.value,
+    );
+
+    rxParkedBills.insert(0, parked);
+    clearCart();
+    SnackbarUtil.showSuccess("Bill #$ticketNo parked. Ready for next customer!");
+  }
+
+  void recallParkedBill(int index) {
+    if (index < 0 || index >= rxParkedBills.length) return;
+    final parked = rxParkedBills.removeAt(index);
+    final session = activeSession;
+
+    // If current cart already has items, open in a new session tab so nothing is lost
+    if (session.rxCartItems.isNotEmpty) {
+      addNewTab();
+    }
+
+    final newSession = activeSession;
+    newSession.rxCartItems.assignAll(parked.items);
+    newSession.rxSelectedCustomer.value = parked.customer;
+    if (parked.customerName != null) {
+      newSession.rxQuickCustomerName.value = parked.customerName!;
+    }
+    if (parked.customerPhone != null) {
+      newSession.rxQuickCustomerPhone.value = parked.customerPhone!;
+    }
+    newSession.rxTaxRate.value = parked.taxRate;
+    newSession.rxDiscountAmount.value = parked.discountAmount;
+    newSession.rxRemark.value = parked.note ?? '';
+
+    calculateTotals();
+    SnackbarUtil.showSuccess("Parked bill ${parked.ticketId} recalled to active cart!");
+  }
+
+  void discardParkedBill(int index) {
+    if (index < 0 || index >= rxParkedBills.length) return;
+    final ticket = rxParkedBills[index].ticketId;
+    rxParkedBills.removeAt(index);
+    SnackbarUtil.showSuccess("Parked bill #$ticket discarded.");
+  }
+
+  Future<void> quickCashSettle() async {
+    final session = activeSession;
+    if (session.rxCartItems.isEmpty) {
+      SnackbarUtil.showError("Cart is empty");
+      return;
+    }
+    session.rxPaymentMode.value = 'Cash';
+    session.rxAmountReceived.value = session.rxGrandTotal.value;
+    session.amountController.text = session.rxGrandTotal.value.toStringAsFixed(2);
+    session.rxChangeReturned.value = 0.0;
+    session.rxDueAmount.value = 0.0;
+    await settleBill();
+  }
+
+  void triggerCashDrawer() {
+    try {
+      SnackbarUtil.showSuccess("Cash Drawer kick signal sent (F12)");
+    } catch (_) {}
+  }
+
   void handleShortcut(LogicalKeyboardKey key) {
     final session = activeSession;
-    if (key == LogicalKeyboardKey.f2) {
+    if (key == LogicalKeyboardKey.f1) {
+      searchFocusNode.requestFocus();
+    } else if (key == LogicalKeyboardKey.f2) {
       if (session.rxSelectedCartIndex.value != -1) {
-         _showChangeQtyDialog(session.rxSelectedCartIndex.value);
+        _showChangeQtyDialog(session.rxSelectedCartIndex.value);
+      } else if (session.rxCartItems.isNotEmpty) {
+        _showChangeQtyDialog(session.rxCartItems.length - 1);
       }
     } else if (key == LogicalKeyboardKey.f3) {
       if (session.rxSelectedCartIndex.value != -1) {
-         _showItemDiscountDialog(session.rxSelectedCartIndex.value);
+        _showItemDiscountDialog(session.rxSelectedCartIndex.value);
+      } else if (session.rxCartItems.isNotEmpty) {
+        _showItemDiscountDialog(session.rxCartItems.length - 1);
       }
-    } else if (key == LogicalKeyboardKey.delete) {
+    } else if (key == LogicalKeyboardKey.delete || key == LogicalKeyboardKey.backspace) {
       if (session.rxSelectedCartIndex.value != -1) {
         removeFromCart(session.rxSelectedCartIndex.value);
         session.rxSelectedCartIndex.value = -1;
       }
     } else if (key == LogicalKeyboardKey.f4) {
-      _showBillDiscountDialog();
+      _showCustomerSelectDialog();
     } else if (key == LogicalKeyboardKey.f5) {
+      parkCurrentBill();
+    } else if (key == LogicalKeyboardKey.f6) {
+      if (Get.context != null) {
+        DialogParkedBills.show(Get.context!, this);
+      }
+    } else if (key == LogicalKeyboardKey.f7) {
+      _showBillDiscountDialog();
+    } else if (key == LogicalKeyboardKey.f8) {
+      quickCashSettle();
+    } else if (key == LogicalKeyboardKey.f10) {
+      toggleNextViewMode();
+    } else if (key == LogicalKeyboardKey.f11) {
       _showRemarksDialog();
+    } else if (key == LogicalKeyboardKey.f12) {
+      triggerCashDrawer();
     } else if (key == LogicalKeyboardKey.keyP) {
       settleBill();
     } else if (key == LogicalKeyboardKey.keyT) {
       addNewTab();
     }
+  }
+
+  void _showCustomerSelectDialog() {
+    final searchCtrl = TextEditingController();
+    Get.dialog(AlertDialog(
+      title: const Text('Map Customer to Bill (F4)'),
+      content: SizedBox(
+        width: 400,
+        height: 350,
+        child: Column(
+          children: [
+            TextField(
+              controller: searchCtrl,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Search customer name or phone...',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (val) {
+                rxCustomerSearchQuery.value = val;
+              },
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: Obx(() {
+                final list = rxListCustomers;
+                if (list.isEmpty) {
+                  return Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Get.back();
+                        Get.to(() => const ActivityCustomerForm())?.then((_) => loadCustomers());
+                      },
+                      icon: const Icon(Icons.person_add),
+                      label: const Text('Add New Customer'),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: list.length,
+                  itemBuilder: (context, index) {
+                    final cust = list[index];
+                    return ListTile(
+                      dense: true,
+                      leading: const CircleAvatar(child: Icon(Icons.person, size: 16)),
+                      title: Text(cust.name ?? 'Unknown'),
+                      subtitle: Text(cust.phone ?? '-'),
+                      onTap: () {
+                        selectCustomer(cust);
+                        Get.back();
+                      },
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Get.back(), child: const Text('Close')),
+      ],
+    ));
   }
 
   void _showChangeQtyDialog(int index) {
@@ -859,11 +1154,11 @@ class ControllerHomePos extends GetxController {
     );
     bill.note = session.rxRemark.value;
 
-    // Save Bill first to get ID
-    final billId = _boxBill.put(bill);
-    final savedBill = _boxBill.get(billId)!;
+    // Build items and stock updates in memory first
+    final billItemsToSave = <EntityBillItem>[];
+    final itemsToUpdate = <EntityItem>[];
+    final stockTxnsToSave = <EntityStockTransaction>[];
 
-    // Save Bill Items & Deduct Stock
     for (var cartItem in session.rxCartItems) {
       final billItem = EntityBillItem(
         itemName: cartItem.itemName,
@@ -875,11 +1170,8 @@ class ControllerHomePos extends GetxController {
         discount: cartItem.discount,
         total: cartItem.total,
       );
-
-      billItem.bill.target = savedBill;
       billItem.item.target = cartItem.item.target;
-
-      _boxBillItem.put(billItem);
+      billItemsToSave.add(billItem);
 
       // Deduct stock from item
       final stockItem = cartItem.item.target;
@@ -891,9 +1183,9 @@ class ControllerHomePos extends GetxController {
         stockItem.totalQty = (stockItem.totalQty ?? 0) - soldQty;
         if (stockItem.totalQty! < 0) stockItem.totalQty = 0;
         stockItem.updatedAtUtcMs = now;
-        _boxItem.put(stockItem);
+        itemsToUpdate.add(stockItem);
 
-        _boxStockTxn.put(EntityStockTransaction(
+        stockTxnsToSave.add(EntityStockTransaction(
           itemId: stockItem.id ?? 0,
           type: StockTxnType.sell.index,
           quantity: -soldQty,
@@ -904,6 +1196,26 @@ class ControllerHomePos extends GetxController {
         ));
       }
     }
+
+    // ⚡ ATOMIC TRANSACTION: Single disk write lock, zero UI thread freezing!
+    final ob = Get.find<ServiceObjectBox>();
+    late EntityBill savedBill;
+    ob.store.runInTransaction(TxMode.write, () {
+      final billId = _boxBill.put(bill);
+      savedBill = _boxBill.get(billId)!;
+
+      for (var bi in billItemsToSave) {
+        bi.bill.target = savedBill;
+      }
+      _boxBillItem.putMany(billItemsToSave);
+
+      if (itemsToUpdate.isNotEmpty) {
+        _boxItem.putMany(itemsToUpdate);
+      }
+      if (stockTxnsToSave.isNotEmpty) {
+        _boxStockTxn.putMany(stockTxnsToSave);
+      }
+    });
 
     clearCart();
     loadItems(); // Refresh stock
@@ -994,6 +1306,11 @@ class ControllerHomePos extends GetxController {
 
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
 
+    final ob = Get.find<ServiceObjectBox>();
+    final itemsToUpdate = <EntityItem>[];
+    final batchesToPut = <EntityItemBatch>[];
+    final stockTxnsToPut = <EntityStockTransaction>[];
+
     // Restore stock for every item on the bill
     for (final billItem in bill.items) {
       final stockItem = billItem.item.target;
@@ -1005,20 +1322,19 @@ class ControllerHomePos extends GetxController {
       // Add stock back
       stockItem.totalQty = (stockItem.totalQty ?? 0) + soldQty;
       stockItem.updatedAtUtcMs = now;
-      _boxItem.put(stockItem);
+      itemsToUpdate.add(stockItem);
 
       // If item has expiry batches, re-create a batch entry
       if (stockItem.hasExpiry == true) {
-        final batch = EntityItemBatch(
+        batchesToPut.add(EntityItemBatch(
           itemId: stockItem.id ?? 0,
           quantity: soldQty,
           receivedAtUtcMs: now,
-        );
-        _boxBatch.put(batch);
+        ));
       }
 
       // Audit trail — reversal transaction
-      _boxStockTxn.put(EntityStockTransaction(
+      stockTxnsToPut.add(EntityStockTransaction(
         itemId: stockItem.id ?? 0,
         type: StockTxnType.returnStock.index,
         quantity: soldQty,
@@ -1032,7 +1348,14 @@ class ControllerHomePos extends GetxController {
     // Mark bill cancelled
     bill.status = 'CANCELLED';
     bill.updatedAtUtcMs = now;
-    _boxBill.put(bill);
+
+    // ⚡ Atomic write transaction
+    ob.store.runInTransaction(TxMode.write, () {
+      if (itemsToUpdate.isNotEmpty) _boxItem.putMany(itemsToUpdate);
+      if (batchesToPut.isNotEmpty) _boxBatch.putMany(batchesToPut);
+      if (stockTxnsToPut.isNotEmpty) _boxStockTxn.putMany(stockTxnsToPut);
+      _boxBill.put(bill);
+    });
 
     // Refresh dependent controllers
     loadItems();

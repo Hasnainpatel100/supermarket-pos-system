@@ -12,6 +12,7 @@ import '../../../../widget/list_tile_dropdown.dart';
 import '../../../../widget/list_tile_toggle.dart';
 import '../../../../widget/my_card.dart';
 import 'controller_home_settings.dart';
+import 'tab_license_security.dart';
 
 class FragHomeSettings extends StatelessWidget {
   FragHomeSettings({super.key});
@@ -24,7 +25,7 @@ class FragHomeSettings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Row(
@@ -55,6 +56,10 @@ class FragHomeSettings extends StatelessWidget {
                 icon: const Icon(Icons.print_outlined, size: 20),
                 text: 'printer'.tr,
               ),
+              const Tab(
+                icon: Icon(Icons.verified_user_outlined, size: 20),
+                text: 'License & Security',
+              ),
             ],
           ),
         ),
@@ -67,6 +72,7 @@ class FragHomeSettings extends StatelessWidget {
               controllerSettings: controllerSettings,
             ),
             _PrinterTab(controller: controllerSettings),
+            const TabLicenseSecurity(),
           ],
         ),
       ),

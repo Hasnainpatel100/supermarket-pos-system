@@ -16,6 +16,7 @@ import '../service/service_brand_context.dart';
 import '../service/service_branch_api.dart';
 import '../service/service_api_user.dart';
 import '../service/service_currency.dart';
+import '../service/service_license.dart';
 import '../service/service_object_box.dart';
 import '../service/service_storage.dart';
 import '../service/service_theme.dart';
@@ -28,6 +29,10 @@ class StaticMethods {
 
     var repoStorage = RepoStorage()..onInit(storage: storage);
     Get.put<RepoStorage>(repoStorage, permanent: true);
+
+    // 1b. Offline Hardware Licensing Service
+    final licenseService = await ServiceLicense(storage: storage).init();
+    Get.put<ServiceLicense>(licenseService, permanent: true);
 
     // 2. Token Storage abstraction
     final tokenStorage = Get.put<TokenStorage>(

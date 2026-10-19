@@ -14,8 +14,10 @@ import '../../../../service/service_object_box.dart';
 import '../../../../service/service_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:printing/printing.dart';
+import '../../../../enums/enum_main_menu.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../../service/service_bill_pdf.dart';
+import '../../controller_home.dart';
 import '../bills/controller_home_bills.dart';
 import '../bills/dialog_bill_detail.dart';
 import '../item/controller_home_item.dart';
@@ -541,14 +543,14 @@ class ControllerHomePos extends GetxController {
       }
     }
 
-    // 3. Fallback search
+    // 3. Fallback search: pick first matching option on Enter
     final options = searchOptions(query);
-    if (options.length == 1) {
+    if (options.isNotEmpty) {
       addToCart(options.first);
       searchController.clear();
       searchFocusNode.requestFocus();
-    } else if (options.isEmpty) {
-      SnackbarUtil.showError('Item not found for barcode: $query');
+    } else {
+      SnackbarUtil.showError('Item not found for: $query');
     }
   }
 
@@ -1173,12 +1175,13 @@ class ControllerHomePos extends GetxController {
       billItem.item.target = cartItem.item.target;
       billItemsToSave.add(billItem);
 
-      // Deduct stock from item
+      // Deduct stock from item and its batches
       final stockItem = cartItem.item.target;
       if (stockItem != null) {
         final soldQty = cartItem.qty ?? 0;
-        if (stockItem.hasExpiry == true) {
-          _deductFromBatches(stockItem.id ?? 0, soldQty);
+        final itemId = stockItem.id ?? 0;
+        if (itemId > 0) {
+          _deductFromBatches(itemId, soldQty);
         }
         stockItem.totalQty = (stockItem.totalQty ?? 0) - soldQty;
         if (stockItem.totalQty! < 0) stockItem.totalQty = 0;
@@ -1272,20 +1275,27 @@ class ControllerHomePos extends GetxController {
   }
 
   void _deductFromBatches(int itemId, int qty) {
+    if (itemId <= 0 || qty <= 0) return;
+
     final query = _boxBatch
         .query(EntityItemBatch_.itemId.equals(itemId))
-        .order(EntityItemBatch_.receivedAtUtcMs)
+        .order(EntityItemBatch_.expiryDateUtcMs)
         .build();
     final batches = query.find();
     query.close();
+
+    if (batches.isEmpty) return;
 
     int remaining = qty;
     for (final batch in batches) {
       if (remaining <= 0) break;
       final batchQty = batch.quantity ?? 0;
+      if (batchQty <= 0) continue;
+
       if (batchQty <= remaining) {
         remaining -= batchQty;
-        _boxBatch.remove(batch.id!);
+        batch.quantity = 0;
+        _boxBatch.put(batch);
       } else {
         batch.quantity = batchQty - remaining;
         _boxBatch.put(batch);
@@ -1298,9 +1308,11 @@ class ControllerHomePos extends GetxController {
   // CANCEL BILL — reverse stock & mark CANCELLED
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Future<void> cancelBill(EntityBill bill) async {
+  Future<void> cancelBill(EntityBill bill, {bool showSnackbar = true}) async {
     if (bill.status == 'CANCELLED') {
-      SnackbarUtil.showError('This bill is already cancelled');
+      if (showSnackbar) {
+        SnackbarUtil.showError('This bill is already cancelled');
+      }
       return;
     }
 
@@ -1369,7 +1381,9 @@ class ControllerHomePos extends GetxController {
       Get.find<ControllerSalesInvoices>().loadInvoices();
     }
 
-    SnackbarUtil.showSuccess('Bill ${bill.billNo} has been cancelled');
+    if (showSnackbar) {
+      SnackbarUtil.showSuccess('Bill ${bill.billNo} has been cancelled');
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1391,8 +1405,8 @@ class ControllerHomePos extends GetxController {
     final paymentMode = bill.paymentMode ?? 'Cash';
     final note = bill.note ?? '';
 
-    // Step 1 — cancel the bill (this restores stock)
-    await cancelBill(bill);
+    // Step 1 — cancel the bill silently without popup (this restores stock)
+    await cancelBill(bill, showSnackbar: false);
 
     // Step 2 — open a new tab and load items into it
     addNewTab();
@@ -1449,6 +1463,12 @@ class ControllerHomePos extends GetxController {
     session.rxRemark.value = note;
 
     calculateTotals();
+
+    // Step 3 — Switch to POS screen and show clear notification
+    if (Get.isRegistered<ControllerHome>()) {
+      Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.pos;
+    }
+    SnackbarUtil.showSuccess('Bill #${bill.billNo} loaded into cart for editing');
   }
 
   Future<void> openCustomerForm() async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:super_market/widget/gradient_action_button.dart';
 import 'package:super_market/widget/gradient_app_bar_title.dart';
 import 'package:super_market/widget/generic_empty_state.dart';
@@ -75,20 +76,79 @@ class FragmentHomeItem extends StatelessWidget {
         ),
       ),
 
-      body: Obx(
-            () => controller.rxListItem.isEmpty
-            ? const GenericEmptyState(
-                icon: Icons.inventory_2_outlined,
-                title: 'No items found',
-                subtitle: 'Add a new item to get started',
-                gradientColors: [Color(0xFFBFDBFE), Color(0xFFA5F3FC)],
-              )
-            : Column(
-          children: [
-            Expanded(
-              child: RepaintBoundary(
-                child: MyCard(
-                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      body: Column(
+        children: [
+          // ── Expiry Filter Chips ── ALWAYS visible at the top
+          _buildExpiryFilterBar(context, controller),
+
+          // ── Table or Filter-aware Empty State ──
+          Expanded(
+            child: Obx(() {
+              if (controller.rxListItem.isEmpty) {
+                final filter = controller.rxExpiryFilter.value;
+                String title = 'No items found';
+                String subtitle = 'No items in this category';
+                IconData icon = Icons.inventory_2_outlined;
+
+                if (filter == ExpiryFilter.expired) {
+                  title = 'No expired items 🎉';
+                  subtitle = 'Great news! None of your tracked items have expired batches.';
+                  icon = Icons.verified_rounded;
+                } else if (filter == ExpiryFilter.expiring) {
+                  title = 'No items expiring soon';
+                  subtitle = 'No items have batches expiring within the next 30 days.';
+                  icon = Icons.schedule_rounded;
+                } else if (filter == ExpiryFilter.safe) {
+                  title = 'No safe batch items';
+                  subtitle = 'No items currently have batches with > 30 days validity.';
+                  icon = Icons.calendar_today_rounded;
+                } else if (controller.searchQuery.isNotEmpty) {
+                  title = 'No items match "${controller.searchQuery.value}"';
+                  subtitle = 'Try checking for typos or searching a different term.';
+                } else {
+                  title = 'No items found';
+                  subtitle = 'Add a new item to get started';
+                }
+
+                return Center(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GenericEmptyState(
+                          icon: icon,
+                          title: title,
+                          subtitle: subtitle,
+                          gradientColors: (filter == ExpiryFilter.expired || filter == ExpiryFilter.expiring)
+                              ? [const Color(0xFFD1FAE5), const Color(0xFFA7F3D0)]
+                              : const [Color(0xFFBFDBFE), Color(0xFFA5F3FC)],
+                        ),
+                        if (filter != ExpiryFilter.all) ...[
+                          const SizedBox(height: 16),
+                          FilledButton.icon(
+                            onPressed: () => controller.setExpiryFilter(ExpiryFilter.all),
+                            icon: const Icon(Icons.apps_rounded, size: 16),
+                            label: const Text('Show All Items'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.blue.shade600,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  Expanded(
+                    child: RepaintBoundary(
+                      child: MyCard(
+                        margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: SizedBox(
                   width: double.infinity,
                   child: SingleChildScrollView(
@@ -156,6 +216,21 @@ class FragmentHomeItem extends StatelessWidget {
                             icon: Icons.warehouse_outlined,
                             iconColor: Colors.blue.shade600,
                             bgColor: Colors.blue.shade50,
+                          ),
+                        ),
+                        // ── EXPIRY ──
+                        DataColumn(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(6)),
+                                child: Icon(Icons.event_busy_rounded, size: 16, color: Colors.orange.shade700),
+                              ),
+                              const SizedBox(width: 8),
+                              Text('Expiry', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                            ],
                           ),
                         ),
                         DataColumn(
@@ -261,6 +336,9 @@ class FragmentHomeItem extends StatelessWidget {
                                 ),
                               ),
                             )),
+
+                            // Expiry Badge
+                            DataCell(_ExpiryBadge(item: item, controller: controller)),
 
                             // Status badge
                             DataCell(Container(
@@ -392,16 +470,76 @@ class FragmentHomeItem extends StatelessWidget {
               ),
             ),
           ),
-            // ── Pagination Footer ──
-            Obx(() => _buildPagination(context, controller)),
-          ],
-        ),
-      ),
+          // ── Pagination Footer ──
+          _buildPagination(context, controller),
+        ],
+      );
+      }),
+    ),
+  ],
+),
     );
+  }
+
+  /// Expiry filter chip bar
+  Widget _buildExpiryFilterBar(BuildContext context, ControllerHomeItem controller) {
+    return Obx(() {
+      final selected = controller.rxExpiryFilter.value;
+      return Container(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _ExpiryChip(
+                label: 'All Items',
+                icon: Icons.apps_rounded,
+                value: ExpiryFilter.all,
+                selected: selected,
+                count: controller.countAll.value,
+                color: Colors.blue.shade600,
+                onTap: () => controller.setExpiryFilter(ExpiryFilter.all),
+              ),
+              const SizedBox(width: 8),
+              _ExpiryChip(
+                label: 'Expiring Soon',
+                icon: Icons.schedule_rounded,
+                value: ExpiryFilter.expiring,
+                selected: selected,
+                count: controller.countExpiring.value,
+                color: Colors.orange.shade700,
+                onTap: () => controller.setExpiryFilter(ExpiryFilter.expiring),
+              ),
+              const SizedBox(width: 8),
+              _ExpiryChip(
+                label: 'Expired',
+                icon: Icons.dangerous_outlined,
+                value: ExpiryFilter.expired,
+                selected: selected,
+                count: controller.countExpired.value,
+                color: Colors.red.shade600,
+                onTap: () => controller.setExpiryFilter(ExpiryFilter.expired),
+              ),
+              const SizedBox(width: 8),
+              _ExpiryChip(
+                label: 'Safe',
+                icon: Icons.verified_rounded,
+                value: ExpiryFilter.safe,
+                selected: selected,
+                count: controller.countSafe.value,
+                color: Colors.green.shade600,
+                onTap: () => controller.setExpiryFilter(ExpiryFilter.safe),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildPagination(BuildContext context, ControllerHomeItem controller) {
     final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -571,3 +709,181 @@ class _SortableHeader extends StatelessWidget {
     });
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Expiry Badge — colour-coded expiry cell in the DataTable
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ExpiryBadge extends StatelessWidget {
+  final EntityItem item;
+  final ControllerHomeItem controller;
+
+  const _ExpiryBadge({required this.item, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    // Items without expiry tracking
+    if (item.hasExpiry != true) {
+      return Text('—', style: TextStyle(color: Colors.grey.shade400, fontSize: 12));
+    }
+
+    final expiryMs = controller.getNearestExpiryMsForItem(item.id ?? 0);
+    if (expiryMs == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text('No batch', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+      );
+    }
+
+    final now = DateTime.now();
+    final expiryDate = DateTime.fromMillisecondsSinceEpoch(expiryMs);
+    final daysLeft = expiryDate.difference(now).inDays;
+    final dateStr = DateFormat('dd MMM yy').format(expiryDate);
+
+    Color bgColor;
+    Color textColor;
+    String label;
+    IconData icon;
+
+    if (daysLeft < 0) {
+      bgColor = Colors.red.shade50;
+      textColor = Colors.red.shade700;
+      label = 'Expired';
+      icon = Icons.dangerous_outlined;
+    } else if (daysLeft == 0) {
+      bgColor = Colors.red.shade50;
+      textColor = Colors.red.shade700;
+      label = 'Today!';
+      icon = Icons.warning_amber_rounded;
+    } else if (daysLeft <= 7) {
+      bgColor = Colors.red.shade50;
+      textColor = Colors.red.shade700;
+      label = '$daysLeft days';
+      icon = Icons.warning_amber_rounded;
+    } else if (daysLeft <= 30) {
+      bgColor = Colors.orange.shade50;
+      textColor = Colors.orange.shade800;
+      label = '$daysLeft days';
+      icon = Icons.schedule_rounded;
+    } else {
+      bgColor = Colors.green.shade50;
+      textColor = Colors.green.shade700;
+      label = dateStr;
+      icon = Icons.check_circle_outline_rounded;
+    }
+
+    return Tooltip(
+      message: 'Nearest batch expiry: $dateStr',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: textColor.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: textColor),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textColor),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Expiry Filter Chip
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ExpiryChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final String value;
+  final String selected;
+  final Color color;
+  final int? count;
+  final VoidCallback onTap;
+
+  const _ExpiryChip({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.selected,
+    required this.color,
+    this.count,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = selected == value;
+    final activeColor = color;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeColor.withValues(alpha: 0.14)
+              : Theme.of(context).colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? activeColor : Theme.of(context).colorScheme.outlineVariant,
+            width: isSelected ? 1.6 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? activeColor : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? activeColor : Theme.of(context).colorScheme.onSurface,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
+            if (count != null) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? activeColor.withValues(alpha: 0.22)
+                      : Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? activeColor : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+

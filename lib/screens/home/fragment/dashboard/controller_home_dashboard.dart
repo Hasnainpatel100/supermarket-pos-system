@@ -4,8 +4,10 @@ import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_customer.dart';
 import '../../../../model/entity_item.dart';
+import '../../../../model/entity_item_batch.dart';
 import '../../../../model/entity_purchase.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../service/service_brand_context.dart';
 import '../../../../service/service_object_box.dart';
 
 class ControllerHomeDashboard extends GetxController {
@@ -14,6 +16,7 @@ class ControllerHomeDashboard extends GetxController {
   late final Box<EntityItem> _boxItem;
   late final Box<EntityCustomer> _boxCustomer;
   late final Box<EntityPurchase> _boxPurchase;
+  late final Box<EntityItemBatch> _boxBatch;
 
   // ── Today stats ──
   final RxDouble todaySales = 0.0.obs;
@@ -21,6 +24,14 @@ class ControllerHomeDashboard extends GetxController {
   final RxDouble averageBill = 0.0.obs;
   final RxInt totalItems = 0.obs;
   final RxInt totalCustomers = 0.obs;
+
+  // ── Expiry & Stock Alerts ──
+  final RxInt expiringItemCount = 0.obs;   // items with batches expiring ≤ 30 days
+  final RxInt expiredItemCount = 0.obs;    // items with batches already expired
+  final RxInt lowStockItemCount = 0.obs;   // items with totalQty <= 0
+
+  // ── Greeting ──
+  final RxString greetingText = ''.obs;
 
   // ── Line chart: this week vs last week daily sales ──
   // Index 0 = Mon, index 6 = Sun (of current week)
@@ -56,11 +67,37 @@ class ControllerHomeDashboard extends GetxController {
     _boxItem = ob.box<EntityItem>();
     _boxCustomer = ob.box<EntityCustomer>();
     _boxPurchase = ob.box<EntityPurchase>();
+    _boxBatch = ob.box<EntityItemBatch>();
+    _updateGreeting();
     loadData();
+  }
+
+  /// Updates the greeting based on current time (Hindi + English mix popular in India)
+  void _updateGreeting() {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = '🌅 सुप्रभात • Good Morning!';
+    } else if (hour < 17) {
+      greeting = '☀️ शुभ दोपहर • Good Afternoon!';
+    } else if (hour < 20) {
+      greeting = '🌆 शुभ संध्या • Good Evening!';
+    } else {
+      greeting = '🌙 शुभ रात्रि • Good Night!';
+    }
+
+    if (Get.isRegistered<ServiceBrandContext>()) {
+      final branch = Get.find<ServiceBrandContext>().rxSelectedBranch.value;
+      if (branch != null && branch.name.en.isNotEmpty) {
+        greeting += '  |  🏪 ${branch.name.en}';
+      }
+    }
+    greetingText.value = greeting;
   }
 
   void loadData() {
     isLoading.value = true;
+    _updateGreeting();
 
     final now = DateTime.now();
     final dateFmt = DateFormat('d/MM/yyyy');
@@ -69,6 +106,34 @@ class ControllerHomeDashboard extends GetxController {
     // ── Total counts ──
     totalItems.value = _boxItem.count();
     totalCustomers.value = _boxCustomer.count();
+
+    // ── Expiry alerts: count items whose nearest batch expires within 30 days (with stock > 0) ──
+    final nowMs = now.millisecondsSinceEpoch;
+    final in30daysMs = now.add(const Duration(days: 30)).millisecondsSinceEpoch;
+    final expiringBatches = _boxBatch
+        .query(EntityItemBatch_.expiryDateUtcMs
+            .greaterOrEqual(nowMs)
+            .and(EntityItemBatch_.expiryDateUtcMs.lessOrEqual(in30daysMs)))
+        .build()
+        .find()
+        .where((b) => (b.quantity ?? 0) > 0)
+        .toList();
+    // Unique item IDs expiring soon
+    final expiringIds = expiringBatches.map((b) => b.itemId).toSet();
+    expiringItemCount.value = expiringIds.length;
+
+    final expiredBatches = _boxBatch
+        .query(EntityItemBatch_.expiryDateUtcMs.lessOrEqual(nowMs))
+        .build()
+        .find()
+        .where((b) => (b.quantity ?? 0) > 0)
+        .toList();
+    final expiredIds = expiredBatches.map((b) => b.itemId).toSet();
+    expiredItemCount.value = expiredIds.length;
+
+    // ── Low stock: items with totalQty <= 0 ──
+    final allItems = _boxItem.getAll();
+    lowStockItemCount.value = allItems.where((i) => (i.totalQty ?? 0) <= 0 && (i.isActive ?? true)).length;
 
     // ── Today ──
     final todayStr = dateFmt.format(now);

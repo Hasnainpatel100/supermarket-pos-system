@@ -30,6 +30,14 @@ class SortField {
   static const stock = 'stock';
 }
 
+/// Expiry filter tab values
+class ExpiryFilter {
+  static const all       = 'all';
+  static const expiring  = 'expiring';   // 1-30 days
+  static const expired   = 'expired';    // past today
+  static const safe      = 'safe';       // > 30 days
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Controller
 // ─────────────────────────────────────────────────────────────────────────────
@@ -44,6 +52,13 @@ class ControllerHomeItem extends GetxController {
   final RxList<EntityItem> rxListItem   = <EntityItem>[].obs;
   final RxString           searchQuery  = ''.obs;
   final searchController = TextEditingController();
+  final RxString rxExpiryFilter = ExpiryFilter.all.obs;
+
+  // ── Filter counts for UI chips ──
+  final RxInt countAll = 0.obs;
+  final RxInt countExpiring = 0.obs;
+  final RxInt countExpired = 0.obs;
+  final RxInt countSafe = 0.obs;
 
   /// Debounce search input to avoid querying ObjectBox on every keystroke.
   final _searchDebouncer = Debouncer(milliseconds: PerfConfig.searchDebounceMs);
@@ -104,16 +119,97 @@ class ControllerHomeItem extends GetxController {
     _fetchPagedItems();
   }
 
+  void setExpiryFilter(String filter) {
+    rxExpiryFilter.value = filter;
+    currentPage.value = 0;
+    _fetchPagedItems();
+  }
+
   void _fetchPagedItems() {
+    // 1. Get paged items with search + sort from service
     final result = _itemService.getItemsPaged(
       query: searchQuery.value,
       sortField: rxSortField.value,
       sortAsc: rxSortAsc.value,
-      offset: currentPage.value * _pageSize,
-      limit: _pageSize,
+      offset: 0,   // fetch ALL for expiry filter; we'll paginate below
+      limit: 99999,
     );
-    totalCount.value = result.totalCount;
-    rxListItem.assignAll(result.items);
+
+    final allForFilter = result.items;
+    countAll.value = allForFilter.length;
+
+    // 2. Compute counts across all items for each filter chip
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final in30Ms = DateTime.now().add(const Duration(days: 30)).millisecondsSinceEpoch;
+
+    int expCount = 0;
+    int expSoonCount = 0;
+    int safeCount = 0;
+
+    for (final item in allForFilter) {
+      if (item.hasExpiry == true) {
+        final expMs = getNearestExpiryMsForItem(item.id ?? 0);
+        if (expMs != null) {
+          if (expMs <= nowMs) {
+            expCount++;
+          } else if (expMs <= in30Ms) {
+            expSoonCount++;
+          } else {
+            safeCount++;
+          }
+        }
+      }
+    }
+
+    countExpired.value = expCount;
+    countExpiring.value = expSoonCount;
+    countSafe.value = safeCount;
+
+    // 3. Apply active filter
+    List<EntityItem> filtered = allForFilter;
+    if (rxExpiryFilter.value != ExpiryFilter.all) {
+      filtered = filtered.where((item) {
+        if (item.hasExpiry != true) {
+          // Items without expiry tracking only appear in 'all'
+          return false;
+        }
+        final expMs = getNearestExpiryMsForItem(item.id ?? 0);
+        if (expMs == null) return false;
+        if (rxExpiryFilter.value == ExpiryFilter.expired) return expMs <= nowMs;
+        if (rxExpiryFilter.value == ExpiryFilter.expiring) return expMs > nowMs && expMs <= in30Ms;
+        if (rxExpiryFilter.value == ExpiryFilter.safe) return expMs > in30Ms;
+        return true;
+      }).toList();
+    }
+
+    // 4. Paginate client-side
+    totalCount.value = filtered.length;
+    final start = currentPage.value * _pageSize;
+    final end = (start + _pageSize).clamp(0, filtered.length);
+    rxListItem.assignAll(start < filtered.length ? filtered.sublist(start, end) : []);
+  }
+
+  /// Gets the nearest future batch expiry ms for an item (nil if none)
+  int? getNearestExpiryMsForItem(int itemId) {
+    final q = _boxBatch
+        .query(EntityItemBatch_.itemId.equals(itemId))
+        .order(EntityItemBatch_.expiryDateUtcMs)
+        .build();
+    final batches = q.find();
+    q.close();
+    // 1. Prefer batches with quantity > 0
+    for (final b in batches) {
+      if ((b.quantity ?? 0) > 0 && b.expiryDateUtcMs != null) {
+        return b.expiryDateUtcMs;
+      }
+    }
+    // 2. Fallback to any batch with an expiry date
+    for (final b in batches) {
+      if (b.expiryDateUtcMs != null) {
+        return b.expiryDateUtcMs;
+      }
+    }
+    return null;
   }
 
   // ── Load / Search ─────────────────────────────────────────────────────────

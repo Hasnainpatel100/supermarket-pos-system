@@ -596,9 +596,9 @@ class DialogBillDetail extends StatelessWidget {
           FilledButton(
             onPressed: () async {
               Get.back(); // close confirmation
+              Get.back(); // close bill detail dialog
               final posController = Get.find<ControllerHomePos>();
               await posController.editBill(bill);
-              Get.back(); // close bill detail dialog
             },
             style: FilledButton.styleFrom(
               backgroundColor: Colors.amber.shade700,

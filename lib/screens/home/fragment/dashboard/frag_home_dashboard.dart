@@ -2,8 +2,11 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../../enums/enum_main_menu.dart';
 import '../../../../service/service_brand_context.dart';
 import '../../../../widget/dialog_plan_expiry.dart';
+import '../../controller_home.dart';
+import '../item/controller_home_item.dart';
 import 'controller_home_dashboard.dart';
 
 // ────────────────────────────────────────────────────────
@@ -88,23 +91,24 @@ class FragHomeDashboard extends StatelessWidget {
               final horizontalPadding = isLarge ? 24.0 : 16.0;
               final sectionGap = isLarge ? 16.0 : 12.0;
 
+              // Count how many alert banners are active
+              final hasExpAlert = ctrl.expiringItemCount.value > 0 || ctrl.expiredItemCount.value > 0;
+              final alertBannerCount = (hasBanner ? 1 : 0) + (hasExpAlert ? 1 : 0);
+
               // Estimate height consumed by fixed elements
-              final headerHeight = isLarge ? 72.0 : 62.0;
-              final bannerHeight = hasBanner ? (isLarge ? 68.0 : 58.0) : 0.0;
+              final headerHeight = isLarge ? 90.0 : 76.0;  // taller for greeting
+              final bannerHeight = (isLarge ? 58.0 : 50.0) * alertBannerCount;
               final statCardsHeight = isLarge ? 106.0 : 88.0;
               final bottomPadding = isLarge ? 20.0 : 14.0;
 
               // Total vertical gap spacing
-              final totalGaps =
-                  (hasBanner ? sectionGap : 0.0) + (sectionGap * 3) + bottomPadding;
-              final fixedConsumed =
-                  headerHeight + bannerHeight + statCardsHeight + totalGaps;
+              final totalGaps = sectionGap * (3 + alertBannerCount) + bottomPadding;
+              final fixedConsumed = headerHeight + bannerHeight + statCardsHeight + totalGaps;
 
               // Calculate available height for the two chart rows
               final remainingForRows = availableHeight - fixedConsumed;
 
               // Row 2 takes ~54% of remaining space, Row 3 takes ~46%
-              // Clamped to sensible minimums and maximums so it never breaks on small windows
               final row2Height = (remainingForRows * 0.54).clamp(240.0, 500.0);
               final row3Height = (remainingForRows * 0.46).clamp(190.0, 420.0);
 
@@ -118,13 +122,19 @@ class FragHomeDashboard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // ── Header ──
+                        // ── Header with Greeting ──
                         _buildHeader(context, ctrl, isLarge, horizontalPadding),
 
                         // ── Plan Expiry Alert Banner ──
                         if (hasBanner) ...[
                           _buildPlanExpiryBanner(
                               context, isLarge, horizontalPadding),
+                          SizedBox(height: sectionGap),
+                        ],
+
+                        // ── Item Expiry Alert Banner ──
+                        if (hasExpAlert) ...[
+                          _buildItemExpiryBanner(context, ctrl, isLarge, horizontalPadding),
                           SizedBox(height: sectionGap),
                         ],
 
@@ -260,7 +270,107 @@ class FragHomeDashboard extends StatelessWidget {
   }
 
   // ──────────────────────────────────────────────────────
-  //  Header
+  //  Item Expiry Alert Banner
+  // ──────────────────────────────────────────────────────
+  Widget _buildItemExpiryBanner(BuildContext context, ControllerHomeDashboard ctrl,
+      bool isLarge, double horizontalPadding) {
+    final expiring = ctrl.expiringItemCount.value;
+    final expired = ctrl.expiredItemCount.value;
+    final isExpired = expired > 0;
+    final color = isExpired ? const Color(0xFFEF4444) : const Color(0xFFF59E0B);
+    final icon = isExpired ? Icons.error_outline_rounded : Icons.event_busy_rounded;
+
+    String title;
+    String subtitle;
+    if (expired > 0 && expiring > 0) {
+      title = '⚠️ $expired item batch(es) expired, $expiring expiring within 30 days';
+      subtitle = 'Remove expired stock immediately to avoid selling bad products.';
+    } else if (expired > 0) {
+      title = '🔴 $expired item batch(es) have already expired!';
+      subtitle = 'Go to Items → View Batches to remove or mark them.';
+    } else {
+      title = '🟡 $expiring item(s) have batches expiring within 30 days';
+      subtitle = 'Review and reorder before they expire.';
+    }
+
+    return Container(
+      margin: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 0),
+      padding: EdgeInsets.symmetric(
+        horizontal: isLarge ? 20 : 16,
+        vertical: isLarge ? 12 : 10,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(isLarge ? 8 : 7),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: isLarge ? 20 : 18),
+          ),
+          SizedBox(width: isLarge ? 14 : 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: isLarge ? 13 : 12,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: isLarge ? 12 : 11,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonal(
+            onPressed: () {
+              if (Get.isRegistered<ControllerHome>()) {
+                Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.item;
+              }
+              if (Get.isRegistered<ControllerHomeItem>()) {
+                Get.find<ControllerHomeItem>().setExpiryFilter(
+                  expired > 0 ? ExpiryFilter.expired : ExpiryFilter.expiring,
+                );
+              }
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: color.withValues(alpha: 0.18),
+              foregroundColor: color,
+              padding: EdgeInsets.symmetric(
+                horizontal: isLarge ? 14 : 10,
+                vertical: isLarge ? 8 : 6,
+              ),
+            ),
+            child: Text(
+              'View Items',
+              style: TextStyle(fontSize: isLarge ? 12 : 11, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────
+  //  Header with Greeting
   // ──────────────────────────────────────────────────────
   Widget _buildHeader(BuildContext context, ControllerHomeDashboard ctrl,
       bool isLarge, double horizontalPadding) {
@@ -293,6 +403,16 @@ class FragHomeDashboard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Greeting line
+              Obx(() => Text(
+                ctrl.greetingText.value,
+                style: TextStyle(
+                  color: _DashboardTheme.textSecondary(context),
+                  fontSize: isLarge ? 13.5 : 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              )),
+              const SizedBox(height: 2),
               Text(
                 'dashboard'.tr,
                 style: TextStyle(
@@ -305,7 +425,7 @@ class FragHomeDashboard extends StatelessWidget {
                 DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
                 style: TextStyle(
                   color: _DashboardTheme.textSecondary(context),
-                  fontSize: isLarge ? 13 : 12,
+                  fontSize: isLarge ? 12 : 11,
                 ),
               ),
             ],
@@ -323,7 +443,7 @@ class FragHomeDashboard extends StatelessWidget {
   }
 
   // ──────────────────────────────────────────────────────
-  //  Top Stat Cards
+  //  Top Stat Cards (with gradient accent colours)
   // ──────────────────────────────────────────────────────
   Widget _buildStatCards(BuildContext context, ControllerHomeDashboard ctrl,
       bool isLarge, double horizontalPadding) {
@@ -337,6 +457,8 @@ class FragHomeDashboard extends StatelessWidget {
             title: 'todays_sales'.tr,
             value: fmt.format(ctrl.todaySales.value),
             subtitle: '${ctrl.todayOrders.value} ${'orders'.tr}',
+            icon: Icons.currency_rupee_rounded,
+            accentColors: [const Color(0xFF8B5CF6), const Color(0xFF06B6D4)],
             isLarge: isLarge,
           ),
           SizedBox(width: cardGap),
@@ -344,6 +466,8 @@ class FragHomeDashboard extends StatelessWidget {
             title: 'todays_orders'.tr,
             value: '${ctrl.todayOrders.value}',
             subtitle: 'bills_today'.tr,
+            icon: Icons.receipt_long_rounded,
+            accentColors: [const Color(0xFF10B981), const Color(0xFF3B82F6)],
             isLarge: isLarge,
           ),
           SizedBox(width: cardGap),
@@ -351,6 +475,8 @@ class FragHomeDashboard extends StatelessWidget {
             title: 'avg_bill'.tr,
             value: fmt.format(ctrl.averageBill.value),
             subtitle: 'per_order'.tr,
+            icon: Icons.trending_up_rounded,
+            accentColors: [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
             isLarge: isLarge,
           ),
           SizedBox(width: cardGap),
@@ -358,6 +484,8 @@ class FragHomeDashboard extends StatelessWidget {
             title: 'total_items'.tr,
             value: '${ctrl.totalItems.value}',
             subtitle: 'in_system'.tr,
+            icon: Icons.inventory_2_rounded,
+            accentColors: [const Color(0xFF3B82F6), const Color(0xFF8B5CF6)],
             isLarge: isLarge,
           ),
           SizedBox(width: cardGap),
@@ -365,7 +493,8 @@ class FragHomeDashboard extends StatelessWidget {
             title: 'total_customers'.tr,
             value: '${ctrl.totalCustomers.value}',
             subtitle: 'total'.tr,
-            isGreenBadge: true,
+            icon: Icons.people_alt_rounded,
+            accentColors: [const Color(0xFF10B981), const Color(0xFF06B6D4)],
             isLarge: isLarge,
           ),
         ],
@@ -556,113 +685,115 @@ class _StatCard extends StatelessWidget {
   final String title;
   final String value;
   final String? subtitle;
-  final bool isGreenBadge;
+  final IconData? icon;
+  final List<Color>? accentColors;
   final bool isLarge;
 
   const _StatCard({
     required this.title,
     required this.value,
     this.subtitle,
-    this.isGreenBadge = false,
+    this.icon,
+    this.accentColors,
     this.isLarge = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = accentColors ?? [_DashboardTheme.purple, _DashboardTheme.teal];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: isLarge ? 18 : 14,
-          vertical: isLarge ? 16 : 12,
-        ),
         decoration: BoxDecoration(
           color: _DashboardTheme.cardBg(context),
           borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
           border: Border.all(color: _DashboardTheme.cardBorder(context)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: _DashboardTheme.textSecondary(context),
-                      fontSize: isLarge ? 14 : 12.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (isGreenBadge)
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isLarge ? 10 : 8,
-                      vertical: isLarge ? 4 : 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6DE899),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'today'.tr,
-                      style: TextStyle(
-                        color:
-                            Theme.of(context).colorScheme.onTertiaryContainer,
-                        fontSize: isLarge ? 11 : 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )
-                else
-                  Container(
-                    padding: EdgeInsets.all(isLarge ? 6 : 4),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF333742),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.trending_up_rounded,
-                      color: _DashboardTheme.purple,
-                      size: isLarge ? 16 : 14,
-                    ),
-                  ),
-              ],
+            // Gradient accent bar at top
+            Container(
+              height: 4,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: colors),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              ),
             ),
-            SizedBox(height: isLarge ? 12 : 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Expanded(
-                  child: FittedBox(
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isLarge ? 18 : 14,
+                vertical: isLarge ? 14 : 10,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      // Gradient icon box
+                      if (icon != null)
+                        Container(
+                          padding: EdgeInsets.all(isLarge ? 7 : 5),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [colors[0].withValues(alpha: isDark ? 0.3 : 0.15),
+                                       colors[1].withValues(alpha: isDark ? 0.2 : 0.08)],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(icon, size: isLarge ? 16 : 14, color: colors[0]),
+                        ),
+                      if (icon != null) SizedBox(width: isLarge ? 8 : 6),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            color: _DashboardTheme.textSecondary(context),
+                            fontSize: isLarge ? 13 : 11.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: isLarge ? 10 : 6),
+                  FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: _DashboardTheme.textPrimary(context),
-                        fontSize: isLarge ? 26 : 20,
-                        fontWeight: FontWeight.bold,
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(colors: colors)
+                          .createShader(bounds),
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isLarge ? 26 : 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(width: 4),
-                  Text(
-                    subtitle!,
+                  if (subtitle != null) ...[
+                    SizedBox(height: isLarge ? 4 : 2),
+                    Text(
+                      subtitle!,
                     style: TextStyle(
                       color: _DashboardTheme.textSecondary(context),
                       fontSize: isLarge ? 12 : 11,
                     ),
                   ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ],
         ),

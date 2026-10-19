@@ -45,9 +45,9 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
     final currencyFmt = NumberFormat.currency(locale: 'en_IN', symbol: currencySymbol);
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        backgroundColor: colorScheme.surface,
+        backgroundColor: colorScheme.surfaceContainerLowest,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: GradientAppBarTitle(
@@ -533,7 +533,7 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
                                             value: 'print_thermal',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.receipt_long_outlined, size: 18, color: Colors.teal.shade600),
+                                                Icon(Icons.receipt_long_outlined, size: 18, color: isDark ? Colors.teal.shade300 : Colors.teal.shade600),
                                                 const SizedBox(width: 10),
                                                 Text('Print Thermal Bill'.tr),
                                               ],
@@ -543,7 +543,7 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
                                             value: 'edit',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.edit_outlined, size: 18, color: Colors.blue.shade600),
+                                                Icon(Icons.edit_outlined, size: 18, color: isDark ? Colors.blue.shade300 : Colors.blue.shade600),
                                                 const SizedBox(width: 10),
                                                 Text('edit'.tr),
                                               ],
@@ -553,7 +553,7 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
                                             value: 'duplicate',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.copy_outlined, size: 18, color: Colors.indigo.shade600),
+                                                Icon(Icons.copy_outlined, size: 18, color: isDark ? Colors.indigo.shade300 : Colors.indigo.shade600),
                                                 const SizedBox(width: 10),
                                                 Text('Duplicate'.tr),
                                               ],
@@ -563,7 +563,7 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
                                             value: 'return',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.assignment_return_outlined, size: 18, color: Colors.orange.shade700),
+                                                Icon(Icons.assignment_return_outlined, size: 18, color: isDark ? Colors.orange.shade300 : Colors.orange.shade700),
                                                 const SizedBox(width: 10),
                                                 Text('Issue Credit Note / Return'.tr),
                                               ],
@@ -574,7 +574,7 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
                                             value: 'cancel',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.cancel_outlined, size: 18, color: Colors.amber.shade700),
+                                                Icon(Icons.cancel_outlined, size: 18, color: isDark ? Colors.amber.shade300 : Colors.amber.shade700),
                                                 const SizedBox(width: 10),
                                                 Text('Cancel Invoice'.tr),
                                               ],
@@ -584,9 +584,9 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
                                             value: 'delete',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red.shade600),
+                                                Icon(Icons.delete_outline_rounded, size: 18, color: isDark ? Colors.red.shade300 : Colors.red.shade600),
                                                 const SizedBox(width: 10),
-                                                Text('delete'.tr, style: TextStyle(color: Colors.red.shade600)),
+                                                Text('delete'.tr, style: TextStyle(color: isDark ? Colors.red.shade300 : Colors.red.shade600)),
                                               ],
                                             ),
                                           ),
@@ -747,56 +747,75 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: isDark ? colorScheme.surfaceContainer : Colors.white,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.6),
+        ),
         boxShadow: [
           BoxShadow(
-            color: gradientColors.first.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top accent strip
           Container(
-            padding: const EdgeInsets.all(8),
+            height: 3.5,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
+              gradient: LinearGradient(colors: gradientColors),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
             ),
-            child: Icon(icon, color: Colors.white, size: 18),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
               children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.white,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: gradientColors.first.withValues(alpha: isDark ? 0.2 : 0.12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  child: Icon(icon, color: isDark ? gradientColors.first : gradientColors.first, size: 20),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  label.tr,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.8),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: colorScheme.onSurface,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        label.tr,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

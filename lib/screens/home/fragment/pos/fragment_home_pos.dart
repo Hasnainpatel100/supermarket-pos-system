@@ -1321,8 +1321,26 @@ void _showCustomerUpiQrDialog(
                 children: [
                   Text('AMOUNT TO PAY', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.purple.shade700, letterSpacing: 0.5)),
                   const SizedBox(height: 2),
-                  Text('₹${amount.toStringAsFixed(2)}', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.purple.shade900)),
-                  Text('UPI VPA: $upiId', style: TextStyle(fontSize: 11, color: Colors.purple.shade800)),
+                  Text('₹${amount.toStringAsFixed(2)}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.purple.shade900)),
+                  const SizedBox(height: 4),
+                  InkWell(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: upiId));
+                      SnackbarUtil.showSuccess('UPI ID copied to clipboard');
+                    },
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('UPI VPA: $upiId', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.purple.shade800)),
+                          const SizedBox(width: 4),
+                          Icon(Icons.copy_rounded, size: 12, color: Colors.purple.shade800),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

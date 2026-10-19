@@ -13,6 +13,7 @@ import '../../../../widget/list_tile_toggle.dart';
 import '../../../../widget/my_card.dart';
 import 'controller_home_settings.dart';
 import 'tab_license_security.dart';
+import '../../../../service/service_voice.dart';
 
 class FragHomeSettings extends StatelessWidget {
   FragHomeSettings({super.key});
@@ -1158,6 +1159,74 @@ class _PrinterTab extends StatelessWidget {
                           activeThumbColor: Colors.teal,
                           onChanged: (v) => controller.rxAutoPrintBill.value = v,
                         )),
+
+                    const Divider(height: 24),
+
+                    // Voice Soundbox announcement switch
+                    Obx(() => SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Row(
+                            children: [
+                              const Text(
+                                'Payment Soundbox Voice Alerts',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'SMART AUDIO',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.purple.shade700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          subtitle: Text(
+                            'Announce received payments aloud like a digital soundbox (e.g., "Payment of 450 rupees received via UPI")',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: colorScheme.onSurface.withValues(alpha: 0.55),
+                            ),
+                          ),
+                          value: controller.rxVoiceAnnouncement.value,
+                          activeThumbColor: Colors.purple,
+                          onChanged: (v) => controller.rxVoiceAnnouncement.value = v,
+                        )),
+
+                    // Test Voice Button
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          ServiceVoice.announcePayment(
+                            amount: 150.0,
+                            paymentMode: 'UPI',
+                            storeName: controller.rxStoreName.value,
+                          );
+                        },
+                        icon: const Icon(Icons.volume_up_rounded, size: 16, color: Colors.purple),
+                        label: const Text(
+                          'Test Soundbox Voice',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.purple),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

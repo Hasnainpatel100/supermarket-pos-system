@@ -41,6 +41,9 @@ class ControllerHomeSettings extends GetxController {
   /// Whether to auto-print receipt upon bill settlement
   final rxAutoPrintBill = false.obs;
 
+  /// Whether to announce payment aloud like a soundbox upon bill settlement
+  final rxVoiceAnnouncement = true.obs;
+
   // ─── Barcode & Label Printer Settings (Product Labels) ────────────────────
 
   /// List of printer names fetched from the OS
@@ -174,6 +177,7 @@ class ControllerHomeSettings extends GetxController {
     rxDefaultThermalPrinter.value = _storage.readString('printer_thermal_default') ?? '';
     rxThermalPaperSize.value      = _storage.readString('printer_thermal_paper_size') ?? '80mm';
     rxAutoPrintBill.value         = _storage.readBool('printer_auto_print_bill') ?? false;
+    rxVoiceAnnouncement.value     = _storage.readBool('pos_voice_announcement') ?? true;
 
     // Barcode & Label Printer Settings
     rxDefaultPrinter.value = _storage.readString('printer_default') ?? '';
@@ -221,6 +225,7 @@ class ControllerHomeSettings extends GetxController {
     await _storage.writeString('printer_thermal_default',    rxDefaultThermalPrinter.value);
     await _storage.writeString('printer_thermal_paper_size', rxThermalPaperSize.value);
     await _storage.writeBool('printer_auto_print_bill',      rxAutoPrintBill.value);
+    await _storage.writeBool('pos_voice_announcement',       rxVoiceAnnouncement.value);
 
     // Save Barcode Label Printer Settings
     await _storage.writeString('printer_default',      rxDefaultPrinter.value);

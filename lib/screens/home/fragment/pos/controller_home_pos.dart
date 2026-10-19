@@ -17,6 +17,7 @@ import 'package:printing/printing.dart';
 import '../../../../enums/enum_main_menu.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../../service/service_bill_pdf.dart';
+import '../../../../service/service_voice.dart';
 import '../../controller_home.dart';
 import '../bills/controller_home_bills.dart';
 import '../bills/dialog_bill_detail.dart';
@@ -1239,6 +1240,14 @@ class ControllerHomePos extends GetxController {
 
     if (settings.rxAutoPrintBill.value) {
       _autoPrintThermalReceipt(savedBill, settings);
+    }
+
+    if (settings.rxVoiceAnnouncement.value) {
+      ServiceVoice.announcePayment(
+        amount: savedBill.grandTotal ?? 0.0,
+        paymentMode: savedBill.paymentMode ?? 'Cash',
+        storeName: settings.rxStoreName.value,
+      );
     }
 
     Get.dialog(DialogBillDetail(bill: savedBill), barrierDismissible: false);

@@ -427,6 +427,7 @@ class ControllerCreateQuotation extends GetxController {
       title: 'Quotation / Estimate',
       docNumber: '${prefixCtrl.text}${quotationNoCtrl.text}',
       docDate: quotationDateCtrl.text,
+      docTime: DateFormat('hh:mm a').format(DateTime.now()),
       validityDate: validityDateCtrl.text,
       status: 'Open',
       partyName: customerNameCtrl.text.isEmpty

@@ -49,6 +49,7 @@ class ServiceGstPdf {
     required DocumentType type,
     required String docNumber,
     required String docDate,
+    String? docTime,
     String? dueDate,
     String? validityDate,
     required String partyName,
@@ -184,6 +185,8 @@ class ServiceGstPdf {
                               pw.SizedBox(height: 4),
                               pw.Text('$docNumLabel: $docNumber', style: const pw.TextStyle(fontSize: 9)),
                               pw.Text('$docDateLabel: $docDate', style: const pw.TextStyle(fontSize: 9)),
+                              if (docTime != null && docTime.isNotEmpty)
+                                pw.Text('Time: $docTime', style: const pw.TextStyle(fontSize: 9)),
                               if (dueDate != null && dueDate.isNotEmpty)
                                 pw.Text('Due Date: $dueDate', style: const pw.TextStyle(fontSize: 9)),
                               if (validityDate != null && validityDate.isNotEmpty)

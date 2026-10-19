@@ -658,7 +658,6 @@ class _ActionBar extends StatelessWidget {
           _ActionChip(icon: Icons.percent_rounded, label: 'Discount (F7)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f7)),
           _ActionChip(icon: Icons.flash_on_rounded, label: 'Quick Cash (F8)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f8)),
           _ActionChip(icon: Icons.note_alt_outlined, label: 'Remarks (F11)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f11)),
-          _ActionChip(icon: Icons.point_of_sale_rounded, label: 'Drawer (F12)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f12)),
           _ActionChip(icon: Icons.delete_outline_rounded, label: 'remove_del'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.delete), isDestructive: true),
         ],
       ),

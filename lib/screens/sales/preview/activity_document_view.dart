@@ -12,6 +12,7 @@ class DocumentViewModel {
   final String title;
   final String docNumber;
   final String docDate;
+  final String? docTime;
   final String? dueDate;
   final String? validityDate;
   final String status;
@@ -40,6 +41,7 @@ class DocumentViewModel {
     required this.title,
     required this.docNumber,
     required this.docDate,
+    this.docTime,
     this.dueDate,
     this.validityDate,
     required this.status,
@@ -112,7 +114,7 @@ class ActivityDocumentView extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            _buildStatusBadge(model.status),
+            _buildStatusBadge(model.status, isDark),
           ],
         ),
         actions: [
@@ -151,8 +153,8 @@ class ActivityDocumentView extends StatelessWidget {
           child: Container(
             width: 820,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(4),
+              color: isDark ? colorScheme.surface : Colors.white,
+              borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
@@ -161,7 +163,7 @@ class ActivityDocumentView extends StatelessWidget {
                 ),
               ],
               border: Border.all(
-                color: isDark ? colorScheme.outline.withValues(alpha: 0.3) : const Color(0xFFE5E7EB),
+                color: isDark ? colorScheme.outline.withValues(alpha: 0.25) : const Color(0xFFE5E7EB),
               ),
             ),
             padding: const EdgeInsets.all(32),
@@ -176,12 +178,12 @@ class ActivityDocumentView extends StatelessWidget {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                        color: isDark ? colorScheme.primary.withValues(alpha: 0.18) : const Color(0xFF4F46E5).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.storefront_rounded,
-                        color: Color(0xFF4F46E5),
+                        color: isDark ? colorScheme.primary : const Color(0xFF4F46E5),
                         size: 30,
                       ),
                     ),
@@ -192,26 +194,26 @@ class ActivityDocumentView extends StatelessWidget {
                         children: [
                           Text(
                             storeName.toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF111827),
+                              color: isDark ? colorScheme.onSurface : const Color(0xFF111827),
                             ),
                           ),
                           if (storeAddress.isNotEmpty)
                             Text(
                               storeAddress,
-                              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                              style: TextStyle(fontSize: 12, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF6B7280)),
                             ),
                           if (storeGstin.isNotEmpty)
                             Text(
                               'GSTIN: $storeGstin',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF374151)),
                             ),
                           if (storePhone.isNotEmpty)
                             Text(
                               'Phone: $storePhone | Email: $storeEmail',
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                              style: TextStyle(fontSize: 11, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF6B7280)),
                             ),
                         ],
                       ),
@@ -221,21 +223,30 @@ class ActivityDocumentView extends StatelessWidget {
                       children: [
                         Text(
                           model.title.toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF4F46E5),
+                            color: isDark ? colorScheme.primary : const Color(0xFF4F46E5),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'No: ${model.docNumber}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? colorScheme.onSurface : const Color(0xFF111827),
+                          ),
                         ),
                         Text(
                           'Date: ${model.docDate}',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                          style: TextStyle(fontSize: 12, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF6B7280)),
                         ),
+                        if (model.docTime != null && model.docTime!.isNotEmpty)
+                          Text(
+                            'Time: ${model.docTime}',
+                            style: TextStyle(fontSize: 12, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF6B7280)),
+                          ),
                         if (model.dueDate != null && model.dueDate!.isNotEmpty)
                           Text(
                             'Due Date: ${model.dueDate}',
@@ -244,7 +255,7 @@ class ActivityDocumentView extends StatelessWidget {
                         if (model.validityDate != null && model.validityDate!.isNotEmpty)
                           Text(
                             'Valid Until: ${model.validityDate}',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF2563EB)),
+                            style: TextStyle(fontSize: 12, color: isDark ? colorScheme.tertiary : const Color(0xFF2563EB)),
                           ),
                       ],
                     ),
@@ -252,16 +263,16 @@ class ActivityDocumentView extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 24),
-                const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                Divider(height: 1, color: isDark ? colorScheme.outline.withValues(alpha: 0.25) : const Color(0xFFE5E7EB)),
                 const SizedBox(height: 16),
 
                 // ── Bill To ──
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
+                    color: isDark ? colorScheme.surfaceContainerHigh : const Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    border: Border.all(color: isDark ? colorScheme.outline.withValues(alpha: 0.25) : const Color(0xFFE5E7EB)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,37 +281,37 @@ class ActivityDocumentView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'BILL TO:',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF9CA3AF),
+                                color: isDark ? colorScheme.primary : const Color(0xFF9CA3AF),
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               model.partyName.isEmpty ? 'Cash Sale' : model.partyName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF111827),
+                                color: isDark ? colorScheme.onSurface : const Color(0xFF111827),
                               ),
                             ),
                             if (model.partyAddress != null && model.partyAddress!.isNotEmpty)
                               Text(
                                 'Address: ${model.partyAddress}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
+                                style: TextStyle(fontSize: 12, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF4B5563)),
                               ),
                             if (model.partyPhone != null && model.partyPhone!.isNotEmpty)
                               Text(
                                 'Phone: ${model.partyPhone}',
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
+                                style: TextStyle(fontSize: 12, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF4B5563)),
                               ),
                             if (model.partyGstin != null && model.partyGstin!.isNotEmpty)
                               Text(
                                 'GSTIN: ${model.partyGstin}',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF374151)),
                               ),
                           ],
                         ),
@@ -313,7 +324,10 @@ class ActivityDocumentView extends StatelessWidget {
 
                 // ── Items Table ──
                 Table(
-                  border: TableBorder.all(color: const Color(0xFFE5E7EB), width: 1),
+                  border: TableBorder.all(
+                    color: isDark ? colorScheme.outline.withValues(alpha: 0.25) : const Color(0xFFE5E7EB),
+                    width: 1,
+                  ),
                   columnWidths: const {
                     0: FixedColumnWidth(40),
                     1: FlexColumnWidth(4),
@@ -326,29 +340,31 @@ class ActivityDocumentView extends StatelessWidget {
                   },
                   children: [
                     TableRow(
-                      decoration: const BoxDecoration(color: Color(0xFFF3F4F6)),
+                      decoration: BoxDecoration(
+                        color: isDark ? colorScheme.surfaceContainerHigh : const Color(0xFFF3F4F6),
+                      ),
                       children: [
-                        _th('S.N', align: TextAlign.center),
-                        _th('ITEMS / SERVICES'),
-                        _th('HSN', align: TextAlign.center),
-                        _th('QTY', align: TextAlign.center),
-                        _th('RATE', align: TextAlign.right),
-                        _th('DISC', align: TextAlign.right),
-                        _th('TAX', align: TextAlign.right),
-                        _th('AMOUNT', align: TextAlign.right),
+                        _th('S.N', align: TextAlign.center, isDark: isDark, colorScheme: colorScheme),
+                        _th('ITEMS / SERVICES', isDark: isDark, colorScheme: colorScheme),
+                        _th('HSN', align: TextAlign.center, isDark: isDark, colorScheme: colorScheme),
+                        _th('QTY', align: TextAlign.center, isDark: isDark, colorScheme: colorScheme),
+                        _th('RATE', align: TextAlign.right, isDark: isDark, colorScheme: colorScheme),
+                        _th('DISC', align: TextAlign.right, isDark: isDark, colorScheme: colorScheme),
+                        _th('TAX', align: TextAlign.right, isDark: isDark, colorScheme: colorScheme),
+                        _th('AMOUNT', align: TextAlign.right, isDark: isDark, colorScheme: colorScheme),
                       ],
                     ),
                     ...model.items.map(
                       (item) => TableRow(
                         children: [
-                          _td('${item.sNo}', align: TextAlign.center),
-                          _td(item.name, isBold: true),
-                          _td(item.hsn.isEmpty ? '-' : item.hsn, align: TextAlign.center),
-                          _td('${item.qty} ${item.unit}', align: TextAlign.center),
-                          _td(currencyFmt.format(item.rate), align: TextAlign.right),
-                          _td(item.discount > 0 ? currencyFmt.format(item.discount) : '-', align: TextAlign.right),
-                          _td(item.taxPercent > 0 ? '${item.taxPercent}%' : '-', align: TextAlign.right),
-                          _td(currencyFmt.format(item.total), align: TextAlign.right, isBold: true),
+                          _td('${item.sNo}', align: TextAlign.center, isDark: isDark, colorScheme: colorScheme),
+                          _td(item.name, isBold: true, isDark: isDark, colorScheme: colorScheme),
+                          _td(item.hsn.isEmpty ? '-' : item.hsn, align: TextAlign.center, isDark: isDark, colorScheme: colorScheme),
+                          _td('${item.qty} ${item.unit}', align: TextAlign.center, isDark: isDark, colorScheme: colorScheme),
+                          _td(currencyFmt.format(item.rate), align: TextAlign.right, isDark: isDark, colorScheme: colorScheme),
+                          _td(item.discount > 0 ? currencyFmt.format(item.discount) : '-', align: TextAlign.right, isDark: isDark, colorScheme: colorScheme),
+                          _td(item.taxPercent > 0 ? '${item.taxPercent}%' : '-', align: TextAlign.right, isDark: isDark, colorScheme: colorScheme),
+                          _td(currencyFmt.format(item.total), align: TextAlign.right, isBold: true, isDark: isDark, colorScheme: colorScheme),
                         ],
                       ),
                     ),
@@ -367,23 +383,43 @@ class ActivityDocumentView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Total Amount in Words:',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF6B7280)),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF6B7280),
+                            ),
                           ),
                           Text(
                             NumberToWords.convert(model.grandTotal),
-                            style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Color(0xFF111827)),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                              color: isDark ? colorScheme.onSurface : const Color(0xFF111827),
+                            ),
                           ),
                           const SizedBox(height: 16),
                           if (model.notes != null && model.notes!.isNotEmpty) ...[
-                            const Text('Notes:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                            Text(model.notes!, style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563))),
+                            Text(
+                              'Notes:',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? colorScheme.onSurface : const Color(0xFF111827)),
+                            ),
+                            Text(
+                              model.notes!,
+                              style: TextStyle(fontSize: 12, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF4B5563)),
+                            ),
                             const SizedBox(height: 8),
                           ],
                           if (model.termsConditions != null && model.termsConditions!.isNotEmpty) ...[
-                            const Text('Terms & Conditions:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                            Text(model.termsConditions!, style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                            Text(
+                              'Terms & Conditions:',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? colorScheme.onSurface : const Color(0xFF111827)),
+                            ),
+                            Text(
+                              model.termsConditions!,
+                              style: TextStyle(fontSize: 11, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF6B7280)),
+                            ),
                           ],
                         ],
                       ),
@@ -395,35 +431,35 @@ class ActivityDocumentView extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
+                          color: isDark ? colorScheme.surfaceContainerHigh : const Color(0xFFF9FAFB),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          border: Border.all(color: isDark ? colorScheme.outline.withValues(alpha: 0.25) : const Color(0xFFE5E7EB)),
                         ),
                         child: Column(
                           children: [
-                            _calcLine('Subtotal', currencyFmt.format(model.subtotal)),
+                            _calcLine('Subtotal', currencyFmt.format(model.subtotal), isDark: isDark, colorScheme: colorScheme),
                             if (model.discount > 0)
-                              _calcLine('Discount (-)', currencyFmt.format(model.discount)),
+                              _calcLine('Discount (-)', currencyFmt.format(model.discount), isDark: isDark, colorScheme: colorScheme),
                             if (model.taxAmount > 0) ...[
                               if (model.cgstAmount != null && model.cgstAmount! > 0)
-                                _calcLine('CGST', currencyFmt.format(model.cgstAmount)),
+                                _calcLine('CGST', currencyFmt.format(model.cgstAmount), isDark: isDark, colorScheme: colorScheme),
                               if (model.sgstAmount != null && model.sgstAmount! > 0)
-                                _calcLine('SGST', currencyFmt.format(model.sgstAmount)),
+                                _calcLine('SGST', currencyFmt.format(model.sgstAmount), isDark: isDark, colorScheme: colorScheme),
                               if (model.igstAmount != null && model.igstAmount! > 0)
-                                _calcLine('IGST', currencyFmt.format(model.igstAmount)),
+                                _calcLine('IGST', currencyFmt.format(model.igstAmount), isDark: isDark, colorScheme: colorScheme),
                               if ((model.cgstAmount == null || model.cgstAmount == 0) && (model.sgstAmount == null || model.sgstAmount == 0))
-                                _calcLine('Tax (+)', currencyFmt.format(model.taxAmount)),
+                                _calcLine('Tax (+)', currencyFmt.format(model.taxAmount), isDark: isDark, colorScheme: colorScheme),
                             ],
                             if (model.additionalCharges != null && model.additionalCharges! > 0)
-                              _calcLine('Additional Charges (+)', currencyFmt.format(model.additionalCharges)),
+                              _calcLine('Additional Charges (+)', currencyFmt.format(model.additionalCharges), isDark: isDark, colorScheme: colorScheme),
                             if (model.roundOff != null && model.roundOff! != 0)
-                              _calcLine('Round Off', currencyFmt.format(model.roundOff)),
-                            const Divider(height: 16),
-                            _calcLine('Grand Total', currencyFmt.format(model.grandTotal), isGrand: true),
+                              _calcLine('Round Off', currencyFmt.format(model.roundOff), isDark: isDark, colorScheme: colorScheme),
+                            Divider(height: 16, color: isDark ? colorScheme.outline.withValues(alpha: 0.25) : const Color(0xFFE5E7EB)),
+                            _calcLine('Grand Total', currencyFmt.format(model.grandTotal), isGrand: true, isDark: isDark, colorScheme: colorScheme),
                             if (model.amountReceived != null && model.amountReceived! > 0)
-                              _calcLine('Amount Received', currencyFmt.format(model.amountReceived)),
+                              _calcLine('Amount Received', currencyFmt.format(model.amountReceived), isDark: isDark, colorScheme: colorScheme),
                             if (model.balanceDue != null && model.balanceDue! > 0)
-                              _calcLine('Balance Due', currencyFmt.format(model.balanceDue), isDue: true),
+                              _calcLine('Balance Due', currencyFmt.format(model.balanceDue), isDue: true, isDark: isDark, colorScheme: colorScheme),
                           ],
                         ),
                       ),
@@ -432,26 +468,33 @@ class ActivityDocumentView extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 32),
-                const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                Divider(height: 1, color: isDark ? colorScheme.outline.withValues(alpha: 0.25) : const Color(0xFFE5E7EB)),
                 const SizedBox(height: 16),
 
                 // ── Footer ──
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Thank you for your business!',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                      style: TextStyle(fontSize: 12, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF6B7280)),
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
                           'For $storeName',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? colorScheme.onSurface : const Color(0xFF111827),
+                          ),
                         ),
                         const SizedBox(height: 32),
-                        const Text('Authorized Signatory', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                        Text(
+                          'Authorized Signatory',
+                          style: TextStyle(fontSize: 11, color: isDark ? colorScheme.onSurfaceVariant : const Color(0xFF6B7280)),
+                        ),
                       ],
                     ),
                   ],
@@ -464,7 +507,7 @@ class ActivityDocumentView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge(String status) {
+  Widget _buildStatusBadge(String status, bool isDark) {
     Color bg;
     Color fg;
 
@@ -472,22 +515,22 @@ class ActivityDocumentView extends StatelessWidget {
       case 'paid':
       case 'completed':
       case 'converted':
-        bg = const Color(0xFFD1FAE5);
-        fg = const Color(0xFF065F46);
+        bg = isDark ? const Color(0xFF064E3B) : const Color(0xFFD1FAE5);
+        fg = isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46);
         break;
       case 'unpaid':
       case 'overdue':
-        bg = const Color(0xFFFEE2E2);
-        fg = const Color(0xFF991B1B);
+        bg = isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFEE2E2);
+        fg = isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B);
         break;
       case 'partially paid':
       case 'open':
-        bg = const Color(0xFFFEF3C7);
-        fg = const Color(0xFF92400E);
+        bg = isDark ? const Color(0xFF78350F) : const Color(0xFFFEF3C7);
+        fg = isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E);
         break;
       default:
-        bg = const Color(0xFFF3F4F6);
-        fg = const Color(0xFF4B5563);
+        bg = isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6);
+        fg = isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563);
     }
 
     return Container(
@@ -507,22 +550,33 @@ class ActivityDocumentView extends StatelessWidget {
     );
   }
 
-  Widget _th(String text, {TextAlign align = TextAlign.left}) {
+  Widget _th(
+    String text, {
+    TextAlign align = TextAlign.left,
+    required bool isDark,
+    required ColorScheme colorScheme,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Text(
         text,
         textAlign: align,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF374151),
+          color: isDark ? colorScheme.onSurface : const Color(0xFF374151),
         ),
       ),
     );
   }
 
-  Widget _td(String text, {TextAlign align = TextAlign.left, bool isBold = false}) {
+  Widget _td(
+    String text, {
+    TextAlign align = TextAlign.left,
+    bool isBold = false,
+    required bool isDark,
+    required ColorScheme colorScheme,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Text(
@@ -531,13 +585,22 @@ class ActivityDocumentView extends StatelessWidget {
         style: TextStyle(
           fontSize: 12,
           fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-          color: const Color(0xFF1F2937),
+          color: isBold
+              ? (isDark ? colorScheme.onSurface : const Color(0xFF111827))
+              : (isDark ? colorScheme.onSurfaceVariant : const Color(0xFF374151)),
         ),
       ),
     );
   }
 
-  Widget _calcLine(String label, String value, {bool isGrand = false, bool isDue = false}) {
+  Widget _calcLine(
+    String label,
+    String value, {
+    bool isGrand = false,
+    bool isDue = false,
+    required bool isDark,
+    required ColorScheme colorScheme,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -548,7 +611,9 @@ class ActivityDocumentView extends StatelessWidget {
             style: TextStyle(
               fontSize: isGrand ? 14 : 12,
               fontWeight: isGrand ? FontWeight.bold : FontWeight.normal,
-              color: isDue ? Colors.red.shade700 : const Color(0xFF374151),
+              color: isDue
+                  ? (isDark ? Colors.red.shade400 : Colors.red.shade700)
+                  : (isDark ? colorScheme.onSurfaceVariant : const Color(0xFF374151)),
             ),
           ),
           Text(
@@ -557,8 +622,10 @@ class ActivityDocumentView extends StatelessWidget {
               fontSize: isGrand ? 15 : 12,
               fontWeight: isGrand || isDue ? FontWeight.bold : FontWeight.w600,
               color: isDue
-                  ? Colors.red.shade700
-                  : (isGrand ? const Color(0xFF4F46E5) : const Color(0xFF111827)),
+                  ? (isDark ? Colors.red.shade400 : Colors.red.shade700)
+                  : (isGrand
+                      ? (isDark ? colorScheme.primary : const Color(0xFF4F46E5))
+                      : (isDark ? colorScheme.onSurface : const Color(0xFF111827))),
             ),
           ),
         ],
@@ -572,6 +639,7 @@ class ActivityDocumentView extends StatelessWidget {
         type: model.type,
         docNumber: model.docNumber,
         docDate: model.docDate,
+        docTime: model.docTime,
         dueDate: model.dueDate,
         validityDate: model.validityDate,
         partyName: model.partyName,
@@ -612,6 +680,7 @@ class ActivityDocumentView extends StatelessWidget {
         type: model.type,
         docNumber: model.docNumber,
         docDate: model.docDate,
+        docTime: model.docTime,
         dueDate: model.dueDate,
         validityDate: model.validityDate,
         partyName: model.partyName,
@@ -645,6 +714,7 @@ class ActivityDocumentView extends StatelessWidget {
         type: model.type,
         docNumber: model.docNumber,
         docDate: model.docDate,
+        docTime: model.docTime,
         dueDate: model.dueDate,
         validityDate: model.validityDate,
         partyName: model.partyName,

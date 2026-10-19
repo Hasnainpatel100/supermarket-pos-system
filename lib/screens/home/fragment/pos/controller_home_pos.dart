@@ -27,7 +27,6 @@ import '../../../sales/invoice/controller_sales_invoices.dart';
 import 'package:flutter/services.dart';
 import '../../../customer/activity_customer_form.dart';
 import '../../../../isolates/pos_isolate_engine.dart';
-import '../../../../widget/dialog_manager_auth.dart';
 import 'dialog_parked_bills.dart';
 import 'model_parked_bill.dart';
 
@@ -645,20 +644,9 @@ class ControllerHomePos extends GetxController {
     calculateTotals();
   }
 
-  Future<void> removeFromCart(int index) async {
+  void removeFromCart(int index) {
     final session = activeSession;
     if (index < 0 || index >= session.rxCartItems.length) return;
-
-    if (Get.context != null) {
-      final item = session.rxCartItems[index];
-      final allowed = await DialogManagerAuth.verify(
-        Get.context!,
-        actionTitle: 'Remove Item from Order',
-        reason: 'Manager PIN is required to remove "${item.itemName}" from the active bill.',
-      );
-      if (!allowed) return;
-    }
-
     session.rxCartItems.removeAt(index);
     calculateTotals();
   }
@@ -884,7 +872,7 @@ class ControllerHomePos extends GetxController {
       } else if (session.rxCartItems.isNotEmpty) {
         _showItemDiscountDialog(session.rxCartItems.length - 1);
       }
-    } else if (key == LogicalKeyboardKey.delete || key == LogicalKeyboardKey.backspace) {
+    } else if (key == LogicalKeyboardKey.delete || key == LogicalKeyboardKey.backspace || key == LogicalKeyboardKey.f12) {
       if (session.rxSelectedCartIndex.value != -1) {
         removeFromCart(session.rxSelectedCartIndex.value);
         session.rxSelectedCartIndex.value = -1;
@@ -905,8 +893,6 @@ class ControllerHomePos extends GetxController {
       toggleNextViewMode();
     } else if (key == LogicalKeyboardKey.f11) {
       _showRemarksDialog();
-    } else if (key == LogicalKeyboardKey.f12) {
-      triggerCashDrawer();
     } else if (key == LogicalKeyboardKey.keyP) {
       settleBill();
     } else if (key == LogicalKeyboardKey.keyT) {

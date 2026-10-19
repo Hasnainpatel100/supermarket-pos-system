@@ -234,11 +234,18 @@ class ControllerSalesInvoices extends GetxController {
       ));
     }
 
+    String? docTime;
+    if (bill.createdAtUtcMs != null) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(bill.createdAtUtcMs!, isUtc: true).toLocal();
+      docTime = DateFormat('hh:mm a').format(dt);
+    }
+
     final docModel = DocumentViewModel(
       type: DocumentType.salesInvoice,
       title: 'Sales Invoice',
       docNumber: bill.billNo ?? '${bill.id}',
       docDate: bill.billDate ?? DateFormat('dd/MM/yyyy').format(DateTime.now()),
+      docTime: docTime,
       dueDate: bill.dueDate,
       status: bill.status ?? 'Paid',
       partyName: bill.customerName ?? 'Cash Sale',

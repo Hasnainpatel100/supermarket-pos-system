@@ -517,6 +517,7 @@ class ControllerCreateSalesInvoice extends GetxController {
       title: 'Sales Invoice',
       docNumber: invoiceNoCtrl.text.isEmpty ? 'DRAFT' : invoiceNoCtrl.text,
       docDate: invoiceDateCtrl.text,
+      docTime: DateFormat('hh:mm a').format(DateTime.now()),
       dueDate: dueDateCtrl.text,
       status: rxBalanceAmount.value <= 0 ? 'Paid' : 'Unpaid',
       partyName: customerNameCtrl.text.isEmpty ? 'Cash Sale' : customerNameCtrl.text,

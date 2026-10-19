@@ -160,7 +160,7 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
           children: [
             // ── KPI Summary Cards ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
               child: Row(
                 children: [
                   Expanded(
@@ -168,36 +168,36 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
                       label: 'Total Sales',
                       value: currencyFmt.format(controller.rxTotalSales.value),
                       icon: Icons.trending_up_rounded,
-                      gradientColors: [Colors.indigo.shade500, Colors.blue.shade500],
+                      gradientColors: const [Color(0xFF3250EB), Color(0xFF218CF8)],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _SummaryCard(
                       label: 'Paid',
                       value: currencyFmt.format(controller.rxTotalPaid.value),
-                      icon: Icons.check_circle_rounded,
-                      gradientColors: [Colors.teal.shade500, Colors.green.shade500],
+                      icon: Icons.receipt_long_rounded,
+                      gradientColors: const [Color(0xFF0A9371), Color(0xFF1CB76E)],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _SummaryCard(
                       label: 'Unpaid',
                       value: currencyFmt.format(controller.rxTotalUnpaid.value),
-                      icon: Icons.pending_actions_rounded,
-                      gradientColors: [Colors.orange.shade600, Colors.red.shade500],
+                      icon: Icons.bar_chart_rounded,
+                      gradientColors: const [Color(0xFFEA7A05), Color(0xFFF59E0B)],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _SummaryCard(
                       label: controller.rxCancelledCount.value > 0
                           ? 'Cancelled (${controller.rxCancelledCount.value})'
                           : 'Cancelled',
                       value: currencyFmt.format(controller.rxCancelledAmount.value),
-                      icon: Icons.cancel_rounded,
-                      gradientColors: [Colors.blueGrey.shade700, Colors.blueGrey.shade900],
+                      icon: Icons.account_balance_rounded,
+                      gradientColors: const [Color(0xFF9333EA), Color(0xFFDB2777)],
                     ),
                   ),
                 ],
@@ -747,75 +747,60 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final colorScheme = theme.colorScheme;
-
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? colorScheme.surfaceContainer : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.6),
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
         ),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: gradientColors.first.withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Row(
         children: [
-          // Top accent strip
           Container(
-            height: 3.5,
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: gradientColors),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+              color: Colors.white.withValues(alpha: 0.22),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: gradientColors.first.withValues(alpha: isDark ? 0.2 : 0.12),
-                    borderRadius: BorderRadius.circular(10),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16.5,
+                    color: Colors.white,
+                    letterSpacing: -0.2,
                   ),
-                  child: Icon(icon, color: isDark ? gradientColors.first : gradientColors.first, size: 20),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: colorScheme.onSurface,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        label.tr,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w500,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                const SizedBox(height: 3),
+                Text(
+                  label.tr,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

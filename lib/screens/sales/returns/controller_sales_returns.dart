@@ -128,11 +128,18 @@ class ControllerSalesReturns extends GetxController {
       ));
     }
 
+    String? docTime;
+    if (ret.createdAtUtcMs != null) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(ret.createdAtUtcMs!, isUtc: true).toLocal();
+      docTime = DateFormat('hh:mm a').format(dt);
+    }
+
     final docModel = DocumentViewModel(
       type: DocumentType.salesReturn,
       title: 'Credit Note / Sales Return',
       docNumber: ret.returnNo ?? '${ret.id}',
       docDate: ret.returnDate ?? DateFormat('dd/MM/yyyy').format(DateTime.now()),
+      docTime: docTime,
       status: ret.status ?? 'Paid',
       partyName: ret.customerName ?? 'Cash Customer',
       partyPhone: ret.customerPhone,

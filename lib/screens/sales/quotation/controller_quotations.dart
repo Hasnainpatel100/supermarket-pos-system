@@ -145,11 +145,18 @@ class ControllerQuotations extends GetxController {
       ));
     }
 
+    String? docTime;
+    if (quote.createdAtUtcMs != null) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(quote.createdAtUtcMs!, isUtc: true).toLocal();
+      docTime = DateFormat('hh:mm a').format(dt);
+    }
+
     final docModel = DocumentViewModel(
       type: DocumentType.quotation,
       title: 'Quotation / Estimate',
       docNumber: quote.quotationNo ?? '${quote.id}',
       docDate: quote.quotationDate ?? DateFormat('dd/MM/yyyy').format(DateTime.now()),
+      docTime: docTime,
       validityDate: quote.validUntilDate,
       status: quote.status ?? 'Open',
       partyName: quote.customerName ?? 'Cash Sale',

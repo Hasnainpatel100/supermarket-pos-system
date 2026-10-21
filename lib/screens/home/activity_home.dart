@@ -32,12 +32,8 @@ import 'fragment/bills/frag_financial_report.dart';
 import 'fragment/bills/controller_financial_report.dart';
 import 'fragment/setting/frag_home_settings.dart';
 import 'fragment/setting/controller_home_settings.dart';
-import 'fragment/users/frag_home_users.dart';
-import 'fragment/api_user/frag_home_api_users.dart';
 import 'fragment/system/frag_home_backup.dart';
 import 'fragment/system/frag_audit_logs.dart';
-import 'fragment/brand/fragment_home_brand.dart';
-import 'fragment/branch/fragment_home_branch.dart';
 import 'fragment/account/fragment_home_account.dart';
 import '../sales/invoice/frag_sales_invoices.dart';
 import '../sales/quotation/frag_quotations.dart';
@@ -205,12 +201,6 @@ class ActivityHome extends StatelessWidget {
     if (menu == EnumMainMenu.supplier) {
       return FragmentHomeSupplier();
     }
-    if (menu == EnumMainMenu.systemUsers || menu == EnumMainMenu.administration) {
-      return FragHomeUsers(entityUser: user);
-    }
-    if (menu == EnumMainMenu.apiUser) {
-      return const FragHomeApiUsers();
-    }
     if (menu == EnumMainMenu.settings) {
       return FragHomeSettings();
     }
@@ -228,12 +218,6 @@ class ActivityHome extends StatelessWidget {
     }
     if (menu == EnumMainMenu.auditLogs) {
       return const FragAuditLogs();
-    }
-    if (menu == EnumMainMenu.brand) {
-      return const FragmentHomeBrand();
-    }
-    if (menu == EnumMainMenu.branch) {
-      return const FragmentHomeBranch();
     }
     if (menu == EnumMainMenu.reportGroupSales) {
       return const FragSalesReport();

@@ -81,74 +81,7 @@ class RepoDrawer {
         .toList();
   }
 
-  static final List<String> _allPermissionNames = [
-    AppPermissions.orderCreate,
-    AppPermissions.orderRead,
-    AppPermissions.orderUpdate,
-    AppPermissions.orderDelete,
-    AppPermissions.orderList,
-    AppPermissions.orderCancel,
-    AppPermissions.orderRefund,
-    AppPermissions.accountCreate,
-    AppPermissions.accountRead,
-    AppPermissions.accountUpdate,
-    AppPermissions.accountDelete,
-    AppPermissions.accountManage,
-    AppPermissions.inventoryCreate,
-    AppPermissions.inventoryRead,
-    AppPermissions.inventoryUpdate,
-    AppPermissions.inventoryDelete,
-    AppPermissions.stockAdjust,
-    AppPermissions.expiryManage,
-    AppPermissions.purchaseCreate,
-    AppPermissions.purchaseRead,
-    AppPermissions.purchaseUpdate,
-    AppPermissions.purchaseDelete,
-    AppPermissions.purchaseList,
-    AppPermissions.purchaseReceive,
-    AppPermissions.supplierCreate,
-    AppPermissions.supplierRead,
-    AppPermissions.supplierUpdate,
-    AppPermissions.supplierDelete,
-    AppPermissions.supplierList,
-    AppPermissions.customerCreate,
-    AppPermissions.customerRead,
-    AppPermissions.customerUpdate,
-    AppPermissions.customerDelete,
-    AppPermissions.customerList,
-    AppPermissions.expenseCreate,
-    AppPermissions.expenseRead,
-    AppPermissions.expenseUpdate,
-    AppPermissions.expenseDelete,
-    AppPermissions.expenseApprove,
-    AppPermissions.reportView,
-    AppPermissions.reportViewSales,
-    AppPermissions.reportViewFinancial,
-    AppPermissions.reportViewUserActivity,
-    AppPermissions.userCreate,
-    AppPermissions.userRead,
-    AppPermissions.userUpdate,
-    AppPermissions.userDelete,
-    AppPermissions.userList,
-    AppPermissions.branchCreate,
-    AppPermissions.branchRead,
-    AppPermissions.branchUpdate,
-    AppPermissions.branchDelete,
-    AppPermissions.brandCreate,
-    AppPermissions.brandRead,
-    AppPermissions.brandUpdate,
-    AppPermissions.brandDelete,
-    AppPermissions.brandList,
-    AppPermissions.apiUserCreate,
-    AppPermissions.apiUserRead,
-    AppPermissions.apiUserUpdate,
-    AppPermissions.apiUserDelete,
-    AppPermissions.apiUserList,
-    AppPermissions.systemBackup,
-    AppPermissions.systemViewLogs,
-    AppPermissions.systemManageConfig,
-    AppPermissions.systemMaintenance,
-  ];
+  static const List<String> _allPermissionNames = AppPermissions.posPermissions;
 
   static List<ModelDrawerMenu> mainMenus = [
     // 1. Point of Sale (Billing) - Primary Daily Cashier Operation
@@ -300,63 +233,7 @@ class RepoDrawer {
     // 9. Reports & Analytics
     buildReportsMenu(),
 
-    // 10. Store Administration (Users, Branches, Brands, API Users)
-    ModelDrawerMenu(
-      menu: EnumMainMenu.administration,
-      titleKey: 'Administration',
-      icon: Icons.manage_accounts_rounded,
-      permissions: const [
-        AppPermissions.userRead,
-        AppPermissions.userList,
-        AppPermissions.branchRead,
-        AppPermissions.brandRead,
-        AppPermissions.brandList,
-        AppPermissions.apiUserRead,
-      ],
-      children: [
-        ModelDrawerMenu(
-          menu: EnumMainMenu.systemUsers,
-          titleKey: 'Users',
-          icon: Icons.group_outlined,
-          permissions: const [
-            AppPermissions.userRead,
-            AppPermissions.userList,
-            AppPermissions.userCreate,
-          ],
-        ),
-        ModelDrawerMenu(
-          menu: EnumMainMenu.branch,
-          titleKey: 'Branches',
-          icon: Icons.storefront_outlined,
-          permissions: const [
-            AppPermissions.branchRead,
-            AppPermissions.branchCreate,
-          ],
-        ),
-        ModelDrawerMenu(
-          menu: EnumMainMenu.brand,
-          titleKey: 'Brands',
-          icon: Icons.business_outlined,
-          permissions: const [
-            AppPermissions.brandRead,
-            AppPermissions.brandList,
-            AppPermissions.brandCreate,
-          ],
-        ),
-        ModelDrawerMenu(
-          menu: EnumMainMenu.apiUser,
-          titleKey: 'API Users',
-          icon: Icons.vpn_key_outlined,
-          permissions: const [
-            AppPermissions.apiUserRead,
-            AppPermissions.apiUserList,
-            AppPermissions.deviceManage,
-          ],
-        ),
-      ],
-    ),
-
-    // 11. System Maintenance
+    // 10. System Maintenance
     ModelDrawerMenu(
       menu: EnumMainMenu.system,
       titleKey: 'system',

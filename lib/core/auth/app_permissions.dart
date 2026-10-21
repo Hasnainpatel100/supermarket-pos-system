@@ -185,11 +185,12 @@ class AppPermissions {
     // Dashboard (2)
     dashboardView,
     dashboardExport,
-    // System Maintenance (4)
+    // System Maintenance & Hardware (5)
     systemViewLogs,
     systemManageConfig,
     systemBackup,
     systemMaintenance,
+    deviceManage,
     // Plan & Subscription (2)
     planRead,
     subscriptionRead,

@@ -57,6 +57,7 @@ class ActivityHome extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (context.mounted) {
         controller.checkAndPromptDayShift(context);
+        controller.checkDeviceLimit(context);
       }
     });
 

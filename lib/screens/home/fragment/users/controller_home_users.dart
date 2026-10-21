@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../../../model/entity_user.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_brand_context.dart';
+import '../../../../widget/dialog_user_limit_block.dart';
 
 class ControllerHomeUsers extends GetxController {
   final EntityUser? entityUser;
@@ -23,6 +25,22 @@ class ControllerHomeUsers extends GetxController {
 
   bool get hasPrev => currentPage.value > 0;
   bool get hasNext => (currentPage.value + 1) * pageSize < totalCount.value;
+
+  int get maxUsers {
+    if (Get.isRegistered<ServiceBrandContext>()) {
+      return Get.find<ServiceBrandContext>().maxUsers;
+    }
+    return 2;
+  }
+
+  int get activeUserCount {
+    final query = _boxUser.query(EntityUser_.isActive.equals(true)).build();
+    final count = query.count();
+    query.close();
+    return count;
+  }
+
+  bool get isUserLimitReached => activeUserCount >= maxUsers;
 
   @override
   void onInit() {
@@ -100,7 +118,18 @@ class ControllerHomeUsers extends GetxController {
   }
 
   void toggleActive(EntityUser user) {
-    user.isActive = !(user.isActive ?? true);
+    final willActivate = !(user.isActive ?? true);
+    if (willActivate && isUserLimitReached) {
+      if (Get.context != null) {
+        DialogUserLimitBlock.show(
+          Get.context!,
+          maxUsers: maxUsers,
+          activeUsers: activeUserCount,
+        );
+      }
+      return;
+    }
+    user.isActive = willActivate;
     _boxUser.put(user);
     loadUsers();
   }

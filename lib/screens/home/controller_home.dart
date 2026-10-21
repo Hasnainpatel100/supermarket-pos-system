@@ -13,7 +13,9 @@ import '../../model/model_drawer_menu.dart';
 import '../../repository/repo_drawer.dart';
 import '../../repository/repo_storage.dart';
 import '../../service/service_brand_context.dart';
+import '../../service/service_device_guard.dart';
 import '../../util/app_route.dart';
+import '../../widget/dialog_device_limit_block.dart';
 import '../../widget/dialog_plan_expired_block.dart';
 import '../../widget/dialog_plan_expiry.dart';
 
@@ -76,6 +78,20 @@ class ControllerHome extends GetxController {
         Get.offAllNamed(AppRoute.login);
         return;
       }
+
+      // ✅ Enforce maxPosDevices terminal quota
+      if (branch != null && Get.isRegistered<ServiceDeviceGuard>()) {
+        final deviceGuard = Get.find<ServiceDeviceGuard>();
+        final authResult = await deviceGuard.verifyDevice(branch);
+        if (!authResult.isAuthorized && Get.context != null) {
+          DialogDeviceLimitBlock.show(
+            Get.context!,
+            branch: branch,
+            result: authResult,
+          );
+          return;
+        }
+      }
     }
 
     // ✅ Prompt for Start Day & Shift ONLY if user has register/account/pos access
@@ -95,6 +111,24 @@ class ControllerHome extends GetxController {
     // ✅ Schedule precision plan-expiry check (one-shot timer, not periodic polling)
     if (Get.isRegistered<PlanExpiryGuard>()) {
       Get.find<PlanExpiryGuard>().scheduleExpiryCheck();
+    }
+  }
+
+  /// Verifies if this physical machine is authorized under maxPosDevices
+  Future<void> checkDeviceLimit(BuildContext context) async {
+    if (!Get.isRegistered<ServiceBrandContext>() || !Get.isRegistered<ServiceDeviceGuard>()) return;
+    final brandCtx = Get.find<ServiceBrandContext>();
+    final branch = brandCtx.selectedBranch;
+    if (branch == null) return;
+
+    final deviceGuard = Get.find<ServiceDeviceGuard>();
+    final authResult = await deviceGuard.verifyDevice(branch);
+    if (!authResult.isAuthorized && context.mounted) {
+      DialogDeviceLimitBlock.show(
+        context,
+        branch: branch,
+        result: authResult,
+      );
     }
   }
 

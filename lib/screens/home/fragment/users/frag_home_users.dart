@@ -11,6 +11,8 @@ import '../../../../model/entity_user.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../controller_home.dart';
 
+import '../../../../widget/dialog_user_limit_block.dart';
+
 class FragHomeUsers extends StatelessWidget {
   final EntityUser? entityUser;
 
@@ -39,10 +41,60 @@ class FragHomeUsers extends StatelessWidget {
           ],
         ),
         actions: [
+          /// ── Plan Quota Badge ──
+          Obx(() {
+            final active = controller.activeUserCount;
+            final max = controller.maxUsers;
+            final isFull = controller.isUserLimitReached;
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: isFull
+                    ? Colors.amber.withValues(alpha: 0.15)
+                    : colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isFull
+                      ? Colors.amber.shade700
+                      : colorScheme.primary.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isFull ? Icons.warning_amber_rounded : Icons.people_outline_rounded,
+                    size: 15,
+                    color: isFull ? Colors.amber.shade800 : colorScheme.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Plan: $active / $max Users',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isFull ? Colors.amber.shade800 : colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(width: 10),
+
           /// ── Create User Button ──
           if (canCreate)
             FilledButton.icon(
               onPressed: () async {
+                if (controller.isUserLimitReached) {
+                  DialogUserLimitBlock.show(
+                    context,
+                    maxUsers: controller.maxUsers,
+                    activeUsers: controller.activeUserCount,
+                  );
+                  return;
+                }
                 await Get.dialog(
                   const ActivityUser(),
                   barrierDismissible: false,

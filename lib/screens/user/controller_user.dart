@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 
 import '../../model/entity_user.dart';
 import '../../objectbox.g.dart';
+import '../../service/service_brand_context.dart';
 import '../../service/service_object_box.dart';
+import '../../widget/dialog_user_limit_block.dart';
 
 class ControllerUser extends GetxController {
   EntityUser? entityUser;
@@ -44,7 +46,23 @@ class ControllerUser extends GetxController {
   void saveUser() {
     if (!formKey.currentState!.validate()) return;
 
+    final brandCtx = Get.isRegistered<ServiceBrandContext>() ? Get.find<ServiceBrandContext>() : null;
+    final maxAllowed = brandCtx?.maxUsers ?? 2;
+    final activeQuery = _boxUser.query(EntityUser_.isActive.equals(true)).build();
+    final activeCount = activeQuery.count();
+    activeQuery.close();
+
     if (entityUser == null) {
+      if (rxIsActive.value && activeCount >= maxAllowed) {
+        if (Get.context != null) {
+          DialogUserLimitBlock.show(
+            Get.context!,
+            maxUsers: maxAllowed,
+            activeUsers: activeCount,
+          );
+        }
+        return;
+      }
       final user = EntityUser()
         ..mobileNumber = textEditingControllerMobileNumber.text.trim()
         ..alternateMobile = textEditingControllerAlternateMobile.text.trim()
@@ -66,6 +84,19 @@ class ControllerUser extends GetxController {
       _boxUser.put(user);
       Get.back(result: user);
     } else {
+      final willBeActive = rxIsActive.value;
+      final wasActive = entityUser!.isActive ?? true;
+      if (willBeActive && !wasActive && activeCount >= maxAllowed) {
+        if (Get.context != null) {
+          DialogUserLimitBlock.show(
+            Get.context!,
+            maxUsers: maxAllowed,
+            activeUsers: activeCount,
+          );
+        }
+        return;
+      }
+
       entityUser!.username = textEditingControllerUserName.text.trim();
       entityUser!.password = textEditingControllerPassword.text;
       entityUser!.first = textEditingControllerFirstName.text.trim();

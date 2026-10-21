@@ -56,6 +56,9 @@ class ServiceBrandContext extends GetxService {
   String get planExpiryStatusText =>
       planDetails?.expiryStatusText ?? 'Active Plan';
 
+  int get maxUsers => planDetails?.maxUsers ?? 2;
+  int get maxPosDevices => planDetails?.maxPosDevices ?? 2;
+
   void setExpiryAlarmDays(int days) {
     rxExpiryAlarmDays.value = days;
   }

@@ -11,6 +11,8 @@ import '../../../repository/repo_storage.dart';
 import '../../../service/service_brand_api.dart';
 import '../../../service/service_branch_api.dart';
 import '../../../service/service_brand_context.dart';
+import '../../../service/service_license.dart';
+import 'dart:io';
 import 'auth_api.dart';
 import 'models/auth_response_model.dart';
 
@@ -71,7 +73,16 @@ class AuthRepository {
     required String pin,
   }) async {
     try {
-      final response = await _api.login(username: username, pin: pin);
+      final licenseService = Get.isRegistered<ServiceLicense>() ? Get.find<ServiceLicense>() : null;
+      final machineId = licenseService?.rxMachineId.value;
+      final osName = Platform.operatingSystem.toUpperCase();
+
+      final response = await _api.login(
+        username: username,
+        pin: pin,
+        machineId: machineId,
+        deviceName: 'Counter ($osName)',
+      );
 
       // ── 1. Strictly enforce appType == 'MARKET' requirement ────────────────
       final appTypeUpper = (response.appType ?? '').trim().toUpperCase();

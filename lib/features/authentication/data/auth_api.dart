@@ -15,12 +15,20 @@ class AuthApi {
   Future<AuthLoginResponse> login({
     required String username,
     required String pin,
+    String? machineId,
+    String? deviceName,
   }) async {
     try {
-      final payload = {
+      final payload = <String, dynamic>{
         'username': username,
         'pin': pin,
       };
+      if (machineId != null && machineId.isNotEmpty) {
+        payload['machineId'] = machineId;
+      }
+      if (deviceName != null && deviceName.isNotEmpty) {
+        payload['deviceName'] = deviceName;
+      }
 
       final response = await _dio.post('/auth/login', data: payload);
       final statusCode = response.statusCode ?? 200;

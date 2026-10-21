@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/auth/app_permissions.dart';
 import '../../../../model/entity_finance_transaction.dart';
 import '../../../../service/service_finance.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../widget/my_card.dart';
 import '../../../expenses_form/activity_expenses_from.dart';
+import '../../controller_home.dart';
 import 'controller_home_expenses.dart';
 
 class FragmentHomeExpenses extends StatelessWidget {
@@ -22,6 +24,9 @@ class FragmentHomeExpenses extends StatelessWidget {
         ),
       ),
     );
+    final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
+    final canCreate = homeCtrl?.hasPermission(AppPermissions.expenseCreate) ?? true;
+    final canDelete = homeCtrl?.hasPermission(AppPermissions.expenseDelete) ?? true;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -193,7 +198,8 @@ class FragmentHomeExpenses extends StatelessWidget {
                 const SizedBox(width: 10),
 
                 // ── New Transaction Text Button ───────────────────────────────
-                FilledButton.icon(
+                if (canCreate)
+                  FilledButton.icon(
                   onPressed: () async {
                     final result = await Get.dialog(
                       const ActivityExpensesFrom(),
@@ -533,18 +539,20 @@ class FragmentHomeExpenses extends StatelessWidget {
                               ),
                             ),
                             DataCell(
-                              IconButton(
-                                icon: Icon(
-                                  Icons.delete_outline_rounded,
-                                  color: Colors.red.shade400,
-                                  size: 20,
-                                ),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                tooltip: 'Delete'.tr,
-                                onPressed: () =>
-                                    _confirmDelete(context, controller, tx),
-                              ),
+                              canDelete
+                                  ? IconButton(
+                                      icon: Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: Colors.red.shade400,
+                                        size: 20,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      tooltip: 'Delete'.tr,
+                                      onPressed: () =>
+                                          _confirmDelete(context, controller, tx),
+                                    )
+                                  : const SizedBox.shrink(),
                             ),
                           ],
                         );

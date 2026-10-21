@@ -241,4 +241,37 @@ class ControllerHome extends GetxController {
       default: return p.name;
     }
   }
+
+  /// Checks whether the current user is authorized to view a specific menu fragment
+  bool canAccessMenu(EnumMainMenu menu) {
+    if (isSuperAdmin) return true;
+    if (menu == EnumMainMenu.logout) return true;
+    if (menu == EnumMainMenu.dashboard) {
+      return hasPermission(AppPermissions.dashboardView);
+    }
+    if (menu == EnumMainMenu.settings) {
+      return hasPermission(AppPermissions.systemManageConfig);
+    }
+
+    final permissions = rxUser.value?.permissions ?? [];
+    if (permissions.isEmpty) return false;
+
+    ModelDrawerMenu? findMenu(List<ModelDrawerMenu> list) {
+      for (final item in list) {
+        if (item.menu == menu) return item;
+        if (item.children != null && item.children!.isNotEmpty) {
+          final found = findMenu(item.children!);
+          if (found != null) return found;
+        }
+      }
+      return null;
+    }
+
+    final target = findMenu(RepoDrawer.mainMenus);
+    if (target != null) {
+      return target.isVisibleFor(permissions);
+    }
+
+    return true;
+  }
 }

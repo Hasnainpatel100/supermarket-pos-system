@@ -92,7 +92,7 @@ class ActivityHome extends StatelessWidget {
               final selectedMenu = controller.selectedMainMenu.value;
               return KeyedSubtree(
                 key: ValueKey('${selectedMenu.name}_$activeLocale'),
-                child: _buildFragment(selectedMenu, controller.rxUser.value),
+                child: _buildFragment(selectedMenu, controller.rxUser.value, context),
               );
             }),
           ),
@@ -167,7 +167,11 @@ class ActivityHome extends StatelessWidget {
     );
   }
 
-  Widget _buildFragment(EnumMainMenu menu, EntityUser? user) {
+  Widget _buildFragment(EnumMainMenu menu, EntityUser? user, BuildContext context) {
+    final ControllerHome controller = Get.find<ControllerHome>();
+    if (!controller.canAccessMenu(menu)) {
+      return _buildNoPermissionsFragment(context);
+    }
     if (menu == EnumMainMenu.dashboard) {
       return FragHomeDashboard();
     }

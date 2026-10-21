@@ -7,6 +7,8 @@ import 'package:super_market/widget/my_card.dart';
 import 'package:super_market/widget/search_app_bar_field.dart';
 import '../../../../model/entity_customer.dart';
 import '../../../../util/snackbar_util.dart';
+import '../../../../core/auth/app_permissions.dart';
+import '../../controller_home.dart';
 import '../../../customer/activity_customer_form.dart';
 import 'controller_home_customer.dart';
 
@@ -19,6 +21,10 @@ class FragmentHomeCustomer extends StatelessWidget {
     Get.isRegistered<ControllerHomeCustomer>()
         ? Get.find<ControllerHomeCustomer>()
         : Get.put(ControllerHomeCustomer());
+    final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
+    final canCreate = homeCtrl?.hasPermission(AppPermissions.customerCreate) ?? true;
+    final canUpdate = homeCtrl?.hasPermission(AppPermissions.customerUpdate) ?? true;
+    final canDelete = homeCtrl?.hasPermission(AppPermissions.customerDelete) ?? true;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -31,18 +37,19 @@ class FragmentHomeCustomer extends StatelessWidget {
           gradientColors: [Colors.blue.shade400, Colors.blue.shade700],
         ),
         actions: [
-          GradientActionButton(
-            icon: Icons.person_add_rounded,
-            label: 'new_customer'.tr,
-            gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
-            onTap: () async {
-              await Get.dialog(
-                const ActivityCustomerForm(),
-                barrierDismissible: false,
-              );
-              controller.loadCustomers();
-            },
-          ),
+          if (canCreate)
+            GradientActionButton(
+              icon: Icons.person_add_rounded,
+              label: 'new_customer'.tr,
+              gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
+              onTap: () async {
+                await Get.dialog(
+                  const ActivityCustomerForm(),
+                  barrierDismissible: false,
+                );
+                controller.loadCustomers();
+              },
+            ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
@@ -371,7 +378,8 @@ class FragmentHomeCustomer extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  PopupMenuItem(
+                                  if (canUpdate)
+                                    PopupMenuItem(
                                     value: 'edit',
                                     child: Row(
                                       children: [
@@ -385,7 +393,8 @@ class FragmentHomeCustomer extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  PopupMenuItem(
+                                  if (canDelete)
+                                    PopupMenuItem(
                                     value: 'toggle',
                                     child: Row(
                                       children: [

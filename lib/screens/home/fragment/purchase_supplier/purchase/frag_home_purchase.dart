@@ -5,10 +5,12 @@ import 'package:super_market/widget/gradient_action_button.dart';
 import 'package:super_market/widget/gradient_app_bar_title.dart';
 import 'package:super_market/widget/my_card.dart';
 import 'package:super_market/widget/search_app_bar_field.dart';
+import '../../../../../core/auth/app_permissions.dart';
 import '../../../../../enums/enum_purchase_status.dart';
 import '../../../../../model/entity_purchase.dart';
 import '../../../../../service/service_currency.dart';
 import '../../../../../util/snackbar_util.dart';
+import '../../../controller_home.dart';
 import '../activity_receive_goods.dart';
 import 'activity_payment_form.dart';
 import 'activity_purchase_form.dart';
@@ -23,6 +25,8 @@ class FragmentHomePurchase extends StatelessWidget {
     final controller = Get.isRegistered<ControllerHomePurchase>()
         ? Get.find<ControllerHomePurchase>()
         : Get.put(ControllerHomePurchase());
+    final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
+    final canCreatePO = homeCtrl?.hasPermission(AppPermissions.purchaseCreate) ?? true;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -36,18 +40,19 @@ class FragmentHomePurchase extends StatelessWidget {
         ),
         actions: [
           // ── New Purchase Button ──
-          GradientActionButton(
-            icon: Icons.add_shopping_cart_rounded,
-            label: 'New Purchase'.tr,
-            gradientColors: [Colors.deepPurple.shade400, Colors.deepPurple.shade700],
-            onTap: () async {
-              await Get.dialog(
-                const ActivityPurchaseForm(),
-                barrierDismissible: false,
-              );
-              controller.loadPurchases();
-            },
-          ),
+          if (canCreatePO)
+            GradientActionButton(
+              icon: Icons.add_shopping_cart_rounded,
+              label: 'New Purchase'.tr,
+              gradientColors: [Colors.deepPurple.shade400, Colors.deepPurple.shade700],
+              onTap: () async {
+                await Get.dialog(
+                  const ActivityPurchaseForm(),
+                  barrierDismissible: false,
+                );
+                controller.loadPurchases();
+              },
+            ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
@@ -225,6 +230,10 @@ class FragmentHomePurchase extends StatelessWidget {
 
     // ── Delete is only available for POs created TODAY ──
     final canDelete = controller.canDeletePurchase(p);
+    final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
+    final canReceivePO = homeCtrl?.hasPermission(AppPermissions.purchaseReceive) ?? true;
+    final canPayPO = homeCtrl?.hasPermission(AppPermissions.paymentProcess) ?? true;
+    final canDeletePO = homeCtrl?.hasPermission(AppPermissions.purchaseDelete) ?? true;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currencySymbol = Get.isRegistered<ServiceCurrency>()
         ? Get.find<ServiceCurrency>().rxCurrency.value
@@ -319,7 +328,7 @@ class FragmentHomePurchase extends StatelessWidget {
                 Text('View Details'.tr),
               ]),
             ),
-            if (canReceive)
+            if (canReceive && canReceivePO)
               PopupMenuItem(
                 value: 'receive',
                 child: Row(children: [
@@ -329,7 +338,7 @@ class FragmentHomePurchase extends StatelessWidget {
                   Text('Receive Goods'.tr),
                 ]),
               ),
-            if (canPay)
+            if (canPay && canPayPO)
               PopupMenuItem(
                 value: 'pay',
                 child: Row(children: [
@@ -349,7 +358,7 @@ class FragmentHomePurchase extends StatelessWidget {
                   Text('Supplier Ledger'.tr),
                 ]),
               ),
-            if (canCancel)
+            if (canCancel && canDeletePO)
               PopupMenuItem(
                 value: 'cancel',
                 child: Row(children: [
@@ -361,7 +370,7 @@ class FragmentHomePurchase extends StatelessWidget {
                 ]),
               ),
             // ── Delete (today's POs only) ──
-            if (canDelete) ...[
+            if (canDelete && canDeletePO) ...[
               const PopupMenuDivider(),
               PopupMenuItem(
                 value: 'delete',

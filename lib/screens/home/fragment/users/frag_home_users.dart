@@ -4,6 +4,7 @@ import 'package:super_market/screens/home/fragment/users/controller_home_users.d
 import 'package:super_market/screens/user/activity_user.dart';
 import 'package:super_market/widget/my_card.dart';
 
+import '../../../../core/auth/app_permissions.dart';
 import '../../../../enums/enum_permission.dart';
 import '../../../../enums/enum_user_action.dart';
 import '../../../../model/entity_user.dart';
@@ -23,10 +24,10 @@ class FragHomeUsers extends StatelessWidget {
     ControllerHome controllerHome = Get.find();
     final colorScheme = Theme.of(context).colorScheme;
 
-    final canUpdate = controllerHome.can(EnumPermission.userUpdate);
-    final canDisable = controllerHome.can(EnumPermission.userDisable);
-    final canAssign = controllerHome.can(EnumPermission.roleAssign);
-    final canCreate = controllerHome.can(EnumPermission.userCreate);
+    final canUpdate = controllerHome.hasPermission(AppPermissions.userUpdate);
+    final canDisable = controllerHome.hasPermission(AppPermissions.userDelete);
+    final canAssign = controllerHome.hasPermission(AppPermissions.userManageRoles);
+    final canCreate = controllerHome.hasPermission(AppPermissions.userCreate);
 
     return Scaffold(
       appBar: AppBar(

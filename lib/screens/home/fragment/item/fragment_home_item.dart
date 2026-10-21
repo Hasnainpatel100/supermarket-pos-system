@@ -11,6 +11,9 @@ import '../../../../model/entity_item.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../item_form/activity_item_form.dart';
 import 'controller_home_item.dart';
+import '../../../../core/auth/app_permissions.dart';
+import '../../../../widget/permission_widget.dart';
+import '../../controller_home.dart';
 import 'dialogs/dialog_adjust_stock.dart';
 import 'dialogs/dialog_item_detail.dart';
 import 'dialogs/dialog_item_batches.dart';
@@ -22,6 +25,10 @@ class FragmentHomeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ControllerHomeItem controller = Get.put(ControllerHomeItem());
+    final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
+    final canUpdate = homeCtrl?.hasPermission(AppPermissions.inventoryUpdate) ?? true;
+    final canAdjust = (homeCtrl?.hasPermission(AppPermissions.stockAdjust) ?? true) || canUpdate;
+    final canDelete = homeCtrl?.hasPermission(AppPermissions.inventoryDelete) ?? true;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -34,32 +41,41 @@ class FragmentHomeItem extends StatelessWidget {
           gradientColors: [Colors.blue.shade400, Colors.blue.shade700],
         ),
         actions: [
-          TextButton.icon(
-            onPressed: () => controller.exportExcel(),
-            icon: const Icon(Icons.download_rounded, size: 18),
-            label: Text('export'.tr, style: TextStyle(fontWeight: FontWeight.bold)),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.blue.shade700,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+          PermissionWidget(
+            permission: AppPermissions.reportExport,
+            child: TextButton.icon(
+              onPressed: () => controller.exportExcel(),
+              icon: const Icon(Icons.download_rounded, size: 18),
+              label: Text('export'.tr, style: TextStyle(fontWeight: FontWeight.bold)),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue.shade700,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
             ),
           ),
-          GradientActionButton(
-            icon: Icons.file_upload_outlined,
-            label: 'import'.tr,
-            gradientColors: [Colors.orange.shade400, Colors.orange.shade700],
-            onTap: controller.importExcel,
+          PermissionWidget(
+            permission: AppPermissions.bulkItemImport,
+            child: GradientActionButton(
+              icon: Icons.file_upload_outlined,
+              label: 'import'.tr,
+              gradientColors: [Colors.orange.shade400, Colors.orange.shade700],
+              onTap: controller.importExcel,
+            ),
           ),
-          GradientActionButton(
-            icon: Icons.add_circle_outline_rounded,
-            label: 'add_item'.tr,
-            gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
-            onTap: () async {
-              await Get.dialog(
-                const ActivityItemForm(),
-                barrierDismissible: false,
-              );
-              controller.loadItems();
-            },
+          PermissionWidget(
+            permission: AppPermissions.inventoryCreate,
+            child: GradientActionButton(
+              icon: Icons.add_circle_outline_rounded,
+              label: 'add_item'.tr,
+              gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
+              onTap: () async {
+                await Get.dialog(
+                  const ActivityItemForm(),
+                  barrierDismissible: false,
+                );
+                controller.loadItems();
+              },
+            ),
           ),
         ],
         bottom: PreferredSize(
@@ -400,7 +416,8 @@ class FragmentHomeItem extends StatelessWidget {
                                   }
                                 },
                                 itemBuilder: (_) => [
-                                  PopupMenuItem(
+                                  if (canUpdate)
+                                    PopupMenuItem(
                                     value: 'edit',
                                     child: Row(children: [
                                       Icon(Icons.edit_outlined, size: 20, color: colorScheme.primary),
@@ -416,7 +433,8 @@ class FragmentHomeItem extends StatelessWidget {
                                       Text('print_barcode'.tr),
                                     ]),
                                   ),
-                                  PopupMenuItem(
+                                  if (canAdjust)
+                                    PopupMenuItem(
                                     value: 'adjust_stock',
                                     child: Row(children: [
                                       Icon(Icons.tune_rounded, size: 20, color: Colors.teal.shade600),
@@ -441,22 +459,24 @@ class FragmentHomeItem extends StatelessWidget {
                                       Text('view_details'.tr),
                                     ]),
                                   ),
-                                  const PopupMenuDivider(),
-                                  PopupMenuItem(
-                                    value: 'toggle',
-                                    child: Row(children: [
-                                      Icon(
-                                        isActive ? Icons.toggle_off_rounded : Icons.toggle_on_rounded,
-                                        size: 22,
-                                        color: isActive ? Colors.red.shade400 : Colors.green.shade500,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        isActive ? 'deactivate'.tr : 'activate'.tr,
-                                        style: TextStyle(color: isActive ? Colors.red.shade400 : Colors.green.shade600),
-                                      ),
-                                    ]),
-                                  ),
+                                  if (canDelete) ...[
+                                    const PopupMenuDivider(),
+                                    PopupMenuItem(
+                                      value: 'toggle',
+                                      child: Row(children: [
+                                        Icon(
+                                          isActive ? Icons.toggle_off_rounded : Icons.toggle_on_rounded,
+                                          size: 22,
+                                          color: isActive ? Colors.red.shade400 : Colors.green.shade500,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          isActive ? 'deactivate'.tr : 'activate'.tr,
+                                          style: TextStyle(color: isActive ? Colors.red.shade400 : Colors.green.shade600),
+                                        ),
+                                      ]),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

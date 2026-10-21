@@ -4,9 +4,11 @@ import 'package:super_market/widget/gradient_action_button.dart';
 import 'package:super_market/widget/gradient_app_bar_title.dart';
 import 'package:super_market/widget/my_card.dart';
 import 'package:super_market/widget/search_app_bar_field.dart';
+import '../../../../../core/auth/app_permissions.dart';
 import '../../../../../model/entity_supplier.dart';
 import '../../../../../service/service_currency.dart';
 import '../../../../../util/snackbar_util.dart';
+import '../../../controller_home.dart';
 import 'activity_supplier_form.dart';
 import 'controller_home_supplier.dart';
 
@@ -18,6 +20,8 @@ class FragmentHomeSupplier extends StatelessWidget {
     final controller = Get.isRegistered<ControllerHomeSupplier>()
         ? Get.find<ControllerHomeSupplier>()
         : Get.put(ControllerHomeSupplier());
+    final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
+    final canCreate = homeCtrl?.hasPermission(AppPermissions.supplierCreate) ?? true;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -30,18 +34,19 @@ class FragmentHomeSupplier extends StatelessWidget {
           gradientColors: [Colors.indigo.shade400, Colors.indigo.shade700],
         ),
         actions: [
-          GradientActionButton(
-            icon: Icons.add_business_rounded,
-            label: 'New Supplier'.tr,
-            gradientColors: [Colors.indigo.shade400, Colors.indigo.shade700],
-            onTap: () async {
-              await Get.dialog(
-                const ActivitySupplierForm(),
-                barrierDismissible: false,
-              );
-              controller.loadSuppliers();
-            },
-          ),
+          if (canCreate)
+            GradientActionButton(
+              icon: Icons.add_business_rounded,
+              label: 'New Supplier'.tr,
+              gradientColors: [Colors.indigo.shade400, Colors.indigo.shade700],
+              onTap: () async {
+                await Get.dialog(
+                  const ActivitySupplierForm(),
+                  barrierDismissible: false,
+                );
+                controller.loadSuppliers();
+              },
+            ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
@@ -151,6 +156,9 @@ class FragmentHomeSupplier extends StatelessWidget {
       ) {
     final isActive = s.isActive ?? true;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
+    final canUpdate = homeCtrl?.hasPermission(AppPermissions.supplierUpdate) ?? true;
+    final canDelete = homeCtrl?.hasPermission(AppPermissions.supplierDelete) ?? true;
 
     return DataRow(
       color: WidgetStateProperty.resolveWith<Color?>((_) {
@@ -239,7 +247,8 @@ class FragmentHomeSupplier extends StatelessWidget {
                   Text('View Details'.tr),
                 ]),
               ),
-              PopupMenuItem(
+              if (canUpdate)
+                PopupMenuItem(
                 value: 'edit',
                 child: Row(children: [
                   Icon(Icons.edit_outlined,
@@ -248,7 +257,8 @@ class FragmentHomeSupplier extends StatelessWidget {
                   Text('Edit'.tr),
                 ]),
               ),
-              PopupMenuItem(
+              if (canDelete)
+                PopupMenuItem(
                 value: 'toggle',
                 child: Row(children: [
                   Icon(

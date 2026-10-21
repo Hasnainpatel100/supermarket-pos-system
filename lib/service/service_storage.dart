@@ -98,18 +98,49 @@ class ServiceStorage {
     _loaded = true;
   }
 
+  bool _isFlushing = false;
+  bool _needsFlushAgain = false;
+
   Future<void> _flush() async {
-    final file = await _file();
-    final tmp = File('${file.path}.tmp');
-
-    final json = jsonEncode(_cache.map((k, v) => MapEntry(k, v.toJson())));
-
-    await tmp.writeAsString(json, flush: true);
-
-    if (await file.exists()) {
-      await file.delete();
+    if (_isFlushing) {
+      _needsFlushAgain = true;
+      return;
     }
-    await tmp.rename(file.path);
+    _isFlushing = true;
+    try {
+      do {
+        _needsFlushAgain = false;
+        final file = await _file();
+        if (!await file.parent.exists()) {
+          await file.parent.create(recursive: true);
+        }
+        final tmp = File('${file.path}.tmp');
+
+        final json = jsonEncode(_cache.map((k, v) => MapEntry(k, v.toJson())));
+
+        await tmp.writeAsString(json, flush: true);
+
+        try {
+          if (await file.exists()) {
+            await file.delete();
+          }
+        } catch (_) {
+          // File may have already been cleaned up or temporarily held
+        }
+
+        try {
+          await tmp.rename(file.path);
+        } catch (_) {
+          // Fallback on Windows if rename fails across locks: copy and delete tmp
+          try {
+            await tmp.copy(file.path);
+            await tmp.delete();
+          } catch (_) {}
+        }
+      } while (_needsFlushAgain);
+    } finally {
+      _isFlushing = false;
+    }
   }
 
   Future<File> _file() async {

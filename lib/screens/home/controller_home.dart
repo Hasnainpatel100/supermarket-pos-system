@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/auth/app_permissions.dart';
 import '../../core/performance/plan_expiry_guard.dart';
 import '../../enums/enum_main_menu.dart';
 import '../../enums/enum_permission.dart';
-import '../../model/entity_user.dart';
 import '../../features/authentication/data/auth_repository.dart';
+import '../../model/entity_user.dart';
+import '../../model/model_drawer_menu.dart';
+import '../../repository/repo_drawer.dart';
 import '../../repository/repo_storage.dart';
 import '../../service/service_brand_context.dart';
 import '../../util/app_route.dart';
@@ -20,7 +23,7 @@ import 'fragment/account/dialog_start_day_shift.dart';
 class ControllerHome extends GetxController {
   final RepoStorage _repoStorage = Get.find();
   Rx<EntityUser?> rxUser = Rx<EntityUser?>(null);
-  var selectedMainMenu = EnumMainMenu.account.obs;
+  var selectedMainMenu = EnumMainMenu.dashboard.obs;
   final isDrawerCollapsed = false.obs;
 
   @override
@@ -36,50 +39,10 @@ class ControllerHome extends GetxController {
       var mapUser = json.decode(strUser);
       EntityUser entityUser = EntityUser.fromMap(mapUser);
 
-      // ✅ Ensure superAdmin has all permissions (including newly added ones) on session restore
-      final roleNormalized = entityUser.role?.toUpperCase().replaceAll('_', '') ?? '';
-      final isSuperAdmin = roleNormalized == 'SUPERADMIN';
-      if (isSuperAdmin) {
-        final allPermissions = EnumPermission.values.map((e) => e.name).toList();
-        entityUser.permissions ??= [];
-        for (var p in allPermissions) {
-          if (!entityUser.permissions!.contains(p)) {
-            entityUser.permissions!.add(p);
-          }
-        }
-      } else {
-        // ✅ Ensure all local operational POS permissions (items, customers, pos, stocks, reports, expenses) are present
-        const Set<String> restrictedPermissions = {
-          'superVendorAccess',
-          'brandManage',
-          'brandCreate',
-          'brandUpdate',
-          'brandDelete',
-          'brandView',
-          'branchManage',
-          'branchCreate',
-          'branchUpdate',
-          'branchDelete',
-          'branchView',
-          'userCreate',
-          'userUpdate',
-          'userDisable',
-          'roleAssign',
-          'apiUserManage',
-        };
-
-        entityUser.permissions ??= [];
-        final operational = EnumPermission.values
-            .map((e) => e.name)
-            .where((p) => !restrictedPermissions.contains(p));
-        for (final op in operational) {
-          if (!entityUser.permissions!.contains(op)) {
-            entityUser.permissions!.add(op);
-          }
-        }
-      }
-
       rxUser.value = entityUser;
+
+      // Dynamically select the first accessible landing menu based on granted permissions
+      _selectInitialLandingMenu(entityUser);
     }
 
     // ✅ Ensure active Brand and Branch context is restored / fetched
@@ -108,7 +71,7 @@ class ControllerHome extends GetxController {
       }
     }
 
-    // ✅ Initialize Account Controller and prompt for Start Day & Shift if needed
+    // ✅ Prompt for Start Day & Shift ONLY if user has register/account/pos access
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (Get.context != null) {
         checkAndPromptDayShift(Get.context!);
@@ -128,16 +91,52 @@ class ControllerHome extends GetxController {
     }
   }
 
-  @override
-  void onClose() {
-    // PlanExpiryGuard is a permanent service — no timer to cancel here.
-    super.onClose();
+  /// Automatically picks the initial landing screen based on what the user is allowed to access
+  void _selectInitialLandingMenu(EntityUser user) {
+    if (isSuperAdmin) {
+      selectedMainMenu.value = EnumMainMenu.dashboard;
+      return;
+    }
+
+    final permissions = user.permissions ?? [];
+    if (permissions.isEmpty) {
+      return;
+    }
+
+    // Prefer Dashboard if granted
+    if (permissions.contains(AppPermissions.dashboardView)) {
+      selectedMainMenu.value = EnumMainMenu.dashboard;
+      return;
+    }
+
+    // Prefer POS if granted
+    if (permissions.contains(AppPermissions.orderCreate)) {
+      selectedMainMenu.value = EnumMainMenu.pos;
+      return;
+    }
+
+    // Otherwise, pick the first visible leaf from drawer menus
+    for (final menu in RepoDrawer.mainMenus) {
+      final leaf = menu.firstVisibleLeaf(permissions);
+      if (leaf != null) {
+        selectedMainMenu.value = leaf.menu;
+        return;
+      }
+    }
   }
 
   static bool isPromptingDayShift = false;
 
   void checkAndPromptDayShift(BuildContext context) {
     if (isPromptingDayShift) return;
+
+    // Only prompt for day/shift register if user has billing or register permission
+    if (!isSuperAdmin &&
+        !hasPermission(AppPermissions.orderCreate) &&
+        !hasPermission(AppPermissions.accountManage) &&
+        !hasPermission(AppPermissions.accountRead)) {
+      return;
+    }
 
     if (!Get.isRegistered<ControllerHomeAccount>()) {
       Get.put(ControllerHomeAccount(), permanent: true);
@@ -158,33 +157,88 @@ class ControllerHome extends GetxController {
         isPromptingDayShift = false;
       });
     } else if (selectedMainMenu.value == EnumMainMenu.logout) {
-      selectedMainMenu.value = EnumMainMenu.pos;
+      selectedMainMenu.value = hasPermission(AppPermissions.orderCreate)
+          ? EnumMainMenu.pos
+          : EnumMainMenu.dashboard;
     }
   }
 
-  /// Single permission check
-  bool can(EnumPermission permission) {
+  // ── RBAC Checks ───────────────────────────────────────────────────────────
+
+  bool get isSuperAdmin {
+    final role = (rxUser.value?.role ?? '').trim().toUpperCase().replaceAll('_', '');
+    return role == 'SUPERADMIN';
+  }
+
+  bool get hasNoPermissions {
+    if (isSuperAdmin) return false;
     final user = rxUser.value;
-    if (user == null) {
-      return false;
-    }
-    if (user.isActive == false) {
-      return false;
-    }
-    // Fix: Handle null permissions list safely
-    if (user.permissions == null) {
-      return false;
-    }
-    return user.permissions!.contains(permission.name);
+    return user == null || user.permissions == null || user.permissions!.isEmpty;
+  }
+
+  /// Single permission check (String)
+  bool hasPermission(String permission) {
+    if (isSuperAdmin) return true;
+    final user = rxUser.value;
+    if (user == null || user.isActive == false) return false;
+    return user.permissions?.contains(permission) ?? false;
   }
 
   /// Multiple permissions (ANY)
-  bool canAny(List<EnumPermission> permissions) {
-    return permissions.any(can);
+  bool hasAnyPermission(List<String> permissions) {
+    if (isSuperAdmin) return true;
+    return permissions.any(hasPermission);
   }
 
   /// Multiple permissions (ALL)
-  bool canAll(List<EnumPermission> permissions) {
+  bool hasAllPermissions(List<String> permissions) {
+    if (isSuperAdmin) return true;
+    return permissions.every(hasPermission);
+  }
+
+  /// Backward-compatible check supporting String and legacy EnumPermission
+  bool can(dynamic permission) {
+    if (isSuperAdmin) return true;
+    if (permission is String) {
+      return hasPermission(permission);
+    }
+    if (permission is EnumPermission) {
+      return hasPermission(_mapEnumPermissionToString(permission));
+    }
+    return false;
+  }
+
+  /// Multiple permissions (ANY) - backward compatible
+  bool canAny(List<dynamic> permissions) {
+    if (isSuperAdmin) return true;
+    return permissions.any(can);
+  }
+
+  /// Multiple permissions (ALL) - backward compatible
+  bool canAll(List<dynamic> permissions) {
+    if (isSuperAdmin) return true;
     return permissions.every(can);
+  }
+
+  String _mapEnumPermissionToString(EnumPermission p) {
+    switch (p) {
+      case EnumPermission.userCreate: return AppPermissions.userCreate;
+      case EnumPermission.userUpdate: return AppPermissions.userUpdate;
+      case EnumPermission.userDisable: return AppPermissions.userDelete;
+      case EnumPermission.roleAssign: return AppPermissions.userManageRoles;
+      case EnumPermission.auditLogView: return AppPermissions.systemViewLogs;
+      case EnumPermission.backupRestore: return AppPermissions.systemBackup;
+      case EnumPermission.brandManage: return AppPermissions.brandUpdate;
+      case EnumPermission.brandCreate: return AppPermissions.brandCreate;
+      case EnumPermission.brandView: return AppPermissions.brandRead;
+      case EnumPermission.branchManage: return AppPermissions.branchUpdate;
+      case EnumPermission.branchCreate: return AppPermissions.branchCreate;
+      case EnumPermission.branchView: return AppPermissions.branchRead;
+      case EnumPermission.posBillCreate: return AppPermissions.orderCreate;
+      case EnumPermission.salesInvoiceView: return AppPermissions.orderRead;
+      case EnumPermission.account: return AppPermissions.accountRead;
+      case EnumPermission.expenses: return AppPermissions.expenseRead;
+      default: return p.name;
+    }
   }
 }

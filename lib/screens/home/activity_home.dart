@@ -85,6 +85,9 @@ class ActivityHome extends StatelessWidget {
 
           Expanded(
             child: Obx(() {
+              if (controller.hasNoPermissions) {
+                return _buildNoPermissionsFragment(context);
+              }
               final activeLocale = localeService.rxLocale.value.toString();
               final selectedMenu = controller.selectedMainMenu.value;
               return KeyedSubtree(
@@ -94,6 +97,72 @@ class ActivityHome extends StatelessWidget {
             }),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNoPermissionsFragment(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 480),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.shield_outlined,
+                size: 56,
+                color: Colors.amber,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Access Denied',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your account does not have any active permissions assigned. Please contact your store administrator to assign your role.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                  ),
+            ),
+            const SizedBox(height: 28),
+            ElevatedButton.icon(
+              onPressed: () {
+                final ctrl = Get.find<ControllerHome>();
+                ctrl.selectedMainMenu.value = EnumMainMenu.logout;
+              },
+              icon: const Icon(Icons.logout),
+              label: Text('logout'.tr),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,36 +1,38 @@
 import 'package:flutter/material.dart';
 
 import '../enums/enum_main_menu.dart';
-import '../enums/enum_permission.dart';
 
 class ModelDrawerMenu {
   final EnumMainMenu menu;
   final String titleKey;
   final IconData icon;
-  final List<EnumPermission> permissions;
+  final List<String> permissions;
   final List<ModelDrawerMenu>? children;
 
   ModelDrawerMenu({
     required this.menu,
     required this.titleKey,
     required this.icon,
-    required this.permissions,
+    this.permissions = const [],
     this.children,
   });
 }
 
 /// Recursive permission-visibility helpers.
 ///
-/// A leaf menu (no children) is visible if the user holds any of its own
+/// A leaf menu (no children) is visible if the user holds ANY of its own
 /// permissions. A parent menu (has children — e.g. a report category, or
 /// "Reports" itself) is visible if ANY descendant at ANY depth is visible.
-/// This lets the drawer nest to any depth (Reports -> Category -> Report
-/// page, or deeper) without each new level needing bespoke visibility
-/// logic in the drawer or the widget.
+/// This lets the drawer nest to any depth without each new level needing
+/// bespoke visibility logic in the drawer or the widget.
 extension ModelDrawerMenuVisibility on ModelDrawerMenu {
   bool isVisibleFor(List<String> grantedPermissions) {
+    if (grantedPermissions.isEmpty) {
+      return false;
+    }
     if (children == null || children!.isEmpty) {
-      return permissions.any((p) => grantedPermissions.contains(p.name));
+      if (permissions.isEmpty) return false;
+      return permissions.any((p) => grantedPermissions.contains(p));
     }
     return children!.any((c) => c.isVisibleFor(grantedPermissions));
   }

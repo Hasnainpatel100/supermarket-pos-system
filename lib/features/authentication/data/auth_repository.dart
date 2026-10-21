@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
-import '../../../enums/enum_permission.dart';
 import '../../../model/entity_user.dart';
 import '../../../model/model_brand.dart';
 import '../../../model/model_branch.dart';
@@ -122,47 +121,14 @@ class AuthRepository {
         brandId: _brandContext.selectedBrandId ?? (isValidMongoId(brandIdToFetch) ? brandIdToFetch : null),
       );
 
-      // ── 5. Build EntityUser (Stripping Brand, Branch & User access for clients) ──
-      const Set<String> restrictedPermissions = {
-        'superVendorAccess',
-        'brandManage',
-        'brandCreate',
-        'brandUpdate',
-        'brandDelete',
-        'brandView',
-        'branchManage',
-        'branchCreate',
-        'branchUpdate',
-        'branchDelete',
-        'branchView',
-        'userCreate',
-        'userUpdate',
-        'userDisable',
-        'roleAssign',
-        'apiUserManage',
-      };
-
-      // Ensure all local operational POS permissions (items, customers, pos, stocks, reports, expenses)
-      // are granted to operational users, while stripping brand, branch, and user management.
-      final operationalPermissions = EnumPermission.values
-          .map((e) => e.name)
-          .where((p) => !restrictedPermissions.contains(p))
-          .toSet();
-
-      // Also retain any server permissions that are not restricted
-      operationalPermissions.addAll(
-        response.permissions.where((p) => !restrictedPermissions.contains(p)),
-      );
-
-      final effectivePermissions = operationalPermissions.toList();
-
+      // ── 5. Build EntityUser (directly injecting backend permissions from login) ──
       final entityUser = EntityUser(
         username: response.username,
         first: response.firstName ?? response.username,
         last: response.lastName ?? '',
         role: response.role ?? 'cashier',
         mongoId: response.userId,
-        permissions: effectivePermissions,
+        permissions: List<String>.from(response.permissions),
         isActive: true,
       );
 

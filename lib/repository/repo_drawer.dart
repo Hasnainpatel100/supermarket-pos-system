@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/auth/app_permissions.dart';
 import '../enums/enum_main_menu.dart';
-import '../enums/enum_permission.dart';
 import '../model/entity_user.dart';
 import '../model/model_drawer_menu.dart';
 import '../widget/brand_branch_card.dart';
@@ -11,10 +11,16 @@ import '../widget/side_menu_item.dart';
 class RepoDrawer {
   static Widget drawerList(EntityUser entityUser) {
     final permissions = entityUser.permissions ?? [];
+    final role = (entityUser.role ?? '').trim().toUpperCase().replaceAll('_', '');
+    final isSuperAdmin = role == 'SUPERADMIN';
+
+    // Top-level menu visibility (Dashboard & Settings)
+    final hasDashboard = isSuperAdmin || permissions.contains(AppPermissions.dashboardView);
+    final hasSettings = isSuperAdmin || permissions.contains(AppPermissions.systemManageConfig);
 
     return Material(
       elevation: 4,
-      child: Column(  
+      child: Column(
         children: [
           const SideMenuHeader(),
           const Divider(height: 1),
@@ -22,15 +28,16 @@ class RepoDrawer {
           Expanded(
             child: ListView(
               children: [
-                const SideMenuItem.simple(
-                  icon: Icons.dashboard_outlined,
-                  titleKey: 'dashboard',
-                  menu: EnumMainMenu.dashboard,
-                ),
+                if (hasDashboard) ...[
+                  const SideMenuItem.simple(
+                    icon: Icons.dashboard_outlined,
+                    titleKey: 'dashboard',
+                    menu: EnumMainMenu.dashboard,
+                  ),
+                  const Divider(),
+                ],
 
-                const Divider(),
-
-                ...buildSideMenus(permissions),
+                ...buildSideMenus(permissions, isSuperAdmin: isSuperAdmin),
                 const Divider(),
               ],
             ),
@@ -41,11 +48,12 @@ class RepoDrawer {
           // ── Brand / Branch context card ───────────────────────────────────
           const BrandBranchCard(),
 
-          const SideMenuItem.simple(
-            icon: Icons.settings_outlined,
-            titleKey: 'settings',
-            menu: EnumMainMenu.settings,
-          ),
+          if (hasSettings)
+            const SideMenuItem.simple(
+              icon: Icons.settings_outlined,
+              titleKey: 'settings',
+              menu: EnumMainMenu.settings,
+            ),
 
           const SideMenuItem.simple(
             icon: Icons.logout,
@@ -57,15 +65,90 @@ class RepoDrawer {
     );
   }
 
-  static List<Widget> buildSideMenus(List<String> permissions) {
-    return mainMenus
-        .where((menu) => menu.isVisibleFor(permissions))
+  static List<Widget> buildSideMenus(List<String> permissions, {bool isSuperAdmin = false}) {
+    // If superAdmin, show all menus. Otherwise filter strictly by backend permissions.
+    final visibleMenus = isSuperAdmin
+        ? mainMenus
+        : mainMenus.where((menu) => menu.isVisibleFor(permissions)).toList();
+
+    return visibleMenus
         .map(
-          (menu) =>
-          SideMenuItem.menu(modelMenu: menu, permissions: permissions),
-    )
+          (menu) => SideMenuItem.menu(
+            modelMenu: menu,
+            permissions: isSuperAdmin ? _allPermissionNames : permissions,
+          ),
+        )
         .toList();
   }
+
+  static final List<String> _allPermissionNames = [
+    AppPermissions.orderCreate,
+    AppPermissions.orderRead,
+    AppPermissions.orderUpdate,
+    AppPermissions.orderDelete,
+    AppPermissions.orderList,
+    AppPermissions.orderCancel,
+    AppPermissions.orderRefund,
+    AppPermissions.accountCreate,
+    AppPermissions.accountRead,
+    AppPermissions.accountUpdate,
+    AppPermissions.accountDelete,
+    AppPermissions.accountManage,
+    AppPermissions.inventoryCreate,
+    AppPermissions.inventoryRead,
+    AppPermissions.inventoryUpdate,
+    AppPermissions.inventoryDelete,
+    AppPermissions.stockAdjust,
+    AppPermissions.expiryManage,
+    AppPermissions.purchaseCreate,
+    AppPermissions.purchaseRead,
+    AppPermissions.purchaseUpdate,
+    AppPermissions.purchaseDelete,
+    AppPermissions.purchaseList,
+    AppPermissions.purchaseReceive,
+    AppPermissions.supplierCreate,
+    AppPermissions.supplierRead,
+    AppPermissions.supplierUpdate,
+    AppPermissions.supplierDelete,
+    AppPermissions.supplierList,
+    AppPermissions.customerCreate,
+    AppPermissions.customerRead,
+    AppPermissions.customerUpdate,
+    AppPermissions.customerDelete,
+    AppPermissions.customerList,
+    AppPermissions.expenseCreate,
+    AppPermissions.expenseRead,
+    AppPermissions.expenseUpdate,
+    AppPermissions.expenseDelete,
+    AppPermissions.expenseApprove,
+    AppPermissions.reportView,
+    AppPermissions.reportViewSales,
+    AppPermissions.reportViewFinancial,
+    AppPermissions.reportViewUserActivity,
+    AppPermissions.userCreate,
+    AppPermissions.userRead,
+    AppPermissions.userUpdate,
+    AppPermissions.userDelete,
+    AppPermissions.userList,
+    AppPermissions.branchCreate,
+    AppPermissions.branchRead,
+    AppPermissions.branchUpdate,
+    AppPermissions.branchDelete,
+    AppPermissions.brandCreate,
+    AppPermissions.brandRead,
+    AppPermissions.brandUpdate,
+    AppPermissions.brandDelete,
+    AppPermissions.brandList,
+    AppPermissions.apiUserCreate,
+    AppPermissions.apiUserRead,
+    AppPermissions.apiUserUpdate,
+    AppPermissions.apiUserDelete,
+    AppPermissions.apiUserList,
+    AppPermissions.systemBackup,
+    AppPermissions.systemViewLogs,
+    AppPermissions.systemManageConfig,
+    AppPermissions.systemMaintenance,
+  ];
 
   static List<ModelDrawerMenu> mainMenus = [
     // 1. Point of Sale (Billing) - Primary Daily Cashier Operation
@@ -73,15 +156,8 @@ class RepoDrawer {
       menu: EnumMainMenu.pos,
       titleKey: 'pos',
       icon: Icons.point_of_sale_rounded,
-      permissions: [
-        EnumPermission.posBillCreate,
-        EnumPermission.posBillHold,
-        EnumPermission.posBillResume,
-        EnumPermission.posBillCancel,
-        EnumPermission.posBillVoid,
-        EnumPermission.posBillReturnSameDay,
-        EnumPermission.posPaymentCollect,
-        EnumPermission.posBillReprint,
+      permissions: const [
+        AppPermissions.orderCreate,
       ],
     ),
 
@@ -90,36 +166,37 @@ class RepoDrawer {
       menu: EnumMainMenu.salesGroup,
       titleKey: 'sales',
       icon: Icons.receipt_long_rounded,
-      permissions: [
-        EnumPermission.posBillCreate,
-        EnumPermission.salesInvoiceView,
+      permissions: const [
+        AppPermissions.orderRead,
+        AppPermissions.orderList,
+        AppPermissions.orderRefund,
       ],
       children: [
         ModelDrawerMenu(
           menu: EnumMainMenu.salesInvoices,
           titleKey: 'sales_invoices',
           icon: Icons.description_outlined,
-          permissions: [
-            EnumPermission.posBillCreate,
-            EnumPermission.salesInvoiceView,
+          permissions: const [
+            AppPermissions.orderRead,
+            AppPermissions.orderList,
           ],
         ),
         ModelDrawerMenu(
           menu: EnumMainMenu.quotationEstimate,
           titleKey: 'quotation_estimate',
           icon: Icons.request_quote_outlined,
-          permissions: [
-            EnumPermission.posBillCreate,
-            EnumPermission.quotationView,
+          permissions: const [
+            AppPermissions.orderCreate,
+            AppPermissions.orderRead,
           ],
         ),
         ModelDrawerMenu(
           menu: EnumMainMenu.salesReturn,
           titleKey: 'sales_return',
           icon: Icons.assignment_return_outlined,
-          permissions: [
-            EnumPermission.posBillCreate,
-            EnumPermission.salesReturnView,
+          permissions: const [
+            AppPermissions.orderRefund,
+            AppPermissions.refundProcess,
           ],
         ),
       ],
@@ -130,7 +207,11 @@ class RepoDrawer {
       menu: EnumMainMenu.account,
       titleKey: 'account',
       icon: Icons.account_balance_wallet_rounded,
-      permissions: [EnumPermission.account],
+      permissions: const [
+        AppPermissions.accountRead,
+        AppPermissions.accountManage,
+        AppPermissions.accountCreate,
+      ],
     ),
 
     // 4. Products & Catalog (Items)
@@ -138,16 +219,10 @@ class RepoDrawer {
       menu: EnumMainMenu.item,
       titleKey: 'item',
       icon: Icons.inventory_2_rounded,
-      permissions: [
-        EnumPermission.itemCreate,
-        EnumPermission.itemUpdate,
-        EnumPermission.itemView,
-        EnumPermission.stockIn,
-        EnumPermission.stockOut,
-        EnumPermission.stockAdjust,
-        EnumPermission.stockCount,
-        EnumPermission.stockView,
-        EnumPermission.expiryManage,
+      permissions: const [
+        AppPermissions.inventoryRead,
+        AppPermissions.inventoryCreate,
+        AppPermissions.inventoryUpdate,
       ],
     ),
 
@@ -156,12 +231,9 @@ class RepoDrawer {
       menu: EnumMainMenu.stocks,
       titleKey: 'stocks history',
       icon: Icons.warehouse_rounded,
-      permissions: [
-        EnumPermission.stockAdjust,
-        EnumPermission.stockCount,
-        EnumPermission.stockIn,
-        EnumPermission.stockOut,
-        EnumPermission.stockView,
+      permissions: const [
+        AppPermissions.inventoryRead,
+        AppPermissions.stockAdjust,
       ],
     ),
 
@@ -170,26 +242,33 @@ class RepoDrawer {
       menu: EnumMainMenu.purchaseSupplier,
       titleKey: 'purchase_supplier',
       icon: Icons.shopping_bag_outlined,
-      permissions: [
-        EnumPermission.purchaseCreate,
-        EnumPermission.purchaseReceive,
-        EnumPermission.supplierManage,
+      permissions: const [
+        AppPermissions.purchaseRead,
+        AppPermissions.purchaseCreate,
+        AppPermissions.supplierRead,
+        AppPermissions.supplierCreate,
+        AppPermissions.inventoryCreate,
       ],
       children: [
         ModelDrawerMenu(
           menu: EnumMainMenu.purchase,
           titleKey: 'purchase',
           icon: Icons.shopping_cart_outlined,
-          permissions: [
-            EnumPermission.purchaseCreate,
-            EnumPermission.purchaseReceive,
+          permissions: const [
+            AppPermissions.purchaseRead,
+            AppPermissions.purchaseCreate,
+            AppPermissions.inventoryCreate,
           ],
         ),
         ModelDrawerMenu(
           menu: EnumMainMenu.supplier,
           titleKey: 'supplier',
           icon: Icons.supervisor_account_outlined,
-          permissions: [EnumPermission.supplierManage],
+          permissions: const [
+            AppPermissions.supplierRead,
+            AppPermissions.supplierCreate,
+            AppPermissions.inventoryRead,
+          ],
         ),
       ],
     ),
@@ -199,13 +278,11 @@ class RepoDrawer {
       menu: EnumMainMenu.customer,
       titleKey: 'customer',
       icon: Icons.people_alt_outlined,
-      permissions: [
-        EnumPermission.priceView,
-        EnumPermission.priceUpdate,
-        EnumPermission.discountApply,
-        EnumPermission.discountOverride,
-        EnumPermission.customerEdit,
-        EnumPermission.customerDelete,
+      permissions: const [
+        AppPermissions.customerRead,
+        AppPermissions.customerList,
+        AppPermissions.customerCreate,
+        AppPermissions.orderRead,
       ],
     ),
 
@@ -214,7 +291,10 @@ class RepoDrawer {
       menu: EnumMainMenu.expenses,
       titleKey: 'Expenses',
       icon: Icons.payments_outlined,
-      permissions: [EnumPermission.expenses],
+      permissions: const [
+        AppPermissions.expenseRead,
+        AppPermissions.expenseCreate,
+      ],
     ),
 
     // 9. Reports & Analytics
@@ -225,44 +305,53 @@ class RepoDrawer {
       menu: EnumMainMenu.administration,
       titleKey: 'Administration',
       icon: Icons.manage_accounts_rounded,
-      permissions: [
-        EnumPermission.userCreate,
-        EnumPermission.userUpdate,
-        EnumPermission.userDisable,
-        EnumPermission.roleAssign,
-        EnumPermission.branchManage,
-        EnumPermission.brandManage,
-        EnumPermission.apiUserManage,
+      permissions: const [
+        AppPermissions.userRead,
+        AppPermissions.userList,
+        AppPermissions.branchRead,
+        AppPermissions.brandRead,
+        AppPermissions.brandList,
+        AppPermissions.apiUserRead,
       ],
       children: [
         ModelDrawerMenu(
           menu: EnumMainMenu.systemUsers,
           titleKey: 'Users',
           icon: Icons.group_outlined,
-          permissions: [
-            EnumPermission.userCreate,
-            EnumPermission.userUpdate,
-            EnumPermission.userDisable,
-            EnumPermission.roleAssign,
+          permissions: const [
+            AppPermissions.userRead,
+            AppPermissions.userList,
+            AppPermissions.userCreate,
           ],
         ),
         ModelDrawerMenu(
           menu: EnumMainMenu.branch,
           titleKey: 'Branches',
           icon: Icons.storefront_outlined,
-          permissions: [EnumPermission.branchManage],
+          permissions: const [
+            AppPermissions.branchRead,
+            AppPermissions.branchCreate,
+          ],
         ),
         ModelDrawerMenu(
           menu: EnumMainMenu.brand,
           titleKey: 'Brands',
           icon: Icons.business_outlined,
-          permissions: [EnumPermission.brandManage],
+          permissions: const [
+            AppPermissions.brandRead,
+            AppPermissions.brandList,
+            AppPermissions.brandCreate,
+          ],
         ),
         ModelDrawerMenu(
           menu: EnumMainMenu.apiUser,
           titleKey: 'API Users',
           icon: Icons.vpn_key_outlined,
-          permissions: [EnumPermission.apiUserManage],
+          permissions: const [
+            AppPermissions.apiUserRead,
+            AppPermissions.apiUserList,
+            AppPermissions.deviceManage,
+          ],
         ),
       ],
     ),
@@ -272,22 +361,26 @@ class RepoDrawer {
       menu: EnumMainMenu.system,
       titleKey: 'system',
       icon: Icons.admin_panel_settings_outlined,
-      permissions: [
-        EnumPermission.backupRestore,
-        EnumPermission.auditLogView,
+      permissions: const [
+        AppPermissions.systemBackup,
+        AppPermissions.systemViewLogs,
+        AppPermissions.systemMaintenance,
       ],
       children: [
         ModelDrawerMenu(
           menu: EnumMainMenu.backup,
           titleKey: 'Backup & Recovery',
           icon: Icons.backup_outlined,
-          permissions: [EnumPermission.backupRestore],
+          permissions: const [AppPermissions.systemBackup],
         ),
         ModelDrawerMenu(
           menu: EnumMainMenu.auditLogs,
           titleKey: 'audit_logs',
           icon: Icons.history_rounded,
-          permissions: [EnumPermission.auditLogView],
+          permissions: const [
+            AppPermissions.systemViewLogs,
+            AppPermissions.reportViewUserActivity,
+          ],
         ),
       ],
     ),
@@ -302,124 +395,94 @@ class RepoDrawer {
       menu: EnumMainMenu.reportGroupSales,
       titleKey: 'sales reports',
       icon: Icons.point_of_sale_outlined,
-      permission: EnumPermission.reportSalesView,
+      permission: AppPermissions.reportViewSales,
       reports: [],
     ),
-
     ReportCategory(
       menu: EnumMainMenu.reportGroupInventory,
       titleKey: 'inventory reports',
       icon: Icons.inventory_2_outlined,
-      permission: EnumPermission.reportStockView,
+      permission: AppPermissions.inventoryRead,
       reports: [],
     ),
-
     ReportCategory(
       menu: EnumMainMenu.reportGroupPurchase,
       titleKey: 'purchase reports',
       icon: Icons.shopping_cart_outlined,
-      permission: EnumPermission.reportPurchaseView,
+      permission: AppPermissions.purchaseRead,
       reports: [],
     ),
-
     ReportCategory(
       menu: EnumMainMenu.reportGroupProfit,
       titleKey: 'profit reports',
       icon: Icons.trending_up,
-      permission: EnumPermission.reportProfitView,
+      permission: AppPermissions.reportViewFinancial,
       reports: [],
     ),
-
     ReportCategory(
       menu: EnumMainMenu.reportGroupReturn,
       titleKey: 'return reports',
       icon: Icons.assignment_return_outlined,
-      permission: EnumPermission.reportReturnView,
+      permission: AppPermissions.orderRefund,
       reports: [],
     ),
-
-    // ReportCategory(
-    //   menu: EnumMainMenu.reportGroupCustomer,
-    //   titleKey: 'customer',
-    //   icon: Icons.people_outline,
-    //   permission: EnumPermission.reportCustomerView,
-    //   reports: [
-    //     _ReportPage(
-    //       menu: EnumMainMenu.reportCustomerPurchaseHistory,
-    //       titleKey: 'customer purchase history',
-    //       icon: Icons.history,
-    //     ),
-    //     _ReportPage(
-    //       menu: EnumMainMenu.reportTopCustomers,
-    //       titleKey: 'top customers',
-    //       icon: Icons.emoji_events_outlined,
-    //     ),
-    //     _ReportPage(
-    //       menu: EnumMainMenu.reportCustomerOutstanding,
-    //       titleKey: 'customer outstanding',
-    //       icon: Icons.account_balance_wallet_outlined,
-    //     ),
-    //   ],
-    // ),
-
     ReportCategory(
       menu: EnumMainMenu.reportGroupSupplier,
       titleKey: 'supplier reports',
       icon: Icons.local_shipping_outlined,
-      permission: EnumPermission.reportSupplierView,
+      permission: AppPermissions.supplierRead,
       reports: [],
     ),
-
     ReportCategory(
       menu: EnumMainMenu.reportGroupCashier,
       titleKey: 'cashier reports',
       icon: Icons.badge_outlined,
-      permission: EnumPermission.reportCashierView,
+      permission: AppPermissions.accountRead,
       reports: [],
     ),
-
     ReportCategory(
       menu: EnumMainMenu.reportGroupFinancial,
       titleKey: 'financial reports',
       icon: Icons.account_balance_outlined,
-      permission: EnumPermission.reportFinancialView,
+      permission: AppPermissions.reportViewFinancial,
       reports: [],
     ),
   ];
-  /// Builds the "Reports" `ModelDrawerMenu` (with nested category and
-  /// report children) from [reportCategories].
+
+  /// Builds the "Reports" `ModelDrawerMenu` from [reportCategories].
   static ModelDrawerMenu buildReportsMenu() {
     return ModelDrawerMenu(
       menu: EnumMainMenu.reports,
       titleKey: 'reports',
       icon: Icons.bar_chart_outlined,
-      permissions: reportCategories.map((c) => c.permission).toList(),
+      permissions: [
+        AppPermissions.reportView,
+        AppPermissions.reportViewSales,
+        AppPermissions.reportViewFinancial,
+        AppPermissions.reportViewUserActivity,
+      ],
       children: reportCategories
           .map(
             (category) => ModelDrawerMenu(
-          menu: category.menu,
-          titleKey: category.titleKey,
-          icon: category.icon,
-          permissions: [category.permission],
-          children: category.reports
-              .map(
-                (report) => ModelDrawerMenu(
-              menu: report.menu,
-              titleKey: report.titleKey,
-              icon: report.icon,
-              permissions: [category.permission],
+              menu: category.menu,
+              titleKey: category.titleKey,
+              icon: category.icon,
+              permissions: [category.permission, AppPermissions.reportView],
+              children: category.reports
+                  .map(
+                    (report) => ModelDrawerMenu(
+                      menu: report.menu,
+                      titleKey: report.titleKey,
+                      icon: report.icon,
+                      permissions: [category.permission, AppPermissions.reportView],
+                    ),
+                  )
+                  .toList(),
             ),
           )
-              .toList(),
-        ),
-      )
           .toList(),
     );
   }
-
-/*
-  ... [unchanged legacy commented-out block from the original file stays here as-is] ...
-  */
 }
 
 class ReportPage {
@@ -438,7 +501,7 @@ class ReportCategory {
   final EnumMainMenu menu;
   final String titleKey;
   final IconData icon;
-  final EnumPermission permission;
+  final String permission;
   final List<ReportPage> reports;
 
   const ReportCategory({

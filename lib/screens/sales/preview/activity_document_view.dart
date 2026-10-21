@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../screens/home/fragment/setting/controller_home_settings.dart';
 import '../../../service/service_currency.dart';
+import '../../../service/service_whatsapp.dart';
 import '../../../util/number_to_words.dart';
 import 'service_gst_pdf.dart';
 
@@ -135,6 +136,17 @@ class ActivityDocumentView extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          const SizedBox(width: 10),
+          ElevatedButton.icon(
+            onPressed: () => _shareToWhatsApp(context),
+            icon: const Icon(Icons.chat_rounded, size: 18),
+            label: const Text('WhatsApp'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
@@ -705,6 +717,210 @@ class ActivityDocumentView extends StatelessWidget {
       await ServiceGstPdf.printDocument(doc);
     } catch (e) {
       Get.snackbar('Error', 'Failed to print document: $e', backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  Future<void> _shareToWhatsApp(BuildContext context) async {
+    final phone = model.partyPhone?.trim() ?? '';
+    if (phone.isNotEmpty && phone.replaceAll(RegExp(r'\D'), '').length >= 10) {
+      _confirmAndSendWhatsApp(context, phone);
+    } else {
+      _promptPhoneForWhatsApp(context);
+    }
+  }
+
+  void _confirmAndSendWhatsApp(BuildContext context, String phone) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: Color(0xFF25D366),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.chat_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Text('Send ${model.title} on WhatsApp', style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF25D366).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 30),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${model.title} #${model.docNumber}.pdf',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        Text(
+                          'Total: ₹${model.grandTotal.toStringAsFixed(2)}',
+                          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Send document PDF to this WhatsApp number?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              phone,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+            onPressed: () {
+              Get.back();
+              _dispatchWhatsApp(phone);
+            },
+            icon: const Icon(Icons.send_rounded, size: 16),
+            label: const Text('Send PDF'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _promptPhoneForWhatsApp(BuildContext context) {
+    final phoneController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Enter WhatsApp Number', style: TextStyle(fontSize: 16)),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF25D366),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.chat_rounded, color: Colors.white, size: 26),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Enter customer mobile number to send the invoice PDF directly on WhatsApp.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                maxLength: 10,
+                decoration: InputDecoration(
+                  labelText: 'Mobile Number'.tr,
+                  prefixText: '+91 ',
+                  prefixIcon: const Icon(Icons.phone_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                ),
+                validator: (val) {
+                  if (val == null || val.trim().length != 10) {
+                    return 'Enter valid 10-digit mobile number';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+            onPressed: () {
+              if (formKey.currentState?.validate() == true) {
+                Get.back();
+                _confirmAndSendWhatsApp(context, phoneController.text.trim());
+              }
+            },
+            child: Text('continue_btn'.tr),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _dispatchWhatsApp(String phone) async {
+    try {
+      final doc = await ServiceGstPdf.generateDocument(
+        type: model.type,
+        docNumber: model.docNumber,
+        docDate: model.docDate,
+        docTime: model.docTime,
+        dueDate: model.dueDate,
+        validityDate: model.validityDate,
+        partyName: model.partyName,
+        partyPhone: model.partyPhone,
+        partyAddress: model.partyAddress,
+        partyGstin: model.partyGstin,
+        items: model.items,
+        subtotal: model.subtotal,
+        discount: model.discount,
+        taxAmount: model.taxAmount,
+        cgstAmount: model.cgstAmount,
+        sgstAmount: model.sgstAmount,
+        igstAmount: model.igstAmount,
+        additionalCharges: model.additionalCharges,
+        roundOff: model.roundOff,
+        grandTotal: model.grandTotal,
+        amountReceived: model.amountReceived,
+        balanceDue: model.balanceDue,
+        notes: model.notes,
+        termsConditions: model.termsConditions,
+      );
+      final file = await ServiceGstPdf.saveAndGetFile(doc, '${model.title}_${model.docNumber}');
+
+      final settings = Get.isRegistered<ControllerHomeSettings>()
+          ? Get.find<ControllerHomeSettings>()
+          : Get.put(ControllerHomeSettings());
+
+      await ServiceWhatsApp.dispatchInvoicePdf(
+        pdfFile: file,
+        phone: phone,
+        invoiceNumber: model.docNumber,
+        storeName: settings.rxStoreName.value,
+        total: model.grandTotal,
+        customerName: model.partyName,
+        settings: settings,
+      );
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to send WhatsApp document: $e',
+          backgroundColor: Colors.red, colorText: Colors.white);
     }
   }
 

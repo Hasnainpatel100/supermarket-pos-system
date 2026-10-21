@@ -1,12 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../service/service_bill_pdf.dart';
+import '../../../../service/service_currency.dart';
+import '../../../../service/service_whatsapp.dart';
 import '../../../../util/snackbar_util.dart';
 import '../setting/controller_home_settings.dart';
 import '../pos/controller_home_pos.dart';
@@ -20,9 +19,13 @@ class DialogBillDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = Get.find<ControllerHomeSettings>();
-    final colorScheme = Theme.of(context).colorScheme;
-    final currencyFormat = NumberFormat.simpleCurrency(locale: 'en_IN');
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
+    final currencyFormat = NumberFormat.currency(symbol: currencySymbol);
     final date = bill.createdAtUtcMs != null
         ? DateTime.fromMillisecondsSinceEpoch(
             bill.createdAtUtcMs!,
@@ -690,6 +693,9 @@ class DialogBillDetail extends StatelessWidget {
     String phone, {
     bool isFromBill = false,
   }) {
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
     Get.dialog(
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -730,7 +736,7 @@ class DialogBillDetail extends StatelessWidget {
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         Text(
-                          'Total: ₹${(bill.grandTotal ?? 0).toStringAsFixed(2)}',
+                          'Total: $currencySymbol${(bill.grandTotal ?? 0).toStringAsFixed(2)}',
                           style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ],
@@ -868,57 +874,17 @@ class DialogBillDetail extends StatelessWidget {
           : '80mm';
       final pdfFile = await ServiceBillPdf.generate(bill, settings, paperSize: paperSize);
 
-      final storeName = settings.rxStoreName.value;
       final billNo = bill.billNo ?? '${bill.id}';
-      final customerName = bill.customerName?.isNotEmpty == true
-          ? bill.customerName!
-          : 'Valued Customer';
-      final total = (bill.grandTotal ?? 0).toStringAsFixed(2);
 
-      final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
-      final targetPhone = cleanPhone.startsWith('91') && cleanPhone.length == 12
-          ? cleanPhone
-          : (cleanPhone.length == 10 ? '91$cleanPhone' : cleanPhone);
-
-      final caption = '🧾 *Tax Invoice / Bill #$billNo*\n'
-          '🏪 *$storeName*\n'
-          '👤 *Customer:* $customerName\n'
-          '💰 *Net Payable:* ₹$total\n'
-          '⭐ *Thank you for shopping with us!* Please find attached your bill PDF.';
-
-      // 1. Share PDF file via system share (attaches actual PDF document)
-      // ignore: deprecated_member_use
-      await Share.shareXFiles(
-        [
-          XFile(
-            pdfFile.path,
-            mimeType: 'application/pdf',
-            name: 'Bill_$billNo.pdf',
-          ),
-        ],
-        text: caption,
-        subject: 'Bill #$billNo from $storeName',
+      await ServiceWhatsApp.dispatchInvoicePdf(
+        pdfFile: pdfFile,
+        phone: phone,
+        invoiceNumber: billNo,
+        storeName: settings.rxStoreName.value,
+        total: bill.grandTotal ?? 0.0,
+        customerName: bill.customerName,
+        settings: settings,
       );
-
-      // 2. On Windows Desktop, copy PDF directly to clipboard and open WhatsApp
-      if (Platform.isWindows) {
-        try {
-          await Process.run('powershell', [
-            '-NoProfile',
-            '-Command',
-            'Set-Clipboard -Path "${pdfFile.path}"',
-          ]);
-        } catch (_) {}
-
-        final waUrl = Uri.parse('https://wa.me/$targetPhone');
-        await launchUrl(waUrl, mode: LaunchMode.externalApplication);
-
-        try {
-          await Process.run('explorer.exe', ['/select,', pdfFile.path]);
-        } catch (_) {}
-
-        SnackbarUtil.showSuccess('PDF copied to clipboard! Press Ctrl+V in WhatsApp to attach.');
-      }
     } catch (e) {
       Get.snackbar(
         '❌ Failed',

@@ -7,6 +7,7 @@ import 'package:super_market/widget/my_card.dart';
 import 'package:super_market/widget/search_app_bar_field.dart';
 import '../../../../../enums/enum_purchase_status.dart';
 import '../../../../../model/entity_purchase.dart';
+import '../../../../../service/service_currency.dart';
 import '../../../../../util/snackbar_util.dart';
 import '../activity_receive_goods.dart';
 import 'activity_payment_form.dart';
@@ -225,6 +226,9 @@ class FragmentHomePurchase extends StatelessWidget {
     // ── Delete is only available for POs created TODAY ──
     final canDelete = controller.canDeletePurchase(p);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
 
     final date = p.purchaseDateUtcMs != null
         ? DateFormat('dd MMM yyyy').format(
@@ -266,7 +270,7 @@ class FragmentHomePurchase extends StatelessWidget {
 
       // Total
       DataCell(Text(
-        '₹ ${(p.totalAmount ?? 0).toStringAsFixed(2)}',
+        '$currencySymbol ${(p.totalAmount ?? 0).toStringAsFixed(2)}',
         style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? Colors.white : null),
       )),
 
@@ -527,6 +531,9 @@ class FragmentHomePurchase extends StatelessWidget {
       );
     }
 
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -535,7 +542,7 @@ class FragmentHomePurchase extends StatelessWidget {
         border: Border.all(color: Colors.red.withValues(alpha: isDark ? 0.5 : 0.25)),
       ),
       child: Text(
-        '₹ ${outstanding.toStringAsFixed(2)}',
+        '$currencySymbol ${outstanding.toStringAsFixed(2)}',
         style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
@@ -687,6 +694,9 @@ class FragmentHomePurchase extends StatelessWidget {
     final status = PurchaseStatus.values[p.status ?? 0];
     final statusColor = Color(status.colorValue);
     final items = controller.getItemsForPurchase(p.id);
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
 
     Get.dialog(
       Dialog(
@@ -797,7 +807,7 @@ class FragmentHomePurchase extends StatelessWidget {
                               ? Colors.orange.shade700
                               : Colors.grey),
                       _cell(
-                          '₹ ${item.lineTotal.toStringAsFixed(2)}'),
+                          '$currencySymbol ${item.lineTotal.toStringAsFixed(2)}'),
                     ])),
                   ],
                 ),
@@ -807,7 +817,7 @@ class FragmentHomePurchase extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  'Total: ₹ ${(p.totalAmount ?? 0).toStringAsFixed(2)}',
+                  'Total: $currencySymbol ${(p.totalAmount ?? 0).toStringAsFixed(2)}',
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16),
                 ),

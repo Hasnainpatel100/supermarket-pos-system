@@ -5,6 +5,7 @@ import 'package:super_market/widget/gradient_app_bar_title.dart';
 import 'package:super_market/widget/my_card.dart';
 import 'package:super_market/widget/search_app_bar_field.dart';
 import '../../../../../model/entity_supplier.dart';
+import '../../../../../service/service_currency.dart';
 import '../../../../../util/snackbar_util.dart';
 import 'activity_supplier_form.dart';
 import 'controller_home_supplier.dart';
@@ -282,6 +283,9 @@ class FragmentHomeSupplier extends StatelessWidget {
       return Text('—',
           style: TextStyle(color: isDark ? Colors.white60 : Colors.grey.shade400, fontSize: 13));
     }
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -290,7 +294,7 @@ class FragmentHomeSupplier extends StatelessWidget {
         border: Border.all(color: Colors.red.withValues(alpha: isDark ? 0.4 : 0.2)),
       ),
       child: Text(
-        '₹ ${amount.toStringAsFixed(2)}',
+        '$currencySymbol ${amount.toStringAsFixed(2)}',
         style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
@@ -506,6 +510,9 @@ class FragmentHomeSupplier extends StatelessWidget {
 
   void _showDetails(BuildContext context, EntitySupplier s) {
     final colorScheme = Theme.of(context).colorScheme;
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
     Get.dialog(
       Dialog(
         shape:
@@ -582,7 +589,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                               fontWeight: FontWeight.w500)),
                       Text(
                         (s.totalOutstanding ?? 0) > 0.001
-                            ? '₹ ${s.totalOutstanding!.toStringAsFixed(2)}'
+                            ? '$currencySymbol ${s.totalOutstanding!.toStringAsFixed(2)}'
                             : 'No dues — fully settled'.tr,
                         style: TextStyle(
                           fontSize: 16,

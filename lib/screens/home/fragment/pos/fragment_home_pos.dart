@@ -863,138 +863,171 @@ class _CustomerSection extends StatelessWidget {
         );
       }
 
-      // Not selected — show quick entry + autocomplete
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+          TextEditingController? searchFieldCtrl;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Autocomplete<EntityCustomer>(
-                  optionsBuilder: (TextEditingValue textEditingValue) {
-                    if (textEditingValue.text.isEmpty) return const Iterable<EntityCustomer>.empty();
-                    return controller.rxListCustomers.where((c) =>
-                        (c.name?.toLowerCase().contains(textEditingValue.text.toLowerCase()) ?? false) ||
-                        (c.phone?.contains(textEditingValue.text) ?? false));
-                  },
-                  displayStringForOption: (EntityCustomer option) => "${option.name} | ${option.phone ?? ''}",
-                  onSelected: (EntityCustomer selection) {
-                    session.rxSelectedCustomer.value = selection;
-                  },
-                  optionsViewBuilder: (context, onSelected, options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 6,
-                        borderRadius: BorderRadius.circular(12),
-                        shadowColor: cs.shadow.withValues(alpha: 0.15),
-                        child: Container(
-                          constraints: const BoxConstraints(maxHeight: 250, maxWidth: 380),
-                          decoration: BoxDecoration(
-                            color: cs.surface,
+              Row(
+                children: [
+                  Expanded(
+                    child: Autocomplete<EntityCustomer>(
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        if (textEditingValue.text.isEmpty) return const Iterable<EntityCustomer>.empty();
+                        return controller.rxListCustomers.where((c) =>
+                            (c.name?.toLowerCase().contains(textEditingValue.text.toLowerCase()) ?? false) ||
+                            (c.phone?.contains(textEditingValue.text) ?? false));
+                      },
+                      displayStringForOption: (EntityCustomer option) => "${option.name} | ${option.phone ?? ''}",
+                      onSelected: (EntityCustomer selection) {
+                        session.rxSelectedCustomer.value = selection;
+                      },
+                      optionsViewBuilder: (context, onSelected, options) {
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 6,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                            shadowColor: cs.shadow.withValues(alpha: 0.15),
+                            child: Container(
+                              constraints: const BoxConstraints(maxHeight: 250, maxWidth: 380),
+                              decoration: BoxDecoration(
+                                color: cs.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                              ),
+                              child: ListView.separated(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                shrinkWrap: true,
+                                itemCount: options.length,
+                                separatorBuilder: (_, _) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
+                                itemBuilder: (context, index) {
+                                  final c = options.elementAt(index);
+                                  return ListTile(
+                                    dense: true,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                    leading: CircleAvatar(
+                                      radius: 15,
+                                      backgroundColor: cs.secondaryContainer,
+                                      child: Text(
+                                        (c.name ?? '?')[0].toUpperCase(),
+                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: cs.onSecondaryContainer),
+                                      ),
+                                    ),
+                                    title: Text(c.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                                    subtitle: Text(c.phone ?? '-', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+                                    onTap: () => onSelected(c),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                          child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            shrinkWrap: true,
-                            itemCount: options.length,
-                            separatorBuilder: (_, _) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
-                            itemBuilder: (context, index) {
-                              final c = options.elementAt(index);
-                              return ListTile(
-                                dense: true,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                                leading: CircleAvatar(
-                                  radius: 15,
-                                  backgroundColor: cs.secondaryContainer,
-                                  child: Text(
-                                    (c.name ?? '?')[0].toUpperCase(),
-                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: cs.onSecondaryContainer),
-                                  ),
-                                ),
-                                title: Text(c.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-                                subtitle: Text(c.phone ?? '-', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
-                                onTap: () => onSelected(c),
-                              );
-                            },
+                        );
+                      },
+                      fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                        searchFieldCtrl = textController;
+                        return TextField(
+                          controller: textController,
+                          focusNode: focusNode,
+                          style: const TextStyle(fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: 'search_customer_hint'.tr,
+                            hintStyle: TextStyle(fontSize: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                            prefixIcon: Icon(Icons.person_search_rounded, size: 18, color: cs.primary),
+                            suffixIcon: textController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 16),
+                                    onPressed: () {
+                                      textController.clear();
+                                    },
+                                  )
+                                : null,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: cs.primary, width: 1.5),
+                            ),
+                            filled: true,
+                            fillColor: cs.surface,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           ),
-                        ),
-                      ),
-                    );
-                  },
-                  fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
-                    return TextField(
-                      controller: textController,
-                      focusNode: focusNode,
-                      style: const TextStyle(fontSize: 13),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    onPressed: () {
+                      final typedName = searchFieldCtrl?.text.trim();
+                      controller.openCustomerForm(
+                        initialName: typedName?.isNotEmpty == true ? typedName : null,
+                      );
+                    },
+                    icon: const Icon(Icons.add_rounded, size: 20),
+                    tooltip: 'add_new_customer'.tr.isNotEmpty ? 'add_new_customer'.tr : 'Add New Customer',
+                    style: IconButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.all(10),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Quick Entry Fields with Quick Save to Customer Master
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      style: const TextStyle(fontSize: 12),
                       decoration: InputDecoration(
-                        hintText: 'search_customer_hint'.tr,
-                        hintStyle: TextStyle(fontSize: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
-                        prefixIcon: Icon(Icons.person_search_rounded, size: 18, color: cs.primary),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                        labelText: 'customer_name'.tr,
+                        labelStyle: const TextStyle(fontSize: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      onChanged: (val) => session.rxQuickCustomerName.value = val,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      style: const TextStyle(fontSize: 12),
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        labelText: 'phone_number'.tr,
+                        labelStyle: const TextStyle(fontSize: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      onChanged: (val) => session.rxQuickCustomerPhone.value = val,
+                    ),
+                  ),
+                  Obx(() {
+                    final hasName = session.rxQuickCustomerName.value.trim().isNotEmpty;
+                    if (!hasName) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: IconButton.filled(
+                        onPressed: controller.saveQuickCustomerToMaster,
+                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                        tooltip: 'Save to Customer Master & Map to Cart',
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.all(9),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: cs.primary, width: 1.5),
-                        ),
-                        filled: true,
-                        fillColor: cs.surface,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
                     );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton.filledTonal(
-                onPressed: controller.openCustomerForm,
-                icon: const Icon(Icons.add_rounded, size: 20),
-                tooltip: 'full_customer_form'.tr,
-                style: IconButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.all(10),
-                ),
+                  }),
+                ],
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          // Quick Entry Fields
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  style: const TextStyle(fontSize: 12),
-                  decoration: InputDecoration(
-                    labelText: 'customer_name'.tr,
-                    labelStyle: const TextStyle(fontSize: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  onChanged: (val) => session.rxQuickCustomerName.value = val,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  style: const TextStyle(fontSize: 12),
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'phone_number'.tr,
-                    labelStyle: const TextStyle(fontSize: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  onChanged: (val) => session.rxQuickCustomerPhone.value = val,
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
+          );
     });
   }
 }

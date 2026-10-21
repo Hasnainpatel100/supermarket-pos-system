@@ -1020,5 +1020,16 @@
   "Net Amount": "निव्वळ रक्कम",
   "Week": "आठवडा",
   "Year": "वर्ष",
-  "showing": "दाखवत आहे"
+  "showing": "दाखवत आहे",
+  "Administration": "प्रशासन",
+  "Users": "वापरकर्ते",
+  "Branches": "शाखा",
+  "Brands": "ब्रँड्स",
+  "API Users": "एपीआय वापरकर्ते",
+  "Backup & Recovery": "बॅकअप आणि पुनर्प्राप्ती",
+  "Expenses": "खर्च",
+  "save_to_customer_master": "ग्राहक सेव्ह करा आणि कार्टला जोडा",
+  "quick_add_customer": "त्वरित ग्राहक जोडा",
+  "walk_in_customer": "वॉक-इन ग्राहक",
+  "customer_mapped_success": "ग्राहक सेव्ह केला आणि कार्टला जोडला"
 }

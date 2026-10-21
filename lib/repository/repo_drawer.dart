@@ -68,26 +68,11 @@ class RepoDrawer {
   }
 
   static List<ModelDrawerMenu> mainMenus = [
-    ModelDrawerMenu(
-      menu: EnumMainMenu.item,
-      titleKey: 'item',
-      icon: Icons.widgets_rounded,
-      permissions: [
-        EnumPermission.itemCreate,
-        EnumPermission.itemUpdate,
-        EnumPermission.itemView,
-        EnumPermission.stockIn,
-        EnumPermission.stockOut,
-        EnumPermission.stockAdjust,
-        EnumPermission.stockCount,
-        EnumPermission.stockView,
-        EnumPermission.expiryManage,
-      ],
-    ),
+    // 1. Point of Sale (Billing) - Primary Daily Cashier Operation
     ModelDrawerMenu(
       menu: EnumMainMenu.pos,
       titleKey: 'pos',
-      icon: Icons.edit_note_rounded,
+      icon: Icons.point_of_sale_rounded,
       permissions: [
         EnumPermission.posBillCreate,
         EnumPermission.posBillHold,
@@ -100,6 +85,7 @@ class RepoDrawer {
       ],
     ),
 
+    // 2. Sales (Invoices, Quotations, Sales Returns)
     ModelDrawerMenu(
       menu: EnumMainMenu.salesGroup,
       titleKey: 'sales',
@@ -139,39 +125,51 @@ class RepoDrawer {
       ],
     ),
 
+    // 3. Accounts & Register (Day/Shift Management, Cash In / Out)
+    ModelDrawerMenu(
+      menu: EnumMainMenu.account,
+      titleKey: 'account',
+      icon: Icons.account_balance_wallet_rounded,
+      permissions: [EnumPermission.account],
+    ),
+
+    // 4. Products & Catalog (Items)
+    ModelDrawerMenu(
+      menu: EnumMainMenu.item,
+      titleKey: 'item',
+      icon: Icons.inventory_2_rounded,
+      permissions: [
+        EnumPermission.itemCreate,
+        EnumPermission.itemUpdate,
+        EnumPermission.itemView,
+        EnumPermission.stockIn,
+        EnumPermission.stockOut,
+        EnumPermission.stockAdjust,
+        EnumPermission.stockCount,
+        EnumPermission.stockView,
+        EnumPermission.expiryManage,
+      ],
+    ),
+
+    // 5. Stock & Inventory History
     ModelDrawerMenu(
       menu: EnumMainMenu.stocks,
       titleKey: 'stocks history',
-      icon: Icons.inventory,
+      icon: Icons.warehouse_rounded,
       permissions: [
         EnumPermission.stockAdjust,
         EnumPermission.stockCount,
-        EnumPermission.stockAdjust,
         EnumPermission.stockIn,
         EnumPermission.stockOut,
         EnumPermission.stockView,
       ],
     ),
 
-    ModelDrawerMenu(
-      menu: EnumMainMenu.customer,
-      titleKey: 'customer',
-      icon: Icons.local_offer_outlined,
-      permissions: [
-        EnumPermission.priceView,
-        EnumPermission.priceUpdate,
-        EnumPermission.discountApply,
-        EnumPermission.discountOverride,
-        EnumPermission.customerEdit,
-        EnumPermission.customerEdit,
-        EnumPermission.customerDelete,
-      ],
-    ),
-
+    // 6. Purchases & Suppliers
     ModelDrawerMenu(
       menu: EnumMainMenu.purchaseSupplier,
       titleKey: 'purchase_supplier',
-      icon: Icons.shopping_cart_outlined,
+      icon: Icons.shopping_bag_outlined,
       permissions: [
         EnumPermission.purchaseCreate,
         EnumPermission.purchaseReceive,
@@ -181,7 +179,7 @@ class RepoDrawer {
         ModelDrawerMenu(
           menu: EnumMainMenu.purchase,
           titleKey: 'purchase',
-          icon: Icons.shopping_cart,
+          icon: Icons.shopping_cart_outlined,
           permissions: [
             EnumPermission.purchaseCreate,
             EnumPermission.purchaseReceive,
@@ -190,33 +188,86 @@ class RepoDrawer {
         ModelDrawerMenu(
           menu: EnumMainMenu.supplier,
           titleKey: 'supplier',
-          icon: Icons.supervisor_account,
+          icon: Icons.supervisor_account_outlined,
           permissions: [EnumPermission.supplierManage],
         ),
       ],
     ),
 
-    // Reports: built from `reportCategories` below. To add a new report,
-    // add one `_ReportPage` entry to its category's `reports` list. To add
-    // a whole new category, add a new `EnumMainMenu` value for it (and one
-    // per report inside it), plus a new `EnumPermission` to gate it, then
-    // add a `_ReportCategory` entry here. Nothing else needs to change —
-    // the drawer nesting, permission filtering, and navigation are all
-    // generated from this config.
-    buildReportsMenu(),
+    // 7. Customers & CRM
+    ModelDrawerMenu(
+      menu: EnumMainMenu.customer,
+      titleKey: 'customer',
+      icon: Icons.people_alt_outlined,
+      permissions: [
+        EnumPermission.priceView,
+        EnumPermission.priceUpdate,
+        EnumPermission.discountApply,
+        EnumPermission.discountOverride,
+        EnumPermission.customerEdit,
+        EnumPermission.customerDelete,
+      ],
+    ),
 
+    // 8. Store Expenses
     ModelDrawerMenu(
       menu: EnumMainMenu.expenses,
       titleKey: 'Expenses',
-      icon: Icons.payment_outlined,
+      icon: Icons.payments_outlined,
       permissions: [EnumPermission.expenses],
     ),
+
+    // 9. Reports & Analytics
+    buildReportsMenu(),
+
+    // 10. Store Administration (Users, Branches, Brands, API Users)
     ModelDrawerMenu(
-      menu: EnumMainMenu.account,
-      titleKey: 'account',
-      icon: Icons.account_balance,
-      permissions: [EnumPermission.account],
+      menu: EnumMainMenu.administration,
+      titleKey: 'Administration',
+      icon: Icons.manage_accounts_rounded,
+      permissions: [
+        EnumPermission.userCreate,
+        EnumPermission.userUpdate,
+        EnumPermission.userDisable,
+        EnumPermission.roleAssign,
+        EnumPermission.branchManage,
+        EnumPermission.brandManage,
+        EnumPermission.apiUserManage,
+      ],
+      children: [
+        ModelDrawerMenu(
+          menu: EnumMainMenu.systemUsers,
+          titleKey: 'Users',
+          icon: Icons.group_outlined,
+          permissions: [
+            EnumPermission.userCreate,
+            EnumPermission.userUpdate,
+            EnumPermission.userDisable,
+            EnumPermission.roleAssign,
+          ],
+        ),
+        ModelDrawerMenu(
+          menu: EnumMainMenu.branch,
+          titleKey: 'Branches',
+          icon: Icons.storefront_outlined,
+          permissions: [EnumPermission.branchManage],
+        ),
+        ModelDrawerMenu(
+          menu: EnumMainMenu.brand,
+          titleKey: 'Brands',
+          icon: Icons.business_outlined,
+          permissions: [EnumPermission.brandManage],
+        ),
+        ModelDrawerMenu(
+          menu: EnumMainMenu.apiUser,
+          titleKey: 'API Users',
+          icon: Icons.vpn_key_outlined,
+          permissions: [EnumPermission.apiUserManage],
+        ),
+      ],
     ),
+
+    // 11. System Maintenance
     ModelDrawerMenu(
       menu: EnumMainMenu.system,
       titleKey: 'system',
@@ -225,7 +276,6 @@ class RepoDrawer {
         EnumPermission.backupRestore,
         EnumPermission.auditLogView,
       ],
-
       children: [
         ModelDrawerMenu(
           menu: EnumMainMenu.backup,

@@ -1162,7 +1162,7 @@ class _PrinterTab extends StatelessWidget {
                           title: Row(
                             children: [
                               const Text(
-                                'Payment Soundbox Voice Alerts',
+                                'Digital Software Soundbox (PC Speaker)',
                                 style: TextStyle(
                                   fontSize: 13.5,
                                   fontWeight: FontWeight.w600,
@@ -1176,7 +1176,7 @@ class _PrinterTab extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  'SMART AUDIO',
+                                  'IN-APP TTS',
                                   style: TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.bold,
@@ -1188,7 +1188,7 @@ class _PrinterTab extends StatelessWidget {
                             ],
                           ),
                           subtitle: Text(
-                            'Announce received payments aloud like a digital soundbox (e.g., "Payment of 450 rupees received via UPI")',
+                            'Uses PC speakers to announce payments aloud like a digital soundbox (saves physical soundbox rental). Turn OFF if you already use a physical hardware Paytm/PhonePe soundbox.',
                             style: TextStyle(
                               fontSize: 11.5,
                               color: colorScheme.onSurface.withValues(alpha: 0.55),

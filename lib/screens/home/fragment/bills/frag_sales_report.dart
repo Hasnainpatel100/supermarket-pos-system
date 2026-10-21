@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../service/service_currency.dart';
 import '../../../../widget/my_card.dart';
 import '../../../../widget/report_date_filter_dropdown.dart';
 import 'controller_sales_report.dart';
@@ -28,7 +29,10 @@ class FragSalesReport extends StatelessWidget {
     }
 
     final colorScheme = Theme.of(context).colorScheme;
-    final currFmt = NumberFormat.simpleCurrency(locale: 'en_IN');
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
+    final currFmt = NumberFormat.currency(symbol: '$currencySymbol ', decimalDigits: 2);
 
     return Scaffold(
       backgroundColor: colorScheme.surface,

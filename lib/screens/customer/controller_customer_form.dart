@@ -20,21 +20,27 @@ class ControllerCustomerForm extends GetxController {
   late TextEditingController notesController;
 
   final EntityCustomer? editingCustomer;
+  final String? initialName;
+  final String? initialPhone;
   late Box<EntityCustomer> _boxCustomer;
 
   // VIP toggle
   final RxBool rxIsVip = false.obs;
 
-  ControllerCustomerForm({this.editingCustomer});
+  ControllerCustomerForm({
+    this.editingCustomer,
+    this.initialName,
+    this.initialPhone,
+  });
 
   @override
   void onInit() {
     super.onInit();
     _boxCustomer = Get.find<ServiceObjectBox>().box<EntityCustomer>();
 
-    // Initialize controllers with existing data or empty
-    nameController = TextEditingController(text: editingCustomer?.name ?? '');
-    phoneController = TextEditingController(text: editingCustomer?.phone ?? '');
+    // Initialize controllers with existing data or initial passed values
+    nameController = TextEditingController(text: editingCustomer?.name ?? initialName ?? '');
+    phoneController = TextEditingController(text: editingCustomer?.phone ?? initialPhone ?? '');
     emailController = TextEditingController(text: editingCustomer?.email ?? '');
     addressController = TextEditingController(
       text: editingCustomer?.address ?? '',

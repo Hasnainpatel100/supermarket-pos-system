@@ -26,12 +26,12 @@ enum ProfitReportType {
 
 extension ProfitReportTypeLabel on ProfitReportType {
   String get label => switch (this) {
-    ProfitReportType.profitSummary   => 'Profit Summary',
-    ProfitReportType.itemProfit      => 'Item-wise Profit',
-    ProfitReportType.categoryProfit  => 'Category-wise Profit',
-    ProfitReportType.brandProfit     => 'Brand-wise Profit',
-    ProfitReportType.dailyProfit     => 'Daily Profit',
-    ProfitReportType.monthlyProfit   => 'Monthly Profit',
+    ProfitReportType.profitSummary   => 'profit_summary'.tr,
+    ProfitReportType.itemProfit      => 'item_profit'.tr,
+    ProfitReportType.categoryProfit  => 'category_profit'.tr,
+    ProfitReportType.brandProfit     => 'brand_profit'.tr,
+    ProfitReportType.dailyProfit     => 'daily_profit'.tr,
+    ProfitReportType.monthlyProfit   => 'monthly_profit'.tr,
   };
 
   IconData get icon => switch (this) {

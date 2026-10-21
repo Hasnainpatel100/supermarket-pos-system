@@ -85,196 +85,180 @@ class ActivityHome extends StatelessWidget {
 
           Expanded(
             child: Obx(() {
-              final _ = localeService.rxLocale.value;
-              // return Center(
-              //   child: Text(controller.selectedMainMenu.value.toString()),
-              // );
-              if (controller.selectedMainMenu.value == EnumMainMenu.dashboard) {
-                return FragHomeDashboard();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.pos) {
-                return FragmentHomePos();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.item) {
-                return FragmentHomeItem();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.stocks) {
-                return FragmentHomeStock();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.customer) {
-                return FragmentHomeCustomer();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.salesInvoices ||
-                  controller.selectedMainMenu.value == EnumMainMenu.salesGroup) {
-                return const FragSalesInvoices();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.quotationEstimate) {
-                return const FragQuotations();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.salesReturn) {
-                return const FragSalesReturns();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reports) {
-                return const FragSalesReport();
-              }
-              if(controller.selectedMainMenu.value == EnumMainMenu.purchase){
-                return FragmentHomePurchase();
-              }
-              if(controller.selectedMainMenu.value == EnumMainMenu.supplier){
-                return FragmentHomeSupplier();
-              }
-              if (controller.selectedMainMenu.value ==
-                  EnumMainMenu.systemUsers) {
-                return FragHomeUsers(entityUser: controller.rxUser.value);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.apiUser) {
-                return const FragHomeApiUsers();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.settings) {
-                return FragHomeSettings();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.logout) {
-                return FragHomeLogout();
-              }
-              if(controller.selectedMainMenu.value == EnumMainMenu.expenses){
-                return FragmentHomeExpenses();
-              }
-
-              if (controller.selectedMainMenu.value == EnumMainMenu.account) {
-                return const FragmentHomeAccount();
-              }
-
-              if (controller.selectedMainMenu.value == EnumMainMenu.backup) {
-                return const FragHomeBackup();
-              }
-
-              if (controller.selectedMainMenu.value == EnumMainMenu.auditLogs) {
-                return const FragAuditLogs();
-              }
-
-              if (controller.selectedMainMenu.value == EnumMainMenu.brand) {
-                return const FragmentHomeBrand();
-              }
-
-              if (controller.selectedMainMenu.value == EnumMainMenu.branch) {
-                return const FragmentHomeBranch();
-              }
-
-              // ── Sales Reports (single entry under Reports → Sales Reports) ──
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportGroupSales) {
-                return const FragSalesReport();
-              }
-
-              // ── Inventory Reports (single entry under Reports → Inventory Reports) ──
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportGroupInventory) {
-                return const FragInventoryReport();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportCurrentStock) {
-                return const FragInventoryReport(initialReportType: InventoryReportType.currentStock);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportLowStock) {
-                return const FragInventoryReport(initialReportType: InventoryReportType.lowStock);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportOutOfStock) {
-                return const FragInventoryReport(initialReportType: InventoryReportType.outOfStock);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportStockMovement) {
-                return const FragInventoryReport(initialReportType: InventoryReportType.stockMovement);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportStockAdjustment) {
-                return const FragInventoryReport(initialReportType: InventoryReportType.stockAdjustment);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportStockValuation) {
-                return const FragInventoryReport(initialReportType: InventoryReportType.stockValuation);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportExpiry) {
-                return const FragInventoryReport(initialReportType: InventoryReportType.expiry);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportNearExpiry) {
-                return const FragInventoryReport(initialReportType: InventoryReportType.nearExpiry);
-              }
-
-              // ── Purchase Reports (single entry under Reports → Purchase Reports) ──
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportGroupPurchase) {
-                return const FragPurchaseReport();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportPurchaseSummary) {
-                return const FragPurchaseReport(initialReportType: PurchaseReportType.purchaseSummary);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportPurchaseDetail) {
-                return const FragPurchaseReport(initialReportType: PurchaseReportType.purchaseDetail);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportSupplierPurchase) {
-                return const FragPurchaseReport(initialReportType: PurchaseReportType.supplierPurchase);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportPendingPurchaseOrders) {
-                return const FragPurchaseReport(initialReportType: PurchaseReportType.pendingPurchaseOrders);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportGroupReturn) {
-                return const FragReturnReport();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportSalesReturn) {
-                return const FragReturnReport(initialReportType: ReturnReportType.salesReturn);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportPurchaseReturn) {
-                return const FragReturnReport(initialReportType: ReturnReportType.purchaseReturn);
-              }
-
-              // ── Profit Reports (single entry under Reports → Profit Reports) ──
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportGroupProfit) {
-                return const FragProfitReport();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportGrossProfit) {
-                return const FragProfitReport(initialReportType: ProfitReportType.profitSummary);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportProfitByItem) {
-                return const FragProfitReport(initialReportType: ProfitReportType.itemProfit);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportProfitByCategory) {
-                return const FragProfitReport(initialReportType: ProfitReportType.categoryProfit);
-              }
-
-              // ── Supplier Reports (single entry under Reports → Supplier Reports) ──
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportGroupSupplier) {
-                return const FragSupplierReport();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportSupplierPurchaseHistory) {
-                return const FragSupplierReport(initialReportType: SupplierReportType.purchaseHistory);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportSupplierOutstanding) {
-                return const FragSupplierReport(initialReportType: SupplierReportType.outstanding);
-              }
-
-              // ── Cashier Reports (single entry under Reports → Cashier Reports) ──
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportGroupCashier) {
-                return const FragCashierReport();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportCashierSales) {
-                return const FragCashierReport(initialReportType: CashierReportType.cashierSales);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportCashierShift) {
-                return const FragCashierReport(initialReportType: CashierReportType.cashierShift);
-              }
-
-              // ── Financial Reports (single entry under Reports → Financial Reports) ──
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportGroupFinancial) {
-                return const FragFinancialReport();
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportPaymentCollection) {
-                return const FragFinancialReport(initialReportType: FinancialReportType.paymentCollection);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportDailyCashClosing) {
-                return const FragFinancialReport(initialReportType: FinancialReportType.dailyCashClosing);
-              }
-              if (controller.selectedMainMenu.value == EnumMainMenu.reportTaxGST) {
-                return const FragFinancialReport(initialReportType: FinancialReportType.taxGST);
-              }
-
-              return FragComingSoon();
+              final activeLocale = localeService.rxLocale.value.toString();
+              final selectedMenu = controller.selectedMainMenu.value;
+              return KeyedSubtree(
+                key: ValueKey('${selectedMenu.name}_$activeLocale'),
+                child: _buildFragment(selectedMenu, controller.rxUser.value),
+              );
             }),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildFragment(EnumMainMenu menu, EntityUser? user) {
+    if (menu == EnumMainMenu.dashboard) {
+      return FragHomeDashboard();
+    }
+    if (menu == EnumMainMenu.pos) {
+      return FragmentHomePos();
+    }
+    if (menu == EnumMainMenu.item) {
+      return FragmentHomeItem();
+    }
+    if (menu == EnumMainMenu.stocks) {
+      return FragmentHomeStock();
+    }
+    if (menu == EnumMainMenu.customer) {
+      return FragmentHomeCustomer();
+    }
+    if (menu == EnumMainMenu.salesInvoices || menu == EnumMainMenu.salesGroup) {
+      return const FragSalesInvoices();
+    }
+    if (menu == EnumMainMenu.quotationEstimate) {
+      return const FragQuotations();
+    }
+    if (menu == EnumMainMenu.salesReturn) {
+      return const FragSalesReturns();
+    }
+    if (menu == EnumMainMenu.reports) {
+      return const FragSalesReport();
+    }
+    if (menu == EnumMainMenu.purchase) {
+      return FragmentHomePurchase();
+    }
+    if (menu == EnumMainMenu.supplier) {
+      return FragmentHomeSupplier();
+    }
+    if (menu == EnumMainMenu.systemUsers || menu == EnumMainMenu.administration) {
+      return FragHomeUsers(entityUser: user);
+    }
+    if (menu == EnumMainMenu.apiUser) {
+      return const FragHomeApiUsers();
+    }
+    if (menu == EnumMainMenu.settings) {
+      return FragHomeSettings();
+    }
+    if (menu == EnumMainMenu.logout) {
+      return FragHomeLogout();
+    }
+    if (menu == EnumMainMenu.expenses) {
+      return FragmentHomeExpenses();
+    }
+    if (menu == EnumMainMenu.account) {
+      return const FragmentHomeAccount();
+    }
+    if (menu == EnumMainMenu.backup) {
+      return const FragHomeBackup();
+    }
+    if (menu == EnumMainMenu.auditLogs) {
+      return const FragAuditLogs();
+    }
+    if (menu == EnumMainMenu.brand) {
+      return const FragmentHomeBrand();
+    }
+    if (menu == EnumMainMenu.branch) {
+      return const FragmentHomeBranch();
+    }
+    if (menu == EnumMainMenu.reportGroupSales) {
+      return const FragSalesReport();
+    }
+    if (menu == EnumMainMenu.reportGroupInventory) {
+      return const FragInventoryReport();
+    }
+    if (menu == EnumMainMenu.reportCurrentStock) {
+      return const FragInventoryReport(initialReportType: InventoryReportType.currentStock);
+    }
+    if (menu == EnumMainMenu.reportLowStock) {
+      return const FragInventoryReport(initialReportType: InventoryReportType.lowStock);
+    }
+    if (menu == EnumMainMenu.reportOutOfStock) {
+      return const FragInventoryReport(initialReportType: InventoryReportType.outOfStock);
+    }
+    if (menu == EnumMainMenu.reportStockMovement) {
+      return const FragInventoryReport(initialReportType: InventoryReportType.stockMovement);
+    }
+    if (menu == EnumMainMenu.reportStockAdjustment) {
+      return const FragInventoryReport(initialReportType: InventoryReportType.stockAdjustment);
+    }
+    if (menu == EnumMainMenu.reportStockValuation) {
+      return const FragInventoryReport(initialReportType: InventoryReportType.stockValuation);
+    }
+    if (menu == EnumMainMenu.reportExpiry) {
+      return const FragInventoryReport(initialReportType: InventoryReportType.expiry);
+    }
+    if (menu == EnumMainMenu.reportNearExpiry) {
+      return const FragInventoryReport(initialReportType: InventoryReportType.nearExpiry);
+    }
+    if (menu == EnumMainMenu.reportGroupPurchase) {
+      return const FragPurchaseReport();
+    }
+    if (menu == EnumMainMenu.reportPurchaseSummary) {
+      return const FragPurchaseReport(initialReportType: PurchaseReportType.purchaseSummary);
+    }
+    if (menu == EnumMainMenu.reportPurchaseDetail) {
+      return const FragPurchaseReport(initialReportType: PurchaseReportType.purchaseDetail);
+    }
+    if (menu == EnumMainMenu.reportSupplierPurchase) {
+      return const FragPurchaseReport(initialReportType: PurchaseReportType.supplierPurchase);
+    }
+    if (menu == EnumMainMenu.reportPendingPurchaseOrders) {
+      return const FragPurchaseReport(initialReportType: PurchaseReportType.pendingPurchaseOrders);
+    }
+    if (menu == EnumMainMenu.reportGroupReturn) {
+      return const FragReturnReport();
+    }
+    if (menu == EnumMainMenu.reportSalesReturn) {
+      return const FragReturnReport(initialReportType: ReturnReportType.salesReturn);
+    }
+    if (menu == EnumMainMenu.reportPurchaseReturn) {
+      return const FragReturnReport(initialReportType: ReturnReportType.purchaseReturn);
+    }
+    if (menu == EnumMainMenu.reportGroupProfit) {
+      return const FragProfitReport();
+    }
+    if (menu == EnumMainMenu.reportGrossProfit) {
+      return const FragProfitReport(initialReportType: ProfitReportType.profitSummary);
+    }
+    if (menu == EnumMainMenu.reportProfitByItem) {
+      return const FragProfitReport(initialReportType: ProfitReportType.itemProfit);
+    }
+    if (menu == EnumMainMenu.reportProfitByCategory) {
+      return const FragProfitReport(initialReportType: ProfitReportType.categoryProfit);
+    }
+    if (menu == EnumMainMenu.reportGroupSupplier) {
+      return const FragSupplierReport();
+    }
+    if (menu == EnumMainMenu.reportSupplierPurchaseHistory) {
+      return const FragSupplierReport(initialReportType: SupplierReportType.purchaseHistory);
+    }
+    if (menu == EnumMainMenu.reportSupplierOutstanding) {
+      return const FragSupplierReport(initialReportType: SupplierReportType.outstanding);
+    }
+    if (menu == EnumMainMenu.reportGroupCashier) {
+      return const FragCashierReport();
+    }
+    if (menu == EnumMainMenu.reportCashierSales) {
+      return const FragCashierReport(initialReportType: CashierReportType.cashierSales);
+    }
+    if (menu == EnumMainMenu.reportCashierShift) {
+      return const FragCashierReport(initialReportType: CashierReportType.cashierShift);
+    }
+    if (menu == EnumMainMenu.reportGroupFinancial) {
+      return const FragFinancialReport();
+    }
+    if (menu == EnumMainMenu.reportPaymentCollection) {
+      return const FragFinancialReport(initialReportType: FinancialReportType.paymentCollection);
+    }
+    if (menu == EnumMainMenu.reportDailyCashClosing) {
+      return const FragFinancialReport(initialReportType: FinancialReportType.dailyCashClosing);
+    }
+    if (menu == EnumMainMenu.reportTaxGST) {
+      return const FragFinancialReport(initialReportType: FinancialReportType.taxGST);
+    }
+
+    return FragComingSoon();
   }
 }

@@ -26,9 +26,9 @@ enum FinancialReportType {
 
 extension FinancialReportTypeLabel on FinancialReportType {
   String get label => switch (this) {
-    FinancialReportType.paymentCollection => 'Payment Collection',
-    FinancialReportType.dailyCashClosing  => 'Daily Cash Closing',
-    FinancialReportType.taxGST            => 'Tax (GST) Report',
+    FinancialReportType.paymentCollection => 'payment_collection'.tr,
+    FinancialReportType.dailyCashClosing  => 'daily_cash_closing'.tr,
+    FinancialReportType.taxGST            => 'tax_gst'.tr,
   };
 
   IconData get icon => switch (this) {

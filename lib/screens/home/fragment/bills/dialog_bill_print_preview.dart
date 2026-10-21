@@ -1,13 +1,11 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../service/service_bill_pdf.dart';
+import '../../../../service/service_whatsapp.dart';
 import '../../../../util/snackbar_util.dart';
 import '../setting/controller_home_settings.dart';
 
@@ -517,57 +515,17 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
         paperSize: _rxPaperSize.value,
       );
 
-      final storeName = _settings.rxStoreName.value;
       final billNo = widget.bill.billNo ?? '${widget.bill.id}';
-      final customerName = widget.bill.customerName?.isNotEmpty == true
-          ? widget.bill.customerName!
-          : 'Valued Customer';
-      final total = (widget.bill.grandTotal ?? 0).toStringAsFixed(2);
 
-      final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
-      final targetPhone = cleanPhone.startsWith('91') && cleanPhone.length == 12
-          ? cleanPhone
-          : (cleanPhone.length == 10 ? '91$cleanPhone' : cleanPhone);
-
-      final caption = '🧾 *Tax Invoice / Bill #$billNo*\n'
-          '🏪 *$storeName*\n'
-          '👤 *Customer:* $customerName\n'
-          '💰 *Net Payable:* ₹$total\n'
-          '⭐ *Thank you for shopping with us!* Please find attached your bill PDF.';
-
-      // 1. Share PDF file via system share sheet
-      // ignore: deprecated_member_use
-      await Share.shareXFiles(
-        [
-          XFile(
-            file.path,
-            mimeType: 'application/pdf',
-            name: 'Bill_$billNo.pdf',
-          ),
-        ],
-        text: caption,
-        subject: 'Bill #$billNo from $storeName',
+      await ServiceWhatsApp.dispatchInvoicePdf(
+        pdfFile: file,
+        phone: phone,
+        invoiceNumber: billNo,
+        storeName: _settings.rxStoreName.value,
+        total: widget.bill.grandTotal ?? 0.0,
+        customerName: widget.bill.customerName,
+        settings: _settings,
       );
-
-      // 2. On Windows Desktop, copy PDF directly to clipboard and open WhatsApp
-      if (Platform.isWindows) {
-        try {
-          await Process.run('powershell', [
-            '-NoProfile',
-            '-Command',
-            'Set-Clipboard -Path "${file.path}"',
-          ]);
-        } catch (_) {}
-
-        final waUrl = Uri.parse('https://wa.me/$targetPhone');
-        await launchUrl(waUrl, mode: LaunchMode.externalApplication);
-
-        try {
-          await Process.run('explorer.exe', ['/select,', file.path]);
-        } catch (_) {}
-
-        SnackbarUtil.showSuccess('PDF copied to clipboard! Press Ctrl+V in WhatsApp to attach.');
-      }
     } catch (e) {
       SnackbarUtil.showError('Failed to send PDF on WhatsApp: $e');
     }

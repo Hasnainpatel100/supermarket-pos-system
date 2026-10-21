@@ -5,13 +5,24 @@ import '../../widget/app_dialog_components.dart';
 import 'controller_customer_form.dart';
 
 class ActivityCustomerForm extends StatelessWidget {
-  const ActivityCustomerForm({super.key});
+  final String? initialName;
+  final String? initialPhone;
+
+  const ActivityCustomerForm({
+    super.key,
+    this.initialName,
+    this.initialPhone,
+  });
 
   @override
   Widget build(BuildContext context) {
     final EntityCustomer? editingCustomer = Get.arguments as EntityCustomer?;
     final controller = Get.put(
-      ControllerCustomerForm(editingCustomer: editingCustomer),
+      ControllerCustomerForm(
+        editingCustomer: editingCustomer,
+        initialName: initialName,
+        initialPhone: initialPhone,
+      ),
     );
     final isEditing = editingCustomer != null;
     final colorScheme = Theme.of(context).colorScheme;

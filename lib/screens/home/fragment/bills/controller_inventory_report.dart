@@ -29,14 +29,14 @@ enum InventoryReportType {
 
 extension InventoryReportTypeLabel on InventoryReportType {
   String get label => switch (this) {
-    InventoryReportType.currentStock     => 'Current Stock',
-    InventoryReportType.lowStock         => 'Low Stock',
-    InventoryReportType.outOfStock       => 'Out of Stock',
-    InventoryReportType.stockMovement    => 'Stock Movement',
-    InventoryReportType.stockAdjustment  => 'Stock Adjustment',
-    InventoryReportType.stockValuation   => 'Stock Valuation',
-    InventoryReportType.expiry           => 'Expired Batches',
-    InventoryReportType.nearExpiry       => 'Near Expiry',
+    InventoryReportType.currentStock     => 'current_stock'.tr,
+    InventoryReportType.lowStock         => 'low_stock'.tr,
+    InventoryReportType.outOfStock       => 'out_of_stock'.tr,
+    InventoryReportType.stockMovement    => 'stock_movement'.tr,
+    InventoryReportType.stockAdjustment  => 'stock_adjustment'.tr,
+    InventoryReportType.stockValuation   => 'stock_valuation'.tr,
+    InventoryReportType.expiry           => 'expired_batches'.tr,
+    InventoryReportType.nearExpiry       => 'near_expiry'.tr,
   };
 
   IconData get icon => switch (this) {

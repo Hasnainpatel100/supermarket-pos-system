@@ -19,6 +19,7 @@ enum EnumMainMenu {
   quotationEstimate,
   salesReturn,
 
+  administration,
   system,
   systemUsers, // 1. system
   apiUser, // API User management

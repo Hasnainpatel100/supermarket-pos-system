@@ -1020,5 +1020,16 @@
   "Net Amount": "शुद्ध राशि",
   "Week": "सप्ताह",
   "Year": "वर्ष",
-  "showing": "दिखा रहा है"
+  "showing": "दिखा रहा है",
+  "Administration": "प्रशासन",
+  "Users": "उपयोगकर्ता",
+  "Branches": "शाखाएं",
+  "Brands": "ब्रांड्स",
+  "API Users": "एपीआई उपयोगकर्ता",
+  "Backup & Recovery": "बैकअप और पुनर्प्राप्ति",
+  "Expenses": "खर्चे",
+  "save_to_customer_master": "ग्राहक सहेजें और कार्ट में मैप करें",
+  "quick_add_customer": "त्वरित ग्राहक जोड़ें",
+  "walk_in_customer": "वॉक-इन ग्राहक",
+  "customer_mapped_success": "ग्राहक सहेजा गया और कार्ट से जोड़ा गया"
 }

@@ -1040,5 +1040,16 @@
   "Net Amount": "Net Amount",
   "Week": "Week",
   "Year": "Year",
-  "showing": "Showing"
+  "showing": "Showing",
+  "Administration": "Administration",
+  "Users": "Users",
+  "Branches": "Branches",
+  "Brands": "Brands",
+  "API Users": "API Users",
+  "Backup & Recovery": "Backup & Recovery",
+  "Expenses": "Expenses",
+  "save_to_customer_master": "Save & Map Customer",
+  "quick_add_customer": "Quick Add Customer",
+  "walk_in_customer": "Walk-in Customer",
+  "customer_mapped_success": "Customer saved & mapped to cart"
 }

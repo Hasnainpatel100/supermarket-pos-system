@@ -21,8 +21,8 @@ enum CashierReportType {
 
 extension CashierReportTypeLabel on CashierReportType {
   String get label => switch (this) {
-    CashierReportType.cashierSales => 'Cashier Sales Summary',
-    CashierReportType.cashierShift => 'Cashier Shift Log',
+    CashierReportType.cashierSales => 'cashier_sales'.tr,
+    CashierReportType.cashierShift => 'cashier_shift'.tr,
   };
 
   IconData get icon => switch (this) {

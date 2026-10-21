@@ -26,12 +26,12 @@ enum SalesReportType {
 
 extension SalesReportTypeLabel on SalesReportType {
   String get label => switch (this) {
-    SalesReportType.salesSummary   => 'Sales Summary',
-    SalesReportType.salesDetail    => 'Sales Detail',
-    SalesReportType.itemSales      => 'Item Sales',
-    SalesReportType.categorySales  => 'Category Sales',
-    SalesReportType.paymentReport  => 'Payment Report',
-    SalesReportType.hourWiseSales  => 'Hour-wise Sales',
+    SalesReportType.salesSummary   => 'sales_summary'.tr,
+    SalesReportType.salesDetail    => 'sales_detail'.tr,
+    SalesReportType.itemSales      => 'item_sales'.tr,
+    SalesReportType.categorySales  => 'category_sales'.tr,
+    SalesReportType.paymentReport  => 'payment_report'.tr,
+    SalesReportType.hourWiseSales  => 'hour_wise_sales'.tr,
   };
 
   IconData get icon => switch (this) {

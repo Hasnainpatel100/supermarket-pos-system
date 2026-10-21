@@ -1466,18 +1466,77 @@ class ControllerHomePos extends GetxController {
     SnackbarUtil.showSuccess('Bill #${bill.billNo} loaded into cart for editing');
   }
 
-  Future<void> openCustomerForm() async {
+  Future<void> openCustomerForm({String? initialName, String? initialPhone}) async {
     final countBefore = _boxCustomer.count();
+    final nameToPass = initialName?.trim().isNotEmpty == true
+        ? initialName!.trim()
+        : (activeSession.rxQuickCustomerName.value.trim().isNotEmpty
+            ? activeSession.rxQuickCustomerName.value.trim()
+            : null);
+    final phoneToPass = initialPhone?.trim().isNotEmpty == true
+        ? initialPhone!.trim()
+        : (activeSession.rxQuickCustomerPhone.value.trim().isNotEmpty
+            ? activeSession.rxQuickCustomerPhone.value.trim()
+            : null);
+
     await Get.dialog(
-      const ActivityCustomerForm(),
+      ActivityCustomerForm(
+        initialName: nameToPass,
+        initialPhone: phoneToPass,
+      ),
       barrierDismissible: false,
     );
     loadCustomers();
     if (_boxCustomer.count() > countBefore) {
       final newCustomer = _boxCustomer.query().order(EntityCustomer_.id, flags: Order.descending).build().findFirst();
-      activeSession.rxSelectedCustomer.value = newCustomer;
+      if (newCustomer != null) {
+        activeSession.rxSelectedCustomer.value = newCustomer;
+        activeSession.rxQuickCustomerName.value = '';
+        activeSession.rxQuickCustomerPhone.value = '';
+      }
     }
     searchFocusNode.requestFocus();
+  }
+
+  Future<void> saveQuickCustomerToMaster() async {
+    final name = activeSession.rxQuickCustomerName.value.trim();
+    final phone = activeSession.rxQuickCustomerPhone.value.trim();
+
+    if (name.isEmpty) {
+      SnackbarUtil.showError('Please enter a customer name to save');
+      return;
+    }
+
+    // Check if customer already exists
+    EntityCustomer? existing;
+    if (phone.isNotEmpty) {
+      existing = _boxCustomer.query(EntityCustomer_.phone.equals(phone)).build().findFirst();
+    }
+    existing ??= _boxCustomer.query(EntityCustomer_.name.equals(name)).build().findFirst();
+
+    if (existing != null) {
+      activeSession.rxSelectedCustomer.value = existing;
+      activeSession.rxQuickCustomerName.value = '';
+      activeSession.rxQuickCustomerPhone.value = '';
+      SnackbarUtil.showSuccess('Existing customer mapped: ${existing.name}');
+      return;
+    }
+
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final newCust = EntityCustomer(
+      name: name,
+      phone: phone.isNotEmpty ? phone : null,
+      isActive: true,
+      createdAtUtcMs: now,
+      updatedAtUtcMs: now,
+    );
+    final id = _boxCustomer.put(newCust);
+    newCust.id = id;
+    loadCustomers();
+    activeSession.rxSelectedCustomer.value = newCust;
+    activeSession.rxQuickCustomerName.value = '';
+    activeSession.rxQuickCustomerPhone.value = '';
+    SnackbarUtil.showSuccess('Added "$name" to customers and mapped to cart');
   }
 
   @override

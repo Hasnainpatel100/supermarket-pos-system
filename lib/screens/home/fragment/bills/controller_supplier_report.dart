@@ -21,8 +21,8 @@ enum SupplierReportType {
 
 extension SupplierReportTypeLabel on SupplierReportType {
   String get label => switch (this) {
-    SupplierReportType.purchaseHistory => 'Supplier Purchase History',
-    SupplierReportType.outstanding     => 'Supplier Outstanding Balance',
+    SupplierReportType.purchaseHistory => 'purchase_history'.tr,
+    SupplierReportType.outstanding     => 'outstanding'.tr,
   };
 
   IconData get icon => switch (this) {

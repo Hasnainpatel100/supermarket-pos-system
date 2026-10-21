@@ -22,8 +22,8 @@ enum ReturnReportType {
 
 extension ReturnReportTypeLabel on ReturnReportType {
   String get label => switch (this) {
-    ReturnReportType.salesReturn    => 'Sales Return',
-    ReturnReportType.purchaseReturn => 'Purchase Return',
+    ReturnReportType.salesReturn    => 'sales_return'.tr,
+    ReturnReportType.purchaseReturn => 'purchase_return'.tr,
   };
 
   IconData get icon => switch (this) {

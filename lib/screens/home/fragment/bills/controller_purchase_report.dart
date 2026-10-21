@@ -25,11 +25,11 @@ enum PurchaseReportType {
 
 extension PurchaseReportTypeLabel on PurchaseReportType {
   String get label => switch (this) {
-    PurchaseReportType.purchaseSummary         => 'Purchase Summary',
-    PurchaseReportType.purchaseDetail          => 'Purchase Detail',
-    PurchaseReportType.supplierPurchase        => 'Supplier Purchase',
-    PurchaseReportType.pendingPurchaseOrders   => 'Pending Purchase Orders',
-    PurchaseReportType.purchaseReturn           => 'Purchase Return',
+    PurchaseReportType.purchaseSummary         => 'purchase_summary'.tr,
+    PurchaseReportType.purchaseDetail          => 'purchase_detail'.tr,
+    PurchaseReportType.supplierPurchase        => 'supplier_purchase'.tr,
+    PurchaseReportType.pendingPurchaseOrders   => 'pending_purchase_orders'.tr,
+    PurchaseReportType.purchaseReturn           => 'purchase_return'.tr,
   };
 
   IconData get icon => switch (this) {

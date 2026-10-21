@@ -7,8 +7,10 @@ import '../../../../model/entity_shift_session.dart';
 import '../../../../util/app_colors.dart';
 import '../../../../util/app_spacing.dart';
 import '../../../../util/snackbar_util.dart';
+import '../../../../service/service_currency.dart';
 import '../../controller_home.dart';
 import 'controller_home_account.dart';
+import 'dialog_cash_movement.dart';
 import 'dialog_close_day.dart';
 import 'dialog_close_shift.dart';
 import 'dialog_start_day_shift.dart';
@@ -140,12 +142,44 @@ class _KpiCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
+
     final items = <_KpiItem>[
       _KpiItem.opening(controller.rxOpeningBalance.value, controller.rxOpeningTxnCount.value, isDark),
-      _KpiItem.cashIn(controller.rxCashInTotal.value, controller.rxCashInTxnCount.value, isDark),
-      _KpiItem.sales(controller.rxSalesCashTotal.value, controller.rxSalesCashTxnCount.value, isDark),
-      _KpiItem.cashOut(controller.rxCashOutTotal.value, controller.rxCashOutTxnCount.value, isDark),
-      _KpiItem.expenses(controller.rxExpensesCashTotal.value, controller.rxExpensesCashTxnCount.value, isDark),
+      _KpiItem.cashIn(
+        controller.rxCashInTotal.value,
+        controller.rxCashInTxnCount.value,
+        isDark,
+        onTap: () => DialogCashMovement.show(context, isCashIn: true),
+      ),
+      _KpiItem.sales(
+        controller.rxSalesCashTotal.value,
+        controller.rxSalesCashTxnCount.value,
+        isDark,
+        onTap: () {
+          if (Get.isRegistered<ControllerHome>()) {
+            Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.salesInvoices;
+          }
+        },
+      ),
+      _KpiItem.cashOut(
+        controller.rxCashOutTotal.value,
+        controller.rxCashOutTxnCount.value,
+        isDark,
+        onTap: () => DialogCashMovement.show(context, isCashIn: false),
+      ),
+      _KpiItem.expenses(
+        controller.rxExpensesCashTotal.value,
+        controller.rxExpensesCashTxnCount.value,
+        isDark,
+        onTap: () {
+          if (Get.isRegistered<ControllerHome>()) {
+            Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.expenses;
+          }
+        },
+      ),
       _KpiItem.closing(controller.rxClosingBalance.value, controller.rxClosingTxnCount.value, isDark),
     ];
 
@@ -154,7 +188,7 @@ class _KpiCards extends StatelessWidget {
         return Row(
           children: List.generate(items.length, (i) {
             final spacing = (items.length - 1) * AppSpacing.md;
-            return Expanded(child: _KpiCard(item: items[i], width: (constraints.maxWidth - spacing) / items.length, isDark: isDark, cs: cs));
+            return Expanded(child: _KpiCard(item: items[i], width: (constraints.maxWidth - spacing) / items.length, isDark: isDark, cs: cs, currencySymbol: currencySymbol));
           }),
         );
       }
@@ -164,9 +198,9 @@ class _KpiCards extends StatelessWidget {
             padding: EdgeInsets.only(bottom: row < 2 ? AppSpacing.sm : 0),
             child: Row(
               children: [
-                Expanded(child: _KpiCard(item: items[row * 2], width: (constraints.maxWidth - AppSpacing.sm) / 2, isDark: isDark, cs: cs)),
+                Expanded(child: _KpiCard(item: items[row * 2], width: (constraints.maxWidth - AppSpacing.sm) / 2, isDark: isDark, cs: cs, currencySymbol: currencySymbol)),
                 const SizedBox(width: AppSpacing.sm),
-                Expanded(child: _KpiCard(item: items[row * 2 + 1], width: (constraints.maxWidth - AppSpacing.sm) / 2, isDark: isDark, cs: cs)),
+                Expanded(child: _KpiCard(item: items[row * 2 + 1], width: (constraints.maxWidth - AppSpacing.sm) / 2, isDark: isDark, cs: cs, currencySymbol: currencySymbol)),
               ],
             ),
           );
@@ -185,10 +219,12 @@ class _KpiItem {
   final int txnCount;
   final bool isHighlighted;
   final Widget? action;
+  final VoidCallback? onTap;
 
   const _KpiItem._({
     required this.title, required this.icon, required this.iconBg, required this.iconColor,
     required this.amount, required this.txnCount, this.isHighlighted = false, this.action,
+    this.onTap,
   });
 
   factory _KpiItem.opening(double amount, int count, bool isDark) => _KpiItem._(
@@ -198,29 +234,36 @@ class _KpiItem {
     action: Icon(Icons.arrow_outward, color: AppColors.info, size: 16),
   );
 
-  factory _KpiItem.cashIn(double amount, int count, bool isDark) => _KpiItem._(
+  factory _KpiItem.cashIn(double amount, int count, bool isDark, {VoidCallback? onTap}) => _KpiItem._(
     title: 'cash_in_cash'.tr, icon: Icons.add,
     iconColor: AppColors.success, iconBg: isDark ? AppColors.success.withValues(alpha: 0.2) : AppColors.successLight,
     amount: amount, txnCount: count,
+    action: Icon(Icons.arrow_outward, color: AppColors.success, size: 16),
+    onTap: onTap,
   );
 
-  factory _KpiItem.sales(double amount, int count, bool isDark) => _KpiItem._(
+  factory _KpiItem.sales(double amount, int count, bool isDark, {VoidCallback? onTap}) => _KpiItem._(
     title: 'sales_cash'.tr, icon: Icons.payments_outlined,
     iconColor: AppColors.success, iconBg: isDark ? AppColors.success.withValues(alpha: 0.2) : AppColors.successLight,
     amount: amount, txnCount: count,
     action: Icon(Icons.arrow_outward, color: AppColors.success, size: 16),
+    onTap: onTap,
   );
 
-  factory _KpiItem.cashOut(double amount, int count, bool isDark) => _KpiItem._(
+  factory _KpiItem.cashOut(double amount, int count, bool isDark, {VoidCallback? onTap}) => _KpiItem._(
     title: 'cash_out_cash'.tr, icon: Icons.upload,
     iconColor: AppColors.error, iconBg: isDark ? AppColors.error.withValues(alpha: 0.2) : AppColors.errorLight,
     amount: amount, txnCount: count,
+    action: Icon(Icons.arrow_outward, color: AppColors.error, size: 16),
+    onTap: onTap,
   );
 
-  factory _KpiItem.expenses(double amount, int count, bool isDark) => _KpiItem._(
+  factory _KpiItem.expenses(double amount, int count, bool isDark, {VoidCallback? onTap}) => _KpiItem._(
     title: 'expenses_cash'.tr, icon: Icons.credit_card,
     iconColor: AppColors.error, iconBg: isDark ? AppColors.error.withValues(alpha: 0.2) : AppColors.errorLight,
     amount: amount, txnCount: count, isHighlighted: false,
+    action: Icon(Icons.arrow_outward, color: AppColors.error, size: 16),
+    onTap: onTap,
   );
 
   factory _KpiItem.closing(double amount, int count, bool isDark) => _KpiItem._(
@@ -236,8 +279,9 @@ class _KpiCard extends StatelessWidget {
   final double width;
   final bool isDark;
   final ColorScheme cs;
+  final String currencySymbol;
 
-  const _KpiCard({required this.item, required this.width, required this.isDark, required this.cs});
+  const _KpiCard({required this.item, required this.width, required this.isDark, required this.cs, required this.currencySymbol});
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +319,7 @@ class _KpiCard extends StatelessWidget {
             maxLines: 1, overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          Text('₹${NumberFormat('#,##0.00').format(item.amount)}',
+          Text('$currencySymbol${NumberFormat('#,##0.00').format(item.amount)}',
             style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: cs.onSurface),
           ),
           const SizedBox(height: 2),
@@ -286,6 +330,18 @@ class _KpiCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (item.onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: item.onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          hoverColor: (isDark ? cs.primary : AppColors.brandTealDark).withValues(alpha: 0.08),
+          child: content,
+        ),
+      );
+    }
 
     return content;
   }
@@ -476,6 +532,9 @@ class _ShiftRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currencySymbol = Get.isRegistered<ServiceCurrency>()
+        ? Get.find<ServiceCurrency>().rxCurrency.value
+        : '₹';
     final isOpen = shift.isOpen;
     final openedBy = shift.startedByUsername ?? 'Unknown';
     final closedBy = shift.closedByUsername;
@@ -525,12 +584,12 @@ class _ShiftRow extends StatelessWidget {
           ]),
           const SizedBox(height: 10),
           Row(children: [
-            _shiftStat(context, 'opening'.tr, '₹${NumberFormat('#,##0.00').format(shift.openingCash)}', AppColors.info),
-            _shiftStat(context, 'Sales'.tr, '₹${NumberFormat('#,##0.00').format(shift.salesCash)}', AppColors.success),
-            _shiftStat(context, 'cash_in'.tr, '₹${NumberFormat('#,##0.00').format(shift.cashIn)}', AppColors.teal),
-            _shiftStat(context, 'Expenses'.tr, '₹${NumberFormat('#,##0.00').format(shift.expensesCash)}', AppColors.error),
-            _shiftStat(context, 'cash_out'.tr, '₹${NumberFormat('#,##0.00').format(shift.cashOut)}', AppColors.errorRed),
-            _shiftStat(context, isOpen ? 'calculated'.tr : 'closing'.tr, '₹${NumberFormat('#,##0.00').format(shift.closingCash)}', AppColors.purple),
+            _shiftStat(context, 'opening'.tr, '$currencySymbol${NumberFormat('#,##0.00').format(shift.openingCash)}', AppColors.info),
+            _shiftStat(context, 'Sales'.tr, '$currencySymbol${NumberFormat('#,##0.00').format(shift.salesCash)}', AppColors.success),
+            _shiftStat(context, 'cash_in'.tr, '$currencySymbol${NumberFormat('#,##0.00').format(shift.cashIn)}', AppColors.teal),
+            _shiftStat(context, 'Expenses'.tr, '$currencySymbol${NumberFormat('#,##0.00').format(shift.expensesCash)}', AppColors.error),
+            _shiftStat(context, 'cash_out'.tr, '$currencySymbol${NumberFormat('#,##0.00').format(shift.cashOut)}', AppColors.errorRed),
+            _shiftStat(context, isOpen ? 'calculated'.tr : 'closing'.tr, '$currencySymbol${NumberFormat('#,##0.00').format(shift.closingCash)}', AppColors.purple),
           ]),
           if (shift.endTimestampMs != null && !isOpen) ...[
             const SizedBox(height: 8),

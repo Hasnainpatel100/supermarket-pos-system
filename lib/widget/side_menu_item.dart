@@ -73,27 +73,122 @@ class SideMenuItem extends StatelessWidget {
         return const SizedBox.shrink();
       }
 
-      // COLLAPSED DRAWER -> behave like SIMPLE TILE + TOOLTIP
+      // COLLAPSED DRAWER -> behave like SIMPLE TILE or POPUP FLYOUT FOR EXPANDABLE MENUS
       if (collapsed) {
         final bool selected =
             controller.selectedMainMenu.value == menuModel.menu;
 
-        final tile = ListTile(
-          leading: Icon(
-            menuModel.icon,
-            color: selected ? Theme.of(context).colorScheme.primary : null,
-          ),
-          title: null,
-          selected: selected,
-          onTap: () {
-            // Default behavior: open the first visible leaf report/screen,
-            // drilling through any nested categories.
-            final leaf = menuModel.firstVisibleLeaf(perms);
-            controller.selectedMainMenu.value = leaf?.menu ?? menuModel.menu;
+        return Builder(
+          builder: (tileContext) {
+            final tile = ListTile(
+              leading: Icon(
+                menuModel.icon,
+                color: selected ? Theme.of(context).colorScheme.primary : null,
+              ),
+              title: null,
+              selected: selected,
+              onTap: () {
+                if (menuModel.children != null && visibleChildren.isNotEmpty) {
+                  // Anchor flyout menu right next to the icon in collapsed rail
+                  final RenderBox renderBox =
+                      tileContext.findRenderObject() as RenderBox;
+                  final offset = renderBox.localToGlobal(Offset.zero);
+                  final size = renderBox.size;
+
+                  final List<PopupMenuEntry<EnumMainMenu>> items = [];
+
+                  // Section header
+                  items.add(PopupMenuItem<EnumMainMenu>(
+                    enabled: false,
+                    height: 32,
+                    child: Text(
+                      menuModel.titleKey.tr.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ));
+                  items.add(const PopupMenuDivider(height: 4));
+
+                  for (final child in visibleChildren) {
+                    if (child.children != null && child.children!.isNotEmpty) {
+                      items.add(PopupMenuItem<EnumMainMenu>(
+                        enabled: false,
+                        height: 28,
+                        child: Text(
+                          child.titleKey.tr,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ));
+                      for (final subChild in child.visibleChildrenFor(perms)) {
+                        items.add(PopupMenuItem<EnumMainMenu>(
+                          value: subChild.menu,
+                          height: 36,
+                          child: Row(
+                            children: [
+                              Icon(subChild.icon,
+                                  size: 16,
+                                  color: Theme.of(context).colorScheme.primary),
+                              const SizedBox(width: 10),
+                              Text(subChild.titleKey.tr,
+                                  style: const TextStyle(fontSize: 12.5)),
+                            ],
+                          ),
+                        ));
+                      }
+                    } else {
+                      items.add(PopupMenuItem<EnumMainMenu>(
+                        value: child.menu,
+                        height: 38,
+                        child: Row(
+                          children: [
+                            Icon(child.icon,
+                                size: 18,
+                                color: Theme.of(context).colorScheme.primary),
+                            const SizedBox(width: 10),
+                            Text(child.titleKey.tr,
+                                style: const TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ));
+                    }
+                  }
+
+                  showMenu<EnumMainMenu>(
+                    context: context,
+                    position: RelativeRect.fromLTRB(
+                      offset.dx + size.width + 4,
+                      offset.dy,
+                      offset.dx + size.width + 260,
+                      offset.dy + size.height,
+                    ),
+                    items: items,
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ).then((chosen) {
+                    if (chosen != null) {
+                      controller.selectedMainMenu.value = chosen;
+                    }
+                  });
+                } else {
+                  final leaf = menuModel.firstVisibleLeaf(perms);
+                  controller.selectedMainMenu.value =
+                      leaf?.menu ?? menuModel.menu;
+                }
+              },
+            );
+
+            return Tooltip(message: menuModel.titleKey.tr, child: tile);
           },
         );
-
-        return Tooltip(message: menuModel.titleKey.tr, child: tile);
       }
 
       // EXPANDED DRAWER -> REAL EXPANSION TILE

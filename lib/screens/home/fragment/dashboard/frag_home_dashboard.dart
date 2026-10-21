@@ -110,7 +110,7 @@ class FragHomeDashboard extends StatelessWidget {
 
               // Row 2 takes ~54% of remaining space, Row 3 takes ~46%
               final row2Height = (remainingForRows * 0.54).clamp(240.0, 500.0);
-              final row3Height = (remainingForRows * 0.46).clamp(190.0, 420.0);
+              final row3Height = (remainingForRows * 0.46).clamp(210.0, 420.0);
 
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -730,7 +730,7 @@ class _StatCard extends StatelessWidget {
             Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: isLarge ? 18 : 14,
-                vertical: isLarge ? 14 : 10,
+                vertical: isLarge ? 12 : 8,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -846,7 +846,7 @@ class _DashCard extends StatelessWidget {
               ],
             ],
           ),
-          SizedBox(height: isLarge ? 14 : 12),
+          SizedBox(height: isLarge ? 12 : 8),
           Expanded(child: child),
         ],
       ),
@@ -1292,48 +1292,53 @@ class _TopItemsDonut extends StatelessWidget {
             SizedBox(width: isLarge ? 14 : 10),
             // Legend
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(items.length, (i) {
-                  final name = items[i]['name'] as String;
-                  final qty = items[i]['qty'] as int? ?? 0;
-                  final color = _palette[i % _palette.length];
-                  return Padding(
-                    padding: EdgeInsets.symmetric(vertical: isLarge ? 6 : 4),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: isLarge ? 11 : 10,
-                          height: isLarge ? 11 : 10,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(items.length, (i) {
+                    final name = items[i]['name'] as String;
+                    final qty = items[i]['qty'] as int? ?? 0;
+                    final color = _palette[i % _palette.length];
+                    return Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: isLarge ? 5 : (items.length > 4 ? 2.5 : 4),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: isLarge ? 11 : 10,
+                            height: isLarge ? 11 : 10,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        SizedBox(width: isLarge ? 8 : 6),
-                        Expanded(
-                          child: Text(
-                            name,
+                          SizedBox(width: isLarge ? 8 : 6),
+                          Expanded(
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                color: _DashboardTheme.textPrimary(context),
+                                fontSize: isLarge ? 12.5 : 11,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '$qty',
                             style: TextStyle(
                               color: _DashboardTheme.textPrimary(context),
-                              fontSize: isLarge ? 12.5 : 11,
+                              fontSize: isLarge ? 13 : 12,
+                              fontWeight: FontWeight.w500,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        Text(
-                          '$qty',
-                          style: TextStyle(
-                            color: _DashboardTheme.textPrimary(context),
-                            fontSize: isLarge ? 13 : 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
               ),
             ),
           ],
@@ -1525,49 +1530,54 @@ class _PaymentDonut extends StatelessWidget {
             SizedBox(width: isLarge ? 12 : 8),
             // Legend
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(entries.length, (i) {
-                  final e = entries[i];
-                  final color = _palette[i % _palette.length];
-                  final pct = total > 0 ? e.value / total * 100 : 0;
-                  final label = _modeLabel(e.key);
-                  return Padding(
-                    padding: EdgeInsets.symmetric(vertical: isLarge ? 6 : 5),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: isLarge ? 11 : 10,
-                          height: isLarge ? 11 : 10,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(entries.length, (i) {
+                    final e = entries[i];
+                    final color = _palette[i % _palette.length];
+                    final pct = total > 0 ? e.value / total * 100 : 0;
+                    final label = _modeLabel(e.key);
+                    return Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: isLarge ? 5 : (entries.length > 4 ? 2.5 : 4),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: isLarge ? 11 : 10,
+                            height: isLarge ? 11 : 10,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        SizedBox(width: isLarge ? 8 : 6),
-                        Expanded(
-                          child: Text(
-                            label,
+                          SizedBox(width: isLarge ? 8 : 6),
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                color: _DashboardTheme.textPrimary(context),
+                                fontSize: isLarge ? 12 : 11,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '${_compactDouble(e.value)} (${pct.toStringAsFixed(0)}%)',
                             style: TextStyle(
                               color: _DashboardTheme.textPrimary(context),
-                              fontSize: isLarge ? 12 : 11,
+                              fontSize: isLarge ? 13 : 12,
+                              fontWeight: FontWeight.w500,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        Text(
-                          '${_compactDouble(e.value)} (${pct.toStringAsFixed(0)}%)',
-                          style: TextStyle(
-                            color: _DashboardTheme.textPrimary(context),
-                            fontSize: isLarge ? 13 : 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
               ),
             ),
           ],

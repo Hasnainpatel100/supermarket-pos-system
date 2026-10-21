@@ -75,6 +75,8 @@ class ControllerHomeAccount extends GetxController {
   final rxUserId = '0'.obs;
   final rxUsername = ''.obs;
   final rxUserRole = ''.obs;
+  final rxBranchName = ''.obs;
+  final rxDeviceName = 'POS-01'.obs;
 
   bool get isDayOpen => rxActiveDay.value != null && rxActiveDay.value!.isOpen;
   bool get isShiftOpen =>
@@ -99,6 +101,7 @@ class ControllerHomeAccount extends GetxController {
       final ip = await UtilDevice.getIpAddress();
       if (ip.isNotEmpty) {
         rxIpAddress.value = ip;
+        rxDeviceName.value = 'POS-$ip';
       }
     } catch (_) {}
 
@@ -113,6 +116,7 @@ class ControllerHomeAccount extends GetxController {
           rxOutletName.value = branch.name.en;
         }
         if (branch != null) {
+          rxBranchName.value = branch.name.en;
           final phone = branch.contact.phones.primary.isNotEmpty
               ? branch.contact.phones.primary
               : branch.contact.phones.alternate;
@@ -505,7 +509,11 @@ class ControllerHomeAccount extends GetxController {
   }
 
   /// Close Day — saves data and then navigates to login screen
-  Future<void> closeDay({String? comments}) async {
+  Future<void> closeDay({
+    String? comments,
+    Map<int, int>? denominations,
+    double? countedTotal,
+  }) async {
     final day = rxActiveDay.value;
     if (day == null) {
       SnackbarUtil.showError('No active day to close');
@@ -541,7 +549,12 @@ class ControllerHomeAccount extends GetxController {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     day.isOpen = false;
     day.endTimestampMs = nowMs;
-    day.closingCash = rxClosingBalance.value;
+    day.closingCash = countedTotal ?? rxClosingBalance.value;
+    if (denominations != null) {
+      day.closingDenominationsJson = jsonEncode(
+        denominations.map((k, v) => MapEntry(k.toString(), v)),
+      );
+    }
     day.closedByUserId = closedById;
     day.closedByUsername = closedByName;
     day.closingComment = comments;

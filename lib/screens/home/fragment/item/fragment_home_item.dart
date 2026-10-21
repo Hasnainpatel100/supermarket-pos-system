@@ -97,6 +97,9 @@ class FragmentHomeItem extends StatelessWidget {
           // ── Expiry Filter Chips ── ALWAYS visible at the top
           _buildExpiryFilterBar(context, controller),
 
+          // ── Bulk Action Bar ── Visible when items are selected
+          _buildBulkActionBar(context, controller, canUpdate, canDelete),
+
           // ── Table or Filter-aware Empty State ──
           Expanded(
             child: Obx(() {
@@ -169,6 +172,14 @@ class FragmentHomeItem extends StatelessWidget {
                   width: double.infinity,
                   child: SingleChildScrollView(
                     child: DataTable(
+                      showCheckboxColumn: true,
+                      onSelectAll: (val) {
+                        if (val == true) {
+                          controller.selectAllVisible();
+                        } else {
+                          controller.clearSelection();
+                        }
+                      },
                       columnSpacing: 18,
                       horizontalMargin: 18,
                       headingRowColor: WidgetStateProperty.all(colorScheme.primary.withValues(alpha: 0.04)),
@@ -280,9 +291,18 @@ class FragmentHomeItem extends StatelessWidget {
                       ],
                       rows: controller.rxListItem.map((EntityItem item) {
                         final isActive = item.isActive ?? true;
+                        final itemId = item.id ?? 0;
+                        final isSelected = controller.isSelected(itemId);
 
                         return DataRow(
+                          selected: isSelected,
+                          onSelectChanged: (val) {
+                            controller.toggleSelection(itemId);
+                          },
                           color: WidgetStateProperty.resolveWith<Color?>((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return colorScheme.primary.withValues(alpha: 0.08);
+                            }
                             if (!isActive) return Colors.grey.withValues(alpha: 0.05);
                             return null;
                           }),
@@ -413,6 +433,9 @@ class FragmentHomeItem extends StatelessWidget {
                                     case 'toggle':
                                       _confirmToggleActive(context, item, controller);
                                       break;
+                                    case 'delete':
+                                      controller.confirmSingleDelete(context, item);
+                                      break;
                                   }
                                 },
                                 itemBuilder: (_) => [
@@ -476,6 +499,21 @@ class FragmentHomeItem extends StatelessWidget {
                                         ),
                                       ]),
                                     ),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(children: [
+                                        const Icon(
+                                          Icons.delete_outline_rounded,
+                                          size: 20,
+                                          color: Colors.red,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Delete Item',
+                                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+                                        ),
+                                      ]),
+                                    ),
                                   ],
                                 ],
                               ),
@@ -499,6 +537,106 @@ class FragmentHomeItem extends StatelessWidget {
   ],
 ),
     );
+  }
+
+  /// Bulk Action Bar for multi-selected items
+  Widget _buildBulkActionBar(
+    BuildContext context,
+    ControllerHomeItem controller,
+    bool canUpdate,
+    bool canDelete,
+  ) {
+    return Obx(() {
+      if (!controller.hasSelection) return const SizedBox.shrink();
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final count = controller.selectedCount;
+
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                '$count item${count > 1 ? 's' : ''} selected',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.5,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Spacer(),
+            if (canUpdate) ...[
+              FilledButton.tonalIcon(
+                onPressed: () => controller.bulkToggleActive(true),
+                icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
+                label: const Text('Activate', style: TextStyle(fontSize: 12.5)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  foregroundColor: const Color(0xFF059669),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonalIcon(
+                onPressed: () => controller.bulkToggleActive(false),
+                icon: const Icon(Icons.block_rounded, size: 16),
+                label: const Text('Deactivate', style: TextStyle(fontSize: 12.5)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.amber.withValues(alpha: 0.18),
+                  foregroundColor: const Color(0xFFB45309),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            if (canDelete) ...[
+              FilledButton.icon(
+                onPressed: () => controller.confirmBulkDelete(context),
+                icon: const Icon(Icons.delete_sweep_rounded, size: 16),
+                label: const Text('Delete', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.red.shade600,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            IconButton(
+              onPressed: () => controller.clearSelection(),
+              tooltip: 'Deselect all',
+              icon: const Icon(Icons.close_rounded, size: 18),
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   /// Expiry filter chip bar

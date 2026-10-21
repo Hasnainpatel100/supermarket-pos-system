@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'activity_split_bill.dart';
 import 'package:super_market/service/service_currency.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
@@ -196,6 +198,7 @@ class ControllerHomePos extends GetxController {
     } catch (_) {}
 
     addNewTab(); // Initialize first tab
+    _loadParkedBills();
     loadCategories();
     loadItems();
     loadCustomers();
@@ -798,6 +801,7 @@ class ControllerHomePos extends GetxController {
     );
 
     rxParkedBills.insert(0, parked);
+    _saveParkedBills();
     clearCart();
     SnackbarUtil.showSuccess("Bill #$ticketNo parked. Ready for next customer!");
   }
@@ -805,6 +809,7 @@ class ControllerHomePos extends GetxController {
   void recallParkedBill(int index) {
     if (index < 0 || index >= rxParkedBills.length) return;
     final parked = rxParkedBills.removeAt(index);
+    _saveParkedBills();
     final session = activeSession;
 
     // If current cart already has items, open in a new session tab so nothing is lost
@@ -833,7 +838,43 @@ class ControllerHomePos extends GetxController {
     if (index < 0 || index >= rxParkedBills.length) return;
     final ticket = rxParkedBills[index].ticketId;
     rxParkedBills.removeAt(index);
+    _saveParkedBills();
     SnackbarUtil.showSuccess("Parked bill #$ticket discarded.");
+  }
+
+  void _saveParkedBills() {
+    try {
+      if (Get.isRegistered<ServiceStorage>()) {
+        final storage = Get.find<ServiceStorage>();
+        final jsonList = rxParkedBills.map((b) => b.toJson()).toList();
+        storage.writeString('pos_held_parked_bills', jsonEncode(jsonList));
+      }
+    } catch (_) {}
+  }
+
+  void _loadParkedBills() {
+    try {
+      if (Get.isRegistered<ServiceStorage>()) {
+        final storage = Get.find<ServiceStorage>();
+        final raw = storage.readString('pos_held_parked_bills');
+        if (raw != null && raw.isNotEmpty) {
+          final decoded = jsonDecode(raw) as List<dynamic>;
+          final list = decoded
+              .map((e) => ModelParkedBill.fromJson(e as Map<String, dynamic>))
+              .toList();
+          rxParkedBills.assignAll(list);
+        }
+      }
+    } catch (_) {}
+  }
+
+  void openSplitBill() {
+    final session = activeSession;
+    if (session.rxCartItems.isEmpty) {
+      SnackbarUtil.showError("Cart is empty");
+      return;
+    }
+    Get.to(() => const ActivitySplitBill());
   }
 
   Future<void> quickCashSettle() async {
@@ -872,7 +913,7 @@ class ControllerHomePos extends GetxController {
       } else if (session.rxCartItems.isNotEmpty) {
         _showItemDiscountDialog(session.rxCartItems.length - 1);
       }
-    } else if (key == LogicalKeyboardKey.delete || key == LogicalKeyboardKey.backspace || key == LogicalKeyboardKey.f12) {
+    } else if (key == LogicalKeyboardKey.delete || key == LogicalKeyboardKey.backspace) {
       if (session.rxSelectedCartIndex.value != -1) {
         removeFromCart(session.rxSelectedCartIndex.value);
         session.rxSelectedCartIndex.value = -1;
@@ -889,10 +930,14 @@ class ControllerHomePos extends GetxController {
       _showBillDiscountDialog();
     } else if (key == LogicalKeyboardKey.f8) {
       quickCashSettle();
+    } else if (key == LogicalKeyboardKey.f9) {
+      openSplitBill();
     } else if (key == LogicalKeyboardKey.f10) {
       toggleNextViewMode();
     } else if (key == LogicalKeyboardKey.f11) {
       _showRemarksDialog();
+    } else if (key == LogicalKeyboardKey.f12) {
+      triggerCashDrawer();
     } else if (key == LogicalKeyboardKey.keyP) {
       settleBill();
     } else if (key == LogicalKeyboardKey.keyT) {

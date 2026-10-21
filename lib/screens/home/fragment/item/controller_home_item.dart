@@ -18,6 +18,7 @@ import '../../../../service/service_currency.dart';
 import '../../../../service/service_item.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_item_excel.dart';
+import '../../../../util/snackbar_util.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sort field constants
@@ -59,6 +60,34 @@ class ControllerHomeItem extends GetxController {
   final RxInt countExpiring = 0.obs;
   final RxInt countExpired = 0.obs;
   final RxInt countSafe = 0.obs;
+
+  // ── Multi-Select State ──
+  final RxSet<int> rxSelectedIds = <int>{}.obs;
+
+  bool isSelected(int id) => rxSelectedIds.contains(id);
+  bool get hasSelection => rxSelectedIds.isNotEmpty;
+  int get selectedCount => rxSelectedIds.length;
+  bool get isAllVisibleSelected =>
+      rxListItem.isNotEmpty &&
+      rxListItem.every((item) => item.id != null && rxSelectedIds.contains(item.id));
+
+  void toggleSelection(int id) {
+    if (rxSelectedIds.contains(id)) {
+      rxSelectedIds.remove(id);
+    } else {
+      rxSelectedIds.add(id);
+    }
+  }
+
+  void selectAllVisible() {
+    for (final item in rxListItem) {
+      if (item.id != null) rxSelectedIds.add(item.id!);
+    }
+  }
+
+  void clearSelection() {
+    rxSelectedIds.clear();
+  }
 
   /// Debounce search input to avoid querying ObjectBox on every keystroke.
   final _searchDebouncer = Debouncer(milliseconds: PerfConfig.searchDebounceMs);
@@ -347,9 +376,136 @@ class ControllerHomeItem extends GetxController {
 
   void deleteItem(EntityItem item) {
     if (item.id != null) {
+      rxSelectedIds.remove(item.id!);
       _itemService.deleteItem(item.id!);
       loadItems();
     }
+  }
+
+  Future<void> bulkToggleActive(bool targetActive) async {
+    if (rxSelectedIds.isEmpty) return;
+    final ids = rxSelectedIds.toList();
+    final items = _boxItem.getMany(ids).whereType<EntityItem>().toList();
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    for (final item in items) {
+      item.isActive = targetActive;
+      item.updatedAtUtcMs = now;
+    }
+    _boxItem.putMany(items);
+    final count = items.length;
+    clearSelection();
+    loadItems();
+    SnackbarUtil.showSuccess(
+      targetActive
+          ? '$count item(s) activated successfully'
+          : '$count item(s) deactivated successfully',
+    );
+  }
+
+  Future<void> bulkDeleteSelected() async {
+    if (rxSelectedIds.isEmpty) return;
+    final ids = rxSelectedIds.toList();
+    final count = ids.length;
+    _boxItem.removeMany(ids);
+    clearSelection();
+    loadItems();
+    SnackbarUtil.showSuccess('$count item(s) deleted successfully');
+  }
+
+  void confirmBulkDelete(BuildContext context) {
+    if (rxSelectedIds.isEmpty) return;
+    final count = rxSelectedIds.length;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.delete_forever_rounded, color: Colors.red, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Text('Delete Selected Items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to permanently delete $count selected item(s)? This will remove them from the catalog and inventory.',
+          style: const TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Get.back();
+              bulkDeleteSelected();
+            },
+            icon: const Icon(Icons.delete_rounded, size: 18),
+            label: Text('Delete $count Items'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void confirmSingleDelete(BuildContext context, EntityItem item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Text('Delete Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete "${item.name ?? 'this item'}"? This action cannot be undone.',
+          style: const TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              Get.back();
+              deleteItem(item);
+              SnackbarUtil.showSuccess('Item "${item.name ?? ''}" deleted');
+            },
+            icon: const Icon(Icons.delete_rounded, size: 18),
+            label: const Text('Delete'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── Excel Export ──────────────────────────────────────────────────────────

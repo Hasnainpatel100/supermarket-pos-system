@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import 'controller_home_account.dart';
+import '../../../../service/service_z_report_pdf.dart';
 
 class DialogCloseShift extends StatefulWidget {
   const DialogCloseShift({super.key});
@@ -307,6 +308,55 @@ class _DialogCloseShiftState extends State<DialogCloseShift> {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Print Report Button
+          OutlinedButton.icon(
+            onPressed: () {
+              final day = _controller.rxActiveDay.value;
+              final shift = _controller.rxActiveShift.value;
+              final startTime = shift?.startTimestampMs != null
+                  ? DateTime.fromMillisecondsSinceEpoch(shift!.startTimestampMs!)
+                  : (day?.startTimestampMs != null
+                      ? DateTime.fromMillisecondsSinceEpoch(day!.startTimestampMs!)
+                      : DateTime.now());
+
+              ServiceZReportPdf.printZReport(
+                reportType: 'SHIFT CLOSING (X-REPORT)',
+                storeName: _controller.rxOutletName.value.isNotEmpty
+                    ? _controller.rxOutletName.value
+                    : 'Supermarket POS',
+                branchName: _controller.rxBranchName.value,
+                terminalId: _controller.rxDeviceName.value,
+                cashierName: _controller.rxUsername.value.isNotEmpty
+                    ? _controller.rxUsername.value
+                    : 'Cashier',
+                startTime: startTime,
+                endTime: DateTime.now(),
+                openingCash: _controller.rxOpeningBalance.value,
+                salesCash: _controller.rxSalesCashTotal.value,
+                paymentModes: Map<String, double>.from(_controller.rxPaymentModes),
+                cashIn: _controller.rxCashInTotal.value,
+                cashOut: _controller.rxCashOutTotal.value,
+                expensesCash: _controller.rxExpensesCashTotal.value,
+                expectedClosingCash: _controller.rxClosingBalance.value,
+                physicalCountedCash: _totalCash,
+                denominations: Map<int, int>.from(_counts),
+                fulfilledOrders: _controller.rxFulfilledOrders.value,
+                cancelledOrders: _controller.rxCancelledOrders.value,
+                complimentaryOrders: _controller.rxComplimentaryOrders.value,
+                comments: _commentsCtrl.text.trim(),
+              );
+            },
+            icon: const Icon(Icons.print_rounded, size: 18),
+            label: const Text('Print / Preview Shift Report', style: TextStyle(fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF005963),
+              side: const BorderSide(color: Color(0xFF005963), width: 1.5),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          const SizedBox(height: 12),
 
           // Buttons
           Row(

@@ -24,12 +24,19 @@ class ControllerHome extends GetxController {
   final RepoStorage _repoStorage = Get.find();
   Rx<EntityUser?> rxUser = Rx<EntityUser?>(null);
   var selectedMainMenu = EnumMainMenu.dashboard.obs;
-  final isDrawerCollapsed = false.obs;
+  late final isDrawerCollapsed = (_repoStorage.getDrawerCollapsed()).obs;
 
   @override
   void onInit() {
+    ever(isDrawerCollapsed, (bool collapsed) {
+      _repoStorage.setDrawerCollapsed(collapsed);
+    });
     getUserDetails();
     super.onInit();
+  }
+
+  void toggleDrawer() {
+    isDrawerCollapsed.toggle();
   }
 
   Future<void> getUserDetails() async {

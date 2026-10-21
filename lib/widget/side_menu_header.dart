@@ -57,7 +57,7 @@ class SideMenuHeader extends StatelessWidget {
                 collapsed ? Icons.chevron_right : Icons.chevron_left,
                 color: colorScheme.onSurface.withValues(alpha: 0.6),
               ),
-              onPressed: controller.isDrawerCollapsed.toggle,
+              onPressed: controller.toggleDrawer,
             ),
           ],
         ),

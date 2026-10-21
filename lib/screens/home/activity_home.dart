@@ -73,7 +73,9 @@ class ActivityHome extends StatelessWidget {
             if (user == null) {
               return SizedBox();
             }
-            return SizedBox(
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
               width: controller.isDrawerCollapsed.value ? 70 : 200,
               child: RepoDrawer.drawerList(user),
             );

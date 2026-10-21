@@ -27,4 +27,12 @@ class RepoStorage {
   Future<void> setExpiryAlarmDays(int days) async {
     await _storage.writeInt("pref_expiry_alarm_days", days);
   }
+
+  bool getDrawerCollapsed() {
+    return _storage.readBool("pref_drawer_collapsed") ?? false;
+  }
+
+  Future<void> setDrawerCollapsed(bool collapsed) async {
+    await _storage.writeBool("pref_drawer_collapsed", collapsed);
+  }
 }

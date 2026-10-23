@@ -15,7 +15,7 @@ class SideMenuHeader extends StatelessWidget {
 
     return Obx(() {
       final bool collapsed = controller.isDrawerCollapsed.value;
-      final brandName = brandCtx.rxSelectedBrand.value?.name.en ?? 'Supermarket';
+      final brandName = brandCtx.rxSelectedBrand.value?.name.en ?? 'DASHPAY';
 
       return SizedBox(
         height: 56,

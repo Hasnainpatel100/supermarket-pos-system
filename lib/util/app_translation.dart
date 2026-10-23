@@ -39,7 +39,7 @@ class AppTranslation extends Translations {
 
   static final Map<String, Map<String, String>> _fallbackKeys = {
     'en_US': {
-      'app_title': 'RH Supermarket',
+      'app_title': 'DASHPAY',
       'home_title': 'Home',
       'toggle_theme': 'Toggle theme',
       'change_language': 'Change language',
@@ -160,7 +160,7 @@ class AppTranslation extends Translations {
       'set_active_branch': 'Set as Active Branch',
     },
     'hi_IN': {
-      'app_title': 'RH Hotel',
+      'app_title': 'DASHPAY',
       'home_title': 'मुख्य पृष्ठ',
       'toggle_theme': 'थीम बदलें',
       'change_language': 'भाषा बदलें',
@@ -172,7 +172,7 @@ class AppTranslation extends Translations {
       'confirm_logout': 'क्या आप लॉग आउट करना चाहते हैं?',
     },
     'mr_IN': {
-      'app_title': 'RH Hotel',
+      'app_title': 'DASHPAY',
       'home_title': 'मुख्यपृष्ठ',
       'toggle_theme': 'थीम बदला',
       'change_language': 'भाषा बदला',
@@ -184,7 +184,7 @@ class AppTranslation extends Translations {
       'confirm_logout': 'तुम्हाला लॉग आउट करायचे आहे का?',
     },
     'ur_PK': {
-      'app_title': 'RH Hotel',
+      'app_title': 'DASHPAY',
       'home_title': 'ہوم',
       'toggle_theme': 'تھیم تبدیل کریں',
       'change_language': 'زبان تبدیل کریں',

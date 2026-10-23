@@ -9,7 +9,6 @@ import '../../../../model/entity_customer.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../../core/auth/app_permissions.dart';
 import '../../controller_home.dart';
-import '../../../customer/activity_customer_form.dart';
 import 'controller_home_customer.dart';
 
 class FragmentHomeCustomer extends StatelessWidget {
@@ -38,17 +37,19 @@ class FragmentHomeCustomer extends StatelessWidget {
         ),
         actions: [
           if (canCreate)
-            GradientActionButton(
-              icon: Icons.person_add_rounded,
-              label: 'new_customer'.tr,
-              gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
-              onTap: () async {
-                await Get.dialog(
-                  const ActivityCustomerForm(),
-                  barrierDismissible: false,
-                );
-                controller.loadCustomers();
-              },
+            Obx(
+              () => GradientActionButton(
+                icon: controller.rxShowCreateForm.value
+                    ? Icons.close_rounded
+                    : Icons.person_add_rounded,
+                label: controller.rxShowCreateForm.value
+                    ? (controller.isEditing ? 'Cancel Edit' : 'Close Form')
+                    : 'new_customer'.tr,
+                gradientColors: controller.rxShowCreateForm.value
+                    ? [Colors.grey.shade600, Colors.grey.shade800]
+                    : [Colors.teal.shade400, Colors.teal.shade700],
+                onTap: controller.toggleCreateForm,
+              ),
             ),
         ],
         bottom: PreferredSize(
@@ -63,16 +64,75 @@ class FragmentHomeCustomer extends StatelessWidget {
         ),
       ),
 
-      body: Obx(
-            () => controller.rxListCustomer.isEmpty
-            ? const GenericEmptyState(
-                icon: Icons.person_off_rounded,
-                title: 'no_customers_found',
-                subtitle: 'add_new_customer_to_get_started',
-                gradientColors: [Color(0xFFBFDBFE), Color(0xFFDDD6FE)],
-              )
-            : Column(
+      floatingActionButton: canCreate
+          ? Obx(
+              () => FloatingActionButton.extended(
+                onPressed: controller.toggleCreateForm,
+                icon: Icon(
+                  controller.rxShowCreateForm.value
+                      ? Icons.close_rounded
+                      : Icons.person_add_rounded,
+                ),
+                label: Text(
+                  controller.rxShowCreateForm.value
+                      ? (controller.isEditing ? 'Cancel Edit' : 'Close Form')
+                      : 'new_customer'.tr,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                backgroundColor: controller.rxShowCreateForm.value
+                    ? Colors.grey.shade700
+                    : colorScheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 4,
+              ),
+            )
+          : null,
+
+      body: Obx(() {
+        if (controller.rxListCustomer.isEmpty) {
+          if (controller.rxShowCreateForm.value) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 80),
+              child: _buildInlineCustomerFormCard(context, controller),
+            );
+          }
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const GenericEmptyState(
+                  icon: Icons.person_off_rounded,
+                  title: 'no_customers_found',
+                  subtitle: 'add_new_customer_to_get_started',
+                  gradientColors: [Color(0xFFBFDBFE), Color(0xFFDDD6FE)],
+                ),
+                if (canCreate) ...[
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => controller.openCreateForm(),
+                    icon: const Icon(Icons.person_add_rounded, size: 20),
+                    label: Text(
+                      'new_customer'.tr,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 4,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }
+
+        return Column(
           children: [
+            if (controller.rxShowCreateForm.value)
+              _buildInlineCustomerFormCard(context, controller),
             Expanded(
               child: MyCard(
                 margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -432,10 +492,10 @@ class FragmentHomeCustomer extends StatelessWidget {
               ),
             ),
             // ── Pagination Footer ──
-            Obx(() => _buildPagination(context, controller)),
+            _buildPagination(context, controller),
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -487,13 +547,8 @@ class FragmentHomeCustomer extends StatelessWidget {
   void _onEdit(
       EntityCustomer customer,
       ControllerHomeCustomer controller,
-      ) async {
-    await Get.dialog(
-      const ActivityCustomerForm(),
-      arguments: customer,
-      barrierDismissible: false,
-    );
-    controller.loadCustomers();
+      ) {
+    controller.openCreateForm(customer);
   }
 
   void _confirmToggleActive(
@@ -649,6 +704,388 @@ class FragmentHomeCustomer extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInlineCustomerFormCard(
+    BuildContext context,
+    ControllerHomeCustomer controller,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isEditing = controller.isEditing;
+
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      elevation: 6,
+      shadowColor: colorScheme.primary.withValues(alpha: 0.15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: colorScheme.primary.withValues(alpha: 0.25),
+          width: 1.2,
+        ),
+      ),
+      child: Form(
+        key: controller.createFormKey,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Header Row ──
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isEditing
+                            ? [Colors.orange.shade500, Colors.deepOrange.shade700]
+                            : [Colors.teal.shade500, Colors.teal.shade800],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      isEditing
+                          ? Icons.manage_accounts_rounded
+                          : Icons.person_add_alt_1_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isEditing
+                              ? 'edit_customer'.tr
+                              : 'new_customer'.tr,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        Text(
+                          isEditing
+                              ? 'Update existing customer details in your database'
+                              : 'Fill in details below to register customer into DASHPAY',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'close'.tr,
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: controller.closeCreateForm,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+              Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.15)),
+              const SizedBox(height: 16),
+
+              // ── Responsive Form Content ──
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isCompact = constraints.maxWidth < 750;
+                  if (isCompact) {
+                    return Column(
+                      children: [
+                        _buildNameField(controller, isDark, colorScheme),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(child: _buildPhoneField(controller, isDark, colorScheme)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _buildEmailField(controller, isDark, colorScheme)),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        _buildAddressField(controller, isDark, colorScheme),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(flex: 2, child: _buildCityField(controller, isDark, colorScheme)),
+                            const SizedBox(width: 10),
+                            Expanded(flex: 2, child: _buildStateField(controller, isDark, colorScheme)),
+                            const SizedBox(width: 10),
+                            Expanded(flex: 1, child: _buildZipField(controller, isDark, colorScheme)),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(child: _buildNotesField(controller, isDark, colorScheme)),
+                            const SizedBox(width: 10),
+                            _buildVipSwitch(controller, isDark, colorScheme),
+                          ],
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 3, child: _buildNameField(controller, isDark, colorScheme)),
+                          const SizedBox(width: 12),
+                          Expanded(flex: 2, child: _buildPhoneField(controller, isDark, colorScheme)),
+                          const SizedBox(width: 12),
+                          Expanded(flex: 2, child: _buildEmailField(controller, isDark, colorScheme)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 3, child: _buildAddressField(controller, isDark, colorScheme)),
+                          const SizedBox(width: 12),
+                          Expanded(flex: 2, child: _buildCityField(controller, isDark, colorScheme)),
+                          const SizedBox(width: 12),
+                          Expanded(flex: 2, child: _buildStateField(controller, isDark, colorScheme)),
+                          const SizedBox(width: 12),
+                          Expanded(flex: 1, child: _buildZipField(controller, isDark, colorScheme)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(child: _buildNotesField(controller, isDark, colorScheme)),
+                          const SizedBox(width: 12),
+                          _buildVipSwitch(controller, isDark, colorScheme),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Action Buttons ──
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: controller.clearCreateForm,
+                    icon: const Icon(Icons.cleaning_services_rounded, size: 16),
+                    label: const Text('Clear'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  OutlinedButton(
+                    onPressed: controller.closeCreateForm,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text('cancel'.tr),
+                  ),
+                  const SizedBox(width: 10),
+                  Obx(
+                    () => ElevatedButton.icon(
+                      onPressed: controller.rxIsSaving.value ? null : controller.saveCustomerFromForm,
+                      icon: controller.rxIsSaving.value
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.save_rounded, size: 18),
+                      label: Text(
+                        isEditing ? 'update_customer'.tr : 'save_customer'.tr,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isEditing ? Colors.deepOrange.shade600 : colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        elevation: 2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNameField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: controller.nameController,
+      decoration: InputDecoration(
+        labelText: '${'customer_name'.tr} *',
+        hintText: 'e.g. John Doe',
+        prefixIcon: const Icon(Icons.person_rounded, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: true,
+        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+      ),
+      validator: (val) {
+        if (val == null || val.trim().isEmpty) {
+          return 'Customer name is required';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildPhoneField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: controller.phoneController,
+      keyboardType: TextInputType.phone,
+      decoration: InputDecoration(
+        labelText: 'phone_number'.tr,
+        hintText: '10 digit number',
+        prefixIcon: const Icon(Icons.phone_rounded, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: true,
+        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+      ),
+    );
+  }
+
+  Widget _buildEmailField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: controller.emailController,
+      keyboardType: TextInputType.emailAddress,
+      decoration: InputDecoration(
+        labelText: 'email_address'.tr,
+        hintText: 'user@gmail.com',
+        prefixIcon: const Icon(Icons.email_rounded, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: true,
+        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+      ),
+    );
+  }
+
+  Widget _buildAddressField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: controller.addressController,
+      decoration: InputDecoration(
+        labelText: 'street_address'.tr,
+        hintText: 'Street / Area / Building',
+        prefixIcon: const Icon(Icons.home_rounded, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: true,
+        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+      ),
+    );
+  }
+
+  Widget _buildCityField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: controller.cityController,
+      decoration: InputDecoration(
+        labelText: 'city'.tr,
+        prefixIcon: const Icon(Icons.location_city_rounded, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: true,
+        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+      ),
+    );
+  }
+
+  Widget _buildStateField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: controller.stateController,
+      decoration: InputDecoration(
+        labelText: 'state'.tr,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: true,
+        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+      ),
+    );
+  }
+
+  Widget _buildZipField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: controller.zipController,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+        labelText: 'zip_code'.tr,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: true,
+        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+      ),
+    );
+  }
+
+  Widget _buildNotesField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+    return TextFormField(
+      controller: controller.notesController,
+      maxLines: 1,
+      decoration: InputDecoration(
+        labelText: 'notes'.tr,
+        hintText: 'Special preferences, discount terms, or notes',
+        prefixIcon: const Icon(Icons.note_alt_outlined, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: true,
+        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+      ),
+    );
+  }
+
+  Widget _buildVipSwitch(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+    return Obx(
+      () => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: controller.rxIsVip.value
+              ? Colors.amber.withValues(alpha: 0.1)
+              : (isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.2) : Colors.grey.shade100),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: controller.rxIsVip.value ? Colors.amber.shade400 : Colors.grey.shade300,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.star_rounded,
+              color: controller.rxIsVip.value ? Colors.amber.shade700 : Colors.grey.shade400,
+              size: 22,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'vip_customer'.tr,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: controller.rxIsVip.value ? Colors.amber.shade800 : colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Switch(
+              value: controller.rxIsVip.value,
+              onChanged: (val) => controller.rxIsVip.value = val,
+              activeTrackColor: Colors.amber.shade600,
+            ),
+          ],
+        ),
       ),
     );
   }

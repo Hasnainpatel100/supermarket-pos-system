@@ -241,8 +241,8 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
                 final format = isA4
                     ? PdfPageFormat.a4
                     : (is58
-                        ? const PdfPageFormat(58 * PdfPageFormat.mm, double.infinity, marginAll: 2.5 * PdfPageFormat.mm)
-                        : const PdfPageFormat(80 * PdfPageFormat.mm, double.infinity, marginAll: 3 * PdfPageFormat.mm));
+                        ? const PdfPageFormat(48 * PdfPageFormat.mm, double.infinity, marginAll: 1.5 * PdfPageFormat.mm)
+                        : const PdfPageFormat(70 * PdfPageFormat.mm, double.infinity, marginAll: 2 * PdfPageFormat.mm));
 
                 return PdfPreview(
                   key: ValueKey('preview_${widget.bill.billNo}_$paperSize'),

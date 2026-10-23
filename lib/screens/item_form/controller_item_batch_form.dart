@@ -16,6 +16,9 @@ class ControllerItemBatchForm extends GetxController {
   final batchNoController = TextEditingController();
   final expiryDateController = TextEditingController();
   final quantityController = TextEditingController();
+  final mrpController = TextEditingController();
+  final salePriceController = TextEditingController();
+  final mfgDateController = TextEditingController();
 
   @override
   void onInit() {
@@ -23,6 +26,10 @@ class ControllerItemBatchForm extends GetxController {
     final ob = Get.find<ServiceObjectBox>();
     _boxBatch = ob.box<EntityItemBatch>();
     _boxItem = ob.box<EntityItem>();
+
+    if (item.sellingPrice != null) {
+      salePriceController.text = item.sellingPrice.toString();
+    }
 
     // Auto-increment Batch Number
     final existingBatchesCount = _boxBatch
@@ -50,27 +57,53 @@ class ControllerItemBatchForm extends GetxController {
         expiryMs = DateTime.parse(
           expiryDateController.text,
         ).millisecondsSinceEpoch;
-      } catch (_) {
-        // Handle parse error or leave null
-      }
+      } catch (_) {}
+    }
+
+    int? mfgMs;
+    if (mfgDateController.text.isNotEmpty) {
+      try {
+        mfgMs = DateTime.parse(
+          mfgDateController.text,
+        ).millisecondsSinceEpoch;
+      } catch (_) {}
     }
 
     final int qty = int.tryParse(quantityController.text) ?? 0;
+    final double? mrp = double.tryParse(mrpController.text);
+    final double? salePrice = double.tryParse(salePriceController.text) ?? item.sellingPrice;
 
     final batch = EntityItemBatch(
       itemId: item.id,
       batchNo: batchNoController.text.trim(),
       quantity: qty,
+      mrp: mrp,
+      salePrice: salePrice,
+      costPrice: item.costPrice,
+      mfgDateUtcMs: mfgMs,
       expiryDateUtcMs: expiryMs,
       receivedAtUtcMs: now,
+      barcode: item.barcode,
     );
 
     _boxBatch.put(batch);
 
     // Update item total quantity
     item.totalQty = (item.totalQty ?? 0) + qty;
+    item.hasExpiry = true;
     _boxItem.put(item);
 
-    Get.back(); // Close Batch Form, returning to where we came from (likely Home or Item List)
+    Get.back(); // Close Batch Form
+  }
+
+  @override
+  void onClose() {
+    batchNoController.dispose();
+    quantityController.dispose();
+    mrpController.dispose();
+    salePriceController.dispose();
+    mfgDateController.dispose();
+    expiryDateController.dispose();
+    super.onClose();
   }
 }

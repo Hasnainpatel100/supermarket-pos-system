@@ -10,13 +10,25 @@ import '../screens/home/fragment/setting/controller_home_settings.dart';
 import 'service_currency.dart';
 
 class ServiceBillPdf {
-  static pw.Font? _cachedFont;
+  static pw.Font? _cachedRegularFont;
+  static pw.Font? _cachedBoldFont;
 
-  static Future<pw.Font> _loadFont() async {
-    if (_cachedFont != null) return _cachedFont!;
+  static Future<pw.Font> _loadRegularFont() async {
+    if (_cachedRegularFont != null) return _cachedRegularFont!;
     final fontData = await rootBundle.load('assets/fonts/segoeui.ttf');
-    _cachedFont = pw.Font.ttf(fontData.buffer.asByteData());
-    return _cachedFont!;
+    _cachedRegularFont = pw.Font.ttf(fontData.buffer.asByteData());
+    return _cachedRegularFont!;
+  }
+
+  static Future<pw.Font> _loadBoldFont() async {
+    if (_cachedBoldFont != null) return _cachedBoldFont!;
+    try {
+      final fontData = await rootBundle.load('assets/fonts/segoeuib.ttf');
+      _cachedBoldFont = pw.Font.ttf(fontData.buffer.asByteData());
+      return _cachedBoldFont!;
+    } catch (_) {
+      return await _loadRegularFont();
+    }
   }
 
   /// Builds a [pw.Document] for the given bill and paper size.
@@ -26,7 +38,8 @@ class ServiceBillPdf {
     ControllerHomeSettings settings, {
     String? paperSize,
   }) async {
-    final ttfFont = await _loadFont();
+    final regularFont = await _loadRegularFont();
+    final boldFont = await _loadBoldFont();
 
     final pdf = pw.Document();
     final String currencySymbol = Get.isRegistered<ServiceCurrency>()
@@ -48,7 +61,8 @@ class ServiceBillPdf {
         pdf,
         bill,
         settings,
-        ttfFont,
+        regularFont,
+        boldFont,
         currencySymbol,
         currencyFormat,
         dateFormat,
@@ -60,7 +74,8 @@ class ServiceBillPdf {
         pdf,
         bill,
         settings,
-        ttfFont,
+        regularFont,
+        boldFont,
         currencySymbol,
         currencyFormat,
         dateFormat,
@@ -72,7 +87,8 @@ class ServiceBillPdf {
         pdf,
         bill,
         settings,
-        ttfFont,
+        regularFont,
+        boldFont,
         currencySymbol,
         currencyFormat,
         dateFormat,
@@ -104,14 +120,15 @@ class ServiceBillPdf {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // THERMAL RECEIPT LAYOUT (80mm & 56mm / 58mm)
+  // THERMAL RECEIPT LAYOUT (80mm & 58mm / 56mm)
   // ═══════════════════════════════════════════════════════════════════════════
 
   static void _buildThermalReceipt(
     pw.Document pdf,
     EntityBill bill,
     ControllerHomeSettings settings,
-    pw.Font ttfFont,
+    pw.Font regularFont,
+    pw.Font boldFont,
     String currencySymbol,
     NumberFormat currencyFormat,
     DateFormat dateFormat,
@@ -123,22 +140,26 @@ class ServiceBillPdf {
     final storePhone = settings.rxStorePhone.value;
     final storeGstin = settings.rxStoreGstin.value;
 
+    // Standard 80mm thermal printers have a 72mm (576 dots) physical printhead.
+    // Using 70mm page width with 2mm margins guarantees zero text clipping on the right.
+    // Standard 58mm thermal printers have a 48mm (384 dots) physical printhead.
+    // Using 48mm page width with 1.5mm margins guarantees zero text clipping.
     final pageFormat = is58mm
-        ? PdfPageFormat(
-            58 * PdfPageFormat.mm,
+        ? const PdfPageFormat(
+            48 * PdfPageFormat.mm,
             double.infinity,
-            marginLeft: 2.5 * PdfPageFormat.mm,
-            marginRight: 2.5 * PdfPageFormat.mm,
-            marginTop: 3 * PdfPageFormat.mm,
-            marginBottom: 3 * PdfPageFormat.mm,
-          )
-        : PdfPageFormat(
-            80 * PdfPageFormat.mm,
-            double.infinity,
-            marginLeft: 3 * PdfPageFormat.mm,
-            marginRight: 3 * PdfPageFormat.mm,
-            marginTop: 4 * PdfPageFormat.mm,
+            marginLeft: 1.5 * PdfPageFormat.mm,
+            marginRight: 1.5 * PdfPageFormat.mm,
+            marginTop: 2 * PdfPageFormat.mm,
             marginBottom: 4 * PdfPageFormat.mm,
+          )
+        : const PdfPageFormat(
+            70 * PdfPageFormat.mm,
+            double.infinity,
+            marginLeft: 2 * PdfPageFormat.mm,
+            marginRight: 2 * PdfPageFormat.mm,
+            marginTop: 2.5 * PdfPageFormat.mm,
+            marginBottom: 4.5 * PdfPageFormat.mm,
           );
 
     final totalQty = bill.items.fold<int>(
@@ -146,14 +167,23 @@ class ServiceBillPdf {
       (sum, item) => sum + (item.qty ?? 0),
     );
 
+    // Calculate customer total savings (discounts + MRP difference)
+    double totalSavings = (bill.discount ?? 0);
+    for (final it in bill.items) {
+      totalSavings += (it.discount ?? 0);
+      if (it.mrp != null && it.price != null && it.mrp! > it.price!) {
+        totalSavings += (it.mrp! - it.price!) * (it.qty ?? 1);
+      }
+    }
+
     pdf.addPage(
       pw.Page(
         pageFormat: pageFormat,
         theme: pw.ThemeData.withFont(
-          base: ttfFont,
-          bold: ttfFont,
-          italic: ttfFont,
-          boldItalic: ttfFont,
+          base: regularFont,
+          bold: boldFont,
+          italic: regularFont,
+          boldItalic: boldFont,
         ),
         build: (ctx) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
@@ -165,17 +195,42 @@ class ServiceBillPdf {
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold,
-                  fontSize: is58mm ? 12 : 14,
+                  fontSize: is58mm ? 11.5 : 13.5,
+                  color: PdfColors.black,
                 ),
               ),
             ),
+            pw.SizedBox(height: 1.5),
+
+            // Badge / Subtitle: RETAIL TAX INVOICE
+            pw.Center(
+              child: pw.Container(
+                padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.black, width: 0.6),
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
+                ),
+                child: pw.Text(
+                  'RETAIL TAX INVOICE',
+                  style: pw.TextStyle(
+                    fontSize: is58mm ? 6.5 : 7.5,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
+                ),
+              ),
+            ),
+
             if (storeAddress.isNotEmpty) ...[
-              pw.SizedBox(height: 1),
+              pw.SizedBox(height: 1.5),
               pw.Center(
                 child: pw.Text(
                   storeAddress,
                   textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5),
+                  style: pw.TextStyle(
+                    fontSize: is58mm ? 7 : 8,
+                    color: PdfColors.black,
+                  ),
                 ),
               ),
             ],
@@ -185,7 +240,10 @@ class ServiceBillPdf {
                 child: pw.Text(
                   'Tel: $storePhone',
                   textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5),
+                  style: pw.TextStyle(
+                    fontSize: is58mm ? 7 : 8,
+                    color: PdfColors.black,
+                  ),
                 ),
               ),
             ],
@@ -196,29 +254,48 @@ class ServiceBillPdf {
                   'GSTIN: $storeGstin',
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
-                    fontSize: is58mm ? 6.5 : 7.5,
+                    fontSize: is58mm ? 7 : 8,
                     fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
                   ),
                 ),
               ),
             ],
 
-            _dashedDivider(is58mm),
+            _doubleDivider(),
 
-            // ── Bill Metadata ──
+            // ── Bill Metadata (Structured Two-Column) ──
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text(
-                  'Bill: #${bill.billNo ?? "N/A"}',
-                  style: pw.TextStyle(
-                    fontSize: is58mm ? 7.5 : 8.5,
-                    fontWeight: pw.FontWeight.bold,
+                pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: 'Bill: ',
+                        style: pw.TextStyle(
+                          fontSize: is58mm ? 7.5 : 8.5,
+                          color: PdfColors.black,
+                        ),
+                      ),
+                      pw.TextSpan(
+                        text: '#${bill.billNo ?? "N/A"}',
+                        style: pw.TextStyle(
+                          fontSize: is58mm ? 8 : 9,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.black,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 pw.Text(
                   dateFormat.format(date),
-                  style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5),
+                  style: pw.TextStyle(
+                    fontSize: is58mm ? 7 : 8,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
                 ),
               ],
             ),
@@ -226,19 +303,30 @@ class ServiceBillPdf {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text(
-                  'Customer: ${bill.customerName ?? "Walk-in"}',
-                  style: pw.TextStyle(fontSize: is58mm ? 7 : 8),
+                pw.Expanded(
+                  child: pw.Text(
+                    'Cust: ${bill.customerName?.isNotEmpty == true ? bill.customerName! : "Walk-in"}',
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7 : 8,
+                      color: PdfColors.black,
+                    ),
+                    maxLines: 1,
+                    overflow: pw.TextOverflow.clip,
+                  ),
                 ),
                 if (bill.customerPhone != null && bill.customerPhone!.isNotEmpty)
                   pw.Text(
-                    bill.customerPhone!,
-                    style: pw.TextStyle(fontSize: is58mm ? 7 : 8),
+                    'Mob: ${bill.customerPhone!}',
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7 : 8,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
+                    ),
                   ),
               ],
             ),
 
-            _dashedDivider(is58mm),
+            _divider(dashed: true),
 
             // ── Items Table Header ──
             pw.Row(
@@ -248,42 +336,51 @@ class ServiceBillPdf {
                   child: pw.Text(
                     'ITEM',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
+                      fontSize: is58mm ? 7.5 : 8.5,
                       fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
                     ),
                   ),
                 ),
                 pw.Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: pw.Text(
                     'QTY x RATE',
-                    textAlign: pw.TextAlign.center,
-                    style: pw.TextStyle(
-                      fontSize: is58mm ? 6.5 : 7.5,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                ),
-                pw.Expanded(
-                  flex: 2,
-                  child: pw.Text(
-                    'AMOUNT',
                     textAlign: pw.TextAlign.right,
                     style: pw.TextStyle(
                       fontSize: is58mm ? 7 : 8,
                       fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
+                    ),
+                  ),
+                ),
+                pw.SizedBox(width: 4),
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Text(
+                    'AMOUNT',
+                    textAlign: pw.TextAlign.right,
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7.5 : 8.5,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
                     ),
                   ),
                 ),
               ],
             ),
 
-            _dashedDivider(is58mm),
+            _divider(dashed: true),
 
             // ── Item Rows ──
             ...bill.items.map((item) {
               final rateStr = '$currencySymbol${currencyFormat.format(item.price ?? 0)}';
               final amtStr = '$currencySymbol${currencyFormat.format(item.total ?? 0)}';
+              final hasBatch = item.batchNo != null && item.batchNo!.isNotEmpty;
+              final hasDisc = (item.discount ?? 0) > 0;
+              final hasMrpSavings =
+                  item.mrp != null && item.price != null && (item.mrp! > item.price!);
+
               return pw.Padding(
                 padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
                 child: pw.Column(
@@ -296,43 +393,72 @@ class ServiceBillPdf {
                           flex: is58mm ? 4 : 5,
                           child: pw.Text(
                             item.itemName ?? '-',
-                            maxLines: 2,
                             style: pw.TextStyle(
-                              fontSize: is58mm ? 7 : 8,
+                              fontSize: is58mm ? 7.5 : 8.5,
                               fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.black,
                             ),
                           ),
                         ),
                         pw.Expanded(
-                          flex: 2,
+                          flex: 3,
                           child: pw.Text(
                             '${item.qty ?? 0} x $rateStr',
-                            textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5),
+                            textAlign: pw.TextAlign.right,
+                            style: pw.TextStyle(
+                              fontSize: is58mm ? 7 : 8,
+                              color: PdfColors.black,
+                            ),
                           ),
                         ),
+                        pw.SizedBox(width: 4),
                         pw.Expanded(
-                          flex: 2,
+                          flex: 3,
                           child: pw.Text(
                             amtStr,
                             textAlign: pw.TextAlign.right,
                             style: pw.TextStyle(
-                              fontSize: is58mm ? 7 : 8,
+                              fontSize: is58mm ? 7.5 : 8.5,
                               fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.black,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    if ((item.discount ?? 0) > 0)
+                    // Item Sub-info (Batch, MRP savings, discount)
+                    if (hasBatch || hasDisc || hasMrpSavings)
                       pw.Padding(
-                        padding: const pw.EdgeInsets.only(left: 4),
-                        child: pw.Text(
-                          'Disc: -$currencySymbol${currencyFormat.format(item.discount!)}',
-                          style: pw.TextStyle(
-                            fontSize: is58mm ? 6 : 6.5,
-                            color: PdfColors.grey700,
-                          ),
+                        padding: const pw.EdgeInsets.only(left: 3, top: 0.5),
+                        child: pw.Row(
+                          children: [
+                            if (hasBatch)
+                              pw.Text(
+                                '[B: ${item.batchNo}] ',
+                                style: pw.TextStyle(
+                                  fontSize: is58mm ? 6.5 : 7.5,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: PdfColors.black,
+                                ),
+                              ),
+                            if (hasMrpSavings)
+                              pw.Text(
+                                'MRP: $currencySymbol${currencyFormat.format(item.mrp)} ',
+                                style: pw.TextStyle(
+                                  fontSize: is58mm ? 6.5 : 7.5,
+                                  color: PdfColors.black,
+                                ),
+                              ),
+                            if (hasDisc)
+                              pw.Text(
+                                'Disc: -$currencySymbol${currencyFormat.format(item.discount!)}',
+                                style: pw.TextStyle(
+                                  fontSize: is58mm ? 6.5 : 7.5,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: PdfColors.black,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                   ],
@@ -340,19 +466,27 @@ class ServiceBillPdf {
               );
             }),
 
-            _dashedDivider(is58mm),
+            _divider(dashed: true),
 
             // ── Summary Totals ──
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'Items: ${bill.items.length}   Qty: $totalQty',
-                  style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5),
+                  'Items: ${bill.items.length}   |   Qty: $totalQty',
+                  style: pw.TextStyle(
+                    fontSize: is58mm ? 7 : 8,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
                 ),
                 pw.Text(
                   'Subtotal: $currencySymbol${currencyFormat.format(bill.totalAmount ?? 0)}',
-                  style: pw.TextStyle(fontSize: is58mm ? 7 : 8),
+                  style: pw.TextStyle(
+                    fontSize: is58mm ? 7.5 : 8.5,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
                 ),
               ],
             ),
@@ -361,10 +495,17 @@ class ServiceBillPdf {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Tax / GST:', style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5)),
+                  pw.Text('Tax / GST:',
+                      style: pw.TextStyle(
+                        fontSize: is58mm ? 7 : 8,
+                        color: PdfColors.black,
+                      )),
                   pw.Text(
                     '+ $currencySymbol${currencyFormat.format(bill.tax ?? 0)}',
-                    style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5),
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7 : 8,
+                      color: PdfColors.black,
+                    ),
                   ),
                 ],
               ),
@@ -374,10 +515,19 @@ class ServiceBillPdf {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Discount:', style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5)),
+                  pw.Text('Bill Discount:',
+                      style: pw.TextStyle(
+                        fontSize: is58mm ? 7 : 8,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.black,
+                      )),
                   pw.Text(
                     '- $currencySymbol${currencyFormat.format(bill.discount ?? 0)}',
-                    style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5),
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7 : 8,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
+                    ),
                   ),
                 ],
               ),
@@ -387,25 +537,54 @@ class ServiceBillPdf {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Round Off:', style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5)),
+                  pw.Text('Round Off:',
+                      style: pw.TextStyle(
+                        fontSize: is58mm ? 7 : 8,
+                        color: PdfColors.black,
+                      )),
                   pw.Text(
                     '${bill.roundOff! >= 0 ? '+' : ''}$currencySymbol${currencyFormat.format(bill.roundOff!)}',
-                    style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5),
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7 : 8,
+                      color: PdfColors.black,
+                    ),
                   ),
                 ],
               ),
             ],
 
+            // ── Customer Total Savings Badge ──
+            if (totalSavings > 0.5) ...[
+              pw.SizedBox(height: 2),
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.black, width: 0.8),
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
+                ),
+                child: pw.Center(
+                  child: pw.Text(
+                    '*** YOU SAVED: $currencySymbol${currencyFormat.format(totalSavings)} ***',
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7.5 : 8.5,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+
             pw.SizedBox(height: 3),
 
-            // ── Grand Total Highlight ──
+            // ── Grand Total Highlight Box ──
             pw.Container(
               padding: pw.EdgeInsets.symmetric(
-                vertical: is58mm ? 3 : 5,
+                vertical: is58mm ? 3.5 : 5,
                 horizontal: is58mm ? 4 : 6,
               ),
               decoration: pw.BoxDecoration(
-                border: pw.Border.all(color: PdfColors.black, width: 1.2),
+                border: pw.Border.all(color: PdfColors.black, width: 1.4),
                 borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
               ),
               child: pw.Row(
@@ -415,14 +594,16 @@ class ServiceBillPdf {
                     'NET PAYABLE:',
                     style: pw.TextStyle(
                       fontWeight: pw.FontWeight.bold,
-                      fontSize: is58mm ? 9.5 : 11.5,
+                      fontSize: is58mm ? 10 : 12,
+                      color: PdfColors.black,
                     ),
                   ),
                   pw.Text(
                     '$currencySymbol${currencyFormat.format(bill.grandTotal ?? 0)}',
                     style: pw.TextStyle(
                       fontWeight: pw.FontWeight.bold,
-                      fontSize: is58mm ? 10.5 : 12.5,
+                      fontSize: is58mm ? 11 : 13.5,
+                      color: PdfColors.black,
                     ),
                   ),
                 ],
@@ -438,15 +619,17 @@ class ServiceBillPdf {
                 pw.Text(
                   'Payment: ${bill.paymentMode?.toUpperCase() ?? "CASH"}',
                   style: pw.TextStyle(
-                    fontSize: is58mm ? 7 : 8,
+                    fontSize: is58mm ? 7.5 : 8.5,
                     fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
                   ),
                 ),
                 pw.Text(
                   'Status: ${bill.status ?? "PAID"}',
                   style: pw.TextStyle(
-                    fontSize: is58mm ? 7 : 8,
+                    fontSize: is58mm ? 7.5 : 8.5,
                     fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
                   ),
                 ),
               ],
@@ -459,8 +642,9 @@ class ServiceBillPdf {
               pw.Text(
                 'UPI Ref / UTR: ${bill.utrNumber}',
                 style: pw.TextStyle(
-                  fontSize: is58mm ? 6.5 : 7.5,
+                  fontSize: is58mm ? 7 : 8,
                   fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.black,
                 ),
               ),
             ],
@@ -472,20 +656,47 @@ class ServiceBillPdf {
                 children: [
                   pw.Text(
                     'Tendered: $currencySymbol${currencyFormat.format(bill.amountReceived ?? 0)}',
-                    style: pw.TextStyle(fontSize: is58mm ? 6.5 : 7.5),
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7 : 8,
+                      color: PdfColors.black,
+                    ),
                   ),
                   pw.Text(
                     'Change: $currencySymbol${currencyFormat.format(bill.changeReturned ?? 0)}',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 6.5 : 7.5,
+                      fontSize: is58mm ? 7 : 8,
                       fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
                     ),
                   ),
                 ],
               ),
             ],
 
-            _dashedDivider(is58mm),
+            if (bill.paymentMode == 'SPLIT') ...[
+              pw.SizedBox(height: 1),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'Cash: $currencySymbol${currencyFormat.format(bill.splitCash ?? 0)}',
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7 : 8,
+                      color: PdfColors.black,
+                    ),
+                  ),
+                  pw.Text(
+                    'Online: $currencySymbol${currencyFormat.format(bill.splitOnline ?? 0)}',
+                    style: pw.TextStyle(
+                      fontSize: is58mm ? 7 : 8,
+                      color: PdfColors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            _divider(dashed: true),
 
             // ── Barcode of Bill No ──
             if (bill.billNo != null && bill.billNo!.isNotEmpty) ...[
@@ -493,13 +704,18 @@ class ServiceBillPdf {
                 child: pw.BarcodeWidget(
                   barcode: pw.Barcode.code128(),
                   data: bill.billNo!,
-                  width: is58mm ? 120 : 155,
-                  height: is58mm ? 24 : 30,
+                  width: is58mm ? 120 : 150,
+                  height: is58mm ? 24 : 28,
                   drawText: true,
-                  textStyle: pw.TextStyle(fontSize: is58mm ? 6 : 7),
+                  color: PdfColors.black,
+                  textStyle: pw.TextStyle(
+                    fontSize: is58mm ? 6.5 : 7.5,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
                 ),
               ),
-              pw.SizedBox(height: 4),
+              pw.SizedBox(height: 3),
             ],
 
             // ── Footer ──
@@ -507,18 +723,30 @@ class ServiceBillPdf {
               child: pw.Text(
                 '*** Thank You! Visit Again ***',
                 style: pw.TextStyle(
-                  fontSize: is58mm ? 7 : 8,
+                  fontSize: is58mm ? 7.5 : 8.5,
                   fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.black,
+                ),
+              ),
+            ),
+            pw.SizedBox(height: 1.5),
+            pw.Center(
+              child: pw.Text(
+                'Goods once sold can be exchanged within 7 days with bill',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  fontSize: is58mm ? 6.5 : 7.5,
+                  color: PdfColors.black,
                 ),
               ),
             ),
             pw.SizedBox(height: 1),
             pw.Center(
               child: pw.Text(
-                'Goods once sold cannot be returned without bill',
+                'Software: RH POS',
                 style: pw.TextStyle(
                   fontSize: is58mm ? 5.5 : 6.5,
-                  color: PdfColors.grey700,
+                  color: PdfColors.black,
                 ),
               ),
             ),
@@ -529,16 +757,26 @@ class ServiceBillPdf {
     );
   }
 
-  static pw.Widget _dashedDivider(bool is58mm) {
+  static pw.Widget _divider({bool dashed = true, double thickness = 0.8}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2.5),
-      child: pw.Text(
-        is58mm
-            ? '--------------------------------'
-            : '--------------------------------------------',
-        maxLines: 1,
-        style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
-        textAlign: pw.TextAlign.center,
+      child: pw.Divider(
+        thickness: thickness,
+        color: PdfColors.black,
+        borderStyle: dashed ? pw.BorderStyle.dashed : pw.BorderStyle.solid,
+      ),
+    );
+  }
+
+  static pw.Widget _doubleDivider() {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 2.0),
+      child: pw.Column(
+        children: [
+          pw.Divider(thickness: 0.8, color: PdfColors.black),
+          pw.SizedBox(height: 1),
+          pw.Divider(thickness: 0.8, color: PdfColors.black),
+        ],
       ),
     );
   }
@@ -551,7 +789,8 @@ class ServiceBillPdf {
     pw.Document pdf,
     EntityBill bill,
     ControllerHomeSettings settings,
-    pw.Font ttfFont,
+    pw.Font regularFont,
+    pw.Font boldFont,
     String currencySymbol,
     NumberFormat currencyFormat,
     DateFormat dateFormat,
@@ -567,10 +806,10 @@ class ServiceBillPdf {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
         theme: pw.ThemeData.withFont(
-          base: ttfFont,
-          bold: ttfFont,
-          italic: ttfFont,
-          boldItalic: ttfFont,
+          base: regularFont,
+          bold: boldFont,
+          italic: regularFont,
+          boldItalic: boldFont,
         ),
         build: (ctx) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
@@ -821,7 +1060,7 @@ class ServiceBillPdf {
             pw.SizedBox(height: 2),
             pw.Center(
               child: pw.Text(
-                'SuperMarket POS - System Generated Invoice',
+                'RH POS - System Generated Invoice',
                 style: const pw.TextStyle(
                   fontSize: 8,
                   color: PdfColors.grey500,

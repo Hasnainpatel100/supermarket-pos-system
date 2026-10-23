@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'activity_split_bill.dart';
+import 'dialog_select_batch.dart';
 import 'package:super_market/service/service_currency.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
@@ -36,6 +37,25 @@ enum PosViewMode {
   classicTable, // 1st view: Standard Table View with barcode scanner & table
   catalogGrid,  // 2nd view: Compact Horizontal Cards Grid
   photoGrid,    // 3rd view: Vertical Food Photo Cards Grid with Background Image
+}
+
+class PosSearchOption {
+  final EntityItem item;
+  final EntityItemBatch? batch;
+
+  PosSearchOption({required this.item, this.batch});
+
+  String get displayName => item.name ?? '';
+  String? get batchNo => batch?.batchNo;
+  int get availableQty => batch?.quantity ?? item.totalQty ?? 0;
+  double get price => batch?.salePrice ?? item.sellingPrice ?? 0.0;
+  double get mrp => batch?.mrp ?? item.sellingPrice ?? price;
+  String? get expiryDate {
+    if (batch?.expiryDateUtcMs == null) return null;
+    final dt = DateTime.fromMillisecondsSinceEpoch(batch!.expiryDateUtcMs!, isUtc: true);
+    return DateFormat('dd-MM-yyyy').format(dt);
+  }
+  bool get hasBatch => batch != null;
 }
 
 class BillSession {
@@ -377,11 +397,31 @@ class ControllerHomePos extends GetxController {
 
   void closeTab(int index) {
     if (rxBillTabs.length <= 1) {
-      clearCart(); // Just clear if it's the last one
+      clearCart(restoreStock: true); // Just clear if it's the last one
       return;
     }
+    final tabToClose = rxBillTabs[index];
+    for (final cartItem in tabToClose.rxCartItems) {
+      final qty = cartItem.qty ?? 0;
+      if (qty > 0) {
+        if (cartItem.batchId != null && cartItem.batchId! > 0) {
+          final batch = _boxBatch.get(cartItem.batchId!);
+          if (batch != null) {
+            batch.quantity = (batch.quantity ?? 0) + qty;
+            _boxBatch.put(batch);
+          }
+        }
+        final stockItem = cartItem.item.target;
+        if (stockItem != null) {
+          stockItem.totalQty = (stockItem.totalQty ?? 0) + qty;
+          _boxItem.put(stockItem);
+        }
+      }
+    }
+    loadItems();
+
     final wasActive = rxActiveTabIndex.value;
-    rxBillTabs[index].dispose();
+    tabToClose.dispose();
     rxBillTabs.removeAt(index);
 
     if (index < wasActive) {
@@ -426,23 +466,71 @@ class ControllerHomePos extends GetxController {
     query.close();
   }
 
-  /// ⚡ HIGH-PERFORMANCE: Instant search powered by ObjectBox @Index and @Unique.
-  /// Handles exact barcode scan matches in sub-millisecond time and scales barcode parsing.
-  List<EntityItem> searchOptions(String rawQuery) {
+  /// ⚡ HIGH-PERFORMANCE: Instant search returning items and their specific batches.
+  /// If an item has batches, each batch is returned so the user can select the exact batch.
+  List<PosSearchOption> searchOptions(String rawQuery) {
     final query = rawQuery.trim();
     if (query.isEmpty) return const [];
 
-    // Check exact barcode or SKU first (sub-millisecond indexed lookup)
+    final List<PosSearchOption> results = [];
+    final Set<String> seenKeys = {}; // key: "${item.id}_${batch?.id ?? 'null'}"
+
+    // 1. Search batches directly by batchNo or barcode
+    final batchQuery = _boxBatch
+        .query(
+          EntityItemBatch_.batchNo
+              .contains(query, caseSensitive: false)
+              .or(EntityItemBatch_.barcode.contains(query, caseSensitive: false)),
+        )
+        .build()
+      ..limit = 25;
+    final matchingBatches = batchQuery.find();
+    batchQuery.close();
+
+    for (final b in matchingBatches) {
+      if (b.itemId != null && b.itemId! > 0) {
+        final item = _boxItem.get(b.itemId!);
+        if (item != null) {
+          final key = '${item.id}_${b.id}';
+          if (!seenKeys.contains(key)) {
+            seenKeys.add(key);
+            results.add(PosSearchOption(item: item, batch: b));
+          }
+        }
+      }
+    }
+
+    // 2. Exact barcode or SKU check
     final exactBarcodeQuery = _boxItem
         .query(EntityItem_.barcode.equals(query).or(EntityItem_.sku.equals(query)))
         .build();
     final exactMatch = exactBarcodeQuery.findFirst();
     exactBarcodeQuery.close();
+
     if (exactMatch != null) {
-      return [exactMatch];
+      final batches = _boxBatch
+          .query(EntityItemBatch_.itemId.equals(exactMatch.id ?? 0))
+          .order(EntityItemBatch_.id)
+          .build()
+          .find();
+      if (batches.isNotEmpty) {
+        for (final b in batches) {
+          final key = '${exactMatch.id}_${b.id}';
+          if (!seenKeys.contains(key)) {
+            seenKeys.add(key);
+            results.add(PosSearchOption(item: exactMatch, batch: b));
+          }
+        }
+      } else {
+        final key = '${exactMatch.id}_null';
+        if (!seenKeys.contains(key)) {
+          seenKeys.add(key);
+          results.add(PosSearchOption(item: exactMatch, batch: null));
+        }
+      }
     }
 
-    // Check variable weight barcode from supermarket weighing scales (Prefix 20, 21, 02, 28)
+    // 3. Variable weight barcode from supermarket weighing scales (Prefix 20, 21, 02, 28)
     if (query.length >= 12 &&
         (query.startsWith('20') || query.startsWith('21') || query.startsWith('02') || query.startsWith('28'))) {
       final plu = query.substring(2, 7);
@@ -452,11 +540,15 @@ class ControllerHomePos extends GetxController {
       final scaleItem = scaleQuery.findFirst();
       scaleQuery.close();
       if (scaleItem != null) {
-        return [scaleItem];
+        final key = '${scaleItem.id}_null';
+        if (!seenKeys.contains(key)) {
+          seenKeys.add(key);
+          results.add(PosSearchOption(item: scaleItem, batch: null));
+        }
       }
     }
 
-    // Otherwise perform indexed multi-field search limited to 25 items
+    // 4. Multi-field search across item name, barcode, and sku
     final q = _boxItem
         .query(
           EntityItem_.name
@@ -467,9 +559,34 @@ class ControllerHomePos extends GetxController {
         )
         .order(EntityItem_.name)
         .build()
-      ..limit = 25;
-    final results = q.find();
+      ..limit = 30;
+    final matchingItems = q.find();
     q.close();
+
+    for (final item in matchingItems) {
+      final batches = _boxBatch
+          .query(EntityItemBatch_.itemId.equals(item.id ?? 0))
+          .order(EntityItemBatch_.id)
+          .build()
+          .find();
+
+      if (batches.isNotEmpty) {
+        for (final b in batches) {
+          final key = '${item.id}_${b.id}';
+          if (!seenKeys.contains(key)) {
+            seenKeys.add(key);
+            results.add(PosSearchOption(item: item, batch: b));
+          }
+        }
+      } else {
+        final key = '${item.id}_null';
+        if (!seenKeys.contains(key)) {
+          seenKeys.add(key);
+          results.add(PosSearchOption(item: item, batch: null));
+        }
+      }
+    }
+
     return results;
   }
 
@@ -549,7 +666,12 @@ class ControllerHomePos extends GetxController {
     // 3. Fallback search: pick first matching option on Enter
     final options = searchOptions(query);
     if (options.isNotEmpty) {
-      addToCart(options.first);
+      final first = options.first;
+      if (first.hasBatch) {
+        addBatchToCart(first.item, first.batch!);
+      } else {
+        addToCart(first.item);
+      }
       searchController.clear();
       searchFocusNode.requestFocus();
     } else {
@@ -582,32 +704,57 @@ class ControllerHomePos extends GetxController {
     }
   }
 
-  void addToCart(EntityItem item) {
+  void addToCart(EntityItem item, {bool skipBatchCheck = false}) {
+    if (!skipBatchCheck) {
+      final batches = _boxBatch
+          .query(EntityItemBatch_.itemId.equals(item.id ?? 0))
+          .order(EntityItemBatch_.id)
+          .build()
+          .find();
+      if (batches.isNotEmpty) {
+        Get.dialog(
+          DialogSelectBatch(
+            item: item,
+            batches: batches,
+            onBatchSelected: (batch) => addBatchToCart(item, batch),
+          ),
+          barrierDismissible: true,
+        );
+        return;
+      }
+    }
+
     final availableStock = item.totalQty ?? 0;
+    if (availableStock < 1) {
+      SnackbarUtil.showError("${item.name} is out of stock!");
+      return;
+    }
+
+    // Deduct stock from item immediately
+    item.totalQty = availableStock - 1;
+    _boxItem.put(item);
+
     final session = activeSession;
-    final index = session.rxCartItems.indexWhere((element) => element.item.target?.id == item.id);
+    final index = session.rxCartItems.indexWhere(
+      (element) => element.item.target?.id == item.id && element.batchNo == null,
+    );
 
     if (index >= 0) {
       final existing = session.rxCartItems[index];
       final currentCartQty = existing.qty ?? 0;
-      if (currentCartQty + 1 > availableStock) {
-        SnackbarUtil.showError("Insufficient stock! Available: $availableStock");
-        return;
-      }
       existing.qty = currentCartQty + 1;
       existing.total = (existing.qty! * (existing.price ?? 0));
       session.rxCartItems[index] = existing;
     } else {
-      if (availableStock < 1) {
-        SnackbarUtil.showError("${item.name} is out of stock!");
-        return;
-      }
       final billItem = EntityBillItem(
         itemName: item.name,
         itemBarcode: item.barcode,
+        hsnCode: item.hsnCode,
         unit: item.unit,
         price: item.sellingPrice,
+        mrp: item.sellingPrice,
         qty: 1,
+        taxRate: item.taxRate,
         tax: 0,
         discount: 0,
         total: item.sellingPrice,
@@ -616,41 +763,179 @@ class ControllerHomePos extends GetxController {
       session.rxCartItems.add(billItem);
     }
     
-    // Attempt Auto-focus back
+    loadItems();
+    calculateTotals();
+
+    // Auto-focus back to search
     searchController.clear();
     rxSearchQuery.value = '';
     searchFocusNode.requestFocus();
-    
+  }
+
+  void addBatchToCart(EntityItem item, EntityItemBatch batch) {
+    final availableStock = batch.quantity ?? 0;
+    if (availableStock < 1) {
+      SnackbarUtil.showError("Batch ${batch.batchNo} is out of stock! Available: $availableStock");
+      return;
+    }
+
+    // 1. Minus stock in THAT batch only
+    batch.quantity = availableStock - 1;
+    _boxBatch.put(batch);
+
+    // 2. Minus stock in the item total quantity
+    item.totalQty = ((item.totalQty ?? 0) - 1).clamp(0, 99999999);
+    _boxItem.put(item);
+
+    final session = activeSession;
+    final effectivePrice = batch.salePrice ?? item.sellingPrice ?? 0.0;
+    final effectiveMrp = batch.mrp ?? item.sellingPrice ?? effectivePrice;
+
+    final index = session.rxCartItems.indexWhere(
+      (element) => element.item.target?.id == item.id && element.batchNo == batch.batchNo,
+    );
+
+    if (index >= 0) {
+      final existing = session.rxCartItems[index];
+      final currentCartQty = existing.qty ?? 0;
+      existing.qty = currentCartQty + 1;
+      existing.total = (existing.qty! * (existing.price ?? effectivePrice));
+      session.rxCartItems[index] = existing;
+    } else {
+      final displayName = batch.batchNo != null && batch.batchNo!.isNotEmpty
+          ? '${item.name} [B: ${batch.batchNo}]'
+          : (item.name ?? '');
+
+      final billItem = EntityBillItem(
+        itemName: displayName,
+        itemBarcode: item.barcode,
+        hsnCode: item.hsnCode,
+        unit: item.unit,
+        price: effectivePrice,
+        mrp: effectiveMrp,
+        batchNo: batch.batchNo,
+        batchId: batch.id,
+        qty: 1,
+        taxRate: item.taxRate,
+        tax: 0,
+        discount: batch.discount ?? 0,
+        total: effectivePrice,
+      );
+      billItem.item.target = item;
+      session.rxCartItems.add(billItem);
+    }
+
+    loadItems();
     calculateTotals();
+
+    searchController.clear();
+    rxSearchQuery.value = '';
+    searchFocusNode.requestFocus();
   }
 
   void updateQty(int index, int delta) {
     final session = activeSession;
+    if (index < 0 || index >= session.rxCartItems.length) return;
     final cartItem = session.rxCartItems[index];
     final newQty = (cartItem.qty ?? 0) + delta;
 
-    if (newQty <= 0) {
-      session.rxCartItems.removeAt(index);
-    } else {
-      if (delta > 0) {
+    if (delta > 0) {
+      // Cashier added +: deduct from batch or item
+      if (cartItem.batchId != null && cartItem.batchId! > 0) {
+        final batch = _boxBatch.get(cartItem.batchId!);
+        if (batch == null || (batch.quantity ?? 0) < delta) {
+          final avail = batch?.quantity ?? 0;
+          SnackbarUtil.showError("Insufficient batch stock! Available: $avail (Batch ${cartItem.batchNo ?? ''})");
+          return;
+        }
+        batch.quantity = (batch.quantity ?? 0) - delta;
+        _boxBatch.put(batch);
+
+        final stockItem = cartItem.item.target;
+        if (stockItem != null) {
+          stockItem.totalQty = ((stockItem.totalQty ?? 0) - delta).clamp(0, 99999999);
+          _boxItem.put(stockItem);
+        }
+      } else {
         final stockItem = cartItem.item.target;
         final availableStock = stockItem?.totalQty ?? 0;
-        if (newQty > availableStock) {
+        if (availableStock < delta) {
           SnackbarUtil.showError("Insufficient stock! Available: $availableStock");
           return;
         }
+        if (stockItem != null) {
+          stockItem.totalQty = availableStock - delta;
+          _boxItem.put(stockItem);
+        }
       }
+
       cartItem.qty = newQty;
       cartItem.total = newQty * (cartItem.price ?? 0);
       session.rxCartItems[index] = cartItem;
+    } else if (delta < 0) {
+      // Cashier decreased -: restore stock to batch or item
+      final restoreQty = -delta;
+      if (cartItem.batchId != null && cartItem.batchId! > 0) {
+        final batch = _boxBatch.get(cartItem.batchId!);
+        if (batch != null) {
+          batch.quantity = (batch.quantity ?? 0) + restoreQty;
+          _boxBatch.put(batch);
+        }
+        final stockItem = cartItem.item.target;
+        if (stockItem != null) {
+          stockItem.totalQty = (stockItem.totalQty ?? 0) + restoreQty;
+          _boxItem.put(stockItem);
+        }
+      } else {
+        final stockItem = cartItem.item.target;
+        if (stockItem != null) {
+          stockItem.totalQty = (stockItem.totalQty ?? 0) + restoreQty;
+          _boxItem.put(stockItem);
+        }
+      }
+
+      if (newQty <= 0) {
+        session.rxCartItems.removeAt(index);
+      } else {
+        cartItem.qty = newQty;
+        cartItem.total = newQty * (cartItem.price ?? 0);
+        session.rxCartItems[index] = cartItem;
+      }
     }
+
+    loadItems();
     calculateTotals();
   }
 
   void removeFromCart(int index) {
     final session = activeSession;
     if (index < 0 || index >= session.rxCartItems.length) return;
+    final cartItem = session.rxCartItems[index];
+    final restoreQty = cartItem.qty ?? 0;
+
+    if (restoreQty > 0) {
+      if (cartItem.batchId != null && cartItem.batchId! > 0) {
+        final batch = _boxBatch.get(cartItem.batchId!);
+        if (batch != null) {
+          batch.quantity = (batch.quantity ?? 0) + restoreQty;
+          _boxBatch.put(batch);
+        }
+        final stockItem = cartItem.item.target;
+        if (stockItem != null) {
+          stockItem.totalQty = (stockItem.totalQty ?? 0) + restoreQty;
+          _boxItem.put(stockItem);
+        }
+      } else {
+        final stockItem = cartItem.item.target;
+        if (stockItem != null) {
+          stockItem.totalQty = (stockItem.totalQty ?? 0) + restoreQty;
+          _boxItem.put(stockItem);
+        }
+      }
+    }
+
     session.rxCartItems.removeAt(index);
+    loadItems();
     calculateTotals();
   }
 
@@ -744,8 +1029,29 @@ class ControllerHomePos extends GetxController {
     calculateTotals();
   }
 
-  void clearCart() {
+  void clearCart({bool restoreStock = true}) {
     final session = activeSession;
+    if (restoreStock && session.rxCartItems.isNotEmpty) {
+      for (final cartItem in session.rxCartItems) {
+        final qty = cartItem.qty ?? 0;
+        if (qty > 0) {
+          if (cartItem.batchId != null && cartItem.batchId! > 0) {
+            final batch = _boxBatch.get(cartItem.batchId!);
+            if (batch != null) {
+              batch.quantity = (batch.quantity ?? 0) + qty;
+              _boxBatch.put(batch);
+            }
+          }
+          final stockItem = cartItem.item.target;
+          if (stockItem != null) {
+            stockItem.totalQty = (stockItem.totalQty ?? 0) + qty;
+            _boxItem.put(stockItem);
+          }
+        }
+      }
+      loadItems();
+    }
+
     session.rxCartItems.clear();
     session.rxDiscountAmount.value = 0;
     session.rxTaxRate.value = 0;
@@ -802,7 +1108,7 @@ class ControllerHomePos extends GetxController {
 
     rxParkedBills.insert(0, parked);
     _saveParkedBills();
-    clearCart();
+    clearCart(restoreStock: false); // Hold items in parked bill without restoring yet
     SnackbarUtil.showSuccess("Bill #$ticketNo parked. Ready for next customer!");
   }
 
@@ -836,7 +1142,26 @@ class ControllerHomePos extends GetxController {
 
   void discardParkedBill(int index) {
     if (index < 0 || index >= rxParkedBills.length) return;
-    final ticket = rxParkedBills[index].ticketId;
+    final parked = rxParkedBills[index];
+    for (final cartItem in parked.items) {
+      final qty = cartItem.qty ?? 0;
+      if (qty > 0) {
+        if (cartItem.batchId != null && cartItem.batchId! > 0) {
+          final batch = _boxBatch.get(cartItem.batchId!);
+          if (batch != null) {
+            batch.quantity = (batch.quantity ?? 0) + qty;
+            _boxBatch.put(batch);
+          }
+        }
+        final stockItem = cartItem.item.target;
+        if (stockItem != null) {
+          stockItem.totalQty = (stockItem.totalQty ?? 0) + qty;
+          _boxItem.put(stockItem);
+        }
+      }
+    }
+    loadItems();
+    final ticket = parked.ticketId;
     rxParkedBills.removeAt(index);
     _saveParkedBills();
     SnackbarUtil.showSuccess("Parked bill #$ticket discarded.");
@@ -893,7 +1218,7 @@ class ControllerHomePos extends GetxController {
 
   void triggerCashDrawer() {
     try {
-      SnackbarUtil.showSuccess("Cash Drawer kick signal sent (F12)");
+      SnackbarUtil.showSuccess("Cash Drawer kick signal sent (Delete)");
     } catch (_) {}
   }
 
@@ -913,7 +1238,7 @@ class ControllerHomePos extends GetxController {
       } else if (session.rxCartItems.isNotEmpty) {
         _showItemDiscountDialog(session.rxCartItems.length - 1);
       }
-    } else if (key == LogicalKeyboardKey.delete || key == LogicalKeyboardKey.backspace) {
+    } else if (key == LogicalKeyboardKey.delete) {
       if (session.rxSelectedCartIndex.value != -1) {
         removeFromCart(session.rxSelectedCartIndex.value);
         session.rxSelectedCartIndex.value = -1;
@@ -936,8 +1261,6 @@ class ControllerHomePos extends GetxController {
       toggleNextViewMode();
     } else if (key == LogicalKeyboardKey.f11) {
       _showRemarksDialog();
-    } else if (key == LogicalKeyboardKey.f12) {
-      triggerCashDrawer();
     } else if (key == LogicalKeyboardKey.keyP) {
       settleBill();
     } else if (key == LogicalKeyboardKey.keyT) {
@@ -1190,16 +1513,20 @@ class ControllerHomePos extends GetxController {
 
     // Build items and stock updates in memory first
     final billItemsToSave = <EntityBillItem>[];
-    final itemsToUpdate = <EntityItem>[];
     final stockTxnsToSave = <EntityStockTransaction>[];
 
     for (var cartItem in session.rxCartItems) {
       final billItem = EntityBillItem(
         itemName: cartItem.itemName,
         itemBarcode: cartItem.itemBarcode,
+        hsnCode: cartItem.hsnCode,
         unit: cartItem.unit,
         price: cartItem.price,
+        mrp: cartItem.mrp,
+        batchNo: cartItem.batchNo,
+        batchId: cartItem.batchId,
         qty: cartItem.qty,
+        taxRate: cartItem.taxRate,
         tax: cartItem.tax,
         discount: cartItem.discount,
         total: cartItem.total,
@@ -1207,26 +1534,17 @@ class ControllerHomePos extends GetxController {
       billItem.item.target = cartItem.item.target;
       billItemsToSave.add(billItem);
 
-      // Deduct stock from item and its batches
+      // Record stock transaction for sale audit
       final stockItem = cartItem.item.target;
       if (stockItem != null) {
         final soldQty = cartItem.qty ?? 0;
-        final itemId = stockItem.id ?? 0;
-        if (itemId > 0) {
-          _deductFromBatches(itemId, soldQty);
-        }
-        stockItem.totalQty = (stockItem.totalQty ?? 0) - soldQty;
-        if (stockItem.totalQty! < 0) stockItem.totalQty = 0;
-        stockItem.updatedAtUtcMs = now;
-        itemsToUpdate.add(stockItem);
-
         stockTxnsToSave.add(EntityStockTransaction(
           itemId: stockItem.id ?? 0,
           type: StockTxnType.sell.index,
           quantity: -soldQty,
           referenceType: 'sell',
           referenceId: stockItem.name ?? '',
-          remarks: 'Sold via POS',
+          remarks: 'Sold via POS${cartItem.batchNo != null ? ' (Batch ${cartItem.batchNo})' : ''}',
           createdAtUtcMs: now,
         ));
       }
@@ -1244,15 +1562,12 @@ class ControllerHomePos extends GetxController {
       }
       _boxBillItem.putMany(billItemsToSave);
 
-      if (itemsToUpdate.isNotEmpty) {
-        _boxItem.putMany(itemsToUpdate);
-      }
       if (stockTxnsToSave.isNotEmpty) {
         _boxStockTxn.putMany(stockTxnsToSave);
       }
     });
 
-    clearCart();
+    clearCart(restoreStock: false);
     loadItems(); // Refresh stock
 
     if (Get.isRegistered<ControllerHomeItem>()) {
@@ -1314,9 +1629,36 @@ class ControllerHomePos extends GetxController {
     }
   }
 
-  void _deductFromBatches(int itemId, int qty) {
+  void deductFromBatches(int itemId, int qty, {String? batchNo, int? batchId}) {
     if (itemId <= 0 || qty <= 0) return;
 
+    // 1. If specific batchId is provided, deduct directly from that batch
+    if (batchId != null && batchId > 0) {
+      final batch = _boxBatch.get(batchId);
+      if (batch != null) {
+        final currentQty = batch.quantity ?? 0;
+        batch.quantity = (currentQty - qty).clamp(0, 99999999);
+        _boxBatch.put(batch);
+        return;
+      }
+    }
+
+    // 2. If batchNo is provided, find that batch for the item
+    if (batchNo != null && batchNo.isNotEmpty) {
+      final query = _boxBatch
+          .query(EntityItemBatch_.itemId.equals(itemId).and(EntityItemBatch_.batchNo.equals(batchNo)))
+          .build();
+      final batch = query.findFirst();
+      query.close();
+      if (batch != null) {
+        final currentQty = batch.quantity ?? 0;
+        batch.quantity = (currentQty - qty).clamp(0, 99999999);
+        _boxBatch.put(batch);
+        return;
+      }
+    }
+
+    // 3. Fallback: FEFO (First Expiring First Out)
     final query = _boxBatch
         .query(EntityItemBatch_.itemId.equals(itemId))
         .order(EntityItemBatch_.expiryDateUtcMs)

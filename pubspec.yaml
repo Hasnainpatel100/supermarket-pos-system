@@ -68,3 +68,5 @@ flutter:
     - family: SegoeUI
       fonts:
         - asset: assets/fonts/segoeui.ttf
+        - asset: assets/fonts/segoeuib.ttf
+          weight: 700

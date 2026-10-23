@@ -25,6 +25,9 @@ class EntityBillItem {
   double? discount;
   double? total;
 
+  String? batchNo;
+  int? batchId;
+
   final bill = ToOne<EntityBill>();
   final item = ToOne<EntityItem>();
 
@@ -41,5 +44,7 @@ class EntityBillItem {
     this.tax,
     this.discount,
     this.total,
+    this.batchNo,
+    this.batchId,
   });
 }

@@ -5,11 +5,11 @@ import 'package:super_market/model/entity_shift_session.dart';
 void main() {
   group('Day & Shift Lifecycle and Logout Flow Rules', () {
     test('Initial state: Neither day nor shift is open', () {
-      EntityDaySession? activeDay;
-      EntityShiftSession? activeShift;
+      EntityDaySession? getActiveDay() => null;
+      EntityShiftSession? getActiveShift() => null;
 
-      final bool isDayOpen = activeDay != null && activeDay.isOpen;
-      final bool isShiftOpen = activeShift != null && activeShift.isOpen;
+      final bool isDayOpen = getActiveDay()?.isOpen ?? false;
+      final bool isShiftOpen = getActiveShift()?.isOpen ?? false;
 
       expect(isDayOpen, isFalse);
       expect(isShiftOpen, isFalse);

@@ -9,6 +9,8 @@ import '../../../../model/entity_purchase.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_brand_context.dart';
 import '../../../../service/service_object_box.dart';
+import '../../../../service/service_storage.dart';
+import '../../../../util/snackbar_util.dart';
 
 class ControllerHomeDashboard extends GetxController {
   late final Box<EntityBill> _boxBill;
@@ -17,6 +19,13 @@ class ControllerHomeDashboard extends GetxController {
   late final Box<EntityCustomer> _boxCustomer;
   late final Box<EntityPurchase> _boxPurchase;
   late final Box<EntityItemBatch> _boxBatch;
+
+  // ── 24-Hour Warning Dismissal Keys & State ──
+  static const String keyDismissPlanExpiry = 'dashboard_dismiss_plan_expiry_until';
+  static const String keyDismissItemExpiry = 'dashboard_dismiss_item_expiry_until';
+
+  final RxBool isPlanExpiryDismissed = false.obs;
+  final RxBool isItemExpiryDismissed = false.obs;
 
   // ── Today stats ──
   final RxDouble todaySales = 0.0.obs;
@@ -69,7 +78,41 @@ class ControllerHomeDashboard extends GetxController {
     _boxPurchase = ob.box<EntityPurchase>();
     _boxBatch = ob.box<EntityItemBatch>();
     _updateGreeting();
+    checkDismissStatus();
     loadData();
+  }
+
+  /// Checks if warnings were snoozed for 24 hours
+  void checkDismissStatus() {
+    if (!Get.isRegistered<ServiceStorage>()) return;
+    final storage = Get.find<ServiceStorage>();
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    final planUntil = storage.readInt(keyDismissPlanExpiry) ?? 0;
+    isPlanExpiryDismissed.value = nowMs < planUntil;
+
+    final itemUntil = storage.readInt(keyDismissItemExpiry) ?? 0;
+    isItemExpiryDismissed.value = nowMs < itemUntil;
+  }
+
+  /// Snoozes plan expiry warning banner for 24 hours
+  Future<void> dismissPlanExpiryBanner() async {
+    final until = DateTime.now().add(const Duration(hours: 24)).millisecondsSinceEpoch;
+    if (Get.isRegistered<ServiceStorage>()) {
+      await Get.find<ServiceStorage>().writeInt(keyDismissPlanExpiry, until);
+    }
+    isPlanExpiryDismissed.value = true;
+    SnackbarUtil.showSuccess('Plan expiry warning dismissed for 24 hours');
+  }
+
+  /// Snoozes item expiry warning banner for 24 hours
+  Future<void> dismissItemExpiryBanner() async {
+    final until = DateTime.now().add(const Duration(hours: 24)).millisecondsSinceEpoch;
+    if (Get.isRegistered<ServiceStorage>()) {
+      await Get.find<ServiceStorage>().writeInt(keyDismissItemExpiry, until);
+    }
+    isItemExpiryDismissed.value = true;
+    SnackbarUtil.showSuccess('Item expiry warning dismissed for 24 hours');
   }
 
   /// Updates the greeting based on current time (Hindi + English mix popular in India)
@@ -98,6 +141,7 @@ class ControllerHomeDashboard extends GetxController {
   void loadData() {
     isLoading.value = true;
     _updateGreeting();
+    checkDismissStatus();
 
     final now = DateTime.now();
     final dateFmt = DateFormat('d/MM/yyyy');

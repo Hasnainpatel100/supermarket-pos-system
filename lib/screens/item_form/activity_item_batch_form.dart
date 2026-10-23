@@ -16,8 +16,8 @@ class ActivityItemBatchForm extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return AppDialog(
-      maxWidth: 500,
-      maxHeight: 520,
+      maxWidth: 540,
+      maxHeight: 580,
       header: DialogHeader(
         title: 'add_item_batch'.tr,
         icon: Icons.inventory_2_rounded,
@@ -28,8 +28,6 @@ class ActivityItemBatchForm extends StatelessWidget {
           key: controller.formKey,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 400;
-
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -40,65 +38,95 @@ class ActivityItemBatchForm extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  if (isWide) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: AppTextField(
-                            controller: controller.batchNoController,
-                            label: 'batch_number'.tr,
-                            required: true,
-                          ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          controller: controller.batchNoController,
+                          label: 'batch_number'.tr,
+                          required: true,
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: AppNumberField(
-                            controller: controller.quantityController,
-                            label: 'quantity'.tr,
-                            required: true,
-                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AppNumberField(
+                          controller: controller.quantityController,
+                          label: 'quantity'.tr,
+                          required: true,
                         ),
-                      ],
-                    ),
-                  ] else ...[
-                    AppTextField(
-                      controller: controller.batchNoController,
-                      label: 'batch_number'.tr,
-                      required: true,
-                    ),
-                    const SizedBox(height: 16),
-                    AppNumberField(
-                      controller: controller.quantityController,
-                      label: 'quantity'.tr,
-                      required: true,
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: AppNumberField(
+                          controller: controller.mrpController,
+                          label: 'MRP',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AppNumberField(
+                          controller: controller.salePriceController,
+                          label: 'Sales Rate / Price',
+                        ),
+                      ),
+                    ],
+                  ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   FormSection(
                     icon: Icons.calendar_today_rounded,
                     color: Colors.orange.shade700,
-                    title: 'expiry_information'.tr,
+                    title: 'Dates & Expiry',
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
-                  AppDatePicker(
-                    controller: controller.expiryDateController,
-                    label: 'expiry_date'.tr,
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now().add(const Duration(days: 30)),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-                      );
-                      if (picked != null) {
-                        controller.expiryDateController.text =
-                            picked.toString().split(' ').first;
-                      }
-                    },
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppDatePicker(
+                          controller: controller.mfgDateController,
+                          label: 'Mfg. Date',
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                            );
+                            if (picked != null) {
+                              controller.mfgDateController.text =
+                                  picked.toString().split(' ').first;
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AppDatePicker(
+                          controller: controller.expiryDateController,
+                          label: 'expiry_date'.tr,
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now().add(const Duration(days: 180)),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                            );
+                            if (picked != null) {
+                              controller.expiryDateController.text =
+                                  picked.toString().split(' ').first;
+                            }
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               );

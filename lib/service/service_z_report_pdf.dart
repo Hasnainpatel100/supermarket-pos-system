@@ -57,11 +57,11 @@ class ServiceZReportPdf {
     final variance = physicalCountedCash - expectedClosingCash;
     final totalSales = paymentModes.values.fold(0.0, (sum, val) => sum + val);
 
-    // Standard 80mm width page format
+    // Standard 80mm thermal printers have 72mm printable width.
     const pageFormat = PdfPageFormat(
-      80 * PdfPageFormat.mm,
+      70 * PdfPageFormat.mm,
       double.infinity,
-      marginAll: 4 * PdfPageFormat.mm,
+      marginAll: 2 * PdfPageFormat.mm,
     );
 
     pdf.addPage(

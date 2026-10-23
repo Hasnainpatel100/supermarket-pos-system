@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import '../../model/entity_item.dart';
 import '../../service/service_item.dart';
@@ -26,8 +27,8 @@ class ActivityItemForm extends StatelessWidget {
     final theme = Theme.of(context);
 
     return AppDialog(
-      maxWidth: 900,
-      maxHeight: 750,
+      maxWidth: 980,
+      maxHeight: 850,
       header: DialogHeader(
         title: isEditing ? 'edit_item'.tr : 'new_item'.tr,
         icon: isEditing ? Icons.edit_note_rounded : Icons.post_add_rounded,
@@ -431,6 +432,10 @@ class ActivityItemForm extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // ── Opening Stock & Batches Section (Matching Photo 2) ──
+                  _BatchesSection(controller: controller, theme: theme, isWide: isWide),
                 ],
               );
             },
@@ -889,6 +894,372 @@ class _BarcodeActionButton extends StatelessWidget {
           ),
           child: Icon(icon, color: color, size: 20),
         ),
+      ),
+    );
+  }
+}
+
+class _BatchesSection extends StatelessWidget {
+  final ControllerItemForm controller;
+  final ThemeData theme;
+  final bool isWide;
+
+  const _BatchesSection({
+    required this.controller,
+    required this.theme,
+    required this.isWide,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = theme.colorScheme;
+    final dateFormat = DateFormat('yyyy-MM-dd');
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              FormSection(
+                icon: Icons.inventory_2_rounded,
+                color: Colors.purple.shade700,
+                title: 'Opening Stock & Batches',
+              ),
+              Obx(() {
+                final totalQty = controller.rxBatches.fold<int>(
+                  0,
+                  (sum, b) => sum + (b.quantity ?? 0),
+                );
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.purple.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    'Batches: ${controller.rxBatches.length}  |  Total Stock: $totalQty',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.purple.shade800,
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Inputs Card matching Photo 2
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (isWide) ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          controller: controller.batchNoController,
+                          label: 'Batch No.',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AppNumberField(
+                          controller: controller.batchQtyController,
+                          label: 'Qty',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AppNumberField(
+                          controller: controller.batchMrpController,
+                          label: 'MRP',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AppNumberField(
+                          controller: controller.batchSalesRateController,
+                          label: 'Sales Rate',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppDatePicker(
+                          controller: controller.batchMfgDateController,
+                          label: 'Mfg. Date',
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                            );
+                            if (picked != null) {
+                              controller.batchMfgDateController.text = dateFormat.format(picked);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AppDatePicker(
+                          controller: controller.batchExpiryDateController,
+                          label: 'Expiry Date',
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now().add(const Duration(days: 180)),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                            );
+                            if (picked != null) {
+                              controller.batchExpiryDateController.text = dateFormat.format(picked);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      FilledButton.icon(
+                        onPressed: controller.addBatch,
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Add Batch'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.teal.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          controller: controller.batchNoController,
+                          label: 'Batch No.',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AppNumberField(
+                          controller: controller.batchQtyController,
+                          label: 'Qty',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppNumberField(
+                          controller: controller.batchMrpController,
+                          label: 'MRP',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AppNumberField(
+                          controller: controller.batchSalesRateController,
+                          label: 'Sales Rate',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppDatePicker(
+                          controller: controller.batchMfgDateController,
+                          label: 'Mfg. Date',
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                            );
+                            if (picked != null) {
+                              controller.batchMfgDateController.text = dateFormat.format(picked);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: AppDatePicker(
+                          controller: controller.batchExpiryDateController,
+                          label: 'Expiry Date',
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now().add(const Duration(days: 180)),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                            );
+                            if (picked != null) {
+                              controller.batchExpiryDateController.text = dateFormat.format(picked);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: controller.addBatch,
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add Batch'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.teal.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Batches Data Table matching Photo 2
+          Obx(() {
+            final batches = controller.rxBatches;
+            if (batches.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: cs.surface.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.15)),
+                ),
+                child: Text(
+                  'No batches added yet. Fill in batch details above and click "Add Batch".',
+                  style: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.7), fontSize: 13),
+                ),
+              );
+            }
+
+            return Container(
+              decoration: BoxDecoration(
+                color: cs.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.25)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    headingRowColor: WidgetStateProperty.all(
+                      theme.brightness == Brightness.dark
+                          ? const Color(0xFF263238)
+                          : const Color(0xFFE0F2F1),
+                    ),
+                    headingTextStyle: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: cs.onSurface,
+                    ),
+                    dataRowMinHeight: 40,
+                    dataRowMaxHeight: 44,
+                    columns: const [
+                      DataColumn(label: Text('Batch No.')),
+                      DataColumn(label: Text('Qty')),
+                      DataColumn(label: Text('MRP')),
+                      DataColumn(label: Text('Sales Rate')),
+                      DataColumn(label: Text('Mfg. Date')),
+                      DataColumn(label: Text('Expiry Date')),
+                      DataColumn(label: Text('Action')),
+                    ],
+                    rows: List.generate(batches.length, (index) {
+                      final b = batches[index];
+                      final mfgStr = b.mfgDateUtcMs != null
+                          ? dateFormat.format(DateTime.fromMillisecondsSinceEpoch(b.mfgDateUtcMs!, isUtc: true).toLocal())
+                          : '-';
+                      final expStr = b.expiryDateUtcMs != null
+                          ? dateFormat.format(DateTime.fromMillisecondsSinceEpoch(b.expiryDateUtcMs!, isUtc: true).toLocal())
+                          : '-';
+
+                      return DataRow(
+                        color: WidgetStateProperty.resolveWith((states) {
+                          if (index.isOdd) {
+                            return cs.surfaceContainerHighest.withValues(alpha: 0.25);
+                          }
+                          return Colors.transparent;
+                        }),
+                        cells: [
+                          DataCell(
+                            Text(
+                              b.batchNo ?? '-',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          DataCell(Text('${b.quantity ?? 0}')),
+                          DataCell(Text(b.mrp != null ? '₹${b.mrp!.toStringAsFixed(2)}' : '-')),
+                          DataCell(
+                            Text(
+                              b.salePrice != null ? '₹${b.salePrice!.toStringAsFixed(2)}' : '-',
+                              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.teal.shade700),
+                            ),
+                          ),
+                          DataCell(Text(mfgStr)),
+                          DataCell(
+                            Text(
+                              expStr,
+                              style: TextStyle(
+                                color: b.expiryDateUtcMs != null &&
+                                        b.expiryDateUtcMs! < DateTime.now().millisecondsSinceEpoch
+                                    ? Colors.red
+                                    : cs.onSurface,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                              tooltip: 'Remove Batch',
+                              onPressed: () => controller.removeBatch(index),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

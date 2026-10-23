@@ -42,6 +42,7 @@ class AppPermissions {
 
   // ── 5. Customers (5) ──────────────────────────────────────────────────────
   static const String customerCreate = 'CUSTOMER_CREATE';
+  static const String createCustomer = 'CREATE_CUSTOMER';
   static const String customerRead = 'CUSTOMER_READ';
   static const String customerUpdate = 'CUSTOMER_UPDATE';
   static const String customerDelete = 'CUSTOMER_DELETE';

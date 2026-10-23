@@ -130,6 +130,15 @@ class DialogItemBatches extends StatelessWidget {
                                             color: Colors.grey.shade600,
                                           ),
                                         ),
+                                      if (batch.salePrice != null || batch.mrp != null)
+                                        Text(
+                                          'Sale: ₹${(batch.salePrice ?? 0).toStringAsFixed(2)}${batch.mrp != null ? ' • MRP: ₹${batch.mrp!.toStringAsFixed(2)}' : ''}',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: colorScheme.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),

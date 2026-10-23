@@ -222,7 +222,23 @@ class ControllerHome extends GetxController {
     if (isSuperAdmin) return true;
     final user = rxUser.value;
     if (user == null || user.isActive == false) return false;
-    return user.permissions?.contains(permission) ?? false;
+    final userPerms = user.permissions;
+    if (userPerms == null || userPerms.isEmpty) return false;
+
+    final target = permission.trim().toUpperCase();
+    for (final p in userPerms) {
+      final current = p.trim().toUpperCase();
+      if (current == target) return true;
+
+      // Handle inverted action-resource names (e.g. CREATE_CUSTOMER <-> CUSTOMER_CREATE)
+      if (target.contains('_')) {
+        final parts = target.split('_');
+        if (parts.length == 2 && current == '${parts[1]}_${parts[0]}') {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /// Multiple permissions (ANY)

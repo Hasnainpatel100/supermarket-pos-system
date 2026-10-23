@@ -21,9 +21,25 @@ class FragmentHomeCustomer extends StatelessWidget {
         ? Get.find<ControllerHomeCustomer>()
         : Get.put(ControllerHomeCustomer());
     final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
-    final canCreate = homeCtrl?.hasPermission(AppPermissions.customerCreate) ?? true;
-    final canUpdate = homeCtrl?.hasPermission(AppPermissions.customerUpdate) ?? true;
-    final canDelete = homeCtrl?.hasPermission(AppPermissions.customerDelete) ?? true;
+    final canCreate = homeCtrl?.hasAnyPermission([
+      'CREATE_CUSTOMER',
+      'CUSTOMER_CREATE',
+      'ADD_CUSTOMER',
+      'CUSTOMER_ADD',
+      AppPermissions.customerCreate,
+    ]) ?? true;
+    final canUpdate = homeCtrl?.hasAnyPermission([
+      'UPDATE_CUSTOMER',
+      'CUSTOMER_UPDATE',
+      'EDIT_CUSTOMER',
+      'CUSTOMER_EDIT',
+      AppPermissions.customerUpdate,
+    ]) ?? true;
+    final canDelete = homeCtrl?.hasAnyPermission([
+      'DELETE_CUSTOMER',
+      'CUSTOMER_DELETE',
+      AppPermissions.customerDelete,
+    ]) ?? true;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -775,7 +791,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                         Text(
                           isEditing
                               ? 'Update existing customer details in your database'
-                              : 'Fill in details below to register customer into DASHPAY',
+                              : 'Fill in details below to register customer into RH POS',
                           style: TextStyle(
                             fontSize: 12,
                             color: colorScheme.onSurface.withValues(alpha: 0.6),

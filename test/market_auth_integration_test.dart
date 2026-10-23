@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
@@ -10,24 +9,6 @@ import 'package:super_market/features/authentication/data/models/auth_response_m
 import 'package:super_market/model/model_brand.dart';
 import 'package:super_market/model/model_branch.dart';
 import 'package:super_market/service/service_storage.dart';
-
-// ---------------------------------------------------------------------------
-// Minimal Dio mock adapter (no real HTTP calls)
-// ---------------------------------------------------------------------------
-class _MockAdapter implements HttpClientAdapter {
-  final Future<ResponseBody> Function(RequestOptions) handler;
-  _MockAdapter(this.handler);
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) => handler(options);
-
-  @override
-  void close({bool force = false}) {}
-}
 
 // ---------------------------------------------------------------------------
 // Sample payloads matching documented backend contracts

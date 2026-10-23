@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../model/entity_item.dart';
+import '../../model/entity_item_batch.dart';
 import '../../model/entity_tax.dart';
+import '../../objectbox.g.dart';
 import '../../service/service_item.dart';
 import '../../service/service_object_box.dart';
 import '../../service/service_item_excel.dart';
@@ -25,6 +27,16 @@ class ControllerItemForm extends GetxController {
   final priceController = TextEditingController();
   final costController = TextEditingController();
   final unitController = TextEditingController();
+
+  // ── Batch Fields (Matching Product Entry Opening Stock) ──
+  final batchNoController = TextEditingController();
+  final batchQtyController = TextEditingController();
+  final batchMrpController = TextEditingController();
+  final batchSalesRateController = TextEditingController();
+  final batchMfgDateController = TextEditingController();
+  final batchExpiryDateController = TextEditingController();
+  final RxList<EntityItemBatch> rxBatches = <EntityItemBatch>[].obs;
+  final rxSelectedBatchIndex = (-1).obs;
 
   // ── Basic Fields ──
   final rxUnit = RxnString();
@@ -140,15 +152,22 @@ class ControllerItemForm extends GetxController {
     rxTaxType.value = editingItem?.taxType ?? 'exclusive';
     rxSalePriceType.value = editingItem?.taxType ?? 'exclusive';
     rxTaxRate.value = editingItem?.taxRate ?? 0.0;
-    rxTaxName.value = editingItem?.taxName ?? '';
+    // Load existing batches for this item
+    try {
+      if (editingItem?.id != null) {
+        final boxBatch = Get.find<ServiceObjectBox>().box<EntityItemBatch>();
+        final existingBatches = boxBatch
+            .query(EntityItemBatch_.itemId.equals(editingItem!.id!))
+            .order(EntityItemBatch_.id)
+            .build()
+            .find();
+        rxBatches.assignAll(existingBatches);
+        if (existingBatches.isNotEmpty) {
+          hasExpiry.value = true;
+        }
+      }
+    } catch (_) {}
 
-    // Re-select preset if matching
-    if (editingItem?.taxName != null && editingItem!.taxName!.isNotEmpty) {
-      final match = rxTaxPresets.firstWhereOrNull(
-        (t) => t.name == editingItem!.taxName && t.rate == editingItem!.taxRate,
-      );
-      rxSelectedTaxId.value = match?.id;
-    }
     _recomputeTax();
   }
 
@@ -218,6 +237,67 @@ class ControllerItemForm extends GetxController {
     }
   }
 
+  void addBatch() {
+    final batchNo = batchNoController.text.trim();
+    final qty = int.tryParse(batchQtyController.text.trim()) ?? 0;
+    final mrp = double.tryParse(batchMrpController.text.trim());
+    final saleRate = double.tryParse(batchSalesRateController.text.trim()) ?? double.tryParse(priceController.text);
+
+    if (batchNo.isEmpty) {
+      Get.snackbar("Error", "Please enter a batch number", snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    if (qty <= 0) {
+      Get.snackbar("Error", "Please enter a valid quantity", snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
+    int? mfgMs;
+    if (batchMfgDateController.text.trim().isNotEmpty) {
+      try {
+        mfgMs = DateTime.parse(batchMfgDateController.text.trim()).millisecondsSinceEpoch;
+      } catch (_) {}
+    }
+
+    int? expMs;
+    if (batchExpiryDateController.text.trim().isNotEmpty) {
+      try {
+        expMs = DateTime.parse(batchExpiryDateController.text.trim()).millisecondsSinceEpoch;
+      } catch (_) {}
+    }
+
+    final newBatch = EntityItemBatch(
+      batchNo: batchNo,
+      quantity: qty,
+      mrp: mrp,
+      salePrice: saleRate,
+      costPrice: double.tryParse(costController.text.trim()),
+      mfgDateUtcMs: mfgMs,
+      expiryDateUtcMs: expMs,
+      receivedAtUtcMs: DateTime.now().toUtc().millisecondsSinceEpoch,
+    );
+
+    rxBatches.add(newBatch);
+    hasExpiry.value = true;
+
+    if (priceController.text.isEmpty && saleRate != null) {
+      priceController.text = saleRate.toString();
+    }
+
+    batchNoController.clear();
+    batchQtyController.clear();
+    batchMrpController.clear();
+    batchSalesRateController.clear();
+    batchMfgDateController.clear();
+    batchExpiryDateController.clear();
+  }
+
+  void removeBatch(int index) {
+    if (index >= 0 && index < rxBatches.length) {
+      rxBatches.removeAt(index);
+    }
+  }
+
   void saveItem() async {
     if (!formKey.currentState!.validate()) {
       Get.snackbar("Error", "Please fill required fields");
@@ -252,7 +332,7 @@ class ControllerItemForm extends GetxController {
           taxAmount: rxTaxRate.value > 0 ? rxComputedTaxAmount.value : null,
           priceBeforeTax: rxTaxRate.value > 0 ? rxComputedBasePrice.value : null,
           priceAfterTax: rxTaxRate.value > 0 ? finalPrice : null,
-          hasExpiry: hasExpiry.value,
+          hasExpiry: hasExpiry.value || rxBatches.isNotEmpty,
           isActive: true,
           totalQty: 0,
           createdAtUtcMs: now,
@@ -273,22 +353,41 @@ class ControllerItemForm extends GetxController {
         editingItem?.taxAmount = rxTaxRate.value > 0 ? rxComputedTaxAmount.value : null;
         editingItem?.priceBeforeTax = rxTaxRate.value > 0 ? rxComputedBasePrice.value : null;
         editingItem?.priceAfterTax = rxTaxRate.value > 0 ? finalPrice : null;
-        editingItem?.hasExpiry = hasExpiry.value;
+        editingItem?.hasExpiry = hasExpiry.value || rxBatches.isNotEmpty;
         editingItem?.updatedAtUtcMs = now;
         itemService.updateItem(editingItem!);
         savedItem = editingItem!;
       }
 
-      if (hasExpiry.value) {
+      // Persist batches if added
+      if (rxBatches.isNotEmpty) {
+        final boxBatch = Get.find<ServiceObjectBox>().box<EntityItemBatch>();
+        if (editingItem != null && editingItem!.id != null) {
+          final old = boxBatch.query(EntityItemBatch_.itemId.equals(editingItem!.id!)).build().find();
+          for (final ob in old) {
+            if (ob.id != null) boxBatch.remove(ob.id!);
+          }
+        }
+        int totalBatchQty = 0;
+        for (final b in rxBatches) {
+          b.id = 0;
+          b.itemId = savedItem.id;
+          b.barcode = savedItem.barcode;
+          b.costPrice ??= savedItem.costPrice;
+          boxBatch.put(b);
+          totalBatchQty += (b.quantity ?? 0);
+        }
+        savedItem.totalQty = totalBatchQty;
+        savedItem.hasExpiry = true;
+        itemService.updateItem(savedItem);
+      } else if (hasExpiry.value && editingItem == null) {
         await Get.dialog(
           const ActivityItemBatchForm(),
           arguments: savedItem,
           barrierDismissible: false,
         );
-        Get.back();
-      } else {
-        Get.back();
       }
+      Get.back();
     } catch (e) {
       Get.snackbar("Error", "Duplicate SKU / Barcode");
     }
@@ -357,6 +456,12 @@ class ControllerItemForm extends GetxController {
     priceController.dispose();
     costController.dispose();
     unitController.dispose();
+    batchNoController.dispose();
+    batchQtyController.dispose();
+    batchMrpController.dispose();
+    batchSalesRateController.dispose();
+    batchMfgDateController.dispose();
+    batchExpiryDateController.dispose();
     super.onClose();
   }
 }

@@ -47,7 +47,8 @@ class _DashboardTheme {
 class FragHomeDashboard extends StatelessWidget {
   const FragHomeDashboard({super.key});
 
-  bool _isPlanBannerActive() {
+  bool _isPlanBannerActive(ControllerHomeDashboard ctrl) {
+    if (ctrl.isPlanExpiryDismissed.value) return false;
     if (!Get.isRegistered<ServiceBrandContext>()) return false;
     final ServiceBrandContext brandCtx = Get.find();
     final branch = brandCtx.rxSelectedBranch.value;
@@ -71,7 +72,7 @@ class FragHomeDashboard extends StatelessWidget {
           );
         }
 
-        final hasBanner = _isPlanBannerActive();
+        final hasBanner = _isPlanBannerActive(ctrl);
 
         return RefreshIndicator(
           color: _DashboardTheme.purple,
@@ -91,8 +92,9 @@ class FragHomeDashboard extends StatelessWidget {
               final horizontalPadding = isLarge ? 24.0 : 16.0;
               final sectionGap = isLarge ? 16.0 : 12.0;
 
-              // Count how many alert banners are active
-              final hasExpAlert = ctrl.expiringItemCount.value > 0 || ctrl.expiredItemCount.value > 0;
+              // Count how many alert banners are active (respecting 24-hour snooze)
+              final hasExpAlert = (ctrl.expiringItemCount.value > 0 || ctrl.expiredItemCount.value > 0) &&
+                  !ctrl.isItemExpiryDismissed.value;
               final alertBannerCount = (hasBanner ? 1 : 0) + (hasExpAlert ? 1 : 0);
 
               // Estimate height consumed by fixed elements
@@ -128,7 +130,7 @@ class FragHomeDashboard extends StatelessWidget {
                         // ── Plan Expiry Alert Banner ──
                         if (hasBanner) ...[
                           _buildPlanExpiryBanner(
-                              context, isLarge, horizontalPadding),
+                              context, ctrl, isLarge, horizontalPadding),
                           SizedBox(height: sectionGap),
                         ],
 
@@ -171,11 +173,12 @@ class FragHomeDashboard extends StatelessWidget {
   //  Plan Expiry Alert Banner
   // ──────────────────────────────────────────────────────
   Widget _buildPlanExpiryBanner(
-      BuildContext context, bool isLarge, double horizontalPadding) {
+      BuildContext context, ControllerHomeDashboard ctrl, bool isLarge, double horizontalPadding) {
     if (!Get.isRegistered<ServiceBrandContext>()) return const SizedBox.shrink();
     final ServiceBrandContext brandCtx = Get.find();
 
     return Obx(() {
+      if (ctrl.isPlanExpiryDismissed.value) return const SizedBox.shrink();
       final branch = brandCtx.rxSelectedBranch.value;
       final plan = branch?.planDetails;
       if (plan == null) return const SizedBox.shrink();
@@ -259,6 +262,24 @@ class FragHomeDashboard extends StatelessWidget {
                 'View Plan',
                 style: TextStyle(
                   fontSize: isLarge ? 13 : 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            OutlinedButton.icon(
+              onPressed: () => ctrl.dismissPlanExpiryBanner(),
+              icon: const Icon(Icons.alarm_off_rounded, size: 14),
+              label: const Text('Dismiss (24h)'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: color,
+                side: BorderSide(color: color.withValues(alpha: 0.45)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isLarge ? 12 : 10,
+                  vertical: isLarge ? 10 : 8,
+                ),
+                textStyle: TextStyle(
+                  fontSize: isLarge ? 12 : 11,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -362,6 +383,24 @@ class FragHomeDashboard extends StatelessWidget {
             child: Text(
               'View Items',
               style: TextStyle(fontSize: isLarge ? 12 : 11, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 6),
+          OutlinedButton.icon(
+            onPressed: () => ctrl.dismissItemExpiryBanner(),
+            icon: const Icon(Icons.alarm_off_rounded, size: 14),
+            label: const Text('Dismiss (24h)'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: color,
+              side: BorderSide(color: color.withValues(alpha: 0.45)),
+              padding: EdgeInsets.symmetric(
+                horizontal: isLarge ? 12 : 10,
+                vertical: isLarge ? 8 : 6,
+              ),
+              textStyle: TextStyle(
+                fontSize: isLarge ? 12 : 11,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

@@ -119,6 +119,17 @@ class FragmentHomePos extends StatelessWidget {
           onKeyEvent: (node, event) {
             if (event is KeyDownEvent) {
               final key = event.logicalKey;
+
+              // Do NOT intercept typing or deletion keys if any EditableText is focused
+              final primaryFocus = FocusManager.instance.primaryFocus;
+              final isEditingText = primaryFocus != null &&
+                  primaryFocus.context != null &&
+                  primaryFocus.context!.findAncestorWidgetOfExactType<EditableText>() != null;
+
+              if (isEditingText && (key == LogicalKeyboardKey.delete || key == LogicalKeyboardKey.backspace)) {
+                return KeyEventResult.ignored;
+              }
+
               if (key == LogicalKeyboardKey.f1 ||
                   key == LogicalKeyboardKey.f2 ||
                   key == LogicalKeyboardKey.f3 ||
@@ -130,7 +141,6 @@ class FragmentHomePos extends StatelessWidget {
                   key == LogicalKeyboardKey.f9 ||
                   key == LogicalKeyboardKey.f10 ||
                   key == LogicalKeyboardKey.f11 ||
-                  key == LogicalKeyboardKey.f12 ||
                   key == LogicalKeyboardKey.delete ||
                   (key == LogicalKeyboardKey.keyP &&
                       HardwareKeyboard.instance.isControlPressed) ||
@@ -358,9 +368,118 @@ class _TabBar extends StatelessWidget {
 
 // ─── Search Bar ──────────────────────────────────────────────────────────────
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends StatefulWidget {
   final ControllerHomePos controller;
   const _SearchBar({required this.controller});
+
+  @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  final LayerLink _layerLink = LayerLink();
+  final OverlayPortalController _overlayController = OverlayPortalController();
+  final ScrollController _listScrollController = ScrollController();
+
+  List<PosSearchOption> _options = [];
+  int _highlightedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.searchController.addListener(_onSearchChanged);
+    widget.controller.searchFocusNode.addListener(_onFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.searchController.removeListener(_onSearchChanged);
+    widget.controller.searchFocusNode.removeListener(_onFocusChanged);
+    _listScrollController.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChanged() {
+    if (!widget.controller.searchFocusNode.hasFocus) {
+      Future.delayed(const Duration(milliseconds: 180), () {
+        if (mounted && !widget.controller.searchFocusNode.hasFocus) {
+          _overlayController.hide();
+        }
+      });
+    } else if (widget.controller.searchController.text.trim().isNotEmpty && _options.isNotEmpty) {
+      _overlayController.show();
+    }
+  }
+
+  void _onSearchChanged() {
+    final text = widget.controller.searchController.text.trim();
+    if (text.isEmpty) {
+      if (_overlayController.isShowing) {
+        _overlayController.hide();
+      }
+      setState(() {
+        _options = [];
+        _highlightedIndex = 0;
+      });
+      return;
+    }
+
+    final results = widget.controller.searchOptions(text);
+    setState(() {
+      _options = results;
+      _highlightedIndex = _highlightedIndex.clamp(0, results.isEmpty ? 0 : results.length - 1);
+    });
+
+    if (results.isNotEmpty && widget.controller.searchFocusNode.hasFocus) {
+      if (!_overlayController.isShowing) {
+        _overlayController.show();
+      }
+    } else {
+      if (_overlayController.isShowing) {
+        _overlayController.hide();
+      }
+    }
+  }
+
+  void _selectOption(PosSearchOption option) {
+    _overlayController.hide();
+    setState(() {
+      _options = [];
+      _highlightedIndex = 0;
+    });
+    if (option.hasBatch) {
+      widget.controller.addBatchToCart(option.item, option.batch!);
+    } else {
+      widget.controller.addToCart(option.item);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.controller.searchController.clear();
+      widget.controller.rxSearchQuery.value = '';
+      widget.controller.searchFocusNode.requestFocus();
+    });
+  }
+
+  void _navigateOptions(int delta) {
+    if (_options.isEmpty) return;
+    setState(() {
+      _highlightedIndex = (_highlightedIndex + delta).clamp(0, _options.length - 1);
+    });
+    _scrollToHighlighted();
+  }
+
+  void _scrollToHighlighted() {
+    if (!_listScrollController.hasClients) return;
+    const itemHeight = 56.0;
+    final targetOffset = _highlightedIndex * itemHeight;
+    if (targetOffset < _listScrollController.offset) {
+      _listScrollController.jumpTo(targetOffset);
+    } else if (targetOffset + itemHeight >
+        _listScrollController.offset + _listScrollController.position.viewportDimension) {
+      _listScrollController.jumpTo(
+        targetOffset + itemHeight - _listScrollController.position.viewportDimension,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -368,137 +487,323 @@ class _SearchBar extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-      child: RawAutocomplete<EntityItem>(
-        textEditingController: controller.searchController,
-        focusNode: controller.searchFocusNode,
-        optionsBuilder: (TextEditingValue textEditingValue) {
-          if (textEditingValue.text.isEmpty) {
-            return const Iterable<EntityItem>.empty();
-          }
-          return controller.searchOptions(textEditingValue.text);
-        },
-        displayStringForOption: (EntityItem option) =>
-            "${option.name} | ${option.barcode ?? option.sku ?? ''}",
-        onSelected: (EntityItem selection) {
-          controller.addToCart(selection);
-          // Clear field and keep cursor ready for next scan
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            controller.searchController.clear();
-            controller.searchFocusNode.requestFocus();
-          });
-        },
-        optionsViewBuilder: (context, onSelected, options) {
-          return Align(
-            alignment: Alignment.topLeft,
-            child: Material(
-              elevation: 6,
-              borderRadius: BorderRadius.circular(12),
-              shadowColor: cs.shadow.withValues(alpha: 0.15),
-              child: Container(
-                constraints: const BoxConstraints(maxHeight: 300, maxWidth: 600),
-                decoration: BoxDecoration(
-                  color: cs.surface,
+      child: CompositedTransformTarget(
+        link: _layerLink,
+        child: OverlayPortal(
+          controller: _overlayController,
+          overlayChildBuilder: (context) {
+            return CompositedTransformFollower(
+              link: _layerLink,
+              targetAnchor: Alignment.bottomLeft,
+              followerAnchor: Alignment.topLeft,
+              offset: const Offset(0, 4),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 8,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
-                ),
-                child: options.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            Icon(Icons.search_off_rounded, size: 20, color: cs.onSurfaceVariant),
-                            const SizedBox(width: 8),
-                            Text('no_items_found'.tr, style: TextStyle(color: cs.onSurfaceVariant)),
-                          ],
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        shrinkWrap: true,
-                        itemCount: options.length,
-                        separatorBuilder: (_, _) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
-                        itemBuilder: (context, index) {
-                          final item = options.elementAt(index);
-                          final isHighlighted = AutocompleteHighlightedOption.of(context) == index;
-                          return Container(
-                            color: isHighlighted
-                                ? cs.primaryContainer.withValues(alpha: 0.4)
-                                : Colors.transparent,
-                            child: ListTile(
-                              dense: true,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                              leading: CircleAvatar(
-                                radius: 16,
-                                backgroundColor: cs.primaryContainer,
-                                child: Text(
-                                  (item.name ?? '?')[0].toUpperCase(),
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: cs.onPrimaryContainer),
+                  shadowColor: Colors.black.withValues(alpha: 0.25),
+                  child: Container(
+                    width: 620,
+                    constraints: const BoxConstraints(maxHeight: 330),
+                    decoration: BoxDecoration(
+                      color: cs.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.35)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Hint header
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${_options.length} item${_options.length == 1 ? '' : 's'} found',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: cs.primary,
                                 ),
                               ),
-                              title: Text(item.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                              subtitle: Text(
-                                "Code: ${item.barcode ?? item.sku ?? '-'} • Stock: ${item.totalQty ?? 0}",
-                                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: cs.surface,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                                    ),
+                                    child: const Text('↑', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: cs.surface,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                                    ),
+                                    child: const Text('↓', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: cs.surface,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                                    ),
+                                    child: const Text('PgUp', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: cs.surface,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                                    ),
+                                    child: const Text('PgDn', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'to navigate • [Enter] to select',
+                                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                                  ),
+                                ],
                               ),
-                              trailing: Text(
-                                "₹${(item.sellingPrice ?? 0).toStringAsFixed(2)}",
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: cs.primary),
-                              ),
-                              onTap: () => onSelected(item),
+                            ],
+                          ),
+                        ),
+
+                        // Options List
+                        Flexible(
+                          child: ListView.separated(
+                            controller: _listScrollController,
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            shrinkWrap: true,
+                            itemCount: _options.length,
+                            separatorBuilder: (_, _) => Divider(
+                              height: 1,
+                              indent: 14,
+                              endIndent: 14,
+                              color: cs.outlineVariant.withValues(alpha: 0.18),
                             ),
-                          );
-                        },
-                      ),
-              ),
-            ),
-          );
-        },
-        fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-          return TextField(
-            controller: textEditingController,
-            focusNode: focusNode,
-            decoration: InputDecoration(
-              hintText: 'search_name_code_barcode'.tr,
-              hintStyle: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.6), fontSize: 13),
-              prefixIcon: Icon(Icons.search_rounded, color: cs.primary, size: 20),
-              suffixIcon: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Chip(
-                  label: Text('auto_focus'.tr, style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                  backgroundColor: cs.surfaceContainerHighest,
-                  side: BorderSide.none,
+                            itemBuilder: (context, index) {
+                              final option = _options[index];
+                              final isHighlighted = index == _highlightedIndex;
+
+                              return InkWell(
+                                onTap: () => _selectOption(option),
+                                onHover: (hovered) {
+                                  if (hovered && _highlightedIndex != index) {
+                                    setState(() {
+                                      _highlightedIndex = index;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  color: isHighlighted
+                                      ? cs.primaryContainer.withValues(alpha: 0.5)
+                                      : Colors.transparent,
+                                  child: ListTile(
+                                    dense: true,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                                    leading: CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: option.hasBatch
+                                          ? (isHighlighted ? Colors.amber.shade800 : Colors.amber.shade100)
+                                          : (isHighlighted ? cs.primary : cs.primaryContainer),
+                                      child: option.hasBatch
+                                          ? Icon(
+                                              Icons.qr_code_2_rounded,
+                                              size: 16,
+                                              color: isHighlighted ? Colors.white : Colors.amber.shade900,
+                                            )
+                                          : Text(
+                                              (option.displayName)[0].toUpperCase(),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: isHighlighted ? cs.onPrimary : cs.onPrimaryContainer,
+                                              ),
+                                            ),
+                                    ),
+                                    title: Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            option.displayName,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ),
+                                        if (option.hasBatch) ...[
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: Colors.amber.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: Colors.amber.shade700.withValues(alpha: 0.5)),
+                                            ),
+                                            child: Text(
+                                              'Batch: ${option.batchNo}',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.amber.shade900,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    subtitle: Text(
+                                      option.hasBatch
+                                          ? "Stock: ${option.availableQty}${option.expiryDate != null && option.expiryDate!.isNotEmpty ? ' • Exp: ${option.expiryDate}' : ''}${option.mrp > 0 ? ' • MRP: ₹${option.mrp.toStringAsFixed(2)}' : ''} • Barcode: ${option.item.barcode ?? '-'}"
+                                          : "Code: ${option.item.barcode ?? option.item.sku ?? '-'} • Stock: ${option.availableQty}",
+                                      style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "₹${option.price.toStringAsFixed(2)}",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: isHighlighted ? cs.primary : cs.onSurface,
+                                          ),
+                                        ),
+                                        if (isHighlighted) ...[
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: cs.primary,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              'Enter ↵',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: cs.onPrimary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              filled: true,
-              fillColor: cs.surfaceContainerLow,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: cs.primary, width: 1.5),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            ),
-            onSubmitted: (val) {
-              if (val.trim().isNotEmpty) {
-                controller.handleBarcodeScan(val.trim());
-              } else {
-                onFieldSubmitted();
+            );
+          },
+          child: Focus(
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent) {
+                final key = event.logicalKey;
+                final isShowing = _overlayController.isShowing && _options.isNotEmpty;
+
+                if (key == LogicalKeyboardKey.arrowDown && isShowing) {
+                  _navigateOptions(1);
+                  return KeyEventResult.handled;
+                } else if (key == LogicalKeyboardKey.arrowUp && isShowing) {
+                  _navigateOptions(-1);
+                  return KeyEventResult.handled;
+                } else if (key == LogicalKeyboardKey.pageDown && isShowing) {
+                  _navigateOptions(5);
+                  return KeyEventResult.handled;
+                } else if (key == LogicalKeyboardKey.pageUp && isShowing) {
+                  _navigateOptions(-5);
+                  return KeyEventResult.handled;
+                } else if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
+                  if (isShowing && _highlightedIndex >= 0 && _highlightedIndex < _options.length) {
+                    _selectOption(_options[_highlightedIndex]);
+                    return KeyEventResult.handled;
+                  } else if (widget.controller.searchController.text.trim().isNotEmpty) {
+                    _overlayController.hide();
+                    widget.controller.handleBarcodeScan(widget.controller.searchController.text.trim());
+                    return KeyEventResult.handled;
+                  }
+                } else if (key == LogicalKeyboardKey.escape && isShowing) {
+                  _overlayController.hide();
+                  return KeyEventResult.handled;
+                }
               }
+              return KeyEventResult.ignored;
             },
-            onChanged: (val) {
-              controller.rxSearchQuery.value = val;
-            },
-          );
-        },
+            child: TextField(
+              controller: widget.controller.searchController,
+              focusNode: widget.controller.searchFocusNode,
+              decoration: InputDecoration(
+                hintText: 'search_name_code_barcode'.tr,
+                hintStyle: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.6), fontSize: 13),
+                prefixIcon: Icon(Icons.search_rounded, color: cs.primary, size: 20),
+                suffixIcon: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Chip(
+                    label: Text('auto_focus'.tr, style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    backgroundColor: cs.surfaceContainerHighest,
+                    side: BorderSide.none,
+                  ),
+                ),
+                filled: true,
+                fillColor: cs.surfaceContainerLow,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: cs.primary, width: 1.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              onSubmitted: (val) {
+                if (_overlayController.isShowing &&
+                    _options.isNotEmpty &&
+                    _highlightedIndex >= 0 &&
+                    _highlightedIndex < _options.length) {
+                  _selectOption(_options[_highlightedIndex]);
+                } else if (val.trim().isNotEmpty) {
+                  _overlayController.hide();
+                  widget.controller.handleBarcodeScan(val.trim());
+                }
+              },
+              onChanged: (val) {
+                widget.controller.rxSearchQuery.value = val;
+              },
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -647,7 +952,7 @@ class _ActionBar extends StatelessWidget {
         border: Border(top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.3))),
       ),
       child: Wrap(
-        spacing: 8,
+        spacing: 6,
         runSpacing: 6,
         children: [
           _ActionChip(icon: Icons.pin_rounded, label: 'qty_f2'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f2)),
@@ -659,8 +964,7 @@ class _ActionBar extends StatelessWidget {
           _ActionChip(icon: Icons.flash_on_rounded, label: 'Quick Cash (F8)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f8)),
           _ActionChip(icon: Icons.call_split_rounded, label: 'Split (F9)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f9)),
           _ActionChip(icon: Icons.note_alt_outlined, label: 'Remarks (F11)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f11)),
-          _ActionChip(icon: Icons.meeting_room_outlined, label: 'Drawer (F12)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f12)),
-          _ActionChip(icon: Icons.delete_outline_rounded, label: 'remove_del'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.delete), isDestructive: true),
+          _ActionChip(icon: Icons.delete_outline_rounded, label: 'Remove (Del)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.delete), isDestructive: true),
         ],
       ),
     );
@@ -692,7 +996,7 @@ class _ActionChip extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(8),
@@ -701,9 +1005,9 @@ class _ActionChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 15, color: color),
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 5),
+              Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: color)),
             ],
           ),
         ),
@@ -732,12 +1036,12 @@ class _RightPanel extends StatelessWidget {
           children: [
             // ── Date & Customer ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _DateBadge(),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 6),
                   _CustomerSection(controller: controller),
                 ],
               ),
@@ -745,7 +1049,7 @@ class _RightPanel extends StatelessWidget {
 
             // ── Summary ──
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               child: RepaintBoundary(
                 child: _SummaryCard(controller: controller),
               ),
@@ -754,14 +1058,14 @@ class _RightPanel extends StatelessWidget {
             // ── Payment ──
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                padding: const EdgeInsets.fromLTRB(14, 2, 14, 2),
                 child: _PaymentSection(controller: controller),
               ),
             ),
 
             // ── Settle Button ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 10),
               child: _SettleButtons(controller: controller),
             ),
           ],
@@ -779,23 +1083,23 @@ class _DateBadge extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final now = DateTime.now();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(Icons.calendar_today_rounded, size: 16, color: cs.primary),
-          const SizedBox(width: 10),
+          Icon(Icons.calendar_today_rounded, size: 14, color: cs.primary),
+          const SizedBox(width: 8),
           Text(
             DateFormat('EEEE, dd MMM yyyy').format(now),
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: cs.onSurface),
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: cs.onSurface),
           ),
           const Spacer(),
           Text(
             DateFormat('hh:mm a').format(now),
-            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -818,44 +1122,48 @@ class _CustomerSection extends StatelessWidget {
 
       if (selected != null) {
         return Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: cs.primaryContainer.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
           ),
           child: Row(
             children: [
               CircleAvatar(
-                radius: 18,
+                radius: 14,
                 backgroundColor: cs.primary,
                 child: Text(
                   (selected.name ?? '?')[0].toUpperCase(),
-                  style: TextStyle(color: cs.onPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(color: cs.onPrimary, fontWeight: FontWeight.bold, fontSize: 11),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       selected.name ?? 'unknown'.tr,
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: cs.onSurface),
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurface),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
                     Text(
                       [selected.phone, selected.city].where((s) => s != null && s.isNotEmpty).join(' • '),
-                      style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                      style: TextStyle(fontSize: 10.5, color: cs.onSurfaceVariant),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.close_rounded, size: 18, color: cs.onSurfaceVariant),
+                icon: Icon(Icons.close_rounded, size: 16, color: cs.onSurfaceVariant),
                 onPressed: () => session.rxSelectedCustomer.value = null,
                 style: IconButton.styleFrom(
-                  padding: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -865,171 +1173,195 @@ class _CustomerSection extends StatelessWidget {
         );
       }
 
-          TextEditingController? searchFieldCtrl;
+      TextEditingController? searchFieldCtrl;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Autocomplete<EntityCustomer>(
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                        if (textEditingValue.text.isEmpty) return const Iterable<EntityCustomer>.empty();
-                        return controller.rxListCustomers.where((c) =>
-                            (c.name?.toLowerCase().contains(textEditingValue.text.toLowerCase()) ?? false) ||
-                            (c.phone?.contains(textEditingValue.text) ?? false));
-                      },
-                      displayStringForOption: (EntityCustomer option) => "${option.name} | ${option.phone ?? ''}",
-                      onSelected: (EntityCustomer selection) {
-                        session.rxSelectedCustomer.value = selection;
-                      },
-                      optionsViewBuilder: (context, onSelected, options) {
-                        return Align(
-                          alignment: Alignment.topLeft,
-                          child: Material(
-                            elevation: 6,
-                            borderRadius: BorderRadius.circular(12),
-                            shadowColor: cs.shadow.withValues(alpha: 0.15),
-                            child: Container(
-                              constraints: const BoxConstraints(maxHeight: 250, maxWidth: 380),
-                              decoration: BoxDecoration(
-                                color: cs.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
-                              ),
-                              child: ListView.separated(
-                                padding: const EdgeInsets.symmetric(vertical: 6),
-                                shrinkWrap: true,
-                                itemCount: options.length,
-                                separatorBuilder: (_, _) => Divider(height: 1, indent: 16, endIndent: 16, color: cs.outlineVariant.withValues(alpha: 0.2)),
-                                itemBuilder: (context, index) {
-                                  final c = options.elementAt(index);
-                                  return ListTile(
-                                    dense: true,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                                    leading: CircleAvatar(
-                                      radius: 15,
-                                      backgroundColor: cs.secondaryContainer,
-                                      child: Text(
-                                        (c.name ?? '?')[0].toUpperCase(),
-                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: cs.onSecondaryContainer),
-                                      ),
+              Expanded(
+                child: SizedBox(
+                  height: 38,
+                  child: Autocomplete<EntityCustomer>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text.isEmpty) return const Iterable<EntityCustomer>.empty();
+                      return controller.rxListCustomers.where((c) =>
+                          (c.name?.toLowerCase().contains(textEditingValue.text.toLowerCase()) ?? false) ||
+                          (c.phone?.contains(textEditingValue.text) ?? false));
+                    },
+                    displayStringForOption: (EntityCustomer option) => "${option.name} | ${option.phone ?? ''}",
+                    onSelected: (EntityCustomer selection) {
+                      session.rxSelectedCustomer.value = selection;
+                    },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          elevation: 6,
+                          borderRadius: BorderRadius.circular(10),
+                          shadowColor: cs.shadow.withValues(alpha: 0.15),
+                          child: Container(
+                            constraints: const BoxConstraints(maxHeight: 220, maxWidth: 360),
+                            decoration: BoxDecoration(
+                              color: cs.surface,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                            ),
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              shrinkWrap: true,
+                              itemCount: options.length,
+                              separatorBuilder: (_, _) => Divider(height: 1, indent: 12, endIndent: 12, color: cs.outlineVariant.withValues(alpha: 0.2)),
+                              itemBuilder: (context, index) {
+                                final c = options.elementAt(index);
+                                return ListTile(
+                                  dense: true,
+                                  visualDensity: VisualDensity.compact,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                                  leading: CircleAvatar(
+                                    radius: 13,
+                                    backgroundColor: cs.secondaryContainer,
+                                    child: Text(
+                                      (c.name ?? '?')[0].toUpperCase(),
+                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: cs.onSecondaryContainer),
                                     ),
-                                    title: Text(c.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-                                    subtitle: Text(c.phone ?? '-', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
-                                    onTap: () => onSelected(c),
-                                  );
-                                },
-                              ),
+                                  ),
+                                  title: Text(c.name ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11.5)),
+                                  subtitle: Text(c.phone ?? '-', style: TextStyle(fontSize: 10.5, color: cs.onSurfaceVariant)),
+                                  onTap: () => onSelected(c),
+                                );
+                              },
                             ),
                           ),
-                        );
-                      },
-                      fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
-                        searchFieldCtrl = textController;
-                        return TextField(
-                          controller: textController,
-                          focusNode: focusNode,
-                          style: const TextStyle(fontSize: 13),
-                          decoration: InputDecoration(
-                            hintText: 'search_customer_hint'.tr,
-                            hintStyle: TextStyle(fontSize: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
-                            prefixIcon: Icon(Icons.person_search_rounded, size: 18, color: cs.primary),
-                            suffixIcon: textController.text.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, size: 16),
-                                    onPressed: () {
-                                      textController.clear();
-                                    },
-                                  )
-                                : null,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: cs.primary, width: 1.5),
-                            ),
-                            filled: true,
-                            fillColor: cs.surface,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filledTonal(
-                    onPressed: () {
-                      final typedName = searchFieldCtrl?.text.trim();
-                      controller.openCustomerForm(
-                        initialName: typedName?.isNotEmpty == true ? typedName : null,
+                        ),
                       );
                     },
-                    icon: const Icon(Icons.add_rounded, size: 20),
-                    tooltip: 'add_new_customer'.tr.isNotEmpty ? 'add_new_customer'.tr : 'Add New Customer',
-                    style: IconButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.all(10),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Quick Entry Fields with Quick Save to Customer Master
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      style: const TextStyle(fontSize: 12),
-                      decoration: InputDecoration(
-                        labelText: 'customer_name'.tr,
-                        labelStyle: const TextStyle(fontSize: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      onChanged: (val) => session.rxQuickCustomerName.value = val,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      style: const TextStyle(fontSize: 12),
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        labelText: 'phone_number'.tr,
-                        labelStyle: const TextStyle(fontSize: 12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      onChanged: (val) => session.rxQuickCustomerPhone.value = val,
-                    ),
-                  ),
-                  Obx(() {
-                    final hasName = session.rxQuickCustomerName.value.trim().isNotEmpty;
-                    if (!hasName) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: IconButton.filled(
-                        onPressed: controller.saveQuickCustomerToMaster,
-                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                        tooltip: 'Save to Customer Master & Map to Cart',
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.teal,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.all(9),
+                    fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                      searchFieldCtrl = textController;
+                      return TextField(
+                        controller: textController,
+                        focusNode: focusNode,
+                        style: const TextStyle(fontSize: 12),
+                        decoration: InputDecoration(
+                          hintText: 'search_customer_hint'.tr,
+                          hintStyle: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant.withValues(alpha: 0.5)),
+                          prefixIcon: Icon(Icons.person_search_rounded, size: 16, color: cs.primary),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          suffixIcon: textController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 14),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () {
+                                    textController.clear();
+                                  },
+                                )
+                              : null,
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: cs.primary, width: 1.5),
+                          ),
+                          filled: true,
+                          fillColor: cs.surface,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         ),
-                      ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                height: 38,
+                width: 38,
+                child: IconButton.filledTonal(
+                  onPressed: () {
+                    final typedName = searchFieldCtrl?.text.trim();
+                    controller.openCustomerForm(
+                      initialName: typedName?.isNotEmpty == true ? typedName : null,
                     );
-                  }),
-                ],
+                  },
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  tooltip: 'add_new_customer'.tr.isNotEmpty ? 'add_new_customer'.tr : 'Add New Customer',
+                  style: IconButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
               ),
             ],
-          );
+          ),
+          const SizedBox(height: 6),
+          // Quick Entry Fields with Quick Save to Customer Master
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 34,
+                  child: TextField(
+                    style: const TextStyle(fontSize: 11.5),
+                    decoration: InputDecoration(
+                      hintText: 'customer_name'.tr,
+                      hintStyle: TextStyle(fontSize: 11, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
+                      isDense: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    ),
+                    onChanged: (val) => session.rxQuickCustomerName.value = val,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: SizedBox(
+                  height: 34,
+                  child: TextField(
+                    style: const TextStyle(fontSize: 11.5),
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      hintText: 'phone_number'.tr,
+                      hintStyle: TextStyle(fontSize: 11, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
+                      isDense: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    ),
+                    onChanged: (val) => session.rxQuickCustomerPhone.value = val,
+                  ),
+                ),
+              ),
+              Obx(() {
+                final hasName = session.rxQuickCustomerName.value.trim().isNotEmpty;
+                if (!hasName) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: SizedBox(
+                    height: 34,
+                    width: 34,
+                    child: IconButton.filled(
+                      onPressed: controller.saveQuickCustomerToMaster,
+                      icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                      tooltip: 'Save to Customer Master & Map to Cart',
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ],
+      );
     });
   }
 }
@@ -1050,165 +1382,156 @@ class _SummaryCard extends StatelessWidget {
       int totalQty = session.rxCartItems.fold(0, (sum, item) => sum + (item.qty ?? 0));
 
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [cs.primaryContainer.withValues(alpha: 0.35), cs.primaryContainer.withValues(alpha: 0.15)],
+            colors: [cs.primaryContainer.withValues(alpha: 0.35), cs.primaryContainer.withValues(alpha: 0.12)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cs.primary.withValues(alpha: 0.12)),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cs.primary.withValues(alpha: 0.15)),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Items / Qty summary
-            Row(
-              children: [
-                _SummaryChip(icon: Icons.inventory_2_outlined, label: "$totalItems ${'items_label'.tr}", cs: cs),
-                const SizedBox(width: 10),
-                _SummaryChip(icon: Icons.add_shopping_cart_rounded, label: "$totalQty ${'qty_label'.tr}", cs: cs),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.2)),
-            const SizedBox(height: 12),
-
-            // Subtotal
-            _SummaryRow(label: 'subtotal'.tr, value: "$currency${session.rxSubTotal.value.toStringAsFixed(2)}", cs: cs),
-            if (session.rxTaxAmount.value > 0) ...[
-              const SizedBox(height: 6),
-              _SummaryRow(label: 'tax'.tr, value: "+$currency${session.rxTaxAmount.value.toStringAsFixed(2)}", cs: cs, valueColor: Colors.orange.shade600),
-            ],
-            if (session.rxDiscountAmount.value > 0) ...[
-              const SizedBox(height: 6),
-              _SummaryRow(label: 'discount'.tr, value: "-$currency${session.rxDiscountAmount.value.toStringAsFixed(2)}", cs: cs, valueColor: Colors.green.shade600),
-            ],
-            if (session.rxRoundOffAmount.value.abs() > 0.001) ...[
-              const SizedBox(height: 6),
-              _SummaryRow(
-                label: 'Round Off',
-                value: "${session.rxRoundOffAmount.value >= 0 ? '+' : ''}$currency${session.rxRoundOffAmount.value.toStringAsFixed(2)}",
-                cs: cs,
-                valueColor: session.rxRoundOffAmount.value > 0 ? Colors.teal.shade700 : Colors.indigo.shade600,
-              ),
-            ],
-            const SizedBox(height: 8),
-            // Auto Round Off Toggle
+            // Top Row: Items/Qty summary on left, Auto Round Off toggle chip on right
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      session.rxAutoRoundOff.value ? Icons.auto_fix_high_rounded : Icons.auto_fix_off_rounded,
-                      size: 14,
-                      color: session.rxAutoRoundOff.value ? cs.primary : cs.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      'Auto Round Off',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: session.rxAutoRoundOff.value ? cs.primary : cs.onSurfaceVariant,
-                      ),
-                    ),
-                    if (session.rxAutoRoundOff.value && session.rxRoundOffAmount.value.abs() > 0.001) ...[
-                      const SizedBox(width: 5),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: cs.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          "${session.rxRoundOffAmount.value >= 0 ? '+' : ''}₹${session.rxRoundOffAmount.value.toStringAsFixed(2)}",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: cs.primary,
-                          ),
-                        ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: cs.surface.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.shopping_bag_outlined, size: 12, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text(
+                        "$totalItems ${'items_label'.tr} ($totalQty ${'qty_label'.tr})",
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-                Transform.scale(
-                  scale: 0.75,
-                  child: Switch(
-                    value: session.rxAutoRoundOff.value,
-                    activeThumbColor: cs.primary,
-                    onChanged: (_) => controller.toggleAutoRoundOff(),
+                // Auto Round Toggle Pill
+                InkWell(
+                  onTap: () => controller.toggleAutoRoundOff(),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: session.rxAutoRoundOff.value
+                          ? cs.primary.withValues(alpha: 0.12)
+                          : cs.surface.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: session.rxAutoRoundOff.value
+                            ? cs.primary.withValues(alpha: 0.3)
+                            : cs.outlineVariant.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          session.rxAutoRoundOff.value ? Icons.auto_fix_high_rounded : Icons.auto_fix_off_rounded,
+                          size: 11,
+                          color: session.rxAutoRoundOff.value ? cs.primary : cs.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Auto Round',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: session.rxAutoRoundOff.value ? cs.primary : cs.onSurfaceVariant,
+                          ),
+                        ),
+                        if (session.rxAutoRoundOff.value && session.rxRoundOffAmount.value.abs() > 0.001) ...[
+                          const SizedBox(width: 3),
+                          Text(
+                            "${session.rxRoundOffAmount.value >= 0 ? '+' : ''}₹${session.rxRoundOffAmount.value.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: cs.primary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.2)),
-            const SizedBox(height: 10),
+            const SizedBox(height: 5),
 
-            // Grand Total
+            // Subtotal / Discounts / Round off summary row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('grand_total'.tr, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: cs.onSurface)),
                 Text(
-                  "$currency${session.rxGrandTotal.value.toStringAsFixed(2)}",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: cs.primary),
+                  '${'subtotal'.tr}: $currency${session.rxSubTotal.value.toStringAsFixed(2)}',
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant, fontWeight: FontWeight.w500),
                 ),
+                if (session.rxDiscountAmount.value > 0)
+                  Text(
+                    "-Disc: $currency${session.rxDiscountAmount.value.toStringAsFixed(2)}",
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.green.shade700),
+                  )
+                else if (session.rxRoundOffAmount.value.abs() > 0.001)
+                  Text(
+                    "Round: ${session.rxRoundOffAmount.value >= 0 ? '+' : ''}$currency${session.rxRoundOffAmount.value.toStringAsFixed(2)}",
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: session.rxRoundOffAmount.value > 0 ? Colors.teal.shade700 : Colors.indigo.shade600,
+                    ),
+                  ),
               ],
+            ),
+            const SizedBox(height: 5),
+
+            // Grand Total Banner
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: cs.surface.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'grand_total'.tr.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                  Text(
+                    "$currency${session.rxGrandTotal.value.toStringAsFixed(2)}",
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w900,
+                      color: cs.primary,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       );
     });
-  }
-}
-
-class _SummaryChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final ColorScheme cs;
-  const _SummaryChip({required this.icon, required this.label, required this.cs});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: cs.surface.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: cs.onSurfaceVariant),
-          const SizedBox(width: 5),
-          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant)),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final ColorScheme cs;
-  final Color? valueColor;
-  const _SummaryRow({required this.label, required this.value, required this.cs, this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: valueColor ?? cs.onSurface)),
-      ],
-    );
   }
 }
 
@@ -1462,47 +1785,56 @@ class _PaymentSection extends StatelessWidget {
       children: [
         // Payment Mode
         Text(
-          'payment_mode'.tr,
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant),
+          'payment_mode'.tr.toUpperCase(),
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 10.5, letterSpacing: 0.6, color: cs.onSurfaceVariant),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 5),
         Obx(() {
           final session = controller.activeSession;
           final mode = session.rxPaymentMode.value;
 
-          return Row(
-            children: [
-              _buildModeChip('Cash', Icons.payments_outlined, mode == 'Cash', () {
-                session.rxPaymentMode.value = 'Cash';
-                session.rxAmountReceived.value = session.rxGrandTotal.value;
-                session.amountController.text = session.rxGrandTotal.value.toStringAsFixed(2);
-                controller.calculateChange();
-              }, cs),
-              const SizedBox(width: 4),
-              _buildModeChip('UPI', Icons.qr_code_2_rounded, mode == 'UPI', () {
-                session.rxPaymentMode.value = 'UPI';
-                session.rxAmountReceived.value = session.rxGrandTotal.value;
-                controller.calculateChange();
-              }, cs),
-              const SizedBox(width: 4),
-              _buildModeChip('Card', Icons.credit_card_rounded, mode == 'Card', () {
-                session.rxPaymentMode.value = 'Card';
-                session.rxAmountReceived.value = session.rxGrandTotal.value;
-                controller.calculateChange();
-              }, cs),
-              const SizedBox(width: 4),
-              _buildModeChip('Split', Icons.call_split_rounded, mode == 'Split', () {
-                if (session.rxCartItems.isEmpty) {
-                  Get.snackbar('cart_empty_title'.tr, 'add_items_before_split'.tr,
-                      snackPosition: SnackPosition.TOP);
-                  return;
-                }
-                Get.dialog(
-                  const ActivitySplitBill(),
-                  barrierDismissible: false,
-                );
-              }, cs),
-            ],
+          return Container(
+            height: 36,
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                _buildModeChip('Cash', Icons.payments_outlined, mode == 'Cash', () {
+                  session.rxPaymentMode.value = 'Cash';
+                  session.rxAmountReceived.value = session.rxGrandTotal.value;
+                  session.amountController.text = session.rxGrandTotal.value.toStringAsFixed(2);
+                  controller.calculateChange();
+                }, cs),
+                const SizedBox(width: 3),
+                _buildModeChip('UPI', Icons.qr_code_2_rounded, mode == 'UPI', () {
+                  session.rxPaymentMode.value = 'UPI';
+                  session.rxAmountReceived.value = session.rxGrandTotal.value;
+                  controller.calculateChange();
+                }, cs),
+                const SizedBox(width: 3),
+                _buildModeChip('Card', Icons.credit_card_rounded, mode == 'Card', () {
+                  session.rxPaymentMode.value = 'Card';
+                  session.rxAmountReceived.value = session.rxGrandTotal.value;
+                  controller.calculateChange();
+                }, cs),
+                const SizedBox(width: 3),
+                _buildModeChip('Split', Icons.call_split_rounded, mode == 'Split', () {
+                  if (session.rxCartItems.isEmpty) {
+                    Get.snackbar('cart_empty_title'.tr, 'add_items_before_split'.tr,
+                        snackPosition: SnackPosition.TOP);
+                    return;
+                  }
+                  Get.dialog(
+                    const ActivitySplitBill(),
+                    barrierDismissible: false,
+                  );
+                }, cs),
+              ],
+            ),
           );
         }),
 
@@ -1819,41 +2151,62 @@ class _PaymentSection extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'amount_received'.tr,
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurfaceVariant),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 38,
+                          child: TextField(
+                            controller: session.amountController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                            decoration: InputDecoration(
+                              labelText: 'amount_received'.tr,
+                              labelStyle: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                              prefixText: "${controller.serviceCurrency.rxCurrency.value} ",
+                              prefixStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: cs.primary),
+                              filled: true,
+                              fillColor: cs.surface,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: cs.primary, width: 1.5),
+                              ),
+                            ),
+                            onChanged: controller.onAmountChanged,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      SizedBox(
+                        height: 38,
+                        child: FilledButton.tonal(
+                          onPressed: () {
+                            session.rxAmountReceived.value = grandTotal;
+                            session.amountController.text = grandTotal.toStringAsFixed(2);
+                            controller.calculateChange();
+                          },
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('Exact', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 6),
-                  TextField(
-                    controller: session.amountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                    decoration: InputDecoration(
-                      prefixText: "${controller.serviceCurrency.rxCurrency.value} ",
-                      prefixStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: cs.primary),
-                      filled: true,
-                      fillColor: cs.surface,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: cs.primary, width: 1.5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                    onChanged: controller.onAmountChanged,
-                  ),
-                  const SizedBox(height: 8),
                   // Quick tender chips
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _quickTenderBtn(session, 'Exact', grandTotal, controller, cs),
-                        const SizedBox(width: 4),
                         _quickTenderBtn(session, '₹100', 100, controller, cs),
                         const SizedBox(width: 4),
                         _quickTenderBtn(session, '₹200', 200, controller, cs),
@@ -1870,60 +2223,75 @@ class _PaymentSection extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
 
         // Due / Change
         Obx(() {
           final session = controller.activeSession;
           final currency = controller.serviceCurrency.rxCurrency.value;
-          final isDue = session.rxDueAmount.value > 0;
+          final isDue = session.rxDueAmount.value > 0.001;
+          final isChange = session.rxChangeReturned.value > 0.001;
+          final isBalanced = !isDue && !isChange && session.rxAmountReceived.value > 0;
           final amount = isDue ? session.rxDueAmount.value : session.rxChangeReturned.value;
 
+          Color bg;
+          Color border;
+          Color fg;
+          IconData icon;
+          String title;
+
+          if (isDue) {
+            bg = Colors.orange.withValues(alpha: 0.08);
+            border = Colors.orange.withValues(alpha: 0.3);
+            fg = Colors.orange.shade800;
+            icon = Icons.warning_amber_rounded;
+            title = 'amount_due'.tr;
+          } else if (isChange) {
+            bg = Colors.green.withValues(alpha: 0.08);
+            border = Colors.green.withValues(alpha: 0.3);
+            fg = Colors.green.shade800;
+            icon = Icons.check_circle_outline_rounded;
+            title = 'change_to_return'.tr;
+          } else if (isBalanced) {
+            bg = Colors.teal.withValues(alpha: 0.08);
+            border = Colors.teal.withValues(alpha: 0.3);
+            fg = Colors.teal.shade800;
+            icon = Icons.done_all_rounded;
+            title = 'Paid in Full';
+          } else {
+            bg = cs.surfaceContainerHighest.withValues(alpha: 0.3);
+            border = cs.outlineVariant.withValues(alpha: 0.25);
+            fg = cs.onSurfaceVariant;
+            icon = Icons.info_outline_rounded;
+            title = 'amount_due'.tr;
+          }
+
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: isDue ? Colors.orange.withValues(alpha: 0.08) : Colors.green.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDue ? Colors.orange.withValues(alpha: 0.25) : Colors.green.withValues(alpha: 0.25),
-              ),
+              color: bg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: border),
             ),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: (isDue ? Colors.orange : Colors.green).withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isDue ? Icons.warning_amber_rounded : Icons.check_circle_outline_rounded,
-                    size: 16,
-                    color: isDue ? Colors.orange.shade700 : Colors.green.shade700,
+                Icon(icon, size: 15, color: fg),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: fg,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isDue ? 'amount_due'.tr : 'change_to_return'.tr,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                          color: isDue ? Colors.orange.shade700 : Colors.green.shade700,
-                        ),
-                      ),
-                      Text(
-                        "$currency${amount.toStringAsFixed(2)}",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: isDue ? Colors.orange.shade800 : Colors.green.shade800,
-                        ),
-                      ),
-                    ],
+                const Spacer(),
+                Text(
+                  "$currency${(isDue || isChange ? amount : (isBalanced ? session.rxAmountReceived.value : session.rxGrandTotal.value)).toStringAsFixed(2)}",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: fg,
                   ),
                 ),
               ],
@@ -1944,36 +2312,37 @@ class _PaymentSection extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          duration: const Duration(milliseconds: 150),
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? cs.primary : cs.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isSelected ? cs.primary : cs.outlineVariant.withValues(alpha: 0.4),
-            ),
+            color: isSelected ? cs.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: cs.primary.withValues(alpha: 0.2),
+                      color: cs.primary.withValues(alpha: 0.25),
                       blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      offset: const Offset(0, 1),
                     ),
                   ]
                 : null,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: isSelected ? Colors.white : cs.onSurfaceVariant),
-              const SizedBox(height: 2),
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.white : cs.onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                   color: isSelected ? Colors.white : cs.onSurface,
                 ),
               ),
@@ -1999,7 +2368,7 @@ class _PaymentSection extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(6),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
           color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(6),
@@ -2029,40 +2398,9 @@ class _SettleButtons extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Quick Retail Cashier Actions Row
-        Row(
-          children: [
-            Expanded(
-              child: FilledButton.tonalIcon(
-                onPressed: controller.quickCashSettle,
-                icon: const Icon(Icons.flash_on_rounded, size: 16),
-                label: const Text('Quick Cash (F8)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
-                  foregroundColor: const Color(0xFF047857),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: controller.parkCurrentBill,
-                icon: const Icon(Icons.pause_circle_outline_rounded, size: 16),
-                label: const Text('Hold Bill (F5)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        // Settle & Print Button
+        // Primary Action: Save & Print Bill (Ctrl+P)
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -2070,12 +2408,12 @@ class _SettleButtons extends StatelessWidget {
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
                 color: Colors.green.withValues(alpha: 0.28),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -2089,32 +2427,64 @@ class _SettleButtons extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
 
-        // Preview Receipt & Paper Size Quick Row
+        // Quick Utilities Bar: Quick Cash (F8), Hold (F5), Preview Receipt, Paper Format Switcher
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _previewCurrentBill(controller, settings),
-                icon: Icon(Icons.visibility_outlined, size: 15, color: cs.primary),
-                label: Text(
-                  'Preview Receipt',
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: cs.primary),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  side: BorderSide(color: cs.primary.withValues(alpha: 0.4)),
+              child: SizedBox(
+                height: 34,
+                child: FilledButton.tonalIcon(
+                  onPressed: controller.quickCashSettle,
+                  icon: const Icon(Icons.flash_on_rounded, size: 14),
+                  label: const Text('Quick Cash (F8)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    foregroundColor: const Color(0xFF047857),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
+            SizedBox(
+              height: 34,
+              child: OutlinedButton.icon(
+                onPressed: controller.parkCurrentBill,
+                icon: const Icon(Icons.pause_circle_outline_rounded, size: 14),
+                label: const Text('Hold (F5)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            // Preview Receipt
+            SizedBox(
+              height: 34,
+              child: Tooltip(
+                message: 'Preview Receipt',
+                child: OutlinedButton(
+                  onPressed: () => _previewCurrentBill(controller, settings),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    side: BorderSide(color: cs.primary.withValues(alpha: 0.4)),
+                  ),
+                  child: Icon(Icons.visibility_outlined, size: 16, color: cs.primary),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
             // Paper Size Quick Indicator / Switch
             Obx(() {
               final paperSize = settings.rxThermalPaperSize.value.isNotEmpty ? settings.rxThermalPaperSize.value : '80mm';
@@ -2126,28 +2496,23 @@ class _SettleButtons extends StatelessWidget {
                     settings.rxThermalPaperSize.value = is80 ? '58mm' : '80mm';
                     settings.savePrinterSettings();
                   },
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                    height: 34,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.4)),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.straighten_rounded, size: 14, color: cs.primary),
-                        const SizedBox(width: 4),
-                        Text(
-                          is80 ? '80mm' : '56mm',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.bold,
-                            color: cs.primary,
-                          ),
-                        ),
-                      ],
+                    alignment: Alignment.center,
+                    child: Text(
+                      is80 ? '80mm' : '56mm',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: cs.primary,
+                      ),
                     ),
                   ),
                 ),

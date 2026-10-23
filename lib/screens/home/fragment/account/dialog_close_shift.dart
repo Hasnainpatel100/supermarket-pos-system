@@ -324,7 +324,7 @@ class _DialogCloseShiftState extends State<DialogCloseShift> {
                 reportType: 'SHIFT CLOSING (X-REPORT)',
                 storeName: _controller.rxOutletName.value.isNotEmpty
                     ? _controller.rxOutletName.value
-                    : 'Supermarket POS',
+                    : 'RH POS',
                 branchName: _controller.rxBranchName.value,
                 terminalId: _controller.rxDeviceName.value,
                 cashierName: _controller.rxUsername.value.isNotEmpty

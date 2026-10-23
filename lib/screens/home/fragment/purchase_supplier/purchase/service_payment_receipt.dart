@@ -15,7 +15,7 @@ import '../../../../../model/entity_purchase.dart';
 ///   path_provider: ^2.1.0
 class ServicePaymentReceipt {
   // ── Branding — update these for your shop ──────────────────────────
-  static const String _shopName = 'RH POS Supermarket';
+  static const String _shopName = 'RH POS';
   static const String _shopAddress =
       '14, Market Road, Latur – 411001, Maharashtra';
   static const String _shopPhone = '+91 98765 43210';

@@ -5,6 +5,8 @@ import '../model/model_branch.dart';
 import '../repository/repo_branch.dart';
 import '../repository/repo_storage.dart';
 import '../service/service_brand_context.dart';
+import '../service/service_storage.dart';
+import '../screens/home/fragment/dashboard/controller_home_dashboard.dart';
 import '../util/snackbar_util.dart';
 import 'app_dialog_components.dart';
 
@@ -67,6 +69,15 @@ class DialogPlanExpiry extends StatefulWidget {
     bool force = false,
   }) {
     if (_hasShownPromptThisSession && !force) return;
+
+    // Check if user snoozed plan expiry reminder for 24 hours
+    if (!force && Get.isRegistered<ServiceStorage>()) {
+      final storage = Get.find<ServiceStorage>();
+      final planUntil = storage.readInt('dashboard_dismiss_plan_expiry_until') ?? 0;
+      if (DateTime.now().millisecondsSinceEpoch < planUntil) {
+        return;
+      }
+    }
 
     final ServiceBrandContext brandCtx = Get.find();
     final activeBranch = branch ?? brandCtx.selectedBranch;
@@ -275,6 +286,22 @@ class _DialogPlanExpiryState extends State<DialogPlanExpiry>
               const SizedBox.shrink(),
             Row(
               children: [
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final until = DateTime.now().add(const Duration(hours: 24)).millisecondsSinceEpoch;
+                    if (Get.isRegistered<ServiceStorage>()) {
+                      await Get.find<ServiceStorage>().writeInt('dashboard_dismiss_plan_expiry_until', until);
+                    }
+                    if (Get.isRegistered<ControllerHomeDashboard>()) {
+                      Get.find<ControllerHomeDashboard>().isPlanExpiryDismissed.value = true;
+                    }
+                    Get.back();
+                    SnackbarUtil.showSuccess('Plan expiry reminder snoozed for 24 hours');
+                  },
+                  icon: const Icon(Icons.alarm_off_rounded, size: 15),
+                  label: const Text('Remind in 24h', style: TextStyle(fontSize: 12)),
+                ),
+                const SizedBox(width: 8),
                 FilledButton(
                   onPressed: () => Get.back(),
                   child: const Text('Close'),

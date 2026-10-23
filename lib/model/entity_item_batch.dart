@@ -20,6 +20,13 @@ class EntityItemBatch {
 
   int? receivedAtUtcMs;
 
+  double? mrp;
+  double? salePrice;
+  double? costPrice;
+  int? mfgDateUtcMs;
+  double? discount;
+  String? barcode;
+
   EntityItemBatch({
     this.id,
     this.itemId,
@@ -27,5 +34,11 @@ class EntityItemBatch {
     this.expiryDateUtcMs,
     this.quantity,
     this.receivedAtUtcMs,
+    this.mrp,
+    this.salePrice,
+    this.costPrice,
+    this.mfgDateUtcMs,
+    this.discount,
+    this.barcode,
   });
 }

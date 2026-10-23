@@ -513,7 +513,7 @@ class _DialogCloseDayState extends State<DialogCloseDay> {
                 reportType: 'END-OF-DAY REGISTER AUDIT (Z-REPORT)',
                 storeName: controller.rxOutletName.value.isNotEmpty
                     ? controller.rxOutletName.value
-                    : 'Supermarket POS',
+                    : 'RH POS',
                 branchName: controller.rxBranchName.value,
                 terminalId: controller.rxDeviceName.value,
                 cashierName: controller.rxUsername.value.isNotEmpty

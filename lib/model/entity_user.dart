@@ -87,7 +87,16 @@ class EntityUser {
       storeId: map['storeId'],
       isActive: map['isActive'] ?? true,
       permissions: map['permissions'] != null
-          ? List<String>.from(map['permissions'])
+          ? (map['permissions'] is List
+              ? List<String>.from(
+                  (map['permissions'] as List).map((e) => e.toString().trim()))
+              : (map['permissions'] is String && (map['permissions'] as String).trim().isNotEmpty
+                  ? (map['permissions'] as String)
+                      .split(',')
+                      .map((e) => e.trim().replaceAll('"', '').replaceAll("'", ''))
+                      .where((e) => e.isNotEmpty)
+                      .toList()
+                  : null))
           : null,
       lastLoginAt: map['lastLoginAt'],
       lastLoginDevice: map['lastLoginDevice'],

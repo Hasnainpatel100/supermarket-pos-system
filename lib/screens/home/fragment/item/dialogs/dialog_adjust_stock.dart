@@ -7,6 +7,7 @@ import '../../../../../model/entity_item_batch.dart';
 import '../../../../../util/snackbar_util.dart';
 import '../../../../../widget/app_dialog_components.dart';
 import '../controller_home_item.dart';
+import '../../pos/controller_home_pos.dart';
 
 /// Professional, feature-rich Dialog for Adjusting Stock.
 /// Supports:
@@ -73,8 +74,8 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
     controller = Get.find<ControllerHomeItem>();
 
     // Initial pre-fill for batch inputs
-    final nextBatchNo = controller.getNextBatchNumber(widget.entityItem);
-    batchNoCtrl.text = '$nextBatchNo';
+    final nextBatchNo = controller.getNextBatchNo(widget.entityItem);
+    batchNoCtrl.text = nextBatchNo;
     if (widget.entityItem.costPrice != null && widget.entityItem.costPrice! > 0) {
       batchCostCtrl.text = widget.entityItem.costPrice!.toStringAsFixed(2);
     }
@@ -156,12 +157,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
     rxAddedBatches.add(newBatch);
 
     // Prepare next batch number automatically
-    final currentNum = int.tryParse(batchNo);
-    if (currentNum != null) {
-      batchNoCtrl.text = '${currentNum + 1}';
-    } else {
-      batchNoCtrl.text = '${batchNo}_1';
-    }
+    batchNoCtrl.text = controller.getNextBatchNo(widget.entityItem, rxAddedBatches);
     batchQtyCtrl.text = '1';
     batchMfgDateCtrl.clear();
     batchExpiryDateCtrl.clear();
@@ -188,6 +184,9 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
         if (success) {
           final totalAdded = rxAddedBatches.fold<int>(0, (sum, b) => sum + (b.quantity ?? 0));
           SnackbarUtil.showSuccess('Added $totalAdded units across ${rxAddedBatches.length} batch(es)');
+          if (Get.isRegistered<ControllerHomePos>()) {
+            Get.find<ControllerHomePos>().loadItems();
+          }
           Get.back();
         } else {
           SnackbarUtil.showError('Failed to save batches');

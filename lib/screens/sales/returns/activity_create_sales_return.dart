@@ -6,6 +6,7 @@ import '../../../model/entity_bill.dart';
 import '../../../model/entity_item.dart';
 import '../../../model/entity_sales_return.dart';
 import '../../../service/service_currency.dart';
+import '../../../util/invoice_scanner_formatter.dart';
 import '../../../widget/app_dialog_components.dart';
 import '../../../widget/my_card.dart';
 import 'controller_create_sales_return.dart';
@@ -157,12 +158,12 @@ class _ActivityCreateSalesReturnState extends State<ActivityCreateSalesReturn> {
                           debounceDuration: const Duration(milliseconds: 200),
                           constraints: const BoxConstraints(maxHeight: 280),
                           suggestionsCallback: (pattern) {
-                            final q = pattern.trim().toLowerCase();
+                            final q = pattern.trim().replaceAll('/', '-').toLowerCase();
                             if (q.isEmpty) {
                               return controller.rxAvailableBills.take(20).toList();
                             }
                             return controller.rxAvailableBills.where((b) {
-                              final no = (b.billNo ?? '').toLowerCase();
+                              final no = (b.billNo ?? '').toLowerCase().replaceAll('/', '-');
                               final name = (b.customerName ?? '').toLowerCase();
                               return no.contains(q) || name.contains(q);
                             }).take(20).toList();
@@ -171,6 +172,11 @@ class _ActivityCreateSalesReturnState extends State<ActivityCreateSalesReturn> {
                             return TextField(
                               controller: textController,
                               focusNode: focusNode,
+                              inputFormatters: [
+                                InvoicePatternFormatter(),
+                              ],
+                              onChanged: controller.onInvoiceInputChanged,
+                              onSubmitted: controller.onInvoiceInputSubmitted,
                               decoration: InputDecoration(
                                 labelText: 'Link to Invoice (Optional)'.tr,
                                 hintText: 'Search invoice by number or customer...'.tr,

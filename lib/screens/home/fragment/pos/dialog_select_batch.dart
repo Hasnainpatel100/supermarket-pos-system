@@ -113,19 +113,13 @@ class _DialogSelectBatchState extends State<DialogSelectBatch> {
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
+        if (event is KeyDownEvent || event is KeyRepeatEvent) {
           final key = event.logicalKey;
-          if (key == LogicalKeyboardKey.arrowDown) {
+          if (key == LogicalKeyboardKey.arrowDown || key == LogicalKeyboardKey.pageDown) {
             _navigate(1);
             return KeyEventResult.handled;
-          } else if (key == LogicalKeyboardKey.arrowUp) {
+          } else if (key == LogicalKeyboardKey.arrowUp || key == LogicalKeyboardKey.pageUp) {
             _navigate(-1);
-            return KeyEventResult.handled;
-          } else if (key == LogicalKeyboardKey.pageDown) {
-            _navigate(5);
-            return KeyEventResult.handled;
-          } else if (key == LogicalKeyboardKey.pageUp) {
-            _navigate(-5);
             return KeyEventResult.handled;
           } else if (key == LogicalKeyboardKey.enter ||
               key == LogicalKeyboardKey.numpadEnter) {
@@ -142,8 +136,8 @@ class _DialogSelectBatchState extends State<DialogSelectBatch> {
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         child: Container(
-          width: 1100,
-          constraints: const BoxConstraints(maxHeight: 520),
+          width: 1220,
+          constraints: const BoxConstraints(maxWidth: 1240, maxHeight: 540),
           decoration: BoxDecoration(
             color: cs.surface,
             borderRadius: BorderRadius.circular(12),
@@ -220,7 +214,7 @@ class _DialogSelectBatchState extends State<DialogSelectBatch> {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
-                    width: 1080,
+                    width: 1180,
                     child: Column(
                       children: [
                         // Table Header
@@ -344,13 +338,13 @@ class _DialogSelectBatchState extends State<DialogSelectBatch> {
                                         color: isSelected ? const Color(0xFF78350F) : null,
                                       ),
                                       _TableCell(
-                                        cgstRate.toStringAsFixed(2),
+                                        cgstRate.toStringAsFixed(1),
                                         width: 70,
                                         align: TextAlign.right,
                                         color: isSelected ? const Color(0xFF78350F) : null,
                                       ),
                                       _TableCell(
-                                        sgstRate.toStringAsFixed(2),
+                                        sgstRate.toStringAsFixed(1),
                                         width: 70,
                                         align: TextAlign.right,
                                         color: isSelected ? const Color(0xFF78350F) : null,

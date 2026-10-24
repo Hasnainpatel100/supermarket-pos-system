@@ -433,43 +433,61 @@ class FragHomeDashboard extends StatelessWidget {
               borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
             ),
             child: Icon(
-              Icons.dashboard_rounded,
+              Icons.storefront_rounded,
               color: Colors.white,
               size: isLarge ? 22 : 20,
             ),
           ),
           SizedBox(width: isLarge ? 14 : 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Greeting line
-              Obx(() => Text(
-                ctrl.greetingText.value,
-                style: TextStyle(
-                  color: _DashboardTheme.textSecondary(context),
-                  fontSize: isLarge ? 13.5 : 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              )),
-              const SizedBox(height: 2),
-              Text(
-                'dashboard'.tr,
-                style: TextStyle(
-                  color: _DashboardTheme.textPrimary(context),
-                  fontSize: isLarge ? 22 : 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
-                style: TextStyle(
-                  color: _DashboardTheme.textSecondary(context),
-                  fontSize: isLarge ? 12 : 11,
-                ),
-              ),
-            ],
-          ),
+          // Greeting line
+          Obx(() => Text(
+            ctrl.greetingText.value,
+            style: TextStyle(
+              color: _DashboardTheme.textPrimary(context),
+              fontSize: isLarge ? 20 : 18,
+              fontWeight: FontWeight.bold,
+            ),
+          )),
           const Spacer(),
+          // Adjusted Date Badge in Corner
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isLarge ? 12 : 10,
+              vertical: isLarge ? 8 : 6,
+            ),
+            decoration: BoxDecoration(
+              color: _DashboardTheme.cardBg(context),
+              borderRadius: BorderRadius.circular(isLarge ? 10 : 8),
+              border: Border.all(color: _DashboardTheme.cardBorder(context)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: isLarge ? 14 : 12,
+                  color: _DashboardTheme.purple,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
+                  style: TextStyle(
+                    color: _DashboardTheme.textPrimary(context),
+                    fontSize: isLarge ? 13 : 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: isLarge ? 10 : 8),
           _PillButton(
             label: 'refresh'.tr,
             icon: Icons.refresh_rounded,

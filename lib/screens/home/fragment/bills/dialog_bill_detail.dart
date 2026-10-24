@@ -300,7 +300,7 @@ class DialogBillDetail extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '${currencyFormat.format(double.parse(((bill.tax ?? 0) / 2).toStringAsFixed(2)))} each',
+                              '${NumberFormat.currency(symbol: currencySymbol, decimalDigits: 1).format((bill.tax ?? 0) / 2)} each',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,

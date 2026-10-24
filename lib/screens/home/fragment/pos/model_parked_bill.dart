@@ -1,5 +1,8 @@
+import 'package:get/get.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_customer.dart';
+import '../../../../model/entity_item.dart';
+import '../../../../service/service_object_box.dart';
 
 /// Represents a held/parked customer cart session in the POS.
 /// Allows cashiers to temporarily suspend a customer's order and recall it later.
@@ -68,7 +71,7 @@ class ModelParkedBill {
         'tax': item.tax,
         'discount': item.discount,
         'total': item.total,
-        'targetItemId': item.item.targetId,
+        'targetItemId': item.item.target?.id,
       }).toList(),
     };
   }
@@ -91,8 +94,11 @@ class ModelParkedBill {
         total: (m['total'] as num?)?.toDouble(),
       );
       final targetId = m['targetItemId'] as int?;
-      if (targetId != null && targetId > 0) {
-        entity.item.targetId = targetId;
+      if (targetId != null && targetId > 0 && Get.isRegistered<ServiceObjectBox>()) {
+        try {
+          final box = Get.find<ServiceObjectBox>().box<EntityItem>();
+          entity.item.target = box.get(targetId);
+        } catch (_) {}
       }
       return entity;
     }).toList();

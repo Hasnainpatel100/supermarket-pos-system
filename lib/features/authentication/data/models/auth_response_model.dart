@@ -58,7 +58,13 @@ class AuthLoginResponse {
 
     List<String> permissionsList = [];
     if (rawPermissions is List) {
-      permissionsList = rawPermissions.map((e) => e.toString()).toList();
+      permissionsList = rawPermissions.map((e) => e.toString().trim()).toList();
+    } else if (rawPermissions is String && rawPermissions.trim().isNotEmpty) {
+      permissionsList = rawPermissions
+          .split(',')
+          .map((e) => e.trim().replaceAll('"', '').replaceAll("'", ''))
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
 
     final userId = data['userId']?.toString() ??

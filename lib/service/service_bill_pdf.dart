@@ -33,6 +33,11 @@ class ServiceBillPdf {
     }
   }
 
+  /// Formats CGST / SGST and GST breakup tax amounts with strictly 1 decimal digit (e.g. 24.5).
+  static String formatGstOneDecimal(double val) {
+    return NumberFormat('#,##0.0').format(val);
+  }
+
   /// Builds a [pw.Document] for the given bill and paper size.
   /// Supported [paperSize] values: '80mm', '58mm', '56mm', 'A4'.
   static Future<pw.Document> buildPdfDocument(
@@ -666,7 +671,7 @@ class ServiceBillPdf {
                             ),
                           ),
                           pw.Text(
-                            '$currencySymbol${currencyFormat.format(totalCgst)}',
+                            '$currencySymbol${formatGstOneDecimal(totalCgst)}',
                             style: pw.TextStyle(
                               fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
                               color: PdfColors.black,
@@ -686,7 +691,7 @@ class ServiceBillPdf {
                             ),
                           ),
                           pw.Text(
-                            '$currencySymbol${currencyFormat.format(totalSgst)}',
+                            '$currencySymbol${formatGstOneDecimal(totalSgst)}',
                             style: pw.TextStyle(
                               fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
                               color: PdfColors.black,
@@ -711,7 +716,7 @@ class ServiceBillPdf {
                             ),
                           ),
                           pw.Text(
-                            '$currencySymbol${currencyFormat.format(totalCgst)}',
+                            '$currencySymbol${formatGstOneDecimal(totalCgst)}',
                             style: pw.TextStyle(
                               fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
                               color: PdfColors.black,
@@ -731,7 +736,7 @@ class ServiceBillPdf {
                             ),
                           ),
                           pw.Text(
-                            '$currencySymbol${currencyFormat.format(totalSgst)}',
+                            '$currencySymbol${formatGstOneDecimal(totalSgst)}',
                             style: pw.TextStyle(
                               fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
                               color: PdfColors.black,
@@ -901,8 +906,8 @@ class ServiceBillPdf {
                     children: [
                       pw.Expanded(flex: 2, child: pw.Text('${r.rate % 1 == 0 ? r.rate.toInt() : r.rate}%', style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
                       pw.Expanded(flex: 3, child: pw.Text(currencyFormat.format(r.taxableAmount), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
-                      pw.Expanded(flex: 2, child: pw.Text(currencyFormat.format(r.cgst), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
-                      pw.Expanded(flex: 2, child: pw.Text(currencyFormat.format(r.sgst), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
+                      pw.Expanded(flex: 2, child: pw.Text(formatGstOneDecimal(r.cgst), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
+                      pw.Expanded(flex: 2, child: pw.Text(formatGstOneDecimal(r.sgst), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
                       pw.Expanded(flex: 3, child: pw.Text(currencyFormat.format(r.total), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
                     ],
                   ),
@@ -926,8 +931,8 @@ class ServiceBillPdf {
                     children: [
                       pw.Expanded(flex: 2, child: pw.Text('${r.index} (${r.rate % 1 == 0 ? r.rate.toInt() : r.rate}%)', style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
                       pw.Expanded(flex: 3, child: pw.Text(currencyFormat.format(r.taxableAmount), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
-                      pw.Expanded(flex: 2, child: pw.Text(currencyFormat.format(r.cgst), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
-                      pw.Expanded(flex: 2, child: pw.Text(currencyFormat.format(r.sgst), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
+                      pw.Expanded(flex: 2, child: pw.Text(formatGstOneDecimal(r.cgst), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
+                      pw.Expanded(flex: 2, child: pw.Text(formatGstOneDecimal(r.sgst), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
                       pw.Expanded(flex: 2, child: pw.Text(r.cess > 0 ? currencyFormat.format(r.cess) : '...', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
                       pw.Expanded(flex: 3, child: pw.Text(currencyFormat.format(r.total), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
                     ],
@@ -1487,7 +1492,7 @@ class ServiceBillPdf {
   static List<_GstBreakupRow> _calculateGstBreakup(EntityBill bill) {
     final Map<double, List<EntityBillItem>> grouped = {};
     for (final item in bill.items) {
-      final rate = item.taxRate ?? ((bill.tax != null && bill.tax! > 0) ? 18.0 : 0.0);
+      final rate = item.taxRate ?? item.item.target?.taxRate ?? ((bill.tax != null && bill.tax! > 0) ? 18.0 : 0.0);
       grouped.putIfAbsent(rate, () => []).add(item);
     }
 

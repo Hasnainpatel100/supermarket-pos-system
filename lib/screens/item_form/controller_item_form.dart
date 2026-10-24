@@ -4,9 +4,12 @@ import '../../model/entity_item.dart';
 import '../../model/entity_item_batch.dart';
 import '../../model/entity_tax.dart';
 import '../../objectbox.g.dart';
+import 'package:objectid/objectid.dart';
 import '../../service/service_item.dart';
 import '../../service/service_object_box.dart';
 import '../../service/service_item_excel.dart';
+import '../home/fragment/item/controller_home_item.dart';
+import '../home/fragment/pos/controller_home_pos.dart';
 
 class ControllerItemForm extends GetxController {
   final ItemService itemService;
@@ -93,6 +96,13 @@ class ControllerItemForm extends GetxController {
     ever(rxTaxRate, (_) => _recomputeTax());
     ever(rxSalePriceType, (_) => _recomputeTax());
     priceController.addListener(_recomputeTax);
+
+    // Pre-fill next batch number automatically
+    batchNoController.text = ControllerHomeItem.calculateNextBatchNo(
+      existingBatches: rxBatches.toList(),
+    );
+    batchQtyController.text = '1';
+
     super.onInit();
   }
 
@@ -148,9 +158,26 @@ class ControllerItemForm extends GetxController {
       rxCategory.value = null;
     }
 
+    rxTaxName.value = editingItem?.taxName ?? '';
+    rxTaxRate.value = editingItem?.taxRate ?? 0.0;
     rxTaxType.value = editingItem?.taxType ?? 'exclusive';
     rxSalePriceType.value = editingItem?.taxType ?? 'exclusive';
-    rxTaxRate.value = editingItem?.taxRate ?? 0.0;
+
+    // Match tax preset by id, name, or rate so dropdown shows the current tax
+    final matchedPreset = rxTaxPresets.firstWhereOrNull(
+      (t) =>
+          (editingItem?.taxName != null &&
+              t.name?.trim().toLowerCase() == editingItem!.taxName!.trim().toLowerCase()) ||
+          (editingItem?.taxRate != null && t.rate == editingItem!.taxRate),
+    );
+    if (matchedPreset != null) {
+      rxSelectedTaxId.value = matchedPreset.id;
+      rxTaxName.value = matchedPreset.name ?? '';
+      if (rxTaxRate.value == 0 && (matchedPreset.rate ?? 0) > 0) {
+        rxTaxRate.value = matchedPreset.rate ?? 0.0;
+      }
+    }
+
     // Load existing batches for this item
     try {
       if (editingItem?.id != null) {
@@ -285,8 +312,12 @@ class ControllerItemForm extends GetxController {
       priceController.text = saleRate.toString();
     }
 
-    batchNoController.clear();
-    batchQtyController.clear();
+    // Auto-increment to the next sequential batch number (e.g. 1 -> 2 -> 3)
+    final nextNo = ControllerHomeItem.calculateNextBatchNo(
+      existingBatches: rxBatches.toList(),
+    );
+    batchNoController.text = nextNo;
+    batchQtyController.text = '1';
     batchMrpController.clear();
     batchSalesRateController.clear();
     batchMfgDateController.clear();
@@ -320,19 +351,19 @@ class ControllerItemForm extends GetxController {
       EntityItem savedItem;
       if (editingItem == null) {
         savedItem = EntityItem(
-          name: nameController.text,
-          barcode: barcodeController.text,
-          sku: skuController.text,
-          sellingPrice: finalPrice,
-          costPrice: double.tryParse(costController.text),
-          unit: rxUnit.value ?? unitController.text,
+          name: nameController.text.trim(),
+          barcode: barcodeController.text.trim(),
+          sku: skuController.text.trim(),
+          sellingPrice: enteredPrice,
+          costPrice: double.tryParse(costController.text.trim()),
+          unit: rxUnit.value ?? unitController.text.trim(),
           category: rxCategory.value,
           taxName: rxTaxName.value.isEmpty ? null : rxTaxName.value,
           taxRate: rxTaxRate.value > 0 ? rxTaxRate.value : null,
           taxType: rxTaxRate.value > 0 ? type : null,
           taxAmount: rxTaxRate.value > 0 ? rxComputedTaxAmount.value : null,
           priceBeforeTax: rxTaxRate.value > 0 ? rxComputedBasePrice.value : null,
-          priceAfterTax: rxTaxRate.value > 0 ? finalPrice : null,
+          priceAfterTax: rxTaxRate.value > 0 ? finalPrice : enteredPrice,
           hasExpiry: hasExpiry.value || rxBatches.isNotEmpty,
           isActive: true,
           totalQty: 0,
@@ -341,19 +372,19 @@ class ControllerItemForm extends GetxController {
         );
         itemService.createItem(savedItem);
       } else {
-        editingItem?.name = nameController.text;
-        editingItem?.barcode = barcodeController.text;
-        editingItem?.sku = skuController.text;
-        editingItem?.sellingPrice = finalPrice;
-        editingItem?.costPrice = double.tryParse(costController.text);
-        editingItem?.unit = rxUnit.value ?? unitController.text;
+        editingItem?.name = nameController.text.trim();
+        editingItem?.barcode = barcodeController.text.trim();
+        editingItem?.sku = skuController.text.trim();
+        editingItem?.sellingPrice = enteredPrice;
+        editingItem?.costPrice = double.tryParse(costController.text.trim());
+        editingItem?.unit = rxUnit.value ?? unitController.text.trim();
         editingItem?.category = rxCategory.value;
         editingItem?.taxName = rxTaxName.value.isEmpty ? null : rxTaxName.value;
         editingItem?.taxRate = rxTaxRate.value > 0 ? rxTaxRate.value : null;
         editingItem?.taxType = rxTaxRate.value > 0 ? type : null;
         editingItem?.taxAmount = rxTaxRate.value > 0 ? rxComputedTaxAmount.value : null;
         editingItem?.priceBeforeTax = rxTaxRate.value > 0 ? rxComputedBasePrice.value : null;
-        editingItem?.priceAfterTax = rxTaxRate.value > 0 ? finalPrice : null;
+        editingItem?.priceAfterTax = rxTaxRate.value > 0 ? finalPrice : enteredPrice;
         editingItem?.hasExpiry = hasExpiry.value || rxBatches.isNotEmpty;
         editingItem?.updatedAtUtcMs = now;
         itemService.updateItem(editingItem!);
@@ -372,6 +403,7 @@ class ControllerItemForm extends GetxController {
         int totalBatchQty = 0;
         for (final b in rxBatches) {
           b.id = 0;
+          b.objectId = ObjectId().hexString;
           b.itemId = savedItem.id;
           b.barcode = savedItem.barcode;
           b.costPrice ??= savedItem.costPrice;
@@ -382,6 +414,17 @@ class ControllerItemForm extends GetxController {
         savedItem.hasExpiry = true;
         itemService.updateItem(savedItem);
       }
+
+      // ⚡ Always notify both Item and POS controllers so changes reflect everywhere!
+      if (Get.isRegistered<ControllerHomeItem>()) {
+        Get.find<ControllerHomeItem>().loadItems();
+      }
+      if (Get.isRegistered<ControllerHomePos>()) {
+        final posCtrl = Get.find<ControllerHomePos>();
+        posCtrl.loadItems();
+        posCtrl.calculateTotals();
+      }
+
       Get.back();
     } catch (e) {
       Get.snackbar("Error", "Duplicate SKU / Barcode");

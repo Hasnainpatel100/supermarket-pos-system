@@ -19,6 +19,7 @@ import '../../../../service/service_item.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../util/snackbar_util.dart';
+import '../pos/controller_home_pos.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sort field constants
@@ -298,7 +299,12 @@ class ControllerHomeItem extends GetxController {
 
   bool adjustStock(EntityItem item, int delta) {
     final ok = _itemService.adjustStock(item, delta);
-    if (ok) loadItems();
+    if (ok) {
+      loadItems();
+      if (Get.isRegistered<ControllerHomePos>()) {
+        Get.find<ControllerHomePos>().loadItems();
+      }
+    }
     return ok;
   }
 
@@ -368,6 +374,9 @@ class ControllerHomeItem extends GetxController {
     item.updatedAtUtcMs = now;
     _boxItem.put(item);
     loadItems();
+    if (Get.isRegistered<ControllerHomePos>()) {
+      Get.find<ControllerHomePos>().loadItems();
+    }
     return true;
   }
 
@@ -416,6 +425,9 @@ class ControllerHomeItem extends GetxController {
     item.updatedAtUtcMs = now;
     _boxItem.put(item);
     loadItems();
+    if (Get.isRegistered<ControllerHomePos>()) {
+      Get.find<ControllerHomePos>().loadItems();
+    }
     return true;
   }
 
@@ -434,6 +446,9 @@ class ControllerHomeItem extends GetxController {
     _boxItem.put(item);
     _logTxn(itemId: item.id ?? 0, itemName: item.name ?? '', type: StockTxnType.add, qty: qty, remarks: 'Batch: $batchNo');
     loadItems();
+    if (Get.isRegistered<ControllerHomePos>()) {
+      Get.find<ControllerHomePos>().loadItems();
+    }
     return true;
   }
 
@@ -472,11 +487,63 @@ class ControllerHomeItem extends GetxController {
     return true;
   }
 
+  /// ⚡ Calculates the next auto-incremented batch number.
+  /// If previous batch is "1", next is "2". If "B-1", next is "B-2".
+  static String calculateNextBatchNo({
+    required List<EntityItemBatch> existingBatches,
+    List<EntityItemBatch>? pendingBatches,
+  }) {
+    final all = <EntityItemBatch>[
+      ...existingBatches,
+      if (pendingBatches != null) ...pendingBatches,
+    ];
+
+    if (all.isEmpty) return '1';
+
+    int maxNum = 0;
+    String? commonPrefix;
+
+    for (final b in all) {
+      final str = (b.batchNo ?? '').trim();
+      if (str.isEmpty) continue;
+
+      // Pure integer (e.g. "1", "2")
+      final pureInt = int.tryParse(str);
+      if (pureInt != null) {
+        if (pureInt > maxNum) maxNum = pureInt;
+        continue;
+      }
+
+      // Prefix + number (e.g. "B-1", "BATCH-02")
+      final match = RegExp(r'^(.*?)(\d+)$').firstMatch(str);
+      if (match != null) {
+        final prefix = match.group(1) ?? '';
+        final numPart = int.tryParse(match.group(2) ?? '') ?? 0;
+        if (numPart > maxNum) {
+          maxNum = numPart;
+          commonPrefix = prefix;
+        }
+      }
+    }
+
+    if (maxNum > 0) {
+      if (commonPrefix != null && commonPrefix.isNotEmpty) {
+        return '$commonPrefix${maxNum + 1}';
+      }
+      return '${maxNum + 1}';
+    }
+
+    return '${all.length + 1}';
+  }
+
+  String getNextBatchNo(EntityItem item, [List<EntityItemBatch>? pendingBatches]) {
+    final existing = getItemBatches(item);
+    return calculateNextBatchNo(existingBatches: existing, pendingBatches: pendingBatches);
+  }
+
   int getNextBatchNumber(EntityItem item) {
-    final q     = _boxBatch.query(EntityItemBatch_.itemId.equals(item.id ?? 0)).build();
-    final count = q.count();
-    q.close();
-    return count + 1;
+    final nextStr = getNextBatchNo(item);
+    return int.tryParse(nextStr) ?? 1;
   }
 
   void _logTxn({

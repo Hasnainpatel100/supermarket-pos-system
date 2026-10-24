@@ -83,6 +83,7 @@ class ActivityDocumentView extends StatelessWidget {
         ? Get.find<ServiceCurrency>().rxCurrency.value
         : '₹';
     final currencyFmt = NumberFormat.currency(locale: 'en_IN', symbol: currencySymbol);
+    final currencyFmt1Dec = NumberFormat.currency(locale: 'en_IN', symbol: currencySymbol, decimalDigits: 1);
 
     final settings = Get.isRegistered<ControllerHomeSettings>()
         ? Get.find<ControllerHomeSettings>()
@@ -454,9 +455,9 @@ class ActivityDocumentView extends StatelessWidget {
                               _calcLine('Discount (-)', currencyFmt.format(model.discount), isDark: isDark, colorScheme: colorScheme),
                             if (model.taxAmount > 0) ...[
                               if (model.cgstAmount != null && model.cgstAmount! > 0)
-                                _calcLine('CGST', currencyFmt.format(model.cgstAmount), isDark: isDark, colorScheme: colorScheme),
+                                _calcLine('CGST', currencyFmt1Dec.format(model.cgstAmount), isDark: isDark, colorScheme: colorScheme),
                               if (model.sgstAmount != null && model.sgstAmount! > 0)
-                                _calcLine('SGST', currencyFmt.format(model.sgstAmount), isDark: isDark, colorScheme: colorScheme),
+                                _calcLine('SGST', currencyFmt1Dec.format(model.sgstAmount), isDark: isDark, colorScheme: colorScheme),
                               if (model.igstAmount != null && model.igstAmount! > 0)
                                 _calcLine('IGST', currencyFmt.format(model.igstAmount), isDark: isDark, colorScheme: colorScheme),
                               if ((model.cgstAmount == null || model.cgstAmount == 0) && (model.sgstAmount == null || model.sgstAmount == 0))

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../model/entity_sales_return.dart';
 import '../../../service/service_currency.dart';
+import '../../../util/invoice_scanner_formatter.dart';
 import '../../../widget/generic_empty_state.dart';
 import '../../../widget/gradient_action_button.dart';
 import '../../../widget/gradient_app_bar_title.dart';
@@ -69,6 +70,7 @@ class FragSalesReturns extends StatelessWidget {
           preferredSize: const Size.fromHeight(60),
           child: SearchAppBarField(
             controller: controller.searchController,
+            inputFormatters: [InvoicePatternFormatter()],
             hint: 'Search return no, invoice no, customer...'.tr,
             onChanged: controller.updateSearch,
             onSubmitted: controller.onSearchSubmitted,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Standard search field used in appBar.bottom across list fragments.
 ///
@@ -30,6 +31,7 @@ class SearchAppBarField extends StatelessWidget {
   final Color? backgroundColor;
   final Color? iconColor;
   final Color? closeIconColor;
+  final List<TextInputFormatter>? inputFormatters;
 
   const SearchAppBarField({
     super.key,
@@ -42,6 +44,7 @@ class SearchAppBarField extends StatelessWidget {
     this.backgroundColor,
     this.iconColor,
     this.closeIconColor,
+    this.inputFormatters,
   });
 
   @override
@@ -61,6 +64,7 @@ class SearchAppBarField extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
+        inputFormatters: inputFormatters,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: hint,

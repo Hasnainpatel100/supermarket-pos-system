@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -10,6 +11,27 @@ import 'util/static_methods.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Guard against known Flutter desktop framework assertion desyncs in HardwareKeyboard
+  FlutterError.onError = (FlutterErrorDetails details) {
+    final msg = details.exception.toString();
+    if (msg.contains('hardware_keyboard.dart') &&
+        (msg.contains('is already pressed') || msg.contains('is not pressed'))) {
+      // Suppress benign HardwareKeyboard assertion desync on Windows desktop
+      return;
+    }
+    FlutterError.presentError(details);
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    final msg = error.toString();
+    if (msg.contains('hardware_keyboard.dart') &&
+        (msg.contains('is already pressed') || msg.contains('is not pressed'))) {
+      return true; // Mark as handled to prevent crashing platform message callback
+    }
+    return false;
+  };
+
   await AppTranslation.loadTranslations();
   await StaticMethods.initServices();
   runApp(MyApp());

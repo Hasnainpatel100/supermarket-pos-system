@@ -2650,7 +2650,7 @@ class _BillPreviewTabState extends State<_BillPreviewTab> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('CGST (2.5%):', style: TextStyle(color: Colors.black, fontSize: 10)),
-                    Text('₹1,878.00', style: TextStyle(color: Colors.black, fontSize: 10)),
+                    Text('₹1,878.0', style: TextStyle(color: Colors.black, fontSize: 10)),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -2658,7 +2658,7 @@ class _BillPreviewTabState extends State<_BillPreviewTab> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('SGST (2.5%):', style: TextStyle(color: Colors.black, fontSize: 10)),
-                    Text('₹1,878.00', style: TextStyle(color: Colors.black, fontSize: 10)),
+                    Text('₹1,878.0', style: TextStyle(color: Colors.black, fontSize: 10)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -2725,8 +2725,8 @@ class _BillPreviewTabState extends State<_BillPreviewTab> {
                     children: [
                       Expanded(flex: 2, child: Text('1 (5%)', style: TextStyle(color: Colors.black, fontSize: 8.5))),
                       Expanded(flex: 3, child: Text('71,364.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontSize: 8.5))),
-                      Expanded(flex: 2, child: Text('1,878.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontSize: 8.5))),
-                      Expanded(flex: 2, child: Text('1,878.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontSize: 8.5))),
+                      Expanded(flex: 2, child: Text('1,878.0', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontSize: 8.5))),
+                      Expanded(flex: 2, child: Text('1,878.0', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontSize: 8.5))),
                       Expanded(flex: 3, child: Text('75,120.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 8.5))),
                     ],
                   ),

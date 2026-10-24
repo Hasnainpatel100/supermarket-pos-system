@@ -328,9 +328,9 @@ class ServiceGstPdf {
                                 _calcRow('Discount (-)', '$currencySymbol ${currencyFormat.format(discount)}'),
                               if (taxAmount > 0) ...[
                                 if (cgstAmount != null && cgstAmount > 0)
-                                  _calcRow('CGST', '$currencySymbol ${currencyFormat.format(cgstAmount)}'),
+                                  _calcRow('CGST', '$currencySymbol ${NumberFormat('#,##0.0').format(cgstAmount)}'),
                                 if (sgstAmount != null && sgstAmount > 0)
-                                  _calcRow('SGST', '$currencySymbol ${currencyFormat.format(sgstAmount)}'),
+                                  _calcRow('SGST', '$currencySymbol ${NumberFormat('#,##0.0').format(sgstAmount)}'),
                                 if (igstAmount != null && igstAmount > 0)
                                   _calcRow('IGST', '$currencySymbol ${currencyFormat.format(igstAmount)}'),
                                 if ((cgstAmount == null || cgstAmount == 0) && (sgstAmount == null || sgstAmount == 0))

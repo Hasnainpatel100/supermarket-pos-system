@@ -17,6 +17,7 @@ import '../../../../service/service_bill_pdf.dart';
 import 'activity_split_bill.dart';
 import 'controller_home_pos.dart';
 import 'dialog_parked_bills.dart';
+import 'dialog_select_batch.dart';
 
 class FragmentHomePos extends StatelessWidget {
   const FragmentHomePos({super.key});
@@ -119,7 +120,7 @@ class FragmentHomePos extends StatelessWidget {
         body: FocusScope(
           autofocus: true,
           onKeyEvent: (node, event) {
-            if (event is KeyDownEvent) {
+            if (event is KeyDownEvent || event is KeyRepeatEvent) {
               final key = event.logicalKey;
 
               // Do NOT intercept typing or deletion keys if any EditableText is focused
@@ -132,7 +133,9 @@ class FragmentHomePos extends StatelessWidget {
                 return KeyEventResult.ignored;
               }
 
-              if (key == LogicalKeyboardKey.f1 ||
+              if (key == LogicalKeyboardKey.pageUp ||
+                  key == LogicalKeyboardKey.pageDown ||
+                  key == LogicalKeyboardKey.f1 ||
                   key == LogicalKeyboardKey.f2 ||
                   key == LogicalKeyboardKey.f3 ||
                   key == LogicalKeyboardKey.f4 ||
@@ -443,21 +446,44 @@ class _SearchBarState extends State<_SearchBar> {
     }
   }
 
-  void _selectOption(PosSearchOption option) {
+  void _selectOption(PosSearchOption option, {bool explicitBatchSelection = false}) {
     _overlayController.hide();
     setState(() {
       _options = [];
       _highlightedIndex = 0;
     });
-    if (option.hasBatch) {
+
+    final availableBatches = widget.controller.getAvailableBatches(option.item);
+
+    // If item has multiple batches available and this was not an explicit user click on a batch row:
+    if (availableBatches.length > 1 && !explicitBatchSelection) {
+      widget.controller.searchController.clear();
+      widget.controller.rxSearchQuery.value = '';
+      Get.dialog(
+        DialogSelectBatch(
+          item: option.item,
+          batches: availableBatches,
+          onBatchSelected: (batch) => widget.controller.addBatchToCart(option.item, batch),
+        ),
+        barrierDismissible: true,
+      );
+      return;
+    }
+
+    if (explicitBatchSelection && option.hasBatch) {
+      widget.controller.addBatchToCart(option.item, option.batch!);
+    } else if (availableBatches.length == 1) {
+      widget.controller.addBatchToCart(option.item, availableBatches.first);
+    } else if (option.hasBatch) {
       widget.controller.addBatchToCart(option.item, option.batch!);
     } else {
-      widget.controller.addToCart(option.item);
+      widget.controller.addToCart(option.item, skipBatchCheck: true);
     }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.controller.searchController.clear();
       widget.controller.rxSearchQuery.value = '';
-      widget.controller.searchFocusNode.requestFocus();
+      widget.controller.requestSearchFocus();
     });
   }
 
@@ -604,7 +630,8 @@ class _SearchBarState extends State<_SearchBar> {
                               final isHighlighted = index == _highlightedIndex;
 
                               return InkWell(
-                                onTap: () => _selectOption(option),
+                                canRequestFocus: false,
+                                onTap: () => _selectOption(option, explicitBatchSelection: true),
                                 onHover: (hovered) {
                                   if (hovered && _highlightedIndex != index) {
                                     setState(() {
@@ -722,40 +749,54 @@ class _SearchBarState extends State<_SearchBar> {
               ),
             );
           },
-          child: Focus(
-            onKeyEvent: (node, event) {
-              if (event is KeyDownEvent) {
-                final key = event.logicalKey;
-                final isShowing = _overlayController.isShowing && _options.isNotEmpty;
+          child: Actions(
+            actions: <Type, Action<Intent>>{
+              DirectionalFocusIntent: DoNothingAction(),
+            },
+            child: Focus(
+              canRequestFocus: false,
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent || event is KeyRepeatEvent) {
+                  final key = event.logicalKey;
+                  final isShowing = _overlayController.isShowing && _options.isNotEmpty;
 
-                if (key == LogicalKeyboardKey.arrowDown && isShowing) {
-                  _navigateOptions(1);
-                  return KeyEventResult.handled;
-                } else if (key == LogicalKeyboardKey.arrowUp && isShowing) {
-                  _navigateOptions(-1);
-                  return KeyEventResult.handled;
-                } else if (key == LogicalKeyboardKey.pageDown && isShowing) {
-                  _navigateOptions(5);
-                  return KeyEventResult.handled;
-                } else if (key == LogicalKeyboardKey.pageUp && isShowing) {
-                  _navigateOptions(-5);
-                  return KeyEventResult.handled;
-                } else if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
-                  if (isShowing && _highlightedIndex >= 0 && _highlightedIndex < _options.length) {
-                    _selectOption(_options[_highlightedIndex]);
+                  if (key == LogicalKeyboardKey.arrowDown && isShowing) {
+                    _navigateOptions(1);
                     return KeyEventResult.handled;
-                  } else if (widget.controller.searchController.text.trim().isNotEmpty) {
+                  } else if (key == LogicalKeyboardKey.arrowUp && isShowing) {
+                    _navigateOptions(-1);
+                    return KeyEventResult.handled;
+                  } else if (key == LogicalKeyboardKey.pageDown) {
+                    if (isShowing) {
+                      _navigateOptions(5);
+                    } else {
+                      widget.controller.navigateCartItem(1);
+                    }
+                    return KeyEventResult.handled;
+                  } else if (key == LogicalKeyboardKey.pageUp) {
+                    if (isShowing) {
+                      _navigateOptions(-5);
+                    } else {
+                      widget.controller.navigateCartItem(-1);
+                    }
+                    return KeyEventResult.handled;
+                  } else if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
+                    final text = widget.controller.searchController.text.trim();
                     _overlayController.hide();
-                    widget.controller.handleBarcodeScan(widget.controller.searchController.text.trim());
+                    if (isShowing && _highlightedIndex >= 0 && _highlightedIndex < _options.length) {
+                      _selectOption(_options[_highlightedIndex], explicitBatchSelection: false);
+                      return KeyEventResult.handled;
+                    } else if (text.isNotEmpty) {
+                      widget.controller.handleBarcodeScan(text);
+                      return KeyEventResult.handled;
+                    }
+                  } else if (key == LogicalKeyboardKey.escape && isShowing) {
+                    _overlayController.hide();
                     return KeyEventResult.handled;
                   }
-                } else if (key == LogicalKeyboardKey.escape && isShowing) {
-                  _overlayController.hide();
-                  return KeyEventResult.handled;
                 }
-              }
-              return KeyEventResult.ignored;
-            },
+                return KeyEventResult.ignored;
+              },
             child: TextField(
               controller: widget.controller.searchController,
               focusNode: widget.controller.searchFocusNode,
@@ -790,14 +831,15 @@ class _SearchBarState extends State<_SearchBar> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
               onSubmitted: (val) {
-                if (_overlayController.isShowing &&
-                    _options.isNotEmpty &&
+                final text = val.trim();
+                final hasOptions = _overlayController.isShowing && _options.isNotEmpty;
+                _overlayController.hide();
+                if (hasOptions &&
                     _highlightedIndex >= 0 &&
                     _highlightedIndex < _options.length) {
-                  _selectOption(_options[_highlightedIndex]);
-                } else if (val.trim().isNotEmpty) {
-                  _overlayController.hide();
-                  widget.controller.handleBarcodeScan(val.trim());
+                  _selectOption(_options[_highlightedIndex], explicitBatchSelection: false);
+                } else if (text.isNotEmpty) {
+                  widget.controller.handleBarcodeScan(text);
                 }
               },
               onChanged: (val) {
@@ -807,7 +849,8 @@ class _SearchBarState extends State<_SearchBar> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -851,6 +894,7 @@ class _CartDataTable extends StatelessWidget {
       }
       return RepaintBoundary(
         child: ListView(
+          controller: controller.cartScrollController,
           children: [
             DataTable(
             showCheckboxColumn: false,
@@ -4204,34 +4248,46 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                       ),
                     )
                   : ListView.separated(
+                      controller: controller.cartScrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       itemCount: cartItems.length,
                       separatorBuilder: (context, index) => const SizedBox(height: 6),
                       itemBuilder: (context, index) {
                         final item = cartItems[index];
+                        final isSelected = session.rxSelectedCartIndex.value == index;
                         final qty = item.qty ?? 1;
                         final price = item.price ?? 0;
                         final itemDiscount = item.discount ?? 0;
                         final lineTotal = item.total ?? ((price * qty) - itemDiscount);
                         final sku = item.itemBarcode ?? 'ITM${item.id}';
 
-                        return Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: cs.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: cs.outlineVariant.withValues(alpha: 0.3),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
+                        return InkWell(
+                          onTap: () {
+                            session.rxSelectedCartIndex.value = index;
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? cs.primaryContainer.withValues(alpha: 0.4)
+                                  : cs.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? cs.primary
+                                    : cs.outlineVariant.withValues(alpha: 0.3),
+                                width: isSelected ? 1.5 : 1.0,
                               ),
-                            ],
-                          ),
-                          child: Column(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: isSelected ? 0.05 : 0.02),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               // Top Row: Thumbnail + Item Name + SKU + Line Total
@@ -4454,8 +4510,9 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                               ),
                             ],
                           ),
-                        );
-                      },
+                        ),
+                      );
+                    },
                     ),
             ),
 

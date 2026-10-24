@@ -19,6 +19,9 @@ class ActivityItemForm extends StatelessWidget {
     final itemService = ItemService(
       Get.find<ServiceObjectBox>().box<EntityItem>(),
     );
+    if (Get.isRegistered<ControllerItemForm>()) {
+      Get.delete<ControllerItemForm>(force: true);
+    }
     final ControllerItemForm controller = Get.put(
       ControllerItemForm.init(itemService, editingItem: editingItem),
     );

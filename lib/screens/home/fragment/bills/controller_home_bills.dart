@@ -49,6 +49,7 @@ class ControllerHomeBills extends GetxController {
 
   // Search
   final RxString rxSearchQuery = ''.obs;
+  final TextEditingController searchController = TextEditingController();
   Worker? _searchWorker;
 
   @override
@@ -69,11 +70,22 @@ class ControllerHomeBills extends GetxController {
   @override
   void onClose() {
     _searchWorker?.dispose();
+    searchController.dispose();
     super.onClose();
   }
 
   void setSearchQuery(String query) {
-    rxSearchQuery.value = query;
+    String sanitized = query.replaceAll('\r', '').replaceAll('\n', '');
+    if (sanitized.contains('/')) {
+      sanitized = sanitized.replaceAll('/', '-');
+      if (searchController.text != sanitized) {
+        searchController.value = TextEditingValue(
+          text: sanitized,
+          selection: TextSelection.collapsed(offset: sanitized.length),
+        );
+      }
+    }
+    rxSearchQuery.value = sanitized;
   }
 
   void setDateFilter(DateFilterType type) {
@@ -168,26 +180,31 @@ class ControllerHomeBills extends GetxController {
     Condition<EntityBill>? searchCondition;
     final queryText = rxSearchQuery.value.trim().toLowerCase();
     if (queryText.isNotEmpty) {
+      final sanitizedQ = queryText.replaceAll('/', '-');
       searchCondition = EntityBill_.customerName
           .contains(queryText, caseSensitive: false)
           .or(EntityBill_.customerPhone.contains(queryText, caseSensitive: false))
-          .or(EntityBill_.billNo.contains(queryText, caseSensitive: false));
+          .or(EntityBill_.billNo.contains(queryText, caseSensitive: false))
+          .or(EntityBill_.billNo.contains(sanitizedQ, caseSensitive: false));
     }
 
+    final bool isSpecificBillSearch = queryText.isNotEmpty &&
+        (queryText.startsWith('bil') || RegExp(r'\d{5,}').hasMatch(queryText));
+
     Condition<EntityBill>? finalCondition;
-    if (dateCondition != null && searchCondition != null) {
+    if (dateCondition != null && searchCondition != null && !isSpecificBillSearch) {
       finalCondition = dateCondition.and(searchCondition);
-    } else if (dateCondition != null) {
-      finalCondition = dateCondition;
     } else if (searchCondition != null) {
       finalCondition = searchCondition;
+    } else if (dateCondition != null) {
+      finalCondition = dateCondition;
     }
 
     final queryBuilder = finalCondition != null
         ? _boxBill.query(finalCondition)
         : _boxBill.query();
     queryBuilder.order(EntityBill_.id, flags: Order.descending);
-    final query = queryBuilder.build();
+    var query = queryBuilder.build();
 
     // Count total for stats and pagination
     final allBillsCount = query.count();

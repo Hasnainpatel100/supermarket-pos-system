@@ -178,6 +178,49 @@ class ControllerHomePos extends GetxController {
   final rxSearchQuery = ''.obs;
   final rxListItems = <EntityItem>[].obs;
 
+  void requestSearchFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!searchFocusNode.hasFocus) {
+        searchFocusNode.requestFocus();
+      }
+    });
+  }
+
+  // Cart Items Keyboard Navigation & Scrolling
+  final ScrollController cartScrollController = ScrollController();
+
+  void navigateCartItem(int delta) {
+    final session = activeSession;
+    if (session.rxCartItems.isEmpty) return;
+
+    final current = session.rxSelectedCartIndex.value;
+    int next;
+    if (current == -1) {
+      next = delta > 0 ? 0 : session.rxCartItems.length - 1;
+    } else {
+      next = (current + delta).clamp(0, session.rxCartItems.length - 1);
+    }
+
+    session.rxSelectedCartIndex.value = next;
+    scrollToCartItem(next);
+  }
+
+  void scrollToCartItem(int index) {
+    if (!cartScrollController.hasClients) return;
+    try {
+      const double rowHeight = 52.0;
+      final target = (index * rowHeight).clamp(
+        0.0,
+        cartScrollController.position.maxScrollExtent,
+      );
+      cartScrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutCubic,
+      );
+    } catch (_) {}
+  }
+
   // Search Customers
   final searchCustomerController = TextEditingController();
   final rxCustomerSearchQuery = ''.obs;
@@ -228,6 +271,18 @@ class ControllerHomePos extends GetxController {
 
     debounce(rxSearchQuery, (_) => loadItems(), time: const Duration(milliseconds: 300));
     debounce(rxCustomerSearchQuery, (_) => loadCustomers(), time: const Duration(milliseconds: 300));
+
+    // Auto-normalize any barcode scanner forward slashes in search field
+    searchController.addListener(() {
+      final t = searchController.text;
+      if (t.contains('/')) {
+        final sanitized = t.replaceAll('/', '-');
+        searchController.value = searchController.value.copyWith(
+          text: sanitized,
+          selection: TextSelection.collapsed(offset: sanitized.length),
+        );
+      }
+    });
   }
 
   void loadCategories() {
@@ -600,12 +655,41 @@ class ControllerHomePos extends GetxController {
     return results;
   }
 
+  /// Returns all active batches with quantity > 0 for a given item.
+  List<EntityItemBatch> getAvailableBatches(EntityItem item) {
+    if (item.id == null || item.id == 0) return const [];
+    final q = _boxBatch
+        .query(EntityItemBatch_.itemId
+            .equals(item.id!)
+            .and(EntityItemBatch_.quantity.greaterThan(0)))
+        .order(EntityItemBatch_.id)
+        .build();
+    final batches = q.find();
+    q.close();
+    return batches;
+  }
+
   /// ⚡ Dedicated fast scanner handler for instant barcode scans & weighing scales
   Future<void> handleBarcodeScan(String rawCode) async {
     final query = rawCode.trim();
     if (query.isEmpty) return;
 
-    // 1. Exact match check
+    // 0. Handle scanned invoice/bill barcode (e.g. BIL-1792849558790 or scanner error BIL/1792849558790)
+    final sanitizedBillNo = query.replaceAll('/', '-');
+    if (sanitizedBillNo.toUpperCase().startsWith('BIL-') || query.toUpperCase().startsWith('BIL/')) {
+      final bill = _boxBill.query(EntityBill_.billNo.equals(sanitizedBillNo, caseSensitive: false)).build().findFirst();
+      if (bill != null) {
+        searchController.clear();
+        rxSearchQuery.value = '';
+        Get.dialog(
+          DialogBillDetail(bill: bill),
+          barrierDismissible: true,
+        );
+        return;
+      }
+    }
+
+    // 1. Exact match check on item barcode or SKU
     final exactQuery = _boxItem
         .query(EntityItem_.barcode.equals(query).or(EntityItem_.sku.equals(query)))
         .build();
@@ -613,10 +697,79 @@ class ControllerHomePos extends GetxController {
     exactQuery.close();
 
     if (exactMatch != null) {
-      addToCart(exactMatch);
-      searchController.clear();
-      searchFocusNode.requestFocus();
-      return;
+      final batches = getAvailableBatches(exactMatch);
+      if (batches.length > 1) {
+        // Multiple batches available: prompt user to select, DO NOT add direct
+        searchController.clear();
+        rxSearchQuery.value = '';
+        Get.dialog(
+          DialogSelectBatch(
+            item: exactMatch,
+            batches: batches,
+            onBatchSelected: (batch) => addBatchToCart(exactMatch, batch),
+          ),
+          barrierDismissible: true,
+        );
+        return;
+      } else if (batches.length == 1) {
+        addBatchToCart(exactMatch, batches.first);
+        searchController.clear();
+        rxSearchQuery.value = '';
+        requestSearchFocus();
+        return;
+      } else {
+        addToCart(exactMatch, skipBatchCheck: true);
+        searchController.clear();
+        rxSearchQuery.value = '';
+        requestSearchFocus();
+        return;
+      }
+    }
+
+    // 1b. Check if scanned code matches a batch directly (by batch barcode or batchNo)
+    final batchQuery = _boxBatch
+        .query(
+          (EntityItemBatch_.barcode.equals(query).or(EntityItemBatch_.batchNo.equals(query)))
+              .and(EntityItemBatch_.quantity.greaterThan(0)),
+        )
+        .build();
+    final matchingBatches = batchQuery.find();
+    batchQuery.close();
+
+    if (matchingBatches.isNotEmpty) {
+      final firstBatch = matchingBatches.first;
+      if (firstBatch.itemId != null && firstBatch.itemId! > 0) {
+        final parentItem = _boxItem.get(firstBatch.itemId!);
+        if (parentItem != null) {
+          final allBatches = getAvailableBatches(parentItem);
+          if (allBatches.length > 1) {
+            // Multiple batches exist for this item: give user option to select batch
+            searchController.clear();
+            rxSearchQuery.value = '';
+            Get.dialog(
+              DialogSelectBatch(
+                item: parentItem,
+                batches: allBatches,
+                onBatchSelected: (batch) => addBatchToCart(parentItem, batch),
+              ),
+              barrierDismissible: true,
+            );
+            return;
+          } else if (allBatches.length == 1) {
+            addBatchToCart(parentItem, allBatches.first);
+            searchController.clear();
+            rxSearchQuery.value = '';
+            requestSearchFocus();
+            return;
+          } else {
+            addBatchToCart(parentItem, firstBatch);
+            searchController.clear();
+            rxSearchQuery.value = '';
+            requestSearchFocus();
+            return;
+          }
+        }
+      }
     }
 
     // 2. Variable-weight scale barcode (offloaded to Isolate)
@@ -647,7 +800,7 @@ class ControllerHomePos extends GetxController {
           activeSession.rxCartItems.add(billItem);
           calculateTotals();
           searchController.clear();
-          searchFocusNode.requestFocus();
+          requestSearchFocus();
           SnackbarUtil.showSuccess('Added weighed ${scaleItem.name} (${(kg * 1000).toInt()}g)');
           return;
         } else if (parsed.embeddedPrice != null) {
@@ -666,24 +819,46 @@ class ControllerHomePos extends GetxController {
           activeSession.rxCartItems.add(billItem);
           calculateTotals();
           searchController.clear();
-          searchFocusNode.requestFocus();
+          requestSearchFocus();
           SnackbarUtil.showSuccess('Added ${scaleItem.name} (₹$price)');
           return;
         }
       }
     }
 
-    // 3. Fallback search: pick first matching option on Enter
+    // 3. Fallback search: pick matching item
     final options = searchOptions(query);
     if (options.isNotEmpty) {
       final first = options.first;
-      if (first.hasBatch) {
+      final targetItem = first.item;
+      final allBatches = getAvailableBatches(targetItem);
+      if (allBatches.length > 1) {
+        searchController.clear();
+        rxSearchQuery.value = '';
+        Get.dialog(
+          DialogSelectBatch(
+            item: targetItem,
+            batches: allBatches,
+            onBatchSelected: (batch) => addBatchToCart(targetItem, batch),
+          ),
+          barrierDismissible: true,
+        );
+      } else if (allBatches.length == 1) {
+        addBatchToCart(targetItem, allBatches.first);
+        searchController.clear();
+        rxSearchQuery.value = '';
+        requestSearchFocus();
+      } else if (first.hasBatch) {
         addBatchToCart(first.item, first.batch!);
+        searchController.clear();
+        rxSearchQuery.value = '';
+        requestSearchFocus();
       } else {
-        addToCart(first.item);
+        addToCart(first.item, skipBatchCheck: true);
+        searchController.clear();
+        rxSearchQuery.value = '';
+        requestSearchFocus();
       }
-      searchController.clear();
-      searchFocusNode.requestFocus();
     } else {
       SnackbarUtil.showError('Item not found for: $query');
     }
@@ -715,63 +890,70 @@ class ControllerHomePos extends GetxController {
   }
 
   void addToCart(EntityItem item, {bool skipBatchCheck = false}) {
+    // ⚡ Always fetch fresh item details from database to ensure updated tax, price, and stock
+    final freshItem = (item.id != null && item.id! > 0 ? _boxItem.get(item.id!) : null) ?? item;
+
     if (!skipBatchCheck) {
-      final batches = _boxBatch
-          .query(EntityItemBatch_.itemId
-              .equals(item.id ?? 0)
-              .and(EntityItemBatch_.quantity.greaterThan(0)))
-          .order(EntityItemBatch_.id)
-          .build()
-          .find();
-      if (batches.isNotEmpty) {
+      final batches = getAvailableBatches(freshItem);
+      if (batches.length > 1) {
+        // Multiple batches available: give user option for selecting batch, do NOT add direct
         Get.dialog(
           DialogSelectBatch(
-            item: item,
+            item: freshItem,
             batches: batches,
-            onBatchSelected: (batch) => addBatchToCart(item, batch),
+            onBatchSelected: (batch) => addBatchToCart(freshItem, batch),
           ),
           barrierDismissible: true,
         );
         return;
+      } else if (batches.length == 1) {
+        // Exactly 1 batch available: add it directly
+        addBatchToCart(freshItem, batches.first);
+        return;
       }
     }
 
-    final availableStock = item.totalQty ?? 0;
+    final availableStock = freshItem.totalQty ?? 0;
     if (availableStock < 1) {
-      SnackbarUtil.showError("${item.name} is out of stock!");
+      SnackbarUtil.showError("${freshItem.name} is out of stock!");
       return;
     }
 
     // Deduct stock from item immediately
-    item.totalQty = availableStock - 1;
-    _boxItem.put(item);
+    freshItem.totalQty = availableStock - 1;
+    _boxItem.put(freshItem);
 
     final session = activeSession;
     final index = session.rxCartItems.indexWhere(
-      (element) => element.item.target?.id == item.id && element.batchNo == null,
+      (element) => element.item.target?.id == freshItem.id && element.batchNo == null,
     );
 
     if (index >= 0) {
       final existing = session.rxCartItems[index];
       final currentCartQty = existing.qty ?? 0;
       existing.qty = currentCartQty + 1;
-      existing.total = (existing.qty! * (existing.price ?? 0));
+      existing.price = freshItem.sellingPrice;
+      existing.mrp = freshItem.sellingPrice;
+      existing.taxRate = freshItem.taxRate;
+      existing.hsnCode = freshItem.hsnCode;
+      existing.total = (existing.qty! * (existing.price ?? freshItem.sellingPrice ?? 0));
+      existing.item.target = freshItem;
       session.rxCartItems[index] = existing;
     } else {
       final billItem = EntityBillItem(
-        itemName: item.name,
-        itemBarcode: item.barcode,
-        hsnCode: item.hsnCode,
-        unit: item.unit,
-        price: item.sellingPrice,
-        mrp: item.sellingPrice,
+        itemName: freshItem.name,
+        itemBarcode: freshItem.barcode,
+        hsnCode: freshItem.hsnCode,
+        unit: freshItem.unit,
+        price: freshItem.sellingPrice,
+        mrp: freshItem.sellingPrice,
         qty: 1,
-        taxRate: item.taxRate,
+        taxRate: freshItem.taxRate,
         tax: 0,
         discount: 0,
-        total: item.sellingPrice,
+        total: freshItem.sellingPrice,
       );
-      billItem.item.target = item;
+      billItem.item.target = freshItem;
       session.rxCartItems.add(billItem);
     }
     
@@ -781,59 +963,68 @@ class ControllerHomePos extends GetxController {
     // Auto-focus back to search
     searchController.clear();
     rxSearchQuery.value = '';
-    searchFocusNode.requestFocus();
+    requestSearchFocus();
   }
 
   void addBatchToCart(EntityItem item, EntityItemBatch batch) {
-    final availableStock = batch.quantity ?? 0;
+    // ⚡ Always fetch fresh item & batch from database so updated price, tax and stock are used
+    final freshItem = (item.id != null && item.id! > 0 ? _boxItem.get(item.id!) : null) ?? item;
+    final freshBatch = (batch.id != null && batch.id! > 0 ? _boxBatch.get(batch.id!) : null) ?? batch;
+
+    final availableStock = freshBatch.quantity ?? 0;
     if (availableStock < 1) {
-      SnackbarUtil.showError("Batch ${batch.batchNo} is out of stock! Available: $availableStock");
+      SnackbarUtil.showError("Batch ${freshBatch.batchNo} is out of stock! Available: $availableStock");
       return;
     }
 
     // 1. Minus stock in THAT batch only
-    batch.quantity = availableStock - 1;
-    _boxBatch.put(batch);
+    freshBatch.quantity = availableStock - 1;
+    _boxBatch.put(freshBatch);
 
     // 2. Minus stock in the item total quantity
-    item.totalQty = ((item.totalQty ?? 0) - 1).clamp(0, 99999999);
-    _boxItem.put(item);
+    freshItem.totalQty = ((freshItem.totalQty ?? 0) - 1).clamp(0, 99999999);
+    _boxItem.put(freshItem);
 
     final session = activeSession;
-    final effectivePrice = batch.salePrice ?? item.sellingPrice ?? 0.0;
-    final effectiveMrp = batch.mrp ?? item.sellingPrice ?? effectivePrice;
+    final effectivePrice = freshBatch.salePrice ?? freshItem.sellingPrice ?? 0.0;
+    final effectiveMrp = freshBatch.mrp ?? freshItem.sellingPrice ?? effectivePrice;
 
     final index = session.rxCartItems.indexWhere(
-      (element) => element.item.target?.id == item.id && element.batchNo == batch.batchNo,
+      (element) => element.item.target?.id == freshItem.id && element.batchNo == freshBatch.batchNo,
     );
 
     if (index >= 0) {
       final existing = session.rxCartItems[index];
       final currentCartQty = existing.qty ?? 0;
       existing.qty = currentCartQty + 1;
+      existing.price = effectivePrice;
+      existing.mrp = effectiveMrp;
+      existing.taxRate = freshItem.taxRate;
+      existing.hsnCode = freshItem.hsnCode;
       existing.total = (existing.qty! * (existing.price ?? effectivePrice));
+      existing.item.target = freshItem;
       session.rxCartItems[index] = existing;
     } else {
-      final displayName = batch.batchNo != null && batch.batchNo!.isNotEmpty
-          ? '${item.name} [B: ${batch.batchNo}]'
-          : (item.name ?? '');
+      final displayName = freshBatch.batchNo != null && freshBatch.batchNo!.isNotEmpty
+          ? '${freshItem.name} [B: ${freshBatch.batchNo}]'
+          : (freshItem.name ?? '');
 
       final billItem = EntityBillItem(
         itemName: displayName,
-        itemBarcode: item.barcode,
-        hsnCode: item.hsnCode,
-        unit: item.unit,
+        itemBarcode: freshItem.barcode,
+        hsnCode: freshItem.hsnCode,
+        unit: freshItem.unit,
         price: effectivePrice,
         mrp: effectiveMrp,
-        batchNo: batch.batchNo,
-        batchId: batch.id,
+        batchNo: freshBatch.batchNo,
+        batchId: freshBatch.id,
         qty: 1,
-        taxRate: item.taxRate,
+        taxRate: freshItem.taxRate,
         tax: 0,
-        discount: batch.discount ?? 0,
+        discount: freshBatch.discount ?? 0,
         total: effectivePrice,
       );
-      billItem.item.target = item;
+      billItem.item.target = freshItem;
       session.rxCartItems.add(billItem);
     }
 
@@ -842,7 +1033,7 @@ class ControllerHomePos extends GetxController {
 
     searchController.clear();
     rxSearchQuery.value = '';
-    searchFocusNode.requestFocus();
+    requestSearchFocus();
   }
 
   void updateQty(int index, int delta) {
@@ -968,6 +1159,26 @@ class ControllerHomePos extends GetxController {
     double exclusiveTaxTotal = 0;
 
     for (var item in session.rxCartItems) {
+      // ⚡ Dynamically sync target item from database so changes in tax/price immediately reflect on cart
+      int? targetId;
+      try {
+        targetId = item.item.target?.id;
+      } catch (_) {}
+
+      if (targetId != null && targetId > 0) {
+        final freshTarget = _boxItem.get(targetId);
+        if (freshTarget != null) {
+          item.item.target = freshTarget;
+          item.taxRate = freshTarget.taxRate;
+          item.hsnCode = freshTarget.hsnCode;
+          if (item.batchId == null || item.batchId == 0) {
+            item.itemName = freshTarget.name;
+            item.price = freshTarget.sellingPrice;
+            item.mrp = freshTarget.sellingPrice;
+          }
+        }
+      }
+
       double itemPrice = item.price ?? 0;
       double itemQty = (item.qty ?? 0).toDouble();
       double itemDiscount = item.discount ?? 0;
@@ -975,7 +1186,7 @@ class ControllerHomePos extends GetxController {
       item.total = lineGross;
       subTotal += lineGross;
 
-      final rate = item.taxRate ?? 0;
+      final rate = item.taxRate ?? item.item.target?.taxRate ?? 0;
       final isInclusive = (item.item.target?.taxType ?? '').toLowerCase().trim() == 'inclusive';
 
       if (rate > 0) {
@@ -1265,8 +1476,16 @@ class ControllerHomePos extends GetxController {
 
   void handleShortcut(LogicalKeyboardKey key) {
     final session = activeSession;
-    if (key == LogicalKeyboardKey.f1) {
-      searchFocusNode.requestFocus();
+    if (key == LogicalKeyboardKey.pageUp) {
+      navigateCartItem(-1);
+    } else if (key == LogicalKeyboardKey.pageDown) {
+      navigateCartItem(1);
+    } else if (key == LogicalKeyboardKey.arrowUp && searchController.text.isEmpty && !searchFocusNode.hasFocus) {
+      navigateCartItem(-1);
+    } else if (key == LogicalKeyboardKey.arrowDown && searchController.text.isEmpty && !searchFocusNode.hasFocus) {
+      navigateCartItem(1);
+    } else if (key == LogicalKeyboardKey.f1) {
+      requestSearchFocus();
     } else if (key == LogicalKeyboardKey.f2) {
       if (session.rxSelectedCartIndex.value != -1) {
         _showChangeQtyDialog(session.rxSelectedCartIndex.value);
@@ -1387,7 +1606,7 @@ class ControllerHomePos extends GetxController {
                Get.back();
                int? q = int.tryParse(val);
                if (q != null) setQty(index, q);
-               searchFocusNode.requestFocus();
+               requestSearchFocus();
             },
          ),
          actions: [
@@ -1396,7 +1615,7 @@ class ControllerHomePos extends GetxController {
                Get.back();
                int? q = int.tryParse(ctrl.text);
                if (q != null) setQty(index, q);
-               searchFocusNode.requestFocus();
+               requestSearchFocus();
             }, child: Text('save'.tr)),
          ],
       ));
@@ -1417,7 +1636,7 @@ class ControllerHomePos extends GetxController {
                Get.back();
                double? d = double.tryParse(val);
                if (d != null) setItemDiscount(index, d);
-               searchFocusNode.requestFocus();
+               requestSearchFocus();
             },
          ),
          actions: [
@@ -1426,7 +1645,7 @@ class ControllerHomePos extends GetxController {
                Get.back();
                double? d = double.tryParse(ctrl.text);
                if (d != null) setItemDiscount(index, d);
-               searchFocusNode.requestFocus();
+               requestSearchFocus();
             }, child: Text('save'.tr)),
          ],
       ));
@@ -1446,7 +1665,7 @@ class ControllerHomePos extends GetxController {
                Get.back();
                double? d = double.tryParse(val);
                if (d != null) setBillDiscount(d);
-               searchFocusNode.requestFocus();
+               requestSearchFocus();
             },
          ),
          actions: [
@@ -1455,7 +1674,7 @@ class ControllerHomePos extends GetxController {
                Get.back();
                double? d = double.tryParse(ctrl.text);
                if (d != null) setBillDiscount(d);
-               searchFocusNode.requestFocus();
+               requestSearchFocus();
             }, child: Text('save'.tr)),
          ],
       ));
@@ -1474,7 +1693,7 @@ class ControllerHomePos extends GetxController {
             onSubmitted: (val) {
                Get.back();
                session.rxRemark.value = val;
-               searchFocusNode.requestFocus();
+               requestSearchFocus();
             },
          ),
          actions: [
@@ -1482,7 +1701,7 @@ class ControllerHomePos extends GetxController {
             FilledButton(onPressed: () {
                Get.back();
                session.rxRemark.value = ctrl.text;
-               searchFocusNode.requestFocus();
+               requestSearchFocus();
             }, child: Text('save'.tr)),
          ],
       ));
@@ -1557,22 +1776,30 @@ class ControllerHomePos extends GetxController {
     final stockTxnsToSave = <EntityStockTransaction>[];
 
     for (var cartItem in session.rxCartItems) {
+      int? targetId;
+      try {
+        targetId = cartItem.item.target?.id;
+      } catch (_) {}
+      final freshItem = (targetId != null && targetId > 0) ? _boxItem.get(targetId) : cartItem.item.target;
+      final finalTaxRate = freshItem?.taxRate ?? cartItem.taxRate;
+      final finalHsn = freshItem?.hsnCode ?? cartItem.hsnCode;
+
       final billItem = EntityBillItem(
         itemName: cartItem.itemName,
         itemBarcode: cartItem.itemBarcode,
-        hsnCode: cartItem.hsnCode,
+        hsnCode: finalHsn,
         unit: cartItem.unit,
         price: cartItem.price,
         mrp: cartItem.mrp,
         batchNo: cartItem.batchNo,
         batchId: cartItem.batchId,
         qty: cartItem.qty,
-        taxRate: cartItem.taxRate,
+        taxRate: finalTaxRate,
         tax: cartItem.tax,
         discount: cartItem.discount,
         total: cartItem.total,
       );
-      billItem.item.target = cartItem.item.target;
+      billItem.item.target = freshItem ?? cartItem.item.target;
       billItemsToSave.add(billItem);
 
       // Record stock transaction for sale audit
@@ -1955,7 +2182,7 @@ class ControllerHomePos extends GetxController {
         activeSession.rxQuickCustomerPhone.value = '';
       }
     }
-    searchFocusNode.requestFocus();
+    requestSearchFocus();
   }
 
   Future<void> saveQuickCustomerToMaster() async {
@@ -2004,6 +2231,7 @@ class ControllerHomePos extends GetxController {
     searchController.dispose();
     searchCustomerController.dispose();
     searchFocusNode.dispose();
+    cartScrollController.dispose();
     for (var session in rxBillTabs) {
       session.dispose();
     }

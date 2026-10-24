@@ -92,7 +92,46 @@ class ControllerCreateSalesReturn extends GetxController {
       addRow();
     }
 
+    // Auto-sanitize scanner forward slashes ('/') into hyphens ('-') immediately
+    originalBillNoCtrl.addListener(() {
+      final text = originalBillNoCtrl.text;
+      if (text.contains('/')) {
+        final sanitized = text.replaceAll('/', '-');
+        originalBillNoCtrl.value = originalBillNoCtrl.value.copyWith(
+          text: sanitized,
+          selection: TextSelection.collapsed(offset: sanitized.length),
+        );
+      }
+    });
+
     calculateTotals();
+  }
+
+  /// Auto-link invoice when exact scanned barcode or bill number is typed/scanned
+  void onInvoiceInputChanged(String val) {
+    final clean = val.trim().replaceAll('/', '-');
+    if (clean.isEmpty) return;
+    final exact = rxAvailableBills.firstWhereOrNull((b) =>
+        (b.billNo ?? '').trim().toLowerCase() == clean.toLowerCase());
+    if (exact != null) {
+      onBillSelected(exact);
+    }
+  }
+
+  /// Handle Enter key from barcode scanner machine when scanning invoice barcode
+  void onInvoiceInputSubmitted(String val) {
+    final clean = val.trim().replaceAll('/', '-');
+    if (clean.isEmpty) return;
+    EntityBill? exact = rxAvailableBills.firstWhereOrNull((b) =>
+        (b.billNo ?? '').trim().toLowerCase() == clean.toLowerCase() ||
+        '${b.id}' == clean);
+    exact ??= _boxBill
+        .query(EntityBill_.billNo.equals(clean, caseSensitive: false))
+        .build()
+        .findFirst();
+    if (exact != null) {
+      onBillSelected(exact);
+    }
   }
 
   void _loadExistingReturn(EntitySalesReturn ret) {
@@ -285,7 +324,7 @@ class ControllerCreateSalesReturn extends GetxController {
       ret.prefix = prefix;
       ret.returnNo = finalReturnNo;
       ret.returnDate = returnDateCtrl.text.trim();
-      ret.originalBillNo = originalBillNoCtrl.text.trim();
+      ret.originalBillNo = originalBillNoCtrl.text.trim().replaceAll('/', '-');
       ret.customerName = customerNameCtrl.text.trim().isEmpty ? 'Walk-in Customer' : customerNameCtrl.text.trim();
       ret.customerPhone = customerPhoneCtrl.text.trim();
       ret.customerAddress = customerAddressCtrl.text.trim();

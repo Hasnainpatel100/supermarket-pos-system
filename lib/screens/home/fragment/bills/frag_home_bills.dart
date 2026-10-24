@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../util/invoice_scanner_formatter.dart';
 import '../../../../widget/my_card.dart';
 import 'package:intl/intl.dart';
 
@@ -143,6 +144,8 @@ class FragHomeBills extends StatelessWidget {
                       ],
                     ),
                     child: TextField(
+                      controller: controller.searchController,
+                      inputFormatters: [InvoicePatternFormatter()],
                       onChanged: controller.setSearchQuery,
                       decoration: InputDecoration(
                         hintText: 'search_customer_phone_hint'.tr,

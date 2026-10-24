@@ -45,6 +45,9 @@ class _DialogSelectBatchState extends State<DialogSelectBatch> {
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
 
+  List<EntityItemBatch> get _batches =>
+      widget.batches.where((b) => (b.quantity ?? 0) > 0).toList();
+
   @override
   void initState() {
     super.initState();
@@ -61,20 +64,22 @@ class _DialogSelectBatchState extends State<DialogSelectBatch> {
   }
 
   void _selectCurrent() {
-    if (widget.batches.isNotEmpty &&
+    final list = _batches;
+    if (list.isNotEmpty &&
         _selectedIndex >= 0 &&
-        _selectedIndex < widget.batches.length) {
-      final selectedBatch = widget.batches[_selectedIndex];
+        _selectedIndex < list.length) {
+      final selectedBatch = list[_selectedIndex];
       Get.back();
       widget.onBatchSelected(selectedBatch);
     }
   }
 
   void _navigate(int delta) {
-    if (widget.batches.isEmpty) return;
+    final list = _batches;
+    if (list.isEmpty) return;
     setState(() {
       _selectedIndex =
-          (_selectedIndex + delta).clamp(0, widget.batches.length - 1);
+          (_selectedIndex + delta).clamp(0, list.length - 1);
     });
     _scrollToSelected();
   }
@@ -245,9 +250,9 @@ class _DialogSelectBatchState extends State<DialogSelectBatch> {
                         Expanded(
                           child: ListView.builder(
                             controller: _scrollController,
-                            itemCount: widget.batches.length,
+                            itemCount: _batches.length,
                             itemBuilder: (context, index) {
-                              final batch = widget.batches[index];
+                              final batch = _batches[index];
                               final isSelected = index == _selectedIndex;
 
                               final purchaseRate = batch.costPrice ?? widget.item.costPrice ?? 0.0;

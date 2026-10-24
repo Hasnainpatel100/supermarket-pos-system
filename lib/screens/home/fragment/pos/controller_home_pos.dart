@@ -65,6 +65,8 @@ class BillSession {
   final rxSubTotal = 0.0.obs;
   final rxTaxRate = 0.0.obs;
   final rxTaxAmount = 0.0.obs;
+  final rxInclusiveTaxAmount = 0.0.obs;
+  final rxExclusiveTaxAmount = 0.0.obs;
   final rxDiscountAmount = 0.0.obs;
   final rxGrandTotal = 0.0.obs;
   final rxPaymentMode = 'Cash'.obs;
@@ -475,12 +477,13 @@ class ControllerHomePos extends GetxController {
     final List<PosSearchOption> results = [];
     final Set<String> seenKeys = {}; // key: "${item.id}_${batch?.id ?? 'null'}"
 
-    // 1. Search batches directly by batchNo or barcode
+    // 1. Search batches directly by batchNo or barcode (only batches with available stock)
     final batchQuery = _boxBatch
         .query(
-          EntityItemBatch_.batchNo
-              .contains(query, caseSensitive: false)
-              .or(EntityItemBatch_.barcode.contains(query, caseSensitive: false)),
+          (EntityItemBatch_.batchNo
+                  .contains(query, caseSensitive: false)
+                  .or(EntityItemBatch_.barcode.contains(query, caseSensitive: false)))
+              .and(EntityItemBatch_.quantity.greaterThan(0)),
         )
         .build()
       ..limit = 25;
@@ -488,6 +491,7 @@ class ControllerHomePos extends GetxController {
     batchQuery.close();
 
     for (final b in matchingBatches) {
+      if ((b.quantity ?? 0) <= 0) continue;
       if (b.itemId != null && b.itemId! > 0) {
         final item = _boxItem.get(b.itemId!);
         if (item != null) {
@@ -509,12 +513,15 @@ class ControllerHomePos extends GetxController {
 
     if (exactMatch != null) {
       final batches = _boxBatch
-          .query(EntityItemBatch_.itemId.equals(exactMatch.id ?? 0))
+          .query(EntityItemBatch_.itemId
+              .equals(exactMatch.id ?? 0)
+              .and(EntityItemBatch_.quantity.greaterThan(0)))
           .order(EntityItemBatch_.id)
           .build()
           .find();
       if (batches.isNotEmpty) {
         for (final b in batches) {
+          if ((b.quantity ?? 0) <= 0) continue;
           final key = '${exactMatch.id}_${b.id}';
           if (!seenKeys.contains(key)) {
             seenKeys.add(key);
@@ -565,13 +572,16 @@ class ControllerHomePos extends GetxController {
 
     for (final item in matchingItems) {
       final batches = _boxBatch
-          .query(EntityItemBatch_.itemId.equals(item.id ?? 0))
+          .query(EntityItemBatch_.itemId
+              .equals(item.id ?? 0)
+              .and(EntityItemBatch_.quantity.greaterThan(0)))
           .order(EntityItemBatch_.id)
           .build()
           .find();
 
       if (batches.isNotEmpty) {
         for (final b in batches) {
+          if ((b.quantity ?? 0) <= 0) continue;
           final key = '${item.id}_${b.id}';
           if (!seenKeys.contains(key)) {
             seenKeys.add(key);
@@ -707,7 +717,9 @@ class ControllerHomePos extends GetxController {
   void addToCart(EntityItem item, {bool skipBatchCheck = false}) {
     if (!skipBatchCheck) {
       final batches = _boxBatch
-          .query(EntityItemBatch_.itemId.equals(item.id ?? 0))
+          .query(EntityItemBatch_.itemId
+              .equals(item.id ?? 0)
+              .and(EntityItemBatch_.quantity.greaterThan(0)))
           .order(EntityItemBatch_.id)
           .build()
           .find();
@@ -952,17 +964,44 @@ class ControllerHomePos extends GetxController {
   void calculateTotals() {
     final session = activeSession;
     double subTotal = 0;
+    double inclusiveTaxTotal = 0;
+    double exclusiveTaxTotal = 0;
+
     for (var item in session.rxCartItems) {
       double itemPrice = item.price ?? 0;
       double itemQty = (item.qty ?? 0).toDouble();
       double itemDiscount = item.discount ?? 0;
-      item.total = (itemPrice * itemQty) - itemDiscount;
-      subTotal += item.total ?? 0;
+      double lineGross = (itemPrice * itemQty) - itemDiscount;
+      item.total = lineGross;
+      subTotal += lineGross;
+
+      final rate = item.taxRate ?? 0;
+      final isInclusive = (item.item.target?.taxType ?? '').toLowerCase().trim() == 'inclusive';
+
+      if (rate > 0) {
+        if (isInclusive) {
+          // Inclusive: Tax is already added inside the item price
+          final taxVal = lineGross * (rate / (100.0 + rate));
+          item.tax = double.parse(taxVal.toStringAsFixed(2));
+          inclusiveTaxTotal += item.tax!;
+        } else {
+          // Exclusive: Tax is added on top of the item price
+          final taxVal = lineGross * (rate / 100.0);
+          item.tax = double.parse(taxVal.toStringAsFixed(2));
+          exclusiveTaxTotal += item.tax!;
+        }
+      } else {
+        item.tax = 0.0;
+      }
     }
 
     session.rxSubTotal.value = subTotal;
-    session.rxTaxAmount.value = (subTotal * (session.rxTaxRate.value / 100));
-    double rawGrand = subTotal + session.rxTaxAmount.value - session.rxDiscountAmount.value;
+    session.rxInclusiveTaxAmount.value = double.parse(inclusiveTaxTotal.toStringAsFixed(2));
+    session.rxExclusiveTaxAmount.value = double.parse(exclusiveTaxTotal.toStringAsFixed(2));
+    session.rxTaxAmount.value = double.parse((inclusiveTaxTotal + exclusiveTaxTotal).toStringAsFixed(2));
+
+    // Notice: subTotal already contains inclusive tax. Exclusive tax is added on top.
+    double rawGrand = subTotal + session.rxExclusiveTaxAmount.value - session.rxDiscountAmount.value;
     if (rawGrand < 0) rawGrand = 0;
 
     if (session.rxAutoRoundOff.value) {
@@ -1056,6 +1095,8 @@ class ControllerHomePos extends GetxController {
     session.rxDiscountAmount.value = 0;
     session.rxTaxRate.value = 0;
     session.rxTaxAmount.value = 0;
+    session.rxInclusiveTaxAmount.value = 0;
+    session.rxExclusiveTaxAmount.value = 0;
     session.rxRoundOffAmount.value = 0;
     session.rxGrandTotal.value = 0;
     session.rxSubTotal.value = 0;
@@ -1565,6 +1606,27 @@ class ControllerHomePos extends GetxController {
       if (stockTxnsToSave.isNotEmpty) {
         _boxStockTxn.putMany(stockTxnsToSave);
       }
+
+      // If any batch was sold and reached 0 stock, remove it from the database permanently
+      for (var bi in billItemsToSave) {
+        if (bi.batchId != null && bi.batchId! > 0) {
+          final b = _boxBatch.get(bi.batchId!);
+          if (b != null && (b.quantity ?? 0) <= 0 && b.id != null) {
+            _boxBatch.remove(b.id!);
+          }
+        } else if (bi.batchNo != null && bi.batchNo!.isNotEmpty && bi.item.target != null) {
+          final q = _boxBatch
+              .query(EntityItemBatch_.itemId
+                  .equals(bi.item.target!.id ?? 0)
+                  .and(EntityItemBatch_.batchNo.equals(bi.batchNo!)))
+              .build();
+          final b = q.findFirst();
+          q.close();
+          if (b != null && (b.quantity ?? 0) <= 0 && b.id != null) {
+            _boxBatch.remove(b.id!);
+          }
+        }
+      }
     });
 
     clearCart(restoreStock: false);
@@ -1584,9 +1646,9 @@ class ControllerHomePos extends GetxController {
         ? Get.find<ControllerHomeSettings>()
         : Get.put(ControllerHomeSettings());
 
-    if (settings.rxAutoPrintBill.value) {
-      _autoPrintThermalReceipt(savedBill, settings);
-    }
+    // NOTE: When user taps "Save & Print", do NOT auto print directly here.
+    // As per user specification, we open the exact bill preview dialog (DialogBillDetail).
+    // The user prints on-demand by tapping "Print" inside the dialog without a printer prompt!
 
     if (settings.rxVoiceAnnouncement.value) {
       ServiceVoice.announcePayment(
@@ -1599,28 +1661,27 @@ class ControllerHomePos extends GetxController {
     Get.dialog(DialogBillDetail(bill: savedBill), barrierDismissible: false);
   }
 
-  Future<void> _autoPrintThermalReceipt(EntityBill bill, ControllerHomeSettings settings) async {
+  Future<void> autoPrintThermalReceipt(EntityBill bill, ControllerHomeSettings settings) async {
     try {
       final paperSize = settings.rxThermalPaperSize.value.isNotEmpty
           ? settings.rxThermalPaperSize.value
           : '80mm';
-      final pdfFile = await ServiceBillPdf.generate(bill, settings, paperSize: paperSize);
-      final pdfBytes = await pdfFile.readAsBytes();
+      final pdfBytes = await ServiceBillPdf.generateBytes(bill, settings, paperSize: paperSize);
+
+      final printers = await Printing.listPrinters();
+      if (printers.isEmpty) return;
 
       final printerName = settings.rxDefaultThermalPrinter.value.trim();
+      Printer? target;
       if (printerName.isNotEmpty) {
-        final printers = await Printing.listPrinters();
-        final target = printers.firstWhereOrNull((p) => p.name == printerName);
-        if (target != null) {
-          await Printing.directPrintPdf(
-            printer: target,
-            onLayout: (_) => pdfBytes,
-            name: 'Bill_${bill.billNo}',
-          );
-          return;
-        }
+        target = printers.firstWhereOrNull(
+          (p) => p.name.toLowerCase() == printerName.toLowerCase(),
+        );
       }
-      await Printing.layoutPdf(
+      target ??= printers.firstWhereOrNull((p) => p.isDefault) ?? printers.first;
+
+      await Printing.directPrintPdf(
+        printer: target,
         onLayout: (_) => pdfBytes,
         name: 'Bill_${bill.billNo}',
       );
@@ -1637,8 +1698,13 @@ class ControllerHomePos extends GetxController {
       final batch = _boxBatch.get(batchId);
       if (batch != null) {
         final currentQty = batch.quantity ?? 0;
-        batch.quantity = (currentQty - qty).clamp(0, 99999999);
-        _boxBatch.put(batch);
+        final newQty = (currentQty - qty).clamp(0, 99999999);
+        if (newQty <= 0) {
+          if (batch.id != null) _boxBatch.remove(batch.id!);
+        } else {
+          batch.quantity = newQty;
+          _boxBatch.put(batch);
+        }
         return;
       }
     }
@@ -1652,8 +1718,13 @@ class ControllerHomePos extends GetxController {
       query.close();
       if (batch != null) {
         final currentQty = batch.quantity ?? 0;
-        batch.quantity = (currentQty - qty).clamp(0, 99999999);
-        _boxBatch.put(batch);
+        final newQty = (currentQty - qty).clamp(0, 99999999);
+        if (newQty <= 0) {
+          if (batch.id != null) _boxBatch.remove(batch.id!);
+        } else {
+          batch.quantity = newQty;
+          _boxBatch.put(batch);
+        }
         return;
       }
     }
@@ -1672,12 +1743,14 @@ class ControllerHomePos extends GetxController {
     for (final batch in batches) {
       if (remaining <= 0) break;
       final batchQty = batch.quantity ?? 0;
-      if (batchQty <= 0) continue;
+      if (batchQty <= 0) {
+        if (batch.id != null) _boxBatch.remove(batch.id!);
+        continue;
+      }
 
       if (batchQty <= remaining) {
         remaining -= batchQty;
-        batch.quantity = 0;
-        _boxBatch.put(batch);
+        if (batch.id != null) _boxBatch.remove(batch.id!);
       } else {
         batch.quantity = batchQty - remaining;
         _boxBatch.put(batch);

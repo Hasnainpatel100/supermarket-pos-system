@@ -16,12 +16,22 @@ class DialogItemBatches extends StatelessWidget {
     final ob = Get.find<ServiceObjectBox>();
     final boxBatch = ob.box<EntityItemBatch>();
 
-    // Query batches for this item
-    final batches = boxBatch
+    // Query batches for this item with stock > 0 and clean up 0-stock batches
+    final allBatches = boxBatch
         .query(EntityItemBatch_.itemId.equals(entityItem.id ?? 0))
         .order(EntityItemBatch_.expiryDateUtcMs)
         .build()
         .find();
+    final batches = <EntityItemBatch>[];
+    for (final b in allBatches) {
+      if ((b.quantity ?? 0) <= 0) {
+        if (b.id != null && b.id! > 0) {
+          boxBatch.remove(b.id!);
+        }
+      } else {
+        batches.add(b);
+      }
+    }
 
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -132,7 +142,7 @@ class DialogItemBatches extends StatelessWidget {
                                         ),
                                       if (batch.salePrice != null || batch.mrp != null)
                                         Text(
-                                          'Sale: ₹${(batch.salePrice ?? 0).toStringAsFixed(2)}${batch.mrp != null ? ' • MRP: ₹${batch.mrp!.toStringAsFixed(2)}' : ''}',
+                                          'Sale: ₹${(batch.salePrice ?? 0).toStringAsFixed(2)}${batch.mrp != null ? ' • Cost: ₹${batch.mrp!.toStringAsFixed(2)}' : ''}',
                                           style: TextStyle(
                                             fontSize: 11,
                                             color: colorScheme.primary,

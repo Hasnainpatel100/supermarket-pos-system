@@ -432,10 +432,19 @@ class ActivityItemForm extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // ── Opening Stock & Batches Section (Matching Photo 2) ──
-                  _BatchesSection(controller: controller, theme: theme, isWide: isWide),
+                  // ── Opening Stock & Batches Section (Visible ONLY when has_expiry_date is true) ──
+                  Obx(() {
+                    if (!controller.hasExpiry.value) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 24),
+                        _BatchesSection(controller: controller, theme: theme, isWide: isWide),
+                      ],
+                    );
+                  }),
                 ],
               );
             },
@@ -991,7 +1000,7 @@ class _BatchesSection extends StatelessWidget {
                       Expanded(
                         child: AppNumberField(
                           controller: controller.batchMrpController,
-                          label: 'MRP',
+                          label: 'Cost',
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -1079,7 +1088,7 @@ class _BatchesSection extends StatelessWidget {
                       Expanded(
                         child: AppNumberField(
                           controller: controller.batchMrpController,
-                          label: 'MRP',
+                          label: 'Cost',
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -1194,7 +1203,7 @@ class _BatchesSection extends StatelessWidget {
                     columns: const [
                       DataColumn(label: Text('Batch No.')),
                       DataColumn(label: Text('Qty')),
-                      DataColumn(label: Text('MRP')),
+                      DataColumn(label: Text('Cost')),
                       DataColumn(label: Text('Sales Rate')),
                       DataColumn(label: Text('Mfg. Date')),
                       DataColumn(label: Text('Expiry Date')),

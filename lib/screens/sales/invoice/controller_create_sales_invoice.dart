@@ -31,9 +31,21 @@ class InvoiceItemRow {
     final discount = double.tryParse(discountCtrl.text) ?? 0.0;
     final taxRate = double.tryParse(taxRateCtrl.text) ?? 0.0;
 
+    final isInclusive = (selectedItem?.taxType ?? '').toLowerCase().trim() == 'inclusive';
     final base = (qty * price) - discount;
-    lineTaxAmount = (base * taxRate) / 100.0;
-    lineTotal = base + lineTaxAmount;
+
+    if (taxRate > 0) {
+      if (isInclusive) {
+        lineTaxAmount = (base * taxRate) / (100.0 + taxRate);
+        lineTotal = base;
+      } else {
+        lineTaxAmount = (base * taxRate) / 100.0;
+        lineTotal = base + lineTaxAmount;
+      }
+    } else {
+      lineTaxAmount = 0.0;
+      lineTotal = base;
+    }
     if (lineTotal < 0) lineTotal = 0.0;
   }
 }
@@ -262,6 +274,8 @@ class ControllerCreateSalesInvoice extends GetxController {
     double tax = 0.0;
     double itemDisc = 0.0;
 
+    double grand = 0.0;
+
     for (var row in rxRows) {
       row.calculate();
       final q = int.tryParse(row.qtyCtrl.text) ?? 1;
@@ -271,14 +285,15 @@ class ControllerCreateSalesInvoice extends GetxController {
       sub += (q * p);
       itemDisc += d;
       tax += row.lineTaxAmount;
+      grand += row.lineTotal;
     }
 
     final extraDisc = double.tryParse(extraDiscountCtrl.text) ?? 0.0;
     final addCharges = double.tryParse(additionalChargesCtrl.text) ?? 0.0;
 
     final totalDisc = itemDisc + extraDisc;
-    final taxable = (sub - totalDisc).clamp(0.0, double.infinity);
-    double grand = taxable + tax + addCharges;
+    grand = (grand - extraDisc + addCharges).clamp(0.0, double.infinity);
+    final taxable = (grand - tax).clamp(0.0, double.infinity);
 
     if (rxAutoRoundOff.value) {
       grand = grand.roundToDouble();
@@ -395,8 +410,8 @@ class ControllerCreateSalesInvoice extends GetxController {
       bill.discount = rxTotalDiscount.value;
       bill.tax = rxTaxAmount.value;
       bill.taxableAmount = rxTaxableAmount.value;
-      bill.cgstAmount = rxTaxAmount.value / 2.0;
-      bill.sgstAmount = rxTaxAmount.value / 2.0;
+      bill.cgstAmount = double.parse((rxTaxAmount.value / 2.0).toStringAsFixed(2));
+      bill.sgstAmount = double.parse((rxTaxAmount.value / 2.0).toStringAsFixed(2));
       bill.additionalCharges = double.tryParse(additionalChargesCtrl.text) ?? 0.0;
       bill.grandTotal = rxGrandTotal.value;
       bill.amountReceived = rec;
@@ -528,8 +543,8 @@ class ControllerCreateSalesInvoice extends GetxController {
       subtotal: rxSubtotal.value,
       discount: rxTotalDiscount.value,
       taxAmount: rxTaxAmount.value,
-      cgstAmount: rxTaxAmount.value / 2,
-      sgstAmount: rxTaxAmount.value / 2,
+      cgstAmount: double.parse((rxTaxAmount.value / 2.0).toStringAsFixed(2)),
+      sgstAmount: double.parse((rxTaxAmount.value / 2.0).toStringAsFixed(2)),
       additionalCharges: double.tryParse(additionalChargesCtrl.text),
       grandTotal: rxGrandTotal.value,
       amountReceived: double.tryParse(amountReceivedCtrl.text),

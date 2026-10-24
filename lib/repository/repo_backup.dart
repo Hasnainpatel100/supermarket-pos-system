@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
@@ -77,19 +79,22 @@ class RepoBackup {
       if (Platform.isWindows) {
         final drive = p.rootPrefix(directory); // e.g. "C:\"
         final letter = drive.replaceAll(r'\', '').replaceAll('/', '');
-        final result = await Process.run('cmd', [
-          '/c',
-          'wmic logicaldisk where "DeviceID=\'$letter\'" get FreeSpace /value',
-        ]);
-        final out = result.stdout as String;
-        final match = RegExp(r'FreeSpace=(\d+)').firstMatch(out);
-        if (match != null) {
-          return int.tryParse(match.group(1)!) ?? 0;
+        // Fast PowerShell check with 800ms timeout
+        final proc = await Process.run('powershell', [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          "(Get-PSDrive '${letter[0]}').Free",
+        ]).timeout(const Duration(milliseconds: 800));
+        final out = (proc.stdout as String).trim();
+        final bytes = int.tryParse(out);
+        if (bytes != null && bytes > 0) {
+          return bytes;
         }
       }
       return 10 * 1024 * 1024 * 1024; // fallback: assume 10 GB
     } catch (_) {
-      return 10 * 1024 * 1024 * 1024; // fallback
+      return 10 * 1024 * 1024 * 1024; // fallback: assume 10 GB
     }
   }
 
@@ -176,26 +181,72 @@ class RepoBackup {
     }
   }
 
+  // ── Fast ZIP Info Inspection ───────────────────────────────────────────────
+
+  /// Reads only the `backup_info.json` from the ZIP archive without extracting
+  /// the full database files. Very fast (sub-50ms).
+  Future<String?> readBackupInfoJsonFromZip(String zipPath) async {
+    try {
+      final inputStream = InputFileStream(zipPath);
+      final archive = ZipDecoder().decodeBuffer(inputStream);
+      final infoFile = archive.findFile('backup_info.json');
+      if (infoFile != null) {
+        final content = infoFile.content as List<int>;
+        return utf8.decode(content);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Checks if the ZIP has a valid structure (has backup_info.json and database/ files)
+  /// without full extraction.
+  Future<String?> validateZipArchiveFast(String zipPath) async {
+    try {
+      final inputStream = InputFileStream(zipPath);
+      final archive = ZipDecoder().decodeBuffer(inputStream);
+      final infoFile = archive.findFile('backup_info.json');
+      if (infoFile == null) {
+        return 'Invalid backup: backup_info.json not found in archive.';
+      }
+      final hasDatabase = archive.any((f) => f.name.startsWith('database/') && f.isFile);
+      if (!hasDatabase) {
+        return 'Invalid backup: database files not found in archive.';
+      }
+      return null;
+    } catch (e) {
+      return 'Corrupted or unreadable backup archive: $e';
+    }
+  }
+
   // ── ZIP Extraction ─────────────────────────────────────────────────────────
 
   /// Extracts a ZIP file to [destDir]. Returns the [Directory] it extracted to.
-  ///
-  /// Throws [FormatException] if the ZIP cannot be decoded.
+  /// Uses streaming extraction in a background isolate to keep UI 100% fluid.
   Future<Directory> extractZip(String zipPath, String destDir) async {
-    final bytes = await File(zipPath).readAsBytes();
-    final archive = ZipDecoder().decodeBytes(bytes);
-
     final out = Directory(destDir);
-    await out.create(recursive: true);
+    if (!await out.exists()) {
+      await out.create(recursive: true);
+    }
 
-    for (final file in archive) {
-      final filePath = p.join(destDir, file.name);
-      if (file.isFile) {
-        final outFile = File(filePath);
-        await outFile.create(recursive: true);
-        await outFile.writeAsBytes(file.content as List<int>);
-      } else {
-        await Directory(filePath).create(recursive: true);
+    try {
+      await Isolate.run(() {
+        extractFileToDisk(zipPath, destDir);
+      });
+    } catch (_) {
+      // Fallback manual extract in case of isolate file descriptor restriction
+      final bytes = await File(zipPath).readAsBytes();
+      final archive = ZipDecoder().decodeBytes(bytes);
+      for (final file in archive) {
+        final filePath = p.join(destDir, file.name);
+        if (file.isFile) {
+          final outFile = File(filePath);
+          await outFile.create(recursive: true);
+          await outFile.writeAsBytes(file.content as List<int>);
+        } else {
+          await Directory(filePath).create(recursive: true);
+        }
       }
     }
     return out;

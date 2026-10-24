@@ -84,14 +84,12 @@ class ControllerBackup extends GetxController {
   Future<void> onRestoreBackup({String? zipPath}) async {
     if (rxIsBackingUp.value || rxIsRestoring.value) return;
 
-    rxIsRestoring.value   = true;
-    rxProgress.value      = 0.0;
-    rxProgressLabel.value = 'Preparing restore…';
     rxError.value = '';
 
     await _service.restoreBackup(
       preselectedZipPath: zipPath,
       onProgress: (progress, label) {
+        rxIsRestoring.value   = true;
         rxProgress.value      = progress;
         rxProgressLabel.value = label;
       },

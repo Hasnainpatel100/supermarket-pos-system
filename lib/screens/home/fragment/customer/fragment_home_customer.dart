@@ -21,25 +21,45 @@ class FragmentHomeCustomer extends StatelessWidget {
         ? Get.find<ControllerHomeCustomer>()
         : Get.put(ControllerHomeCustomer());
     final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
-    final canCreate = homeCtrl?.hasAnyPermission([
-      'CREATE_CUSTOMER',
-      'CUSTOMER_CREATE',
-      'ADD_CUSTOMER',
-      'CUSTOMER_ADD',
-      AppPermissions.customerCreate,
-    ]) ?? true;
-    final canUpdate = homeCtrl?.hasAnyPermission([
-      'UPDATE_CUSTOMER',
-      'CUSTOMER_UPDATE',
-      'EDIT_CUSTOMER',
-      'CUSTOMER_EDIT',
-      AppPermissions.customerUpdate,
-    ]) ?? true;
-    final canDelete = homeCtrl?.hasAnyPermission([
-      'DELETE_CUSTOMER',
-      'CUSTOMER_DELETE',
-      AppPermissions.customerDelete,
-    ]) ?? true;
+    final role = (homeCtrl?.rxUser.value?.role ?? '').trim().toUpperCase().replaceAll('_', '');
+    final isAdminOrManager = homeCtrl?.isSuperAdmin == true ||
+        ['SUPERADMIN', 'ADMIN', 'STOREADMIN', 'MANAGER', 'OWNER'].contains(role);
+    final hasNoGranularPerms = homeCtrl?.hasNoPermissions ?? true;
+
+    final canCreate = isAdminOrManager ||
+        hasNoGranularPerms ||
+        (homeCtrl?.hasAnyPermission([
+          'CREATE_CUSTOMER',
+          'CUSTOMER_CREATE',
+          'ADD_CUSTOMER',
+          'CUSTOMER_ADD',
+          'CUSTOMER_MANAGE',
+          'CUSTOMERS_ALL',
+          AppPermissions.customerCreate,
+        ]) ?? true) ||
+        (homeCtrl?.hasPermission(AppPermissions.orderCreate) ?? true);
+
+    final canUpdate = isAdminOrManager ||
+        hasNoGranularPerms ||
+        (homeCtrl?.hasAnyPermission([
+          'UPDATE_CUSTOMER',
+          'CUSTOMER_UPDATE',
+          'EDIT_CUSTOMER',
+          'CUSTOMER_EDIT',
+          'CUSTOMER_MANAGE',
+          'CUSTOMERS_ALL',
+          AppPermissions.customerUpdate,
+        ]) ?? true);
+
+    final canDelete = isAdminOrManager ||
+        hasNoGranularPerms ||
+        (homeCtrl?.hasAnyPermission([
+          'DELETE_CUSTOMER',
+          'CUSTOMER_DELETE',
+          'CUSTOMER_MANAGE',
+          'CUSTOMERS_ALL',
+          AppPermissions.customerDelete,
+        ]) ?? true);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -413,89 +433,148 @@ class FragmentHomeCustomer extends StatelessWidget {
 
                             /// ── Action Column ──
                             DataCell(
-                              PopupMenuButton<String>(
-                                icon: Icon(
-                                  Icons.more_vert_rounded,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                                tooltip: 'actions'.tr,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                onSelected: (value) {
-                                  switch (value) {
-                                    case 'view':
-                                      _showCustomerDetails(context, customer);
-                                      break;
-                                    case 'edit':
-                                      _onEdit(customer, controller);
-                                      break;
-                                    case 'toggle':
-                                      _confirmToggleActive(
-                                        context,
-                                        customer,
-                                        controller,
-                                      );
-                                      break;
-                                  }
-                                },
-                                itemBuilder: (_) => [
-                                  PopupMenuItem(
-                                    value: 'view',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.visibility_outlined,
-                                          size: 20,
-                                          color: Colors.blue.shade600,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text('view_details'.tr),
-                                      ],
-                                    ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: colorScheme.primary.withValues(alpha: 0.2),
                                   ),
-                                  if (canUpdate)
-                                    PopupMenuItem(
-                                    value: 'edit',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.edit_outlined,
-                                          size: 20,
+                                ),
+                                child: PopupMenuButton<String>(
+                                  icon: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.settings_suggest_rounded,
+                                        size: 16,
+                                        color: colorScheme.primary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'actions'.tr,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
                                           color: colorScheme.primary,
                                         ),
-                                        const SizedBox(width: 12),
-                                        Text('edit'.tr),
-                                      ],
-                                    ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_drop_down,
+                                        size: 16,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ],
                                   ),
-                                  if (canDelete)
+                                  tooltip: 'actions'.tr,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  onSelected: (value) {
+                                    switch (value) {
+                                      case 'view':
+                                        _showCustomerDetails(context, customer);
+                                        break;
+                                      case 'edit':
+                                        _onEdit(customer, controller);
+                                        break;
+                                      case 'toggle':
+                                        _confirmToggleActive(
+                                          context,
+                                          customer,
+                                          controller,
+                                        );
+                                        break;
+                                      case 'delete':
+                                        _confirmDeleteCustomer(
+                                          context,
+                                          customer,
+                                          controller,
+                                        );
+                                        break;
+                                    }
+                                  },
+                                  itemBuilder: (_) => [
                                     PopupMenuItem(
-                                    value: 'toggle',
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          isActive
-                                              ? Icons.toggle_off_rounded
-                                              : Icons.toggle_on_rounded,
-                                          size: 22,
-                                          color: isActive
-                                              ? Colors.orange.shade400
-                                              : Colors.green.shade500,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          isActive ? 'deactivate'.tr : 'activate'.tr,
-                                          style: TextStyle(
-                                            color: isActive
-                                                ? Colors.orange.shade500
-                                                : Colors.green.shade600,
+                                      value: 'view',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.visibility_outlined,
+                                            size: 20,
+                                            color: Colors.blue.shade600,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 12),
+                                          Text('view_details'.tr),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    if (canUpdate)
+                                      PopupMenuItem(
+                                        value: 'edit',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 20,
+                                              color: colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text('edit'.tr),
+                                          ],
+                                        ),
+                                      ),
+                                    if (canDelete)
+                                      PopupMenuItem(
+                                        value: 'toggle',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              isActive
+                                                  ? Icons.toggle_off_rounded
+                                                  : Icons.toggle_on_rounded,
+                                              size: 22,
+                                              color: isActive
+                                                  ? Colors.orange.shade400
+                                                  : Colors.green.shade500,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              isActive ? 'deactivate'.tr : 'activate'.tr,
+                                              style: TextStyle(
+                                                color: isActive
+                                                    ? Colors.orange.shade600
+                                                    : Colors.green.shade600,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (canDelete)
+                                      PopupMenuItem(
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.delete_outline_rounded,
+                                              size: 20,
+                                              color: Colors.red.shade600,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              'delete'.tr,
+                                              style: TextStyle(
+                                                color: Colors.red.shade700,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -604,6 +683,48 @@ class FragmentHomeCustomer extends StatelessWidget {
           );
         },
         label: Text(isCurrentlyActive ? 'deactivate'.tr : 'activate'.tr),
+      ),
+      cancel: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+        onPressed: () => Get.back(),
+        child: Text('cancel'.tr),
+      ),
+    );
+  }
+
+  void _confirmDeleteCustomer(
+      BuildContext context,
+      EntityCustomer customer,
+      ControllerHomeCustomer controller,
+      ) {
+    Get.defaultDialog(
+      title: 'delete_customer'.tr,
+      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red),
+      middleText: 'Are you sure you want to permanently delete customer "${customer.name ?? ""}"?',
+      confirm: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red.shade600,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        ),
+        icon: const Icon(
+          Icons.delete_forever_rounded,
+          size: 20,
+        ),
+        onPressed: () {
+          controller.deleteCustomer(customer);
+          Get.back();
+          SnackbarUtil.showSuccess('Customer "${customer.name ?? ""}" deleted.');
+        },
+        label: Text('delete'.tr),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(

@@ -254,11 +254,14 @@ class ServiceBackup {
       // 1. Pick ZIP ───────────────────────────────────────────────────────────
       String? zipPath = preselectedZipPath;
       if (zipPath == null || zipPath.isEmpty) {
+        final defaultDir = _repo.getSavedBackupLocation();
+        final initialDir = (defaultDir != null && Directory(defaultDir).existsSync()) ? defaultDir : null;
         final result = await FilePicker.platform.pickFiles(
           dialogTitle: 'Select Backup ZIP to Restore',
           type: FileType.custom,
           allowedExtensions: ['zip'],
           allowMultiple: false,
+          initialDirectory: initialDir,
         );
         if (result == null || result.files.isEmpty) {
           onError('Restore cancelled: no file selected.');
@@ -278,33 +281,58 @@ class ServiceBackup {
         return;
       }
 
-      onProgress(0.05, 'Extracting backup…');
+      onProgress(0.05, 'Inspecting backup…');
 
-      // 3. Extract to temp ────────────────────────────────────────────────────
-      tempDir = await _repo.createTempExtractDir();
-      await _repo.extractZip(zipPath, tempDir);
-
-      onProgress(0.35, 'Validating backup…');
-
-      // 4. Validate content ───────────────────────────────────────────────────
-      final validationError = await _repo.validateExtractedBackup(tempDir);
-      if (validationError != null) {
-        await _repo.deleteTempDir(tempDir);
-        onError(validationError);
-        return;
+      // 3. Fast metadata check directly from ZIP ──────────────────────────────
+      BackupInfo? backupInfo;
+      final fastInfoJson = await _repo.readBackupInfoJsonFromZip(zipPath);
+      if (fastInfoJson != null) {
+        try {
+          backupInfo = BackupInfo.fromJsonString(fastInfoJson);
+        } catch (_) {}
       }
 
-      // 5. Parse backup_info ─────────────────────────────────────────────────
-      final infoJson =
-          await File(p.join(tempDir, 'backup_info.json')).readAsString();
-      final backupInfo = BackupInfo.fromJsonString(infoJson);
+      if (backupInfo != null) {
+        // Fast path: Ask confirmation immediately before doing heavy disk extraction!
+        final confirmed = await onValidated(backupInfo);
+        if (!confirmed) {
+          onError('Restore cancelled.');
+          return;
+        }
 
-      // 6. Confirmation dialog (caller responsibility) ────────────────────────
-      final confirmed = await onValidated(backupInfo);
-      if (!confirmed) {
-        await _repo.deleteTempDir(tempDir);
-        onError('Restore cancelled.');
-        return;
+        onProgress(0.15, 'Extracting backup archive…');
+        tempDir = await _repo.createTempExtractDir();
+        await _repo.extractZip(zipPath, tempDir);
+
+        final validationError = await _repo.validateExtractedBackup(tempDir);
+        if (validationError != null) {
+          await _repo.deleteTempDir(tempDir);
+          onError(validationError);
+          return;
+        }
+      } else {
+        // Fallback path: Extract first if fast inspection failed
+        onProgress(0.1, 'Extracting backup…');
+        tempDir = await _repo.createTempExtractDir();
+        await _repo.extractZip(zipPath, tempDir);
+
+        onProgress(0.35, 'Validating backup…');
+        final validationError = await _repo.validateExtractedBackup(tempDir);
+        if (validationError != null) {
+          await _repo.deleteTempDir(tempDir);
+          onError(validationError);
+          return;
+        }
+
+        final infoJson = await File(p.join(tempDir, 'backup_info.json')).readAsString();
+        backupInfo = BackupInfo.fromJsonString(infoJson);
+
+        final confirmed = await onValidated(backupInfo);
+        if (!confirmed) {
+          await _repo.deleteTempDir(tempDir);
+          onError('Restore cancelled.');
+          return;
+        }
       }
 
       onProgress(0.5, 'Closing database…');

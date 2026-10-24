@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -6,6 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:get/get.dart';
 import '../model/entity_bill.dart';
+import '../model/entity_bill_item.dart';
 import '../screens/home/fragment/setting/controller_home_settings.dart';
 import 'service_currency.dart';
 
@@ -45,7 +47,11 @@ class ServiceBillPdf {
     final String currencySymbol = Get.isRegistered<ServiceCurrency>()
         ? Get.find<ServiceCurrency>().rxCurrency.value
         : '₹';
-    final currencyFormat = NumberFormat.decimalPattern();
+    final currencyFormat = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '',
+      decimalDigits: 2,
+    );
     final dateFormat = DateFormat('dd/MM/yyyy, hh:mm a');
     final date = bill.createdAtUtcMs != null
         ? DateTime.fromMillisecondsSinceEpoch(
@@ -54,35 +60,12 @@ class ServiceBillPdf {
           ).toLocal()
         : DateTime.now();
 
-    final chosenSize = (paperSize ?? settings.rxPaperSize.value).toLowerCase();
+    final defaultPaperSize = settings.rxThermalPaperSize.value.isNotEmpty
+        ? settings.rxThermalPaperSize.value
+        : '80mm';
+    final chosenSize = (paperSize ?? defaultPaperSize).toLowerCase();
 
-    if (chosenSize == '80mm') {
-      _buildThermalReceipt(
-        pdf,
-        bill,
-        settings,
-        regularFont,
-        boldFont,
-        currencySymbol,
-        currencyFormat,
-        dateFormat,
-        date,
-        is58mm: false,
-      );
-    } else if (chosenSize == '58mm' || chosenSize == '56mm' || chosenSize == '57mm') {
-      _buildThermalReceipt(
-        pdf,
-        bill,
-        settings,
-        regularFont,
-        boldFont,
-        currencySymbol,
-        currencyFormat,
-        dateFormat,
-        date,
-        is58mm: true,
-      );
-    } else {
+    if (chosenSize == 'a4') {
       _buildA4Invoice(
         pdf,
         bill,
@@ -94,9 +77,32 @@ class ServiceBillPdf {
         dateFormat,
         date,
       );
+    } else {
+      _buildThermalReceipt(
+        pdf,
+        bill,
+        settings,
+        regularFont,
+        boldFont,
+        currencySymbol,
+        currencyFormat,
+        dateFormat,
+        date,
+        paperSize: chosenSize,
+      );
     }
 
     return pdf;
+  }
+
+  /// Build and return the raw PDF bytes without writing to disk.
+  static Future<Uint8List> generateBytes(
+    EntityBill bill,
+    ControllerHomeSettings settings, {
+    String? paperSize,
+  }) async {
+    final pdf = await buildPdfDocument(bill, settings, paperSize: paperSize);
+    return await pdf.save();
   }
 
   /// Generate a PDF invoice and return the saved [File].
@@ -105,17 +111,20 @@ class ServiceBillPdf {
     ControllerHomeSettings settings, {
     String? paperSize,
   }) async {
-    final pdf = await buildPdfDocument(bill, settings, paperSize: paperSize);
+    final bytes = await generateBytes(bill, settings, paperSize: paperSize);
 
     final dir = await getApplicationDocumentsDirectory();
     final billDir = Directory('${dir.path}/SuperMarketBills');
     if (!await billDir.exists()) {
       await billDir.create(recursive: true);
     }
-    final path =
-        '${billDir.path}/Bill_${bill.billNo ?? DateTime.now().millisecondsSinceEpoch}.pdf';
+    final rawNo = bill.billNo?.trim();
+    final safeNo = (rawNo != null && rawNo.isNotEmpty)
+        ? rawNo.replaceAll(RegExp(r'[\\/:*?"<>|\s]'), '_')
+        : '${DateTime.now().millisecondsSinceEpoch}';
+    final path = '${billDir.path}/Bill_$safeNo.pdf';
     final file = File(path);
-    await file.writeAsBytes(await pdf.save());
+    await file.writeAsBytes(bytes, flush: true);
     return file;
   }
 
@@ -133,34 +142,53 @@ class ServiceBillPdf {
     NumberFormat currencyFormat,
     DateFormat dateFormat,
     DateTime date, {
-    required bool is58mm,
+    String paperSize = '80mm',
+    bool? is58mm,
   }) {
     final storeName = settings.rxStoreName.value;
     final storeAddress = settings.rxStoreAddress.value;
-    final storePhone = settings.rxStorePhone.value;
     final storeGstin = settings.rxStoreGstin.value;
 
-    // Standard 80mm thermal printers have a 72mm (576 dots) physical printhead.
-    // Using 70mm page width with 2mm margins guarantees zero text clipping on the right.
-    // Standard 58mm thermal printers have a 48mm (384 dots) physical printhead.
-    // Using 48mm page width with 1.5mm margins guarantees zero text clipping.
-    final pageFormat = is58mm
+    final sizeKey = paperSize.toLowerCase();
+    final bool is56mm = sizeKey == '56mm' || sizeKey.contains('56');
+    final bool is58mmEffective = !is56mm && (sizeKey == '58mm' || sizeKey == '57mm' || sizeKey.contains('58') || (is58mm ?? false));
+    final bool isCompact = is56mm || is58mmEffective;
+    final bool showTaxInItemList = settings.rxShowTaxInItemList.value;
+    final bool showGstBreakup = settings.rxShowGstBreakup.value;
+    final bool showBillBarcode = settings.rxShowBillBarcode.value;
+    final String billTerms = settings.rxBillTerms.value.trim();
+    final String billFooterTagline = settings.rxBillFooterTagline.value.trim();
+
+    // Precise pageFormat for each thermal roll width:
+    // 56mm paper roll: 56.0mm physical width (~158.7pt), with 1.5mm margins => 53mm (~150.2pt) printable width.
+    // 58mm paper roll: 58.0mm physical width (~164.4pt), with 2.0mm margins => 54mm (~153.1pt) printable width.
+    // 80mm paper roll: 72.0mm standard printhead width (~204.1pt), with 2.0mm margins => 68mm (~192.8pt) printable width.
+    final pageFormat = is56mm
         ? const PdfPageFormat(
-            48 * PdfPageFormat.mm,
+            56.0 * PdfPageFormat.mm,
             double.infinity,
             marginLeft: 1.5 * PdfPageFormat.mm,
             marginRight: 1.5 * PdfPageFormat.mm,
-            marginTop: 2 * PdfPageFormat.mm,
-            marginBottom: 4 * PdfPageFormat.mm,
+            marginTop: 2.0 * PdfPageFormat.mm,
+            marginBottom: 4.0 * PdfPageFormat.mm,
           )
-        : const PdfPageFormat(
-            70 * PdfPageFormat.mm,
-            double.infinity,
-            marginLeft: 2 * PdfPageFormat.mm,
-            marginRight: 2 * PdfPageFormat.mm,
-            marginTop: 2.5 * PdfPageFormat.mm,
-            marginBottom: 4.5 * PdfPageFormat.mm,
-          );
+        : (is58mmEffective
+            ? const PdfPageFormat(
+                58.0 * PdfPageFormat.mm,
+                double.infinity,
+                marginLeft: 2.0 * PdfPageFormat.mm,
+                marginRight: 2.0 * PdfPageFormat.mm,
+                marginTop: 2.0 * PdfPageFormat.mm,
+                marginBottom: 4.0 * PdfPageFormat.mm,
+              )
+            : const PdfPageFormat(
+                72.0 * PdfPageFormat.mm,
+                double.infinity,
+                marginLeft: 2.0 * PdfPageFormat.mm,
+                marginRight: 2.0 * PdfPageFormat.mm,
+                marginTop: 2.5 * PdfPageFormat.mm,
+                marginBottom: 4.5 * PdfPageFormat.mm,
+              ));
 
     final totalQty = bill.items.fold<int>(
       0,
@@ -195,7 +223,7 @@ class ServiceBillPdf {
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold,
-                  fontSize: is58mm ? 11.5 : 13.5,
+                  fontSize: is56mm ? 10.5 : (is58mmEffective ? 11.5 : 13.5),
                   color: PdfColors.black,
                 ),
               ),
@@ -213,7 +241,7 @@ class ServiceBillPdf {
                 child: pw.Text(
                   'RETAIL TAX INVOICE',
                   style: pw.TextStyle(
-                    fontSize: is58mm ? 6.5 : 7.5,
+                    fontSize: is56mm ? 6.2 : (is58mmEffective ? 6.5 : 7.5),
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
                   ),
@@ -228,25 +256,13 @@ class ServiceBillPdf {
                   storeAddress,
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
-                    fontSize: is58mm ? 7 : 8,
+                    fontSize: is56mm ? 6.5 : (is58mmEffective ? 7.0 : 8.0),
                     color: PdfColors.black,
                   ),
                 ),
               ),
             ],
-            if (storePhone.isNotEmpty) ...[
-              pw.SizedBox(height: 1),
-              pw.Center(
-                child: pw.Text(
-                  'Tel: $storePhone',
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                    fontSize: is58mm ? 7 : 8,
-                    color: PdfColors.black,
-                  ),
-                ),
-              ),
-            ],
+
             if (storeGstin.isNotEmpty) ...[
               pw.SizedBox(height: 1),
               pw.Center(
@@ -254,7 +270,7 @@ class ServiceBillPdf {
                   'GSTIN: $storeGstin',
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(
-                    fontSize: is58mm ? 7 : 8,
+                    fontSize: is56mm ? 6.5 : (is58mmEffective ? 7.0 : 8.0),
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
                   ),
@@ -264,37 +280,33 @@ class ServiceBillPdf {
 
             _doubleDivider(),
 
-            // ── Bill Metadata (Structured Two-Column) ──
+            // ── Bill Metadata (Structured to display Date & Time in front of Customer Name) ──
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.RichText(
-                  text: pw.TextSpan(
-                    children: [
-                      pw.TextSpan(
-                        text: 'Bill: ',
-                        style: pw.TextStyle(
-                          fontSize: is58mm ? 7.5 : 8.5,
-                          color: PdfColors.black,
+                pw.Expanded(
+                  child: pw.RichText(
+                    text: pw.TextSpan(
+                      children: [
+                        pw.TextSpan(
+                          text: 'Bill: ',
+                          style: pw.TextStyle(
+                            fontSize: is56mm ? 7.2 : (is58mmEffective ? 7.5 : 8.5),
+                            color: PdfColors.black,
+                          ),
                         ),
-                      ),
-                      pw.TextSpan(
-                        text: '#${bill.billNo ?? "N/A"}',
-                        style: pw.TextStyle(
-                          fontSize: is58mm ? 8 : 9,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.black,
+                        pw.TextSpan(
+                          text: '#${bill.billNo ?? "N/A"}',
+                          style: pw.TextStyle(
+                            fontSize: is56mm ? 7.5 : (is58mmEffective ? 8.0 : 9.0),
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.black,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                pw.Text(
-                  dateFormat.format(date),
-                  style: pw.TextStyle(
-                    fontSize: is58mm ? 7 : 8,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.black,
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: pw.TextOverflow.clip,
                   ),
                 ),
               ],
@@ -302,69 +314,28 @@ class ServiceBillPdf {
             pw.SizedBox(height: 1.5),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
                 pw.Expanded(
                   child: pw.Text(
                     'Cust: ${bill.customerName?.isNotEmpty == true ? bill.customerName! : "Walk-in"}',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
+                      fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
                       color: PdfColors.black,
                     ),
                     maxLines: 1,
                     overflow: pw.TextOverflow.clip,
                   ),
                 ),
-                if (bill.customerPhone != null && bill.customerPhone!.isNotEmpty)
-                  pw.Text(
-                    'Mob: ${bill.customerPhone!}',
-                    style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.black,
-                    ),
-                  ),
-              ],
-            ),
-
-            _divider(dashed: true),
-
-            // ── Items Table Header ──
-            pw.Row(
-              children: [
-                pw.Expanded(
-                  flex: is58mm ? 4 : 5,
-                  child: pw.Text(
-                    'ITEM',
-                    style: pw.TextStyle(
-                      fontSize: is58mm ? 7.5 : 8.5,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.black,
-                    ),
-                  ),
-                ),
-                pw.Expanded(
-                  flex: 3,
-                  child: pw.Text(
-                    'QTY x RATE',
-                    textAlign: pw.TextAlign.right,
-                    style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.black,
-                    ),
-                  ),
-                ),
                 pw.SizedBox(width: 4),
-                pw.Expanded(
-                  flex: 3,
-                  child: pw.Text(
-                    'AMOUNT',
-                    textAlign: pw.TextAlign.right,
-                    style: pw.TextStyle(
-                      fontSize: is58mm ? 7.5 : 8.5,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.black,
-                    ),
+                pw.Text(
+                  isCompact
+                      ? DateFormat('dd/MM/yy, hh:mm a').format(date)
+                      : dateFormat.format(date),
+                  style: pw.TextStyle(
+                    fontSize: is56mm ? 6.5 : (is58mmEffective ? 7.0 : 8.0),
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
                   ),
                 ),
               ],
@@ -372,144 +343,431 @@ class ServiceBillPdf {
 
             _divider(dashed: true),
 
-            // ── Item Rows ──
-            ...bill.items.map((item) {
-              final rateStr = '$currencySymbol${currencyFormat.format(item.price ?? 0)}';
-              final amtStr = '$currencySymbol${currencyFormat.format(item.total ?? 0)}';
-              final hasBatch = item.batchNo != null && item.batchNo!.isNotEmpty;
-              final hasDisc = (item.discount ?? 0) > 0;
-              final hasMrpSavings =
-                  item.mrp != null && item.price != null && (item.mrp! > item.price!);
-
-              return pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Row(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Expanded(
-                          flex: is58mm ? 4 : 5,
-                          child: pw.Text(
-                            item.itemName ?? '-',
-                            style: pw.TextStyle(
-                              fontSize: is58mm ? 7.5 : 8.5,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.black,
-                            ),
-                          ),
-                        ),
-                        pw.Expanded(
-                          flex: 3,
-                          child: pw.Text(
-                            '${item.qty ?? 0} x $rateStr',
-                            textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(
-                              fontSize: is58mm ? 7 : 8,
-                              color: PdfColors.black,
-                            ),
-                          ),
-                        ),
-                        pw.SizedBox(width: 4),
-                        pw.Expanded(
-                          flex: 3,
-                          child: pw.Text(
-                            amtStr,
-                            textAlign: pw.TextAlign.right,
-                            style: pw.TextStyle(
-                              fontSize: is58mm ? 7.5 : 8.5,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.black,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Item Sub-info (Batch, MRP savings, discount)
-                    if (hasBatch || hasDisc || hasMrpSavings)
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.only(left: 3, top: 0.5),
-                        child: pw.Row(
-                          children: [
-                            if (hasBatch)
-                              pw.Text(
-                                '[B: ${item.batchNo}] ',
-                                style: pw.TextStyle(
-                                  fontSize: is58mm ? 6.5 : 7.5,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: PdfColors.black,
-                                ),
-                              ),
-                            if (hasMrpSavings)
-                              pw.Text(
-                                'MRP: $currencySymbol${currencyFormat.format(item.mrp)} ',
-                                style: pw.TextStyle(
-                                  fontSize: is58mm ? 6.5 : 7.5,
-                                  color: PdfColors.black,
-                                ),
-                              ),
-                            if (hasDisc)
-                              pw.Text(
-                                'Disc: -$currencySymbol${currencyFormat.format(item.discount!)}',
-                                style: pw.TextStyle(
-                                  fontSize: is58mm ? 6.5 : 7.5,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: PdfColors.black,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            }),
-
-            _divider(dashed: true),
-
-            // ── Summary Totals ──
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text(
-                  'Items: ${bill.items.length}   |   Qty: $totalQty',
-                  style: pw.TextStyle(
-                    fontSize: is58mm ? 7 : 8,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.black,
-                  ),
-                ),
-                pw.Text(
-                  'Subtotal: $currencySymbol${currencyFormat.format(bill.totalAmount ?? 0)}',
-                  style: pw.TextStyle(
-                    fontSize: is58mm ? 7.5 : 8.5,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.black,
-                  ),
-                ),
-              ],
-            ),
-            if ((bill.tax ?? 0) > 0) ...[
-              pw.SizedBox(height: 1),
+            if (isCompact) ...[
+              // ── 56mm / 58mm Compact Table Header ──
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Tax / GST:',
-                      style: pw.TextStyle(
-                        fontSize: is58mm ? 7 : 8,
-                        color: PdfColors.black,
-                      )),
                   pw.Text(
-                    '+ $currencySymbol${currencyFormat.format(bill.tax ?? 0)}',
+                    'ITEM / DETAILS',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
+                      fontSize: is56mm ? 7.0 : 7.5,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
+                    ),
+                  ),
+                  pw.Text(
+                    'AMOUNT',
+                    style: pw.TextStyle(
+                      fontSize: is56mm ? 7.0 : 7.5,
+                      fontWeight: pw.FontWeight.bold,
                       color: PdfColors.black,
                     ),
                   ),
                 ],
               ),
+              _divider(dashed: true),
+
+              // ── 56mm / 58mm Clean Compact Item Rows (Line 1: Name, Line 2: Qty x Rate + Tax & Amt) ──
+              ...bill.items.map((item) {
+                final rateStr = '$currencySymbol${currencyFormat.format(item.price ?? 0)}';
+                final amtStr = '$currencySymbol${currencyFormat.format(item.total ?? 0)}';
+                final itemName = item.itemName ?? '-';
+                // Prevent duplicate batch display if already embedded in itemName
+                final alreadyHasBatch = itemName.contains('[B:') || itemName.contains('(Batch:');
+                final showBatchTag = !alreadyHasBatch && item.batchNo != null && item.batchNo!.trim().isNotEmpty;
+                // Only show tax tag in item list if enabled in settings (standard restaurant bills omit it)
+                final hasTaxTag = showTaxInItemList && (item.taxRate ?? 0) > 0;
+                final hasDisc = (item.discount ?? 0) > 0;
+                final hasMrpSavings =
+                    item.mrp != null && item.price != null && (item.mrp! > item.price!);
+
+                return pw.Padding(
+                  padding: pw.EdgeInsets.symmetric(vertical: is56mm ? 1.5 : 2.0),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      // Item Name (bold, full-width)
+                      pw.Text(
+                        itemName,
+                        style: pw.TextStyle(
+                          fontSize: is56mm ? 7.5 : 8.0,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.black,
+                        ),
+                        maxLines: 2,
+                      ),
+                      pw.SizedBox(height: 1),
+                      // Line 2: Qty x Rate [B: batch] [GST %] (Left) and Amount (Right)
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Expanded(
+                            child: pw.Text(
+                              '${item.qty ?? 0} x $rateStr'
+                              '${showBatchTag ? " [B: ${item.batchNo}]" : ""}'
+                              '${hasTaxTag ? " [GST ${(item.taxRate! % 1 == 0 ? item.taxRate!.toInt() : item.taxRate)}%]" : ""}',
+                              style: pw.TextStyle(
+                                fontSize: is56mm ? 6.5 : 7.0,
+                                color: PdfColors.black,
+                              ),
+                            ),
+                          ),
+                          pw.Text(
+                            amtStr,
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 7.5 : 8.0,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (hasDisc || hasMrpSavings)
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.only(top: 0.5),
+                          child: pw.Text(
+                            '${hasMrpSavings ? "MRP: $currencySymbol${currencyFormat.format(item.mrp)} " : ""}'
+                            '${hasDisc ? "Disc: -$currencySymbol${currencyFormat.format(item.discount!)}" : ""}',
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 6.0 : 6.5,
+                              color: PdfColors.black,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }),
+            ] else ...[
+              // ── 80mm Standard Items Table Header ──
+              pw.Row(
+                children: [
+                  pw.Expanded(
+                    flex: 5,
+                    child: pw.Text(
+                      'ITEM',
+                      style: pw.TextStyle(
+                        fontSize: 8.5,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.black,
+                      ),
+                    ),
+                  ),
+                  pw.Expanded(
+                    flex: 3,
+                    child: pw.Text(
+                      'QTY x RATE',
+                      textAlign: pw.TextAlign.right,
+                      style: pw.TextStyle(
+                        fontSize: 8,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.black,
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(width: 4),
+                  pw.Expanded(
+                    flex: 3,
+                    child: pw.Text(
+                      'AMOUNT',
+                      textAlign: pw.TextAlign.right,
+                      style: pw.TextStyle(
+                        fontSize: 8.5,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              _divider(dashed: true),
+
+              // ── 80mm Item Rows ──
+              ...bill.items.map((item) {
+                final rateStr = '$currencySymbol${currencyFormat.format(item.price ?? 0)}';
+                final amtStr = '$currencySymbol${currencyFormat.format(item.total ?? 0)}';
+                final itemName = item.itemName ?? '-';
+                final alreadyHasBatch = itemName.contains('[B:') || itemName.contains('(Batch:');
+                final showBatchTag = !alreadyHasBatch && item.batchNo != null && item.batchNo!.trim().isNotEmpty;
+                final hasTaxTag = showTaxInItemList && (item.taxRate ?? 0) > 0;
+                final hasDisc = (item.discount ?? 0) > 0;
+                final hasMrpSavings =
+                    item.mrp != null && item.price != null && (item.mrp! > item.price!);
+
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Row(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Expanded(
+                            flex: 5,
+                            child: pw.Text(
+                              itemName,
+                              style: pw.TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.black,
+                              ),
+                            ),
+                          ),
+                          pw.Expanded(
+                            flex: 3,
+                            child: pw.Text(
+                              '${item.qty ?? 0} x $rateStr',
+                              textAlign: pw.TextAlign.right,
+                              style: const pw.TextStyle(
+                                fontSize: 8,
+                                color: PdfColors.black,
+                              ),
+                            ),
+                          ),
+                          pw.SizedBox(width: 4),
+                          pw.Expanded(
+                            flex: 3,
+                            child: pw.Text(
+                              amtStr,
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.black,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (showBatchTag || hasTaxTag || hasDisc || hasMrpSavings)
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.only(left: 3, top: 0.5),
+                          child: pw.Row(
+                            children: [
+                              if (showBatchTag)
+                                pw.Text(
+                                  '[B: ${item.batchNo}] ',
+                                  style: pw.TextStyle(
+                                    fontSize: 7.5,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: PdfColors.black,
+                                  ),
+                                ),
+                              if (hasTaxTag)
+                                pw.Text(
+                                  '[GST ${(item.taxRate! % 1 == 0 ? item.taxRate!.toInt() : item.taxRate)}%] ',
+                                  style: pw.TextStyle(
+                                    fontSize: 7.5,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: PdfColors.black,
+                                  ),
+                                ),
+                              if (hasMrpSavings)
+                                pw.Text(
+                                  'MRP: $currencySymbol${currencyFormat.format(item.mrp)} ',
+                                  style: const pw.TextStyle(
+                                    fontSize: 7.5,
+                                    color: PdfColors.black,
+                                  ),
+                                ),
+                              if (hasDisc)
+                                pw.Text(
+                                  'Disc: -$currencySymbol${currencyFormat.format(item.discount!)}',
+                                  style: pw.TextStyle(
+                                    fontSize: 7.5,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: PdfColors.black,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }),
             ],
+
+            _divider(dashed: true),
+
+            // ── Items & Qty Summary Row ──
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'Total Items: ${bill.items.length}',
+                  style: pw.TextStyle(
+                    fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                    color: PdfColors.black,
+                  ),
+                ),
+                pw.Text(
+                  'Total Qty: $totalQty',
+                  style: pw.TextStyle(
+                    fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 1.5),
+
+            // ── Subtotal Row (Separated onto its own line to prevent collision on 56mm) ──
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'Subtotal:',
+                  style: pw.TextStyle(
+                    fontSize: is56mm ? 7.5 : (is58mmEffective ? 8.0 : 8.5),
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
+                ),
+                pw.Text(
+                  '$currencySymbol${currencyFormat.format(bill.totalAmount ?? 0)}',
+                  style: pw.TextStyle(
+                    fontSize: is56mm ? 7.5 : (is58mmEffective ? 8.0 : 8.5),
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
+                ),
+              ],
+            ),
+
+            // ── Standard Restaurant Tax Breakdown (CGST & SGST) ──
+            () {
+              final gstRows = _calculateGstBreakup(bill);
+              final double totalCgst = double.parse(
+                gstRows.fold<double>(0, (sum, r) => sum + r.cgst).toStringAsFixed(2),
+              );
+              final double totalSgst = double.parse(
+                gstRows.fold<double>(0, (sum, r) => sum + r.sgst).toStringAsFixed(2),
+              );
+              final double totalTax = totalCgst + totalSgst;
+
+              if (totalTax > 0) {
+                if (gstRows.length == 1 && gstRows.first.rate > 0) {
+                  final halfRate = gstRows.first.rate / 2;
+                  final rateStr = halfRate % 1 == 0 ? '${halfRate.toInt()}%' : '$halfRate%';
+                  return pw.Column(
+                    children: [
+                      pw.SizedBox(height: 1),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'CGST ($rateStr):',
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                              color: PdfColors.black,
+                            ),
+                          ),
+                          pw.Text(
+                            '$currencySymbol${currencyFormat.format(totalCgst)}',
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                              color: PdfColors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      pw.SizedBox(height: 0.5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'SGST ($rateStr):',
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                              color: PdfColors.black,
+                            ),
+                          ),
+                          pw.Text(
+                            '$currencySymbol${currencyFormat.format(totalSgst)}',
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                              color: PdfColors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                } else {
+                  return pw.Column(
+                    children: [
+                      pw.SizedBox(height: 1),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'CGST:',
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                              color: PdfColors.black,
+                            ),
+                          ),
+                          pw.Text(
+                            '$currencySymbol${currencyFormat.format(totalCgst)}',
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                              color: PdfColors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      pw.SizedBox(height: 0.5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'SGST:',
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                              color: PdfColors.black,
+                            ),
+                          ),
+                          pw.Text(
+                            '$currencySymbol${currencyFormat.format(totalSgst)}',
+                            style: pw.TextStyle(
+                              fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                              color: PdfColors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                }
+              } else {
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.only(top: 1),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'GST / Tax (0%):',
+                        style: pw.TextStyle(
+                          fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                          color: PdfColors.black,
+                        ),
+                      ),
+                      pw.Text(
+                        '$currencySymbol 0.00',
+                        style: pw.TextStyle(
+                          fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
+                          color: PdfColors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            }(),
+
             if ((bill.discount ?? 0) > 0) ...[
               pw.SizedBox(height: 1),
               pw.Row(
@@ -517,14 +775,14 @@ class ServiceBillPdf {
                 children: [
                   pw.Text('Bill Discount:',
                       style: pw.TextStyle(
-                        fontSize: is58mm ? 7 : 8,
+                        fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
                         fontWeight: pw.FontWeight.bold,
                         color: PdfColors.black,
                       )),
                   pw.Text(
                     '- $currencySymbol${currencyFormat.format(bill.discount ?? 0)}',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
+                      fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.black,
                     ),
@@ -539,13 +797,13 @@ class ServiceBillPdf {
                 children: [
                   pw.Text('Round Off:',
                       style: pw.TextStyle(
-                        fontSize: is58mm ? 7 : 8,
+                        fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
                         color: PdfColors.black,
                       )),
                   pw.Text(
                     '${bill.roundOff! >= 0 ? '+' : ''}$currencySymbol${currencyFormat.format(bill.roundOff!)}',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
+                      fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.0 : 8.0),
                       color: PdfColors.black,
                     ),
                   ),
@@ -566,7 +824,7 @@ class ServiceBillPdf {
                   child: pw.Text(
                     '*** YOU SAVED: $currencySymbol${currencyFormat.format(totalSavings)} ***',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7.5 : 8.5,
+                      fontSize: is56mm ? 6.8 : (is58mmEffective ? 7.5 : 8.5),
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.black,
                     ),
@@ -575,16 +833,16 @@ class ServiceBillPdf {
               ),
             ],
 
-            pw.SizedBox(height: 3),
+            pw.SizedBox(height: 2.5),
 
             // ── Grand Total Highlight Box ──
             pw.Container(
               padding: pw.EdgeInsets.symmetric(
-                vertical: is58mm ? 3.5 : 5,
-                horizontal: is58mm ? 4 : 6,
+                vertical: is56mm ? 3.0 : (is58mmEffective ? 3.5 : 5.0),
+                horizontal: is56mm ? 3.0 : (is58mmEffective ? 4.0 : 6.0),
               ),
               decoration: pw.BoxDecoration(
-                border: pw.Border.all(color: PdfColors.black, width: 1.4),
+                border: pw.Border.all(color: PdfColors.black, width: 1.2),
                 borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
               ),
               child: pw.Row(
@@ -594,7 +852,7 @@ class ServiceBillPdf {
                     'NET PAYABLE:',
                     style: pw.TextStyle(
                       fontWeight: pw.FontWeight.bold,
-                      fontSize: is58mm ? 10 : 12,
+                      fontSize: is56mm ? 9.0 : (is58mmEffective ? 10.0 : 12.0),
                       color: PdfColors.black,
                     ),
                   ),
@@ -602,7 +860,7 @@ class ServiceBillPdf {
                     '$currencySymbol${currencyFormat.format(bill.grandTotal ?? 0)}',
                     style: pw.TextStyle(
                       fontWeight: pw.FontWeight.bold,
-                      fontSize: is58mm ? 11 : 13.5,
+                      fontSize: is56mm ? 10.0 : (is58mmEffective ? 11.0 : 13.5),
                       color: PdfColors.black,
                     ),
                   ),
@@ -610,41 +868,111 @@ class ServiceBillPdf {
               ),
             ),
 
-            pw.SizedBox(height: 3),
+            // ── GST Breakup Details Table (Configurable via Settings) ──
+            if (showGstBreakup) ...[
+              pw.SizedBox(height: 2),
+              pw.Center(
+                child: pw.Text(
+                  isCompact ? '<--- GST Breakup (INR) --->' : '<------- GST Breakup Details -------> (Amount INR)',
+                  style: pw.TextStyle(
+                    fontSize: is56mm ? 6.2 : (is58mmEffective ? 6.5 : 7.5),
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
+                ),
+              ),
+              _divider(dashed: true),
 
-            // ── Payment Details ──
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text(
-                  'Payment: ${bill.paymentMode?.toUpperCase() ?? "CASH"}',
-                  style: pw.TextStyle(
-                    fontSize: is58mm ? 7.5 : 8.5,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.black,
-                  ),
+              if (isCompact) ...[
+                // 56mm / 58mm compact GST header
+                pw.Row(
+                  children: [
+                    pw.Expanded(flex: 2, child: pw.Text('GST', style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    pw.Expanded(flex: 3, child: pw.Text('Taxable', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    pw.Expanded(flex: 2, child: pw.Text('CGST', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    pw.Expanded(flex: 2, child: pw.Text('SGST', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    pw.Expanded(flex: 3, child: pw.Text('Total', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                  ],
                 ),
-                pw.Text(
-                  'Status: ${bill.status ?? "PAID"}',
-                  style: pw.TextStyle(
-                    fontSize: is58mm ? 7.5 : 8.5,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.black,
+                _divider(dashed: true),
+                ..._calculateGstBreakup(bill).map((r) => pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 0.5),
+                  child: pw.Row(
+                    children: [
+                      pw.Expanded(flex: 2, child: pw.Text('${r.rate % 1 == 0 ? r.rate.toInt() : r.rate}%', style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
+                      pw.Expanded(flex: 3, child: pw.Text(currencyFormat.format(r.taxableAmount), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
+                      pw.Expanded(flex: 2, child: pw.Text(currencyFormat.format(r.cgst), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
+                      pw.Expanded(flex: 2, child: pw.Text(currencyFormat.format(r.sgst), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, color: PdfColors.black))),
+                      pw.Expanded(flex: 3, child: pw.Text(currencyFormat.format(r.total), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: is56mm ? 6.0 : 6.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    ],
                   ),
+                )),
+              ] else ...[
+                // 80mm GST header
+                pw.Row(
+                  children: [
+                    pw.Expanded(flex: 2, child: pw.Text('GST IND', style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    pw.Expanded(flex: 3, child: pw.Text('Taxable Amount', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    pw.Expanded(flex: 2, child: pw.Text('CGST', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    pw.Expanded(flex: 2, child: pw.Text('SGST', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    pw.Expanded(flex: 2, child: pw.Text('CESS', textAlign: pw.TextAlign.center, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    pw.Expanded(flex: 3, child: pw.Text('Total Amount', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                  ],
                 ),
+                _divider(dashed: true),
+                ..._calculateGstBreakup(bill).map((r) => pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 0.5),
+                  child: pw.Row(
+                    children: [
+                      pw.Expanded(flex: 2, child: pw.Text('${r.index} (${r.rate % 1 == 0 ? r.rate.toInt() : r.rate}%)', style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
+                      pw.Expanded(flex: 3, child: pw.Text(currencyFormat.format(r.taxableAmount), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
+                      pw.Expanded(flex: 2, child: pw.Text(currencyFormat.format(r.cgst), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
+                      pw.Expanded(flex: 2, child: pw.Text(currencyFormat.format(r.sgst), textAlign: pw.TextAlign.right, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
+                      pw.Expanded(flex: 2, child: pw.Text(r.cess > 0 ? currencyFormat.format(r.cess) : '...', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 7, color: PdfColors.black))),
+                      pw.Expanded(flex: 3, child: pw.Text(currencyFormat.format(r.total), textAlign: pw.TextAlign.right, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.black))),
+                    ],
+                  ),
+                )),
               ],
+
+              _divider(dashed: true),
+            ],
+
+            // ── Amount Received / Payment Details ──
+            pw.Center(
+              child: pw.Text(
+                '<----- Payment Details ----->',
+                style: pw.TextStyle(
+                  fontSize: is56mm ? 6.2 : (is58mmEffective ? 6.5 : 7.5),
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.black,
+                ),
+              ),
+            ),
+            pw.SizedBox(height: 1.5),
+            pw.Center(
+              child: pw.Text(
+                '${(bill.paymentMode?.isNotEmpty == true ? bill.paymentMode! : "CASH").toUpperCase()} Payment : $currencySymbol${currencyFormat.format(bill.grandTotal ?? 0)} /-',
+                style: pw.TextStyle(
+                  fontSize: is56mm ? 7.0 : (is58mmEffective ? 7.5 : 8.5),
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.black,
+                ),
+              ),
             ),
 
             if (bill.paymentMode == 'UPI' &&
                 bill.utrNumber != null &&
                 bill.utrNumber!.isNotEmpty) ...[
               pw.SizedBox(height: 1),
-              pw.Text(
-                'UPI Ref / UTR: ${bill.utrNumber}',
-                style: pw.TextStyle(
-                  fontSize: is58mm ? 7 : 8,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.black,
+              pw.Center(
+                child: pw.Text(
+                  'UPI Ref / UTR: ${bill.utrNumber}',
+                  style: pw.TextStyle(
+                    fontSize: is56mm ? 6.0 : (is58mmEffective ? 6.5 : 7.5),
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
                 ),
               ),
             ],
@@ -657,14 +985,14 @@ class ServiceBillPdf {
                   pw.Text(
                     'Tendered: $currencySymbol${currencyFormat.format(bill.amountReceived ?? 0)}',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
+                      fontSize: is56mm ? 6.5 : (is58mmEffective ? 7.0 : 8.0),
                       color: PdfColors.black,
                     ),
                   ),
                   pw.Text(
                     'Change: $currencySymbol${currencyFormat.format(bill.changeReturned ?? 0)}',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
+                      fontSize: is56mm ? 6.5 : (is58mmEffective ? 7.0 : 8.0),
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.black,
                     ),
@@ -681,14 +1009,14 @@ class ServiceBillPdf {
                   pw.Text(
                     'Cash: $currencySymbol${currencyFormat.format(bill.splitCash ?? 0)}',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
+                      fontSize: is56mm ? 6.5 : (is58mmEffective ? 7.0 : 8.0),
                       color: PdfColors.black,
                     ),
                   ),
                   pw.Text(
                     'Online: $currencySymbol${currencyFormat.format(bill.splitOnline ?? 0)}',
                     style: pw.TextStyle(
-                      fontSize: is58mm ? 7 : 8,
+                      fontSize: is56mm ? 6.5 : (is58mmEffective ? 7.0 : 8.0),
                       color: PdfColors.black,
                     ),
                   ),
@@ -698,59 +1026,59 @@ class ServiceBillPdf {
 
             _divider(dashed: true),
 
-            // ── Barcode of Bill No ──
-            if (bill.billNo != null && bill.billNo!.isNotEmpty) ...[
+            // ── Barcode of Bill No (Configurable via Settings) ──
+            if (showBillBarcode && bill.billNo != null && bill.billNo!.isNotEmpty) ...[
               pw.Center(
                 child: pw.BarcodeWidget(
                   barcode: pw.Barcode.code128(),
                   data: bill.billNo!,
-                  width: is58mm ? 120 : 150,
-                  height: is58mm ? 24 : 28,
+                  width: is56mm ? 105 : (is58mmEffective ? 120 : 150),
+                  height: is56mm ? 20 : (is58mmEffective ? 24 : 28),
                   drawText: true,
                   color: PdfColors.black,
                   textStyle: pw.TextStyle(
-                    fontSize: is58mm ? 6.5 : 7.5,
+                    fontSize: is56mm ? 6.0 : (is58mmEffective ? 6.5 : 7.5),
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
                   ),
                 ),
               ),
-              pw.SizedBox(height: 3),
+              pw.SizedBox(height: 2.5),
             ],
 
             // ── Footer ──
             pw.Center(
               child: pw.Text(
-                '*** Thank You! Visit Again ***',
+                billFooterTagline.isNotEmpty ? '*** $billFooterTagline ***' : '*** Thank You! Visit Again ***',
                 style: pw.TextStyle(
-                  fontSize: is58mm ? 7.5 : 8.5,
+                  fontSize: is56mm ? 7.0 : (is58mmEffective ? 7.5 : 8.5),
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.black,
                 ),
               ),
             ),
-            pw.SizedBox(height: 1.5),
+            pw.SizedBox(height: 1.0),
             pw.Center(
               child: pw.Text(
-                'Goods once sold can be exchanged within 7 days with bill',
+                billTerms.isNotEmpty ? billTerms : 'Goods once sold can be exchanged within 7 days with bill',
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
-                  fontSize: is58mm ? 6.5 : 7.5,
+                  fontSize: is56mm ? 6.0 : (is58mmEffective ? 6.5 : 7.5),
                   color: PdfColors.black,
                 ),
               ),
             ),
-            pw.SizedBox(height: 1),
+            pw.SizedBox(height: 1.0),
             pw.Center(
               child: pw.Text(
                 'Software: RH POS',
                 style: pw.TextStyle(
-                  fontSize: is58mm ? 5.5 : 6.5,
+                  fontSize: is56mm ? 5.2 : (is58mmEffective ? 5.5 : 6.5),
                   color: PdfColors.black,
                 ),
               ),
             ),
-            pw.SizedBox(height: 6),
+            pw.SizedBox(height: 4),
           ],
         ),
       ),
@@ -798,7 +1126,6 @@ class ServiceBillPdf {
   ) {
     final storeName = settings.rxStoreName.value;
     final storeAddress = settings.rxStoreAddress.value;
-    final storePhone = settings.rxStorePhone.value;
     final storeGstin = settings.rxStoreGstin.value;
 
     pdf.addPage(
@@ -833,10 +1160,6 @@ class ServiceBillPdf {
                     pw.SizedBox(height: 4),
                     pw.Text(
                       storeAddress,
-                      style: const pw.TextStyle(fontSize: 10),
-                    ),
-                    pw.Text(
-                      'Phone: $storePhone',
                       style: const pw.TextStyle(fontSize: 10),
                     ),
                     if (storeGstin.isNotEmpty)
@@ -896,12 +1219,6 @@ class ServiceBillPdf {
                         fontSize: 12,
                       ),
                     ),
-                    if (bill.customerPhone != null &&
-                        bill.customerPhone!.isNotEmpty)
-                      pw.Text(
-                        bill.customerPhone!,
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
                   ],
                 ),
                 pw.Column(
@@ -1167,4 +1484,96 @@ class ServiceBillPdf {
           ],
         ),
       );
+  static List<_GstBreakupRow> _calculateGstBreakup(EntityBill bill) {
+    final Map<double, List<EntityBillItem>> grouped = {};
+    for (final item in bill.items) {
+      final rate = item.taxRate ?? ((bill.tax != null && bill.tax! > 0) ? 18.0 : 0.0);
+      grouped.putIfAbsent(rate, () => []).add(item);
+    }
+
+    final rows = <_GstBreakupRow>[];
+    int idx = 1;
+
+    if (grouped.isEmpty) {
+      final total = bill.grandTotal ?? bill.totalAmount ?? 0.0;
+      final tax = bill.tax ?? 0.0;
+      final taxable = (total - tax) > 0 ? (total - tax) : total;
+      final halfTax = double.parse((tax / 2.0).toStringAsFixed(2));
+      rows.add(_GstBreakupRow(
+        index: 1,
+        rate: 0.0,
+        taxableAmount: double.parse(taxable.toStringAsFixed(2)),
+        cgst: halfTax,
+        sgst: halfTax,
+        cess: 0.0,
+        total: double.parse(total.toStringAsFixed(2)),
+      ));
+      return rows;
+    }
+
+    final sortedRates = grouped.keys.toList()..sort();
+    for (final rate in sortedRates) {
+      final items = grouped[rate]!;
+      double slabTaxable = 0;
+      double slabTax = 0;
+      double slabTotal = 0;
+
+      for (final it in items) {
+        final isInclusive = (it.item.target?.taxType ?? '').toLowerCase().trim() == 'inclusive';
+        final lineAmt = it.total ?? ((it.price ?? 0) * (it.qty ?? 1) - (it.discount ?? 0));
+
+        if (rate > 0) {
+          if (isInclusive) {
+            final t = it.tax ?? (lineAmt * (rate / (100.0 + rate)));
+            slabTax += t;
+            slabTaxable += (lineAmt - t);
+            slabTotal += lineAmt;
+          } else {
+            final t = it.tax ?? (lineAmt * (rate / 100.0));
+            slabTax += t;
+            slabTaxable += lineAmt;
+            slabTotal += (lineAmt + t);
+          }
+        } else {
+          slabTaxable += lineAmt;
+          slabTotal += lineAmt;
+        }
+      }
+
+      final cgst = double.parse((slabTax / 2.0).toStringAsFixed(2));
+      final sgst = double.parse((slabTax / 2.0).toStringAsFixed(2));
+
+      rows.add(_GstBreakupRow(
+        index: idx++,
+        rate: rate,
+        taxableAmount: double.parse(slabTaxable.toStringAsFixed(2)),
+        cgst: cgst,
+        sgst: sgst,
+        cess: 0.0,
+        total: double.parse(slabTotal.toStringAsFixed(2)),
+      ));
+    }
+
+    return rows;
+  }
+}
+
+class _GstBreakupRow {
+  final int index;
+  final double rate;
+  final double taxableAmount;
+  final double cgst;
+  final double sgst;
+  final double cess;
+  final double total;
+
+  _GstBreakupRow({
+    required this.index,
+    required this.rate,
+    required this.taxableAmount,
+    required this.cgst,
+    required this.sgst,
+    this.cess = 0.0,
+    required this.total,
+  });
 }

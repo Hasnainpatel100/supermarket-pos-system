@@ -160,9 +160,17 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
                             ),
                             const SizedBox(width: 8),
                             _buildSizeChip(
-                              label: '56mm / 58mm Thermal (2")',
+                              label: '58mm Thermal (2.25")',
                               sizeKey: '58mm',
-                              isSelected: currentSize == '58mm' || currentSize == '56mm',
+                              isSelected: currentSize == '58mm',
+                              icon: Icons.receipt_outlined,
+                              cs: cs,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildSizeChip(
+                              label: '56mm Thermal (2")',
+                              sizeKey: '56mm',
+                              isSelected: currentSize == '56mm',
                               icon: Icons.receipt_outlined,
                               cs: cs,
                             ),
@@ -235,19 +243,23 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
             // ── Live PDF Interactive Preview (Sharp & High DPI) ──
             Expanded(
               child: Obx(() {
-                final paperSize = _rxPaperSize.value;
-                final is58 = paperSize.toLowerCase() == '58mm' || paperSize.toLowerCase() == '56mm';
-                final isA4 = paperSize.toLowerCase() == 'a4';
+                final paperSize = _rxPaperSize.value.toLowerCase();
+                final is56 = paperSize == '56mm' || paperSize.contains('56');
+                final is58 = !is56 && (paperSize == '58mm' || paperSize == '57mm' || paperSize.contains('58'));
+                final isA4 = paperSize == 'a4';
                 final format = isA4
                     ? PdfPageFormat.a4
-                    : (is58
-                        ? const PdfPageFormat(48 * PdfPageFormat.mm, double.infinity, marginAll: 1.5 * PdfPageFormat.mm)
-                        : const PdfPageFormat(70 * PdfPageFormat.mm, double.infinity, marginAll: 2 * PdfPageFormat.mm));
+                    : (is56
+                        ? const PdfPageFormat(56 * PdfPageFormat.mm, double.infinity, marginAll: 1.5 * PdfPageFormat.mm)
+                        : (is58
+                            ? const PdfPageFormat(58 * PdfPageFormat.mm, double.infinity, marginAll: 2 * PdfPageFormat.mm)
+                            : const PdfPageFormat(72 * PdfPageFormat.mm, double.infinity, marginAll: 2 * PdfPageFormat.mm)));
 
                 return PdfPreview(
                   key: ValueKey('preview_${widget.bill.billNo}_$paperSize'),
-                  dpi: isA4 ? 200 : 250, // High-DPI rasterization fixes blurriness on thermal sizes
+                  dpi: isA4 ? 180 : 140, // Fast crisp rasterization for instant preview
                   initialPageFormat: format,
+                  dynamicLayout: false,
                   build: (f) async {
                     if (_pdfBytesCache.containsKey(paperSize)) {
                       return _pdfBytesCache[paperSize]!;
@@ -351,159 +363,8 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
     );
   }
 
-  void _sharePdfToWhatsApp(BuildContext context) {
-    final phone = widget.bill.customerPhone;
-    if (phone != null && phone.trim().length == 10) {
-      _confirmAndSendWhatsAppPdf(context, phone.trim(), isFromBill: true);
-    } else {
-      _promptPhoneForWhatsApp(context);
-    }
-  }
-
-  void _confirmAndSendWhatsAppPdf(
-    BuildContext context,
-    String phone, {
-    bool isFromBill = false,
-  }) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Color(0xFF25D366),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.chat_rounded, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 10),
-            const Text('Send Bill PDF on WhatsApp', style: TextStyle(fontSize: 16)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF25D366).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 30),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Bill #${widget.bill.billNo ?? "N/A"}.pdf',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        Text(
-                          'Paper Format: ${_rxPaperSize.value.toUpperCase()}',
-                          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              isFromBill
-                  ? 'Send bill PDF to customer on WhatsApp?'
-                  : 'Send bill PDF to this WhatsApp number?',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '+91 $phone',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Get.back();
-              _dispatchWhatsAppPdf(phone);
-            },
-            icon: const Icon(Icons.send_rounded, size: 16),
-            label: const Text('Send PDF'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _promptPhoneForWhatsApp(BuildContext context) {
-    final phoneController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Enter WhatsApp Number', style: TextStyle(fontSize: 16)),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Enter the customer 10-digit mobile number to send the invoice PDF.',
-                style: TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: phoneController,
-                autofocus: true,
-                keyboardType: TextInputType.phone,
-                maxLength: 10,
-                decoration: const InputDecoration(
-                  prefixText: '+91 ',
-                  labelText: 'Mobile Number',
-                  hintText: '9876543210',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone_rounded),
-                ),
-                validator: (val) {
-                  if (val == null || val.trim().length != 10) {
-                    return 'Please enter a valid 10-digit number';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Get.back();
-                _confirmAndSendWhatsAppPdf(context, phoneController.text.trim());
-              }
-            },
-            child: const Text('Continue'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _sharePdfToWhatsApp(BuildContext context) async {
+    await _dispatchWhatsAppPdf(widget.bill.customerPhone ?? '');
   }
 
   Future<void> _dispatchWhatsAppPdf(String phone) async {
@@ -517,7 +378,9 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
 
       final billNo = widget.bill.billNo ?? '${widget.bill.id}';
 
-      await ServiceWhatsApp.dispatchInvoicePdf(
+      if (!mounted) return;
+      ServiceWhatsApp.showDispatchDialog(
+        context: context,
         pdfFile: file,
         phone: phone,
         invoiceNumber: billNo,
@@ -527,7 +390,7 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
         settings: _settings,
       );
     } catch (e) {
-      SnackbarUtil.showError('Failed to send PDF on WhatsApp: $e');
+      SnackbarUtil.showError('Failed to prepare PDF for WhatsApp: $e');
     }
   }
 }

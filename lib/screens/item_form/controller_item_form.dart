@@ -7,7 +7,6 @@ import '../../objectbox.g.dart';
 import '../../service/service_item.dart';
 import '../../service/service_object_box.dart';
 import '../../service/service_item_excel.dart';
-import 'activity_item_batch_form.dart';
 
 class ControllerItemForm extends GetxController {
   final ItemService itemService;
@@ -157,7 +156,9 @@ class ControllerItemForm extends GetxController {
       if (editingItem?.id != null) {
         final boxBatch = Get.find<ServiceObjectBox>().box<EntityItemBatch>();
         final existingBatches = boxBatch
-            .query(EntityItemBatch_.itemId.equals(editingItem!.id!))
+            .query(EntityItemBatch_.itemId
+                .equals(editingItem!.id!)
+                .and(EntityItemBatch_.quantity.greaterThan(0)))
             .order(EntityItemBatch_.id)
             .build()
             .find();
@@ -380,12 +381,6 @@ class ControllerItemForm extends GetxController {
         savedItem.totalQty = totalBatchQty;
         savedItem.hasExpiry = true;
         itemService.updateItem(savedItem);
-      } else if (hasExpiry.value && editingItem == null) {
-        await Get.dialog(
-          const ActivityItemBatchForm(),
-          arguments: savedItem,
-          barrierDismissible: false,
-        );
       }
       Get.back();
     } catch (e) {

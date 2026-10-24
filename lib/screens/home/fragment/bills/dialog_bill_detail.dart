@@ -282,10 +282,33 @@ class DialogBillDetail extends StatelessWidget {
                       label: 'Subtotal',
                       value: currencyFormat.format(bill.totalAmount ?? 0),
                     ),
+                    _TotalRow(
+                      label: 'Tax (GST)',
+                      value: currencyFormat.format(bill.tax ?? 0),
+                    ),
                     if ((bill.tax ?? 0) > 0)
-                      _TotalRow(
-                        label: 'Tax',
-                        value: currencyFormat.format(bill.tax ?? 0),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10, top: 1, bottom: 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '  ↳ CGST / SGST (50% each)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            Text(
+                              '${currencyFormat.format(double.parse(((bill.tax ?? 0) / 2).toStringAsFixed(2)))} each',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     if ((bill.discount ?? 0) > 0)
                       _TotalRow(
@@ -623,28 +646,32 @@ class DialogBillDetail extends StatelessWidget {
       final paperSize = settings.rxThermalPaperSize.value.isNotEmpty
           ? settings.rxThermalPaperSize.value
           : '80mm';
-      final pdfFile = await ServiceBillPdf.generate(bill, settings, paperSize: paperSize);
-      final pdfBytes = await pdfFile.readAsBytes();
+      final pdfBytes = await ServiceBillPdf.generateBytes(bill, settings, paperSize: paperSize);
 
-      final defaultPrinterName = settings.rxDefaultThermalPrinter.value.trim();
-      if (defaultPrinterName.isNotEmpty) {
-        final printers = await Printing.listPrinters();
-        final target = printers.firstWhereOrNull((p) => p.name == defaultPrinterName);
-        if (target != null) {
-          await Printing.directPrintPdf(
-            printer: target,
-            onLayout: (_) => pdfBytes,
-            name: 'Bill_${bill.billNo}',
-          );
-          SnackbarUtil.showSuccess('Sent to printer $defaultPrinterName ($paperSize)');
-          return;
-        }
+      final printers = await Printing.listPrinters();
+      if (printers.isEmpty) {
+        SnackbarUtil.showError('No printer detected on this system.');
+        return;
       }
 
-      await Printing.layoutPdf(
+      final defaultPrinterName = settings.rxDefaultThermalPrinter.value.trim();
+      Printer? target;
+      if (defaultPrinterName.isNotEmpty) {
+        target = printers.firstWhereOrNull(
+          (p) => p.name.toLowerCase() == defaultPrinterName.toLowerCase(),
+        );
+      }
+
+      // If configured printer not found or not set, use system default printer or first available
+      target ??= printers.firstWhereOrNull((p) => p.isDefault) ?? printers.first;
+
+      await Printing.directPrintPdf(
+        printer: target,
         onLayout: (_) => pdfBytes,
         name: 'Bill_${bill.billNo}',
       );
+      SnackbarUtil.showSuccess('Printed directly to ${target.name} ($paperSize)');
+      // Dialogue remains open so user can send on WhatsApp or view preview
     } catch (e) {
       SnackbarUtil.showError('Printing failed: $e');
     }
@@ -671,194 +698,7 @@ class DialogBillDetail extends StatelessWidget {
     BuildContext context,
     ControllerHomeSettings settings,
   ) async {
-    final customerPhone = bill.customerPhone;
-
-    if (customerPhone != null && customerPhone.length == 10) {
-      // Already have a valid phone number
-      _confirmAndSendWhatsApp(
-        context,
-        settings,
-        customerPhone,
-        isFromBill: true,
-      );
-    } else {
-      // Ask for number
-      _promptPhoneAndSend(context, settings);
-    }
-  }
-
-  void _confirmAndSendWhatsApp(
-    BuildContext context,
-    ControllerHomeSettings settings,
-    String phone, {
-    bool isFromBill = false,
-  }) {
-    final currencySymbol = Get.isRegistered<ServiceCurrency>()
-        ? Get.find<ServiceCurrency>().rxCurrency.value
-        : '₹';
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Color(0xFF25D366),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.chat_rounded, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 10),
-            const Text('Send Bill PDF on WhatsApp', style: TextStyle(fontSize: 16)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF25D366).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF25D366).withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 30),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Bill #${bill.billNo ?? "N/A"}.pdf',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        Text(
-                          'Total: $currencySymbol${(bill.grandTotal ?? 0).toStringAsFixed(2)}',
-                          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              isFromBill
-                  ? 'send_bill_to_customer_q'.tr
-                  : 'send_bill_to_number_q'.tr,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '+91 $phone',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Get.back();
-              _launchWhatsApp(context, settings, phone);
-            },
-            icon: const Icon(Icons.send_rounded, size: 16),
-            label: const Text('Send PDF'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _promptPhoneAndSend(
-    BuildContext context,
-    ControllerHomeSettings settings,
-  ) {
-    final phoneController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('enter_customer_number'.tr),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF25D366),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.chat_rounded,
-                  color: Colors.white,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'no_phone_on_file'.tr,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13),
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: phoneController,
-                keyboardType: TextInputType.number,
-                maxLength: 10,
-                decoration: InputDecoration(
-                  labelText: 'mobile_number'.tr,
-                  prefixText: '+91 ',
-                  prefixIcon: const Icon(Icons.phone_rounded),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                ),
-                validator: (val) {
-                  if (val == null || val.trim().length != 10) {
-                    return 'enter_valid_10_digit'.tr;
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
-            ),
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Get.back();
-                _confirmAndSendWhatsApp(
-                  context,
-                  settings,
-                  phoneController.text.trim(),
-                );
-              }
-            },
-            child: Text('continue_btn'.tr),
-          ),
-        ],
-      ),
-    );
+    await _launchWhatsApp(context, settings, bill.customerPhone ?? '');
   }
 
   Future<void> _launchWhatsApp(
@@ -876,7 +716,9 @@ class DialogBillDetail extends StatelessWidget {
 
       final billNo = bill.billNo ?? '${bill.id}';
 
-      await ServiceWhatsApp.dispatchInvoicePdf(
+      if (!context.mounted) return;
+      ServiceWhatsApp.showDispatchDialog(
+        context: context,
         pdfFile: pdfFile,
         phone: phone,
         invoiceNumber: billNo,

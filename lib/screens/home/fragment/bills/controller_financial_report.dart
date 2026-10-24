@@ -6,7 +6,6 @@ import '../../../../model/entity_purchase.dart';
 import '../../../../model/entity_purchase_item.dart';
 import '../../../../model/entity_finance_transaction.dart';
 import '../../../../model/entity_user.dart';
-import '../../../../model/entity_item.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_item_excel.dart';
 import '../../../../service/service_object_box.dart';
@@ -64,6 +63,7 @@ class PaymentCollectionRow {
 
 class DailyCashClosingRow {
   final String date;
+  final int timestampMs;
   final String cashierName;
   final double openingCash;
   final double cashSales;
@@ -73,6 +73,7 @@ class DailyCashClosingRow {
 
   DailyCashClosingRow({
     required this.date,
+    this.timestampMs = 0,
     required this.cashierName,
     required this.openingCash,
     required this.cashSales,
@@ -84,6 +85,7 @@ class DailyCashClosingRow {
 
 class TaxGstRow {
   final String date;
+  final int timestampMs;
   final String docNo;
   final String txnType; // Sale / Purchase
   final double taxableAmount;
@@ -93,6 +95,7 @@ class TaxGstRow {
 
   TaxGstRow({
     required this.date,
+    this.timestampMs = 0,
     required this.docNo,
     required this.txnType,
     required this.taxableAmount,
@@ -129,7 +132,6 @@ class ControllerFinancialReport extends GetxController {
   late final Box<EntityPurchaseItem> _boxPurchaseItem;
   late final Box<EntityFinanceTransaction> _boxFinanceTxn;
   late final Box<EntityUser> _boxUser;
-  late final Box<EntityItem> _boxItem;
 
   // Report Type
   final Rx<FinancialReportType> rxReportType = FinancialReportType.paymentCollection.obs;
@@ -170,7 +172,6 @@ class ControllerFinancialReport extends GetxController {
     _boxPurchaseItem = ob.box<EntityPurchaseItem>();
     _boxFinanceTxn = ob.box<EntityFinanceTransaction>();
     _boxUser = ob.box<EntityUser>();
-    _boxItem = ob.box<EntityItem>();
 
     loadData();
 
@@ -245,7 +246,7 @@ class ControllerFinancialReport extends GetxController {
     rxLoading.value = true;
     currentPage.value = 0;
 
-    await Future.delayed(Duration.zero);
+    await Future.delayed(const Duration(milliseconds: 25));
 
     try {
       switch (rxReportType.value) {
@@ -404,8 +405,9 @@ class ControllerFinancialReport extends GetxController {
 
     // Group sales and returns
     for (final bill in bills) {
-      final dateStr = bill.createdAtUtcMs != null
-          ? df.format(DateTime.fromMillisecondsSinceEpoch(bill.createdAtUtcMs!))
+      final billTime = bill.createdAtUtcMs ?? 0;
+      final dateStr = billTime > 0
+          ? df.format(DateTime.fromMillisecondsSinceEpoch(billTime))
           : '-';
       final cashier = users.isNotEmpty ? users[bill.id % users.length] : null;
       final cashierName = cashier != null ? '${cashier.first ?? ''} ${cashier.last ?? ''}'.trim() : 'System';
@@ -431,9 +433,13 @@ class ControllerFinancialReport extends GetxController {
       if (existing != null) {
         existing.cashSales += cashSales;
         existing.cashReturns += cashReturns;
+        if (billTime > existing.timestampMs) {
+          existing.timestampMs = billTime;
+        }
       } else {
         agg[key] = _DailyCashAgg(
           date: dateStr,
+          timestampMs: billTime,
           cashierName: cashierName,
           openingCash: 1000.0, // Default opening drawer cash
           cashSales: cashSales,
@@ -445,8 +451,9 @@ class ControllerFinancialReport extends GetxController {
 
     // Group cash expenses (distribute evenly or assign to system)
     for (final exp in expenses) {
-      final dateStr = exp.dateUtcMs != null
-          ? df.format(DateTime.fromMillisecondsSinceEpoch(exp.dateUtcMs!))
+      final expTime = exp.dateUtcMs ?? 0;
+      final dateStr = expTime > 0
+          ? df.format(DateTime.fromMillisecondsSinceEpoch(expTime))
           : '-';
       final key = '$dateStr|System';
       final val = exp.amount ?? 0.0;
@@ -454,9 +461,13 @@ class ControllerFinancialReport extends GetxController {
       final existing = agg[key];
       if (existing != null) {
         existing.cashExpenses += val;
+        if (expTime > existing.timestampMs) {
+          existing.timestampMs = expTime;
+        }
       } else {
         agg[key] = _DailyCashAgg(
           date: dateStr,
+          timestampMs: expTime,
           cashierName: 'System',
           openingCash: 1000.0,
           cashSales: 0.0,
@@ -479,6 +490,7 @@ class ControllerFinancialReport extends GetxController {
 
       rows.add(DailyCashClosingRow(
         date: entry.date,
+        timestampMs: entry.timestampMs,
         cashierName: entry.cashierName,
         openingCash: entry.openingCash,
         cashSales: entry.cashSales,
@@ -489,13 +501,9 @@ class ControllerFinancialReport extends GetxController {
     }
 
     _fullRows = _filterSearch(rows, (r) => '${r.cashierName} ${r.date}');
-    // Sort descending by date
-    final parseDf = DateFormat('dd/MM/yyyy');
-    _fullRows.sort((a, b) {
-      final ad = parseDf.parse((a as DailyCashClosingRow).date);
-      final bd = parseDf.parse((b as DailyCashClosingRow).date);
-      return bd.compareTo(ad);
-    });
+    // Ultra-fast integer comparison (Zero string date parsing)
+    _fullRows.sort((a, b) =>
+        (b as DailyCashClosingRow).timestampMs.compareTo((a as DailyCashClosingRow).timestampMs));
 
     final closingDrawer = 1000.0 * (agg.length) + overallCashSales - overallCashReturns - overallCashExpenses;
 
@@ -561,8 +569,9 @@ class ControllerFinancialReport extends GetxController {
 
     // Process Sales (GST Collected)
     for (final bill in bills) {
-      final dateStr = bill.createdAtUtcMs != null
-          ? df.format(DateTime.fromMillisecondsSinceEpoch(bill.createdAtUtcMs!))
+      final billTime = bill.createdAtUtcMs ?? 0;
+      final dateStr = billTime > 0
+          ? df.format(DateTime.fromMillisecondsSinceEpoch(billTime))
           : '-';
 
       for (final item in bill.items) {
@@ -570,17 +579,17 @@ class ControllerFinancialReport extends GetxController {
         final taxAmount = item.tax ?? 0.0;
         final taxable = total - taxAmount;
 
-        final targetId = item.item.targetId;
-        final itemMaster = (item.item.hasValue && item.item.target != null)
-            ? item.item.target
-            : (targetId > 0 ? _boxItem.get(targetId) : null);
-        final rate = itemMaster?.taxRate ?? 18.0;
+        final rate = item.taxRate ??
+            (item.item.hasValue && item.item.target?.taxRate != null
+                ? item.item.target!.taxRate!
+                : 18.0);
 
         totalTaxableSales += taxable;
         gstCollected += taxAmount;
 
         rows.add(TaxGstRow(
           date: dateStr,
+          timestampMs: billTime,
           docNo: bill.billNo ?? 'N/A',
           txnType: 'Sale',
           taxableAmount: taxable,
@@ -591,18 +600,24 @@ class ControllerFinancialReport extends GetxController {
       }
     }
 
-    // Process Purchases (GST Paid)
-    for (final po in purchases) {
-      final dateStr = po.purchaseDateUtcMs != null
-          ? df.format(DateTime.fromMillisecondsSinceEpoch(po.purchaseDateUtcMs!))
-          : '-';
+    // Process Purchases (GST Paid) - Single Batch Query
+    if (purchases.isNotEmpty) {
+      final purchaseMap = {for (var p in purchases) p.id: p};
+      final purchaseIds = purchaseMap.keys.toList();
 
-      // Load PO items
-      final itemsQuery = _boxPurchaseItem.query(EntityPurchaseItem_.purchaseId.equals(po.id)).build();
-      final items = itemsQuery.find();
+      final itemsQuery = _boxPurchaseItem
+          .query(EntityPurchaseItem_.purchaseId.oneOf(purchaseIds))
+          .build();
+      final allPurchaseItems = itemsQuery.find();
       itemsQuery.close();
 
-      for (final item in items) {
+      for (final item in allPurchaseItems) {
+        final po = purchaseMap[item.purchaseId];
+        final poTime = po?.purchaseDateUtcMs ?? 0;
+        final dateStr = poTime > 0
+            ? df.format(DateTime.fromMillisecondsSinceEpoch(poTime))
+            : '-';
+
         final total = item.lineAmountIncl ?? 0.0;
         final taxAmount = item.taxAmount ?? 0.0;
         final taxable = item.lineAmountExcl ?? (total - taxAmount);
@@ -612,7 +627,8 @@ class ControllerFinancialReport extends GetxController {
 
         rows.add(TaxGstRow(
           date: dateStr,
-          docNo: po.purchaseNo ?? 'N/A',
+          timestampMs: poTime,
+          docNo: po?.purchaseNo ?? 'N/A',
           txnType: 'Purchase',
           taxableAmount: taxable,
           gstRate: rate,
@@ -623,13 +639,9 @@ class ControllerFinancialReport extends GetxController {
     }
 
     _fullRows = _filterSearch(rows, (r) => '${r.docNo} ${r.txnType}');
-    // Sort descending by date
-    final parseDf = DateFormat('dd/MM/yyyy HH:mm');
-    _fullRows.sort((a, b) {
-      final ad = parseDf.parse((a as TaxGstRow).date);
-      final bd = parseDf.parse((b as TaxGstRow).date);
-      return bd.compareTo(ad);
-    });
+    // Ultra-fast integer comparison (Zero string date parsing)
+    _fullRows.sort((a, b) =>
+        (b as TaxGstRow).timestampMs.compareTo((a as TaxGstRow).timestampMs));
 
     final netGst = gstCollected - gstPaid;
 
@@ -983,6 +995,7 @@ class ControllerFinancialReport extends GetxController {
 // ── Aggregation helper classes ──
 class _DailyCashAgg {
   String date;
+  int timestampMs;
   String cashierName;
   double openingCash;
   double cashSales;
@@ -990,6 +1003,7 @@ class _DailyCashAgg {
   double cashExpenses;
   _DailyCashAgg({
     required this.date,
+    this.timestampMs = 0,
     required this.cashierName,
     required this.openingCash,
     required this.cashSales,

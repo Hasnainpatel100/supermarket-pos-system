@@ -56,14 +56,11 @@ class FragQuotations extends StatelessWidget {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
-          child: Obx(
-            () => SearchAppBarField(
-              controller: controller.searchController,
-              hint: 'Search quotation, customer, phone...'.tr,
-              onChanged: controller.updateSearch,
-              onClear: controller.clearSearch,
-              hasQuery: controller.rxSearchQuery.isNotEmpty,
-            ),
+          child: SearchAppBarField(
+            controller: controller.searchController,
+            hint: 'Search quotation, customer, phone...'.tr,
+            onChanged: controller.updateSearch,
+            onClear: controller.clearSearch,
           ),
         ),
       ),

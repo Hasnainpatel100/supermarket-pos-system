@@ -43,6 +43,17 @@ class FragSalesReturns extends StatelessWidget {
               : [Colors.red.shade500, Colors.red.shade800],
         ),
         actions: [
+          // Most Returned Items Analytics Button
+          GradientActionButton(
+            icon: Icons.leaderboard_rounded,
+            label: 'Most Returned Items'.tr,
+            gradientColors: isDark
+                ? [Colors.purple.shade600, Colors.deepPurple.shade800]
+                : [Colors.purple.shade500, Colors.deepPurple.shade700],
+            onTap: () => _showMostReturnedItemsDialog(context, controller, currencyFmt, isDark),
+          ),
+          const SizedBox(width: 8),
+
           // Create Return Button
           GradientActionButton(
             icon: Icons.add_circle_outline_rounded,
@@ -56,14 +67,12 @@ class FragSalesReturns extends StatelessWidget {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
-          child: Obx(
-            () => SearchAppBarField(
-              controller: controller.searchController,
-              hint: 'Search return no, invoice no, customer...'.tr,
-              onChanged: controller.updateSearch,
-              onClear: controller.clearSearch,
-              hasQuery: controller.rxSearchQuery.isNotEmpty,
-            ),
+          child: SearchAppBarField(
+            controller: controller.searchController,
+            hint: 'Search return no, invoice no, customer...'.tr,
+            onChanged: controller.updateSearch,
+            onSubmitted: controller.onSearchSubmitted,
+            onClear: controller.clearSearch,
           ),
         ),
       ),
@@ -97,7 +106,27 @@ class FragSalesReturns extends StatelessWidget {
                       gradientColors: [Colors.teal.shade500, Colors.cyan.shade600],
                     ),
                   ),
-                  const Spacer(flex: 2),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _SummaryCard(
+                      label: 'Total Units Returned',
+                      value: '${controller.rxTotalUnitsReturned.value} pcs',
+                      icon: Icons.inventory_2_outlined,
+                      gradientColors: [Colors.orange.shade600, Colors.amber.shade700],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _SummaryCard(
+                      label: 'Top Returned Item',
+                      value: controller.rxTopReturnedName.value == '-'
+                          ? 'None'
+                          : '${controller.rxTopReturnedName.value} (${controller.rxTopReturnedQty.value} pcs)',
+                      icon: Icons.trending_up_rounded,
+                      gradientColors: [Colors.purple.shade600, Colors.deepPurple.shade700],
+                      onTap: () => _showMostReturnedItemsDialog(context, controller, currencyFmt, isDark),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -450,17 +479,19 @@ class _SummaryCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final List<Color> gradientColors;
+  final VoidCallback? onTap;
 
   const _SummaryCard({
     required this.label,
     required this.value,
     required this.icon,
     required this.gradientColors,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final cardContent = Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -514,8 +545,365 @@ class _SummaryCard extends StatelessWidget {
               ],
             ),
           ),
+          if (onTap != null)
+            const Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Icon(Icons.open_in_new_rounded, size: 14, color: Colors.white70),
+            ),
         ],
       ),
     );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: cardContent,
+        ),
+      );
+    }
+    return cardContent;
   }
 }
+
+void _showMostReturnedItemsDialog(
+  BuildContext context,
+  ControllerSalesReturns controller,
+  NumberFormat currencyFmt,
+  bool isDark,
+) {
+  final colorScheme = Theme.of(context).colorScheme;
+  final searchFilter = ''.obs;
+  final filterCtrl = TextEditingController();
+
+  Get.dialog(
+    Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Container(
+        width: 820,
+        height: 640,
+        decoration: BoxDecoration(
+          color: isDark ? colorScheme.surface : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // ── Dialog Header ──
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [Colors.purple.shade900, Colors.deepPurple.shade800]
+                      : [Colors.purple.shade700, Colors.deepPurple.shade900],
+                ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.leaderboard_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Most Returned Items Analytics',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Track products frequently returned by customers to identify quality issues or defects.',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Get.back(),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Search & Metrics Subheader ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: filterCtrl,
+                      onChanged: (val) => searchFilter.value = val.trim().toLowerCase(),
+                      decoration: InputDecoration(
+                        hintText: 'Search returned product name or barcode...',
+                        prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                        suffixIcon: Obx(() => searchFilter.value.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                onPressed: () {
+                                  filterCtrl.clear();
+                                  searchFilter.value = '';
+                                },
+                              )
+                            : const SizedBox.shrink()),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Obx(() => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+                        ),
+                        child: Text(
+                          '${controller.rxMostReturnedItems.length} Products Tracked',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.purple.shade300 : Colors.purple.shade800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      )),
+                ],
+              ),
+            ),
+
+            const Divider(height: 1),
+
+            // ── Table Content ──
+            Expanded(
+              child: Obx(() {
+                final query = searchFilter.value;
+                final items = controller.rxMostReturnedItems.where((it) {
+                  if (query.isEmpty) return true;
+                  return it.itemName.toLowerCase().contains(query) ||
+                      it.barcode.toLowerCase().contains(query);
+                }).toList();
+
+                if (items.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.inventory_2_outlined, size: 54, color: Colors.grey.shade400),
+                        const SizedBox(height: 12),
+                        Text(
+                          query.isEmpty
+                              ? 'No customer return records yet.'
+                              : 'No returned products match "$query"',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: DataTable(
+                    columnSpacing: 18,
+                    horizontalMargin: 8,
+                    headingTextStyle: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: colorScheme.onSurface,
+                    ),
+                    dataRowMaxHeight: 56,
+                    columns: const [
+                      DataColumn(label: Text('Rank')),
+                      DataColumn(label: Text('Item Name & Barcode')),
+                      DataColumn(label: Text('Units Returned')),
+                      DataColumn(label: Text('Return Incidents')),
+                      DataColumn(label: Text('Total Refund Value')),
+                      DataColumn(label: Text('Last Return')),
+                    ],
+                    rows: List.generate(items.length, (index) {
+                      final it = items[index];
+                      final isTop3 = index < 3;
+                      final badgeColor = index == 0
+                          ? const Color(0xFFFFD700) // Gold
+                          : index == 1
+                              ? const Color(0xFFC0C0C0) // Silver
+                              : index == 2
+                                  ? const Color(0xFFCD7F32) // Bronze
+                                  : Colors.grey.shade400;
+
+                      return DataRow(
+                        cells: [
+                          // Rank
+                          DataCell(
+                            Container(
+                              width: 28,
+                              height: 28,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isTop3
+                                    ? badgeColor.withValues(alpha: 0.25)
+                                    : Colors.grey.withValues(alpha: 0.1),
+                                border: isTop3 ? Border.all(color: badgeColor, width: 1.5) : null,
+                              ),
+                              child: Text(
+                                '#${index + 1}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                  color: isTop3 ? Colors.deepOrange.shade800 : colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Item Name & Barcode
+                          DataCell(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  it.itemName,
+                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (it.barcode.isNotEmpty)
+                                  Text(
+                                    'Barcode: ${it.barcode}',
+                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                  ),
+                              ],
+                            ),
+                          ),
+
+                          // Units Returned (Highlighted)
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${it.totalQty} pcs',
+                                style: TextStyle(
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Return Incidents
+                          DataCell(
+                            Text(
+                              '${it.returnCount} ${it.returnCount == 1 ? "time" : "times"}',
+                              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                            ),
+                          ),
+
+                          // Total Refund Value
+                          DataCell(
+                            Text(
+                              currencyFmt.format(it.totalRefund),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: isDark ? Colors.amber.shade300 : Colors.deepOrange.shade800,
+                              ),
+                            ),
+                          ),
+
+                          // Last Return Date
+                          DataCell(
+                            Text(
+                              it.lastReturnDate ?? 'N/A',
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                );
+              }),
+            ),
+
+            // ── Dialog Footer ──
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark ? colorScheme.surfaceContainerHighest : Colors.grey.shade50,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Tip: Items at the top have the highest return rate.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Get.back(),
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+

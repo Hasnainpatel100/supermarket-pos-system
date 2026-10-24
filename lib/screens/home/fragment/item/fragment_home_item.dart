@@ -80,14 +80,11 @@ class FragmentHomeItem extends StatelessWidget {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
-          child: Obx(
-            () => SearchAppBarField(
-              controller: controller.searchController,
-              hint: 'search_item'.tr,
-              onChanged: controller.updateSearch,
-              onClear: controller.clearSearch,
-              hasQuery: controller.searchQuery.isNotEmpty,
-            ),
+          child: SearchAppBarField(
+            controller: controller.searchController,
+            hint: 'search_item'.tr,
+            onChanged: controller.updateSearch,
+            onClear: controller.clearSearch,
           ),
         ),
       ),
@@ -168,10 +165,19 @@ class FragmentHomeItem extends StatelessWidget {
                     child: RepaintBoundary(
                       child: MyCard(
                         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: SingleChildScrollView(
-                    child: DataTable(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Scrollbar(
+                      controller: controller.horizontalScrollController,
+                      thumbVisibility: true,
+                      trackVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: controller.horizontalScrollController,
+                        scrollDirection: Axis.horizontal,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                          child: SingleChildScrollView(
+                            child: DataTable(
                       showCheckboxColumn: true,
                       onSelectAll: (val) {
                         if (val == true) {
@@ -526,12 +532,16 @@ class FragmentHomeItem extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-          ),
-          // ── Pagination Footer ──
-          _buildPagination(context, controller),
-        ],
-      );
+            );
+          },
+        ),
+      ),
+    ),
+  ),
+  // ── Pagination Footer ──
+  _buildPagination(context, controller),
+],
+);
       }),
     ),
   ],
@@ -706,6 +716,40 @@ class FragmentHomeItem extends StatelessWidget {
           Text(
             'total_items_count'.trParams({'count': '${controller.totalCount.value}'}),
             style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
+          ),
+          // ── Horizontal Table Scroll Navigation ──
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.compare_arrows_rounded, size: 16, color: colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Scroll Table:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
+                ),
+                const SizedBox(width: 8),
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                  tooltip: 'Scroll Left',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: controller.scrollLeft,
+                ),
+                const SizedBox(width: 4),
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                  tooltip: 'Scroll Right (Expiry & Actions)',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: controller.scrollRight,
+                ),
+              ],
+            ),
           ),
           Row(
             children: [

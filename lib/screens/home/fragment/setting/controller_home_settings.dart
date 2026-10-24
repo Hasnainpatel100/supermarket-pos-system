@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:printing/printing.dart';
 
+import '../../../../model/entity_bill.dart';
+import '../../../../model/entity_bill_item.dart';
 import '../../../../service/service_storage.dart';
+import '../../../../service/service_whatsapp.dart';
 
 class ControllerHomeSettings extends GetxController {
   final ServiceStorage _storage = Get.find<ServiceStorage>();
@@ -20,6 +23,9 @@ class ControllerHomeSettings extends GetxController {
   // WhatsApp Cloud API credentials
   final rxWhatsAppToken   = ''.obs;
   final rxWhatsAppPhoneId = ''.obs;
+  final rxIsTestingWhatsApp = false.obs;
+  final rxWhatsAppTestResult = ''.obs;
+  final rxWhatsAppTestSuccess = false.obs;
 
   final storeNameController    = TextEditingController();
   final storeAddressController = TextEditingController();
@@ -43,6 +49,23 @@ class ControllerHomeSettings extends GetxController {
 
   /// Whether to announce payment aloud like a soundbox upon bill settlement
   final rxVoiceAnnouncement = true.obs;
+
+  /// Whether to show tax rate next to each item in the receipt item list (default: false, clean restaurant style)
+  final rxShowTaxInItemList = false.obs;
+
+  /// Whether to show the GST Breakup table (Taxable, CGST, SGST, CESS, Total) at the bottom of the bill
+  final rxShowGstBreakup = true.obs;
+
+  /// Whether to show the Code128 barcode of Bill No at the bottom of the bill
+  final rxShowBillBarcode = true.obs;
+
+  /// Custom bill return policy / terms & conditions text
+  final rxBillTerms = 'Goods once sold can be exchanged within 7 days with bill'.obs;
+  final billTermsController = TextEditingController();
+
+  /// Custom bill footer tagline
+  final rxBillFooterTagline = 'Thank You! Visit Again'.obs;
+  final billFooterTaglineController = TextEditingController();
 
   // ─── Barcode & Label Printer Settings (Product Labels) ────────────────────
 
@@ -167,6 +190,71 @@ class ControllerHomeSettings extends GetxController {
     );
   }
 
+  Future<void> testWhatsAppCredentials() async {
+    final token = whatsAppTokenController.text.trim();
+    final phoneId = whatsAppPhoneIdController.text.trim();
+
+    if (token.isEmpty || phoneId.isEmpty) {
+      Get.snackbar(
+        'Required',
+        'Please enter both Phone Number ID and Access Token to test.',
+        backgroundColor: Colors.orange.shade800,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    rxIsTestingWhatsApp.value = true;
+    rxWhatsAppTestResult.value = '';
+    rxWhatsAppTestSuccess.value = false;
+
+    try {
+      final res = await ServiceWhatsApp.testConnection(
+        accessToken: token,
+        phoneNumberId: phoneId,
+      );
+      final phone = res['display_phone_number'] ?? phoneId;
+      final name = res['verified_name'] ?? 'Verified';
+      rxWhatsAppTestSuccess.value = true;
+      rxWhatsAppTestResult.value = 'Connected successfully! Verified Name: $name ($phone)';
+      Get.snackbar(
+        'Connected',
+        'WhatsApp Cloud API is active ($phone)',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      rxWhatsAppTestSuccess.value = false;
+      rxWhatsAppTestResult.value = e.toString().replaceAll('Exception: ', '');
+      Get.snackbar(
+        'Connection Failed',
+        rxWhatsAppTestResult.value,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
+    } finally {
+      rxIsTestingWhatsApp.value = false;
+    }
+  }
+
+  Future<void> clearWhatsAppCredentials() async {
+    whatsAppTokenController.clear();
+    whatsAppPhoneIdController.clear();
+    rxWhatsAppToken.value = '';
+    rxWhatsAppPhoneId.value = '';
+    rxWhatsAppTestResult.value = '';
+    rxWhatsAppTestSuccess.value = false;
+    await _storage.writeString('wa_token', '');
+    await _storage.writeString('wa_phone_id', '');
+    Get.snackbar(
+      'Cleared',
+      'WhatsApp API credentials removed',
+      backgroundColor: Colors.orange.shade800,
+      colorText: Colors.white,
+    );
+  }
+
   bool get hasWhatsAppCredentials =>
       rxWhatsAppToken.value.isNotEmpty && rxWhatsAppPhoneId.value.isNotEmpty;
 
@@ -178,6 +266,13 @@ class ControllerHomeSettings extends GetxController {
     rxThermalPaperSize.value      = _storage.readString('printer_thermal_paper_size') ?? '80mm';
     rxAutoPrintBill.value         = _storage.readBool('printer_auto_print_bill') ?? false;
     rxVoiceAnnouncement.value     = _storage.readBool('pos_voice_announcement') ?? true;
+    rxShowTaxInItemList.value     = _storage.readBool('printer_show_tax_in_item_list') ?? false;
+    rxShowGstBreakup.value        = _storage.readBool('printer_show_gst_breakup') ?? true;
+    rxShowBillBarcode.value       = _storage.readBool('printer_show_bill_barcode') ?? true;
+    rxBillTerms.value             = _storage.readString('printer_bill_terms') ?? 'Goods once sold can be exchanged within 7 days with bill';
+    billTermsController.text      = rxBillTerms.value;
+    rxBillFooterTagline.value     = _storage.readString('printer_bill_footer_tagline') ?? 'Thank You! Visit Again';
+    billFooterTaglineController.text = rxBillFooterTagline.value;
 
     // Barcode & Label Printer Settings
     rxDefaultPrinter.value = _storage.readString('printer_default') ?? '';
@@ -226,6 +321,11 @@ class ControllerHomeSettings extends GetxController {
     await _storage.writeString('printer_thermal_paper_size', rxThermalPaperSize.value);
     await _storage.writeBool('printer_auto_print_bill',      rxAutoPrintBill.value);
     await _storage.writeBool('pos_voice_announcement',       rxVoiceAnnouncement.value);
+    await _storage.writeBool('printer_show_tax_in_item_list', rxShowTaxInItemList.value);
+    await _storage.writeBool('printer_show_gst_breakup',     rxShowGstBreakup.value);
+    await _storage.writeBool('printer_show_bill_barcode',    rxShowBillBarcode.value);
+    await _storage.writeString('printer_bill_terms',         rxBillTerms.value);
+    await _storage.writeString('printer_bill_footer_tagline', rxBillFooterTagline.value);
 
     // Save Barcode Label Printer Settings
     await _storage.writeString('printer_default',      rxDefaultPrinter.value);
@@ -246,6 +346,69 @@ class ControllerHomeSettings extends GetxController {
     );
   }
 
+  /// Saves Bill & Receipt Preview settings (GST breakdown, barcode, terms, taglines)
+  Future<void> saveBillSettings() async {
+    rxBillTerms.value = billTermsController.text.trim();
+    rxBillFooterTagline.value = billFooterTaglineController.text.trim();
+
+    await _storage.writeBool('printer_show_gst_breakup',     rxShowGstBreakup.value);
+    await _storage.writeBool('printer_show_bill_barcode',    rxShowBillBarcode.value);
+    await _storage.writeBool('printer_show_tax_in_item_list', rxShowTaxInItemList.value);
+    await _storage.writeBool('printer_auto_print_bill',      rxAutoPrintBill.value);
+    await _storage.writeString('printer_thermal_paper_size', rxThermalPaperSize.value);
+    await _storage.writeString('printer_bill_terms',         rxBillTerms.value);
+    await _storage.writeString('printer_bill_footer_tagline', rxBillFooterTagline.value);
+
+    Get.snackbar(
+      'Saved',
+      'Bill & receipt preview settings saved successfully',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
+  }
+
+  /// Generates a realistic sample bill with inclusive & exclusive items for preview
+  EntityBill createSampleBill() {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final bill = EntityBill(
+      id: 999,
+      billNo: 'BIL-1792831688290',
+      customerName: 'Hasnain',
+      customerPhone: '',
+      createdAtUtcMs: nowMs,
+      status: 'PAID',
+      paymentMode: 'CASH',
+      totalAmount: 75120.0,
+      tax: 3756.0,
+      discount: 0.0,
+      grandTotal: 78876.0,
+      amountReceived: 78876.0,
+      changeReturned: 0.0,
+    );
+
+    final item1 = EntityBillItem(
+      id: 1,
+      itemName: 'iPhone 17',
+      price: 75000.0,
+      qty: 1,
+      taxRate: 5.0,
+      total: 75000.0,
+    );
+
+    final item2 = EntityBillItem(
+      id: 2,
+      itemName: 'Odonil [B: 1]',
+      price: 120.0,
+      qty: 1,
+      taxRate: 5.0,
+      total: 120.0,
+    );
+
+    bill.items.addAll([item1, item2]);
+    return bill;
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
 
   @override
@@ -260,6 +423,8 @@ class ControllerHomeSettings extends GetxController {
     whatsAppTokenController.dispose();
     whatsAppPhoneIdController.dispose();
     extraInfoController.dispose();
+    billTermsController.dispose();
+    billFooterTaglineController.dispose();
     super.onClose();
   }
 }

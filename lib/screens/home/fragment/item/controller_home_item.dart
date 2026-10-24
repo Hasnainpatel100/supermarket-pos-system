@@ -118,6 +118,38 @@ class ControllerHomeItem extends GetxController {
   final RxString rxSortField = SortField.none.obs;
   final RxBool   rxSortAsc   = true.obs;
 
+  // ── Horizontal Table Scrolling ──
+  final horizontalScrollController = ScrollController();
+
+  void scrollLeft() {
+    if (horizontalScrollController.hasClients) {
+      final target = (horizontalScrollController.offset - 250).clamp(
+        0.0,
+        horizontalScrollController.position.maxScrollExtent,
+      );
+      horizontalScrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void scrollRight() {
+    if (horizontalScrollController.hasClients) {
+      final target = (horizontalScrollController.offset + 250).clamp(
+        0.0,
+        horizontalScrollController.position.maxScrollExtent,
+      );
+      horizontalScrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+
   // ─────────────────────────────────────────────────────────────────────────
   @override
   void onInit() {
@@ -270,7 +302,7 @@ class ControllerHomeItem extends GetxController {
     return ok;
   }
 
-  bool adjustStockDirect(EntityItem item, int delta) {
+  bool adjustStockDirect(EntityItem item, int delta, {String? reason, String? remarks}) {
     final ok = adjustStock(item, delta);
     if (ok) {
       _logTxn(
@@ -278,10 +310,113 @@ class ControllerHomeItem extends GetxController {
         itemName: item.name ?? '',
         type: StockTxnType.adjust,
         qty: delta,
-        remarks: delta >= 0 ? 'Manual increment' : 'Manual decrement',
+        remarks: remarks ??
+            (reason != null
+                ? '$reason (${delta >= 0 ? "Increment" : "Decrement"})'
+                : (delta >= 0 ? 'Manual increment' : 'Manual decrement')),
       );
     }
     return ok;
+  }
+
+  List<EntityItemBatch> getItemBatches(EntityItem item) {
+    if (item.id == null) return [];
+    final q = _boxBatch
+        .query(EntityItemBatch_.itemId.equals(item.id!))
+        .order(EntityItemBatch_.expiryDateUtcMs)
+        .build();
+    final batches = q.find();
+    q.close();
+    return batches.where((b) => (b.quantity ?? 0) > 0).toList();
+  }
+
+  bool adjustStockWithMultipleBatches(
+    EntityItem item,
+    List<EntityItemBatch> batches,
+    String reason, {
+    String? remarks,
+  }) {
+    if (batches.isEmpty) return false;
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    int totalAdded = 0;
+
+    for (final b in batches) {
+      final qty = b.quantity ?? 0;
+      if (qty <= 0) continue;
+      b.itemId = item.id;
+      b.barcode = item.barcode;
+      b.costPrice ??= item.costPrice;
+      b.salePrice ??= item.sellingPrice;
+      b.receivedAtUtcMs ??= now;
+      _boxBatch.put(b);
+      totalAdded += qty;
+
+      _logTxn(
+        itemId: item.id ?? 0,
+        itemName: item.name ?? '',
+        type: StockTxnType.add,
+        qty: qty,
+        remarks:
+            'Batch: ${b.batchNo ?? "-"} ($reason)${remarks != null && remarks.isNotEmpty ? " - $remarks" : ""}',
+      );
+    }
+
+    if (totalAdded == 0) return false;
+
+    item.totalQty = (item.totalQty ?? 0) + totalAdded;
+    item.hasExpiry = true;
+    item.updatedAtUtcMs = now;
+    _boxItem.put(item);
+    loadItems();
+    return true;
+  }
+
+  bool adjustStockDecrementByBatches(
+    EntityItem item,
+    Map<int, int> batchDeductions,
+    String reason, {
+    String? remarks,
+  }) {
+    if (batchDeductions.isEmpty) return false;
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    int totalDeducted = 0;
+
+    for (final entry in batchDeductions.entries) {
+      final batchId = entry.key;
+      final deductQty = entry.value;
+      if (deductQty <= 0) continue;
+
+      final batch = _boxBatch.get(batchId);
+      if (batch == null) continue;
+
+      final current = batch.quantity ?? 0;
+      final newQty = current - deductQty;
+      if (newQty <= 0) {
+        _boxBatch.remove(batchId);
+      } else {
+        batch.quantity = newQty;
+        _boxBatch.put(batch);
+      }
+      totalDeducted += deductQty;
+
+      _logTxn(
+        itemId: item.id ?? 0,
+        itemName: item.name ?? '',
+        type: StockTxnType.deduct,
+        qty: -deductQty,
+        remarks:
+            'Batch: ${batch.batchNo ?? "-"} ($reason)${remarks != null && remarks.isNotEmpty ? " - $remarks" : ""}',
+      );
+    }
+
+    if (totalDeducted == 0) return false;
+
+    final currentTotal = item.totalQty ?? 0;
+    item.totalQty = (currentTotal - totalDeducted).clamp(0, 999999999);
+    item.updatedAtUtcMs = now;
+    _boxItem.put(item);
+    loadItems();
+    return true;
   }
 
   bool adjustStockWithNewBatch(EntityItem item, int qty, String batchNo, int? expiryMs) {
@@ -525,6 +660,7 @@ class ControllerHomeItem extends GetxController {
 
   @override
   void onClose() {
+    horizontalScrollController.dispose();
     _searchDebouncer.dispose();
     searchController.dispose();
     super.onClose();

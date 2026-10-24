@@ -13,6 +13,7 @@ import '../../../../widget/list_tile_toggle.dart';
 import '../../../../widget/my_card.dart';
 import 'controller_home_settings.dart';
 import '../../../../service/service_voice.dart';
+import '../bills/dialog_bill_print_preview.dart';
 
 class FragHomeSettings extends StatelessWidget {
   FragHomeSettings({super.key});
@@ -25,7 +26,7 @@ class FragHomeSettings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Row(
@@ -56,6 +57,10 @@ class FragHomeSettings extends StatelessWidget {
                 icon: const Icon(Icons.print_outlined, size: 20),
                 text: 'printer'.tr,
               ),
+              Tab(
+                icon: const Icon(Icons.receipt_long_rounded, size: 20),
+                text: 'Bill & Preview'.tr,
+              ),
             ],
           ),
         ),
@@ -68,6 +73,7 @@ class FragHomeSettings extends StatelessWidget {
               controllerSettings: controllerSettings,
             ),
             _PrinterTab(controller: controllerSettings),
+            _BillPreviewTab(controller: controllerSettings),
           ],
         ),
       ),
@@ -1109,7 +1115,18 @@ class _PrinterTab extends StatelessWidget {
                                   Icon(Icons.receipt_outlined,
                                       size: 18, color: Colors.teal),
                                   SizedBox(width: 10),
-                                  Text('56mm / 58mm Thermal (2") - Compact Roll'),
+                                  Text('58mm Thermal (2.25") - POS Roll'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: '56mm',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.receipt_outlined,
+                                      size: 18, color: Colors.teal),
+                                  SizedBox(width: 10),
+                                  Text('56mm Thermal (2") - Compact Roll'),
                                 ],
                               ),
                             ),
@@ -1152,6 +1169,30 @@ class _PrinterTab extends StatelessWidget {
                           value: controller.rxAutoPrintBill.value,
                           activeThumbColor: Colors.teal,
                           onChanged: (v) => controller.rxAutoPrintBill.value = v,
+                        )),
+
+                    const SizedBox(height: 8),
+
+                    // Show item tax in receipt item list switch
+                    Obx(() => SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text(
+                            'Show item tax in receipt item list',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Show tax rate next to each item in the receipt (Standard restaurant style is OFF for a clean bill)',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: colorScheme.onSurface.withValues(alpha: 0.55),
+                            ),
+                          ),
+                          value: controller.rxShowTaxInItemList.value,
+                          activeThumbColor: Colors.teal,
+                          onChanged: (v) => controller.rxShowTaxInItemList.value = v,
                         )),
 
                     const Divider(height: 24),
@@ -2028,3 +2069,830 @@ class _PrinterTab extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB 3: Bill & Receipt Print Preview Settings
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BillPreviewTab extends StatefulWidget {
+  final ControllerHomeSettings controller;
+  const _BillPreviewTab({required this.controller});
+
+  @override
+  State<_BillPreviewTab> createState() => _BillPreviewTabState();
+}
+
+class _BillPreviewTabState extends State<_BillPreviewTab> {
+  void _openFullScreenPreview(BuildContext context) {
+    final sampleBill = widget.controller.createSampleBill();
+    Get.dialog(
+      DialogBillPrintPreview(
+        bill: sampleBill,
+        initialPaperSize: widget.controller.rxThermalPaperSize.value,
+      ),
+      barrierDismissible: true,
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10, left: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            title.toUpperCase(),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                  letterSpacing: 1.1,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSwitchCard({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    Color? activeColor,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return MyCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: (activeColor ?? cs.primary).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: activeColor ?? cs.primary, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: value,
+              activeThumbColor: activeColor ?? cs.primary,
+              onChanged: onChanged,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 900;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: isWide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left Column: Configuration Controls
+                    Expanded(
+                      flex: 6,
+                      child: _buildControls(context, cs, isDark),
+                    ),
+                    const SizedBox(width: 24),
+                    // Right Column: Live Interactive Receipt Mockup
+                    Expanded(
+                      flex: 4,
+                      child: _buildLiveReceiptMockup(context, cs, isDark),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildControls(context, cs, isDark),
+                    const SizedBox(height: 24),
+                    _buildLiveReceiptMockup(context, cs, isDark),
+                  ],
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _buildControls(BuildContext context, ColorScheme cs, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Top Gradient Info Banner ──
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF1E3A8A), const Color(0xFF1E293B)]
+                  : [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: cs.primary.withValues(alpha: 0.25),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Bill & Receipt Preview Settings',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Customize your receipt layout, toggle GST breakdown details, and preview changes live.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: cs.primary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.fullscreen_rounded, size: 20),
+                label: const Text('Open PDF Preview', style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: () => _openFullScreenPreview(context),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // ── SECTION 1: GST Breakdown & Tax Settings ──
+        _buildSectionHeader(context, 'GST Breakdown & Tax Display', Icons.calculate_outlined),
+
+        Obx(() => _buildSwitchCard(
+              context: context,
+              title: 'Show GST Breakdown Table',
+              subtitle: 'Display the slab-wise GST table (Taxable, CGST, SGST, CESS, Total) at the bottom of the bill',
+              icon: Icons.table_chart_rounded,
+              activeColor: Colors.teal,
+              value: widget.controller.rxShowGstBreakup.value,
+              onChanged: (val) => widget.controller.rxShowGstBreakup.value = val,
+            )),
+
+        Obx(() => _buildSwitchCard(
+              context: context,
+              title: 'Show Tax Rate in Item List',
+              subtitle: 'Display [GST 5%] beneath each item row in the receipt item list',
+              icon: Icons.percent_rounded,
+              activeColor: Colors.indigo,
+              value: widget.controller.rxShowTaxInItemList.value,
+              onChanged: (val) => widget.controller.rxShowTaxInItemList.value = val,
+            )),
+
+        const SizedBox(height: 16),
+
+        // ── SECTION 2: Bill Customization & Extra Details ──
+        _buildSectionHeader(context, 'Receipt Content & Extra Details', Icons.tune_rounded),
+
+        Obx(() => _buildSwitchCard(
+              context: context,
+              title: 'Print Barcode on Bill',
+              subtitle: 'Prints Code128 barcode of Bill Number at the bottom for quick scanner search and returns',
+              icon: Icons.qr_code_rounded,
+              activeColor: Colors.deepPurple,
+              value: widget.controller.rxShowBillBarcode.value,
+              onChanged: (val) => widget.controller.rxShowBillBarcode.value = val,
+            )),
+
+        Obx(() => _buildSwitchCard(
+              context: context,
+              title: 'Auto-Print Receipt on Bill Settlement',
+              subtitle: 'Instantly sends print job to thermal printer upon completing cash/UPI checkout',
+              icon: Icons.print_rounded,
+              activeColor: Colors.blue,
+              value: widget.controller.rxAutoPrintBill.value,
+              onChanged: (val) => widget.controller.rxAutoPrintBill.value = val,
+            )),
+
+        // Paper Size Quick Switcher
+        MyCard(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.aspect_ratio_rounded, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Thermal Paper Roll Width',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Select standard POS roll width for thermal printing.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 12),
+                Obx(() {
+                  final current = widget.controller.rxThermalPaperSize.value;
+                  return Wrap(
+                    spacing: 10,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('80mm (Standard POS)'),
+                        selected: current == '80mm',
+                        onSelected: (sel) {
+                          if (sel) widget.controller.rxThermalPaperSize.value = '80mm';
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('58mm (Compact)'),
+                        selected: current == '58mm',
+                        onSelected: (sel) {
+                          if (sel) widget.controller.rxThermalPaperSize.value = '58mm';
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('56mm (Mini)'),
+                        selected: current == '56mm',
+                        onSelected: (sel) {
+                          if (sel) widget.controller.rxThermalPaperSize.value = '56mm';
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('A4 Invoice'),
+                        selected: current == 'A4',
+                        onSelected: (sel) {
+                          if (sel) widget.controller.rxThermalPaperSize.value = 'A4';
+                        },
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+
+        // Footer Tagline & Return Policy Fields
+        MyCard(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.edit_note_rounded, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Custom Footer & Return Policy',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: widget.controller.billFooterTaglineController,
+                  decoration: InputDecoration(
+                    labelText: 'Footer Tagline (e.g. Thank You! Visit Again)',
+                    prefixIcon: const Icon(Icons.favorite_outline_rounded, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: widget.controller.billTermsController,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: 'Return / Exchange Terms & Conditions',
+                    prefixIcon: const Icon(Icons.policy_outlined, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Save Button
+        Align(
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: cs.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 3,
+            ),
+            icon: const Icon(Icons.save_rounded, size: 20),
+            label: const Text(
+              'Save Bill Settings',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            onPressed: () => widget.controller.saveBillSettings(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLiveReceiptMockup(BuildContext context, ColorScheme cs, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSectionHeader(context, 'Live Receipt Mockup', Icons.visibility_rounded),
+
+        // Thermal Paper Container
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+          child: Obx(() {
+            final storeName = widget.controller.rxStoreName.value;
+            final storeAddr = widget.controller.rxStoreAddress.value;
+            final storeGstin = widget.controller.rxStoreGstin.value;
+            final showGstBreakup = widget.controller.rxShowGstBreakup.value;
+            final showTaxInItem = widget.controller.rxShowTaxInItemList.value;
+            final showBarcode = widget.controller.rxShowBillBarcode.value;
+            final tagline = widget.controller.billFooterTaglineController.text.isNotEmpty
+                ? widget.controller.billFooterTaglineController.text
+                : widget.controller.rxBillFooterTagline.value;
+            final terms = widget.controller.billTermsController.text.isNotEmpty
+                ? widget.controller.billTermsController.text
+                : widget.controller.rxBillTerms.value;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Store Name & Header
+                Center(
+                  child: Text(
+                    storeName.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black87),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'RETAIL TAX INVOICE',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 9.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Center(
+                  child: Text(
+                    storeAddr,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey.shade800, fontSize: 10),
+                  ),
+                ),
+                if (storeGstin.isNotEmpty) ...[
+                  const SizedBox(height: 1),
+                  Center(
+                    child: Text(
+                      'GSTIN: $storeGstin',
+                      style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+
+                // Double Divider
+                _mockDivider(doubleLine: true),
+                const SizedBox(height: 6),
+
+                // Bill Metadata Row 1: Bill No
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Bill: #BIL-1792831688290',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+
+                // Bill Metadata Row 2: Customer Name on left, Date & Time in front on right
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Cust: Hasnain',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      '24/10/2026, 02:18 PM',
+                      style: TextStyle(
+                        color: Colors.grey.shade900,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                _mockDivider(dashed: true),
+                const SizedBox(height: 4),
+
+                // Items Table Header
+                const Row(
+                  children: [
+                    Expanded(flex: 4, child: Text('ITEM', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10))),
+                    Expanded(flex: 3, child: Text('QTY x RATE', textAlign: TextAlign.center, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10))),
+                    Expanded(flex: 3, child: Text('AMOUNT', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10))),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                _mockDivider(dashed: true),
+                const SizedBox(height: 4),
+
+                // Item 1: iPhone 17 (Inclusive 5% GST)
+                _mockItemRow('iPhone 17', '1 x ₹75,000', '₹75,000', showTax: showTaxInItem, taxLabel: '[GST 5%]'),
+                const SizedBox(height: 4),
+
+                // Item 2: Odonil
+                _mockItemRow('Odonil [B: 1]', '1 x ₹120', '₹120', showTax: showTaxInItem, taxLabel: '[GST 5%]'),
+
+                const SizedBox(height: 6),
+                _mockDivider(dashed: true),
+                const SizedBox(height: 4),
+
+                // Subtotal & Totals
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total Items: 2', style: TextStyle(color: Colors.black, fontSize: 10.5)),
+                    Text('Total Qty: 2', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10.5)),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Subtotal:', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 11)),
+                    Text('₹75,120.00', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 11)),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('CGST (2.5%):', style: TextStyle(color: Colors.black, fontSize: 10)),
+                    Text('₹1,878.00', style: TextStyle(color: Colors.black, fontSize: 10)),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('SGST (2.5%):', style: TextStyle(color: Colors.black, fontSize: 10)),
+                    Text('₹1,878.00', style: TextStyle(color: Colors.black, fontSize: 10)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // NET PAYABLE Box
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 1.4),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'NET PAYABLE:',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        '₹78,876.00',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // ── GST Breakup Section (Toggled live by rxShowGstBreakup) ──
+                if (showGstBreakup) ...[
+                  const Center(
+                    child: Text(
+                      '<------- GST Breakup Details ------->',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 9.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  _mockDivider(dashed: true),
+                  const SizedBox(height: 3),
+                  const Row(
+                    children: [
+                      Expanded(flex: 2, child: Text('GST IND', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 8.5))),
+                      Expanded(flex: 3, child: Text('Taxable', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 8.5))),
+                      Expanded(flex: 2, child: Text('CGST', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 8.5))),
+                      Expanded(flex: 2, child: Text('SGST', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 8.5))),
+                      Expanded(flex: 3, child: Text('Total', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 8.5))),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  _mockDivider(dashed: true),
+                  const SizedBox(height: 2),
+                  const Row(
+                    children: [
+                      Expanded(flex: 2, child: Text('1 (5%)', style: TextStyle(color: Colors.black, fontSize: 8.5))),
+                      Expanded(flex: 3, child: Text('71,364.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontSize: 8.5))),
+                      Expanded(flex: 2, child: Text('1,878.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontSize: 8.5))),
+                      Expanded(flex: 2, child: Text('1,878.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontSize: 8.5))),
+                      Expanded(flex: 3, child: Text('75,120.00', textAlign: TextAlign.right, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 8.5))),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  _mockDivider(dashed: true),
+                  const SizedBox(height: 6),
+                ],
+
+                // Payment Details
+                const Center(
+                  child: Text(
+                    '<----- Payment Details ----->',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 9.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Center(
+                  child: Text(
+                    'CASH Payment : ₹78,876.00 /-',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // ── Barcode Section (Toggled live by rxShowBillBarcode) ──
+                if (showBarcode) ...[
+                  _mockDivider(dashed: true),
+                  const SizedBox(height: 6),
+                  Center(
+                    child: Column(
+                      children: [
+                        // Barcode Representation Bars
+                        Container(
+                          height: 28,
+                          width: 170,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54, width: 0.5),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(
+                              26,
+                              (i) => Container(
+                                width: (i % 3 == 0) ? 2.5 : ((i % 2 == 0) ? 1.5 : 1.0),
+                                color: (i % 5 == 1) ? Colors.transparent : Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        const Text(
+                          'BIL-1792831688290',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                ],
+
+                // Footer
+                _mockDivider(dashed: true),
+                const SizedBox(height: 6),
+                Center(
+                  child: Text(
+                    tagline.isNotEmpty ? '*** $tagline ***' : '*** Thank You! Visit Again ***',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Center(
+                  child: Text(
+                    terms.isNotEmpty ? terms : 'Goods once sold can be exchanged within 7 days with bill',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: 9.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Center(
+                  child: Text(
+                    'Software: RH POS',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 8.5,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
+
+        const SizedBox(height: 12),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: cs.primaryContainer,
+            foregroundColor: cs.onPrimaryContainer,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          icon: const Icon(Icons.print_outlined, size: 18),
+          label: const Text('Test Print / View Full PDF', style: TextStyle(fontWeight: FontWeight.bold)),
+          onPressed: () => _openFullScreenPreview(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _mockDivider({bool dashed = false, bool doubleLine = false}) {
+    if (doubleLine) {
+      return Column(
+        children: [
+          Container(height: 1, color: Colors.black54),
+          const SizedBox(height: 2),
+          Container(height: 1, color: Colors.black54),
+        ],
+      );
+    }
+    return Container(
+      height: 1,
+      color: Colors.grey.shade400,
+    );
+  }
+
+  Widget _mockItemRow(String name, String qtyRate, String total, {bool showTax = false, String? taxLabel}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(flex: 4, child: Text(name, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 10.5))),
+            Expanded(flex: 3, child: Text(qtyRate, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade900, fontSize: 10))),
+            Expanded(flex: 3, child: Text(total, textAlign: TextAlign.right, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 10.5))),
+          ],
+        ),
+        if (showTax && taxLabel != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Text(
+              taxLabel,
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 9, fontWeight: FontWeight.w500),
+            ),
+          ),
+      ],
+    );
+  }
+}
+

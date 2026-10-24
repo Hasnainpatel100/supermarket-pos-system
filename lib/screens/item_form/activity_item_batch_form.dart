@@ -65,7 +65,7 @@ class ActivityItemBatchForm extends StatelessWidget {
                       Expanded(
                         child: AppNumberField(
                           controller: controller.mrpController,
-                          label: 'MRP',
+                          label: 'Cost',
                         ),
                       ),
                       const SizedBox(width: 12),

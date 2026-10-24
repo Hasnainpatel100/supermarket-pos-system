@@ -139,14 +139,12 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
-          child: Obx(
-            () => SearchAppBarField(
-              controller: controller.searchController,
-              hint: 'Search by Invoice No, Customer, Phone...'.tr,
-              onChanged: controller.updateSearch,
-              onClear: controller.clearSearch,
-              hasQuery: controller.rxSearchQuery.isNotEmpty,
-            ),
+          child: SearchAppBarField(
+            controller: controller.searchController,
+            hint: 'Search by Invoice No, Customer, Phone...'.tr,
+            onChanged: controller.updateSearch,
+            onSubmitted: controller.onSearchSubmitted,
+            onClear: controller.clearSearch,
           ),
         ),
       ),

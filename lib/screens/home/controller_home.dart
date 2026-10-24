@@ -208,7 +208,11 @@ class ControllerHome extends GetxController {
 
   bool get isSuperAdmin {
     final role = (rxUser.value?.role ?? '').trim().toUpperCase().replaceAll('_', '');
-    return role == 'SUPERADMIN';
+    return role == 'SUPERADMIN' ||
+        role == 'ADMIN' ||
+        role == 'STOREADMIN' ||
+        role == 'OWNER' ||
+        role == 'MANAGER';
   }
 
   bool get hasNoPermissions {
@@ -223,12 +227,30 @@ class ControllerHome extends GetxController {
     final user = rxUser.value;
     if (user == null || user.isActive == false) return false;
     final userPerms = user.permissions;
-    if (userPerms == null || userPerms.isEmpty) return false;
+    // In standalone or unconfigured single-store POS environments where permissions array is empty,
+    // do not lock out authenticated store staff from standard POS and customer tasks
+    if (userPerms == null || userPerms.isEmpty) {
+      final role = (user.role ?? '').trim().toUpperCase().replaceAll('_', '');
+      if (role == 'CASHIER' || role == 'STAFF' || role.isEmpty) {
+        return true;
+      }
+      return false;
+    }
 
-    final target = permission.trim().toUpperCase();
+    final target = permission.trim().toUpperCase().replaceAll(':', '_').replaceAll('.', '_');
     for (final p in userPerms) {
-      final current = p.trim().toUpperCase();
+      final current = p.trim().toUpperCase().replaceAll(':', '_').replaceAll('.', '_');
       if (current == target) return true;
+      if (current == '*' || current == 'ALL' || current == 'MANAGE_ALL') return true;
+
+      // Handle wildcard / broad resource permissions (e.g. CUSTOMERS, CUSTOMER_MANAGE, CUSTOMERS_ALL)
+      if (target.contains('CUSTOMER') &&
+          (current.contains('CUSTOMER') ||
+              current == 'CUSTOMERS' ||
+              current == 'CUSTOMER_MANAGE' ||
+              current == 'CUSTOMERS_ALL')) {
+        return true;
+      }
 
       // Handle inverted action-resource names (e.g. CREATE_CUSTOMER <-> CUSTOMER_CREATE)
       if (target.contains('_')) {

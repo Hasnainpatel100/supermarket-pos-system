@@ -325,8 +325,8 @@ class ControllerCreateQuotation extends GetxController {
       quote.discount = rxTotalDiscount.value;
       quote.tax = rxTaxAmount.value;
       quote.taxableAmount = rxTaxableAmount.value;
-      quote.cgstAmount = rxTaxAmount.value / 2.0;
-      quote.sgstAmount = rxTaxAmount.value / 2.0;
+      quote.cgstAmount = double.parse((rxTaxAmount.value / 2.0).toStringAsFixed(2));
+      quote.sgstAmount = double.parse((rxTaxAmount.value / 2.0).toStringAsFixed(2));
       quote.additionalCharges =
           double.tryParse(additionalChargesCtrl.text) ?? 0.0;
       quote.grandTotal = rxGrandTotal.value;
@@ -440,8 +440,8 @@ class ControllerCreateQuotation extends GetxController {
       subtotal: rxSubtotal.value,
       discount: rxTotalDiscount.value,
       taxAmount: rxTaxAmount.value,
-      cgstAmount: rxTaxAmount.value / 2,
-      sgstAmount: rxTaxAmount.value / 2,
+      cgstAmount: double.parse((rxTaxAmount.value / 2.0).toStringAsFixed(2)),
+      sgstAmount: double.parse((rxTaxAmount.value / 2.0).toStringAsFixed(2)),
       additionalCharges: double.tryParse(additionalChargesCtrl.text),
       grandTotal: rxGrandTotal.value,
       notes: notesCtrl.text,

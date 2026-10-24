@@ -24,6 +24,7 @@ class SearchAppBarField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
   final VoidCallback? onClear;
   final bool hasQuery;
   final Color? backgroundColor;
@@ -35,6 +36,7 @@ class SearchAppBarField extends StatelessWidget {
     required this.controller,
     required this.hint,
     this.onChanged,
+    this.onSubmitted,
     this.onClear,
     this.hasQuery = false,
     this.backgroundColor,
@@ -59,18 +61,25 @@ class SearchAppBarField extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
+        textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           prefixIcon: Icon(Icons.search_rounded,
               color: iconColor ?? Colors.blue.shade600, size: 22),
-          suffixIcon: hasQuery
-              ? IconButton(
-                  icon: Icon(Icons.close_rounded,
-                      color: closeIconColor ?? Colors.red.shade400, size: 20),
-                  onPressed: onClear,
-                )
-              : const SizedBox.shrink(),
+          suffixIcon: ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (context, value, _) {
+              final show = hasQuery || value.text.isNotEmpty;
+              return show
+                  ? IconButton(
+                      icon: Icon(Icons.close_rounded,
+                          color: closeIconColor ?? Colors.red.shade400, size: 20),
+                      onPressed: onClear,
+                    )
+                  : const SizedBox.shrink();
+            },
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -81,6 +90,7 @@ class SearchAppBarField extends StatelessWidget {
           fillColor: backgroundColor ?? Theme.of(context).cardColor,
         ),
         onChanged: onChanged,
+        onSubmitted: onSubmitted,
       ),
     );
   }

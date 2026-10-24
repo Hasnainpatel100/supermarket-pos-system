@@ -12,6 +12,8 @@ import '../account/controller_home_account.dart';
 import '../account/dialog_start_day_shift.dart';
 import '../setting/controller_home_settings.dart';
 import '../bills/dialog_bill_print_preview.dart';
+import '../../../../service/service_whatsapp.dart';
+import '../../../../service/service_bill_pdf.dart';
 import 'activity_split_bill.dart';
 import 'controller_home_pos.dart';
 import 'dialog_parked_bills.dart';
@@ -1767,6 +1769,58 @@ void _previewCurrentBill(ControllerHomePos controller, ControllerHomeSettings se
   );
 }
 
+Future<void> _sendCurrentBillOnWhatsApp(ControllerHomePos controller, ControllerHomeSettings settings) async {
+  final session = controller.activeSession;
+  if (session.rxCartItems.isEmpty) {
+    SnackbarUtil.showError('Cart is empty. Add items to send receipt.');
+    return;
+  }
+  final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+  final todayDate = DateFormat('d/MM/yyyy').format(DateTime.now());
+  final tempBill = EntityBill(
+    billNo: "PREVIEW-${session.id.replaceAll(' ', '')}",
+    customerName: session.rxSelectedCustomer.value?.name ??
+        (session.rxQuickCustomerName.value.isNotEmpty ? session.rxQuickCustomerName.value : "Walk-in"),
+    customerPhone: session.rxSelectedCustomer.value?.phone ?? session.rxQuickCustomerPhone.value,
+    totalAmount: session.rxSubTotal.value,
+    discount: session.rxDiscountAmount.value,
+    tax: session.rxTaxAmount.value,
+    roundOff: session.rxRoundOffAmount.value,
+    grandTotal: session.rxGrandTotal.value,
+    status: session.rxDueAmount.value > 0.01 ? "DUE" : "PAID",
+    paymentMode: session.rxPaymentMode.value,
+    amountReceived: session.rxAmountReceived.value,
+    changeReturned: session.rxChangeReturned.value,
+    utrNumber: session.rxUtrNumber.value,
+    billDate: todayDate,
+    createdAtUtcMs: now,
+  );
+  for (var ci in session.rxCartItems) {
+    tempBill.items.add(ci);
+  }
+
+  try {
+    SnackbarUtil.showSuccess('Preparing Bill PDF for WhatsApp...');
+    final paperSize = settings.rxThermalPaperSize.value.isNotEmpty
+        ? settings.rxThermalPaperSize.value
+        : '80mm';
+    final file = await ServiceBillPdf.generate(tempBill, settings, paperSize: paperSize);
+
+    ServiceWhatsApp.showDispatchDialog(
+      context: Get.context ?? Get.overlayContext!,
+      pdfFile: file,
+      phone: tempBill.customerPhone ?? '',
+      invoiceNumber: tempBill.billNo ?? 'N/A',
+      storeName: settings.rxStoreName.value,
+      total: tempBill.grandTotal ?? 0.0,
+      customerName: tempBill.customerName,
+      settings: settings,
+    );
+  } catch (e) {
+    SnackbarUtil.showError('Failed to prepare PDF for WhatsApp: $e');
+  }
+}
+
 // ─── Payment Section ─────────────────────────────────────────────────────────
 
 class _PaymentSection extends StatelessWidget {
@@ -2481,6 +2535,24 @@ class _SettleButtons extends StatelessWidget {
                     side: BorderSide(color: cs.primary.withValues(alpha: 0.4)),
                   ),
                   child: Icon(Icons.visibility_outlined, size: 16, color: cs.primary),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            // Send on WhatsApp
+            SizedBox(
+              height: 34,
+              child: Tooltip(
+                message: 'Send Bill on WhatsApp',
+                child: FilledButton(
+                  onPressed: () => _sendCurrentBillOnWhatsApp(controller, settings),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Icon(Icons.chat_rounded, size: 16),
                 ),
               ),
             ),
@@ -4482,11 +4554,17 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Tax (${session.rxTaxRate.value}%)',
+                          session.rxExclusiveTaxAmount.value > 0
+                              ? (session.rxInclusiveTaxAmount.value > 0
+                                  ? 'Tax (GST Incl. + Addl.)'
+                                  : 'Tax (GST Addl.)')
+                              : 'Tax (GST Included)',
                           style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                         ),
                         Text(
-                          '+ ₹${tax.toStringAsFixed(2)}',
+                          session.rxExclusiveTaxAmount.value > 0
+                              ? '+ ₹${session.rxExclusiveTaxAmount.value.toStringAsFixed(2)}'
+                              : '₹${session.rxInclusiveTaxAmount.value.toStringAsFixed(2)} (Incl.)',
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
@@ -5064,6 +5142,32 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Send on WhatsApp
+                      Tooltip(
+                        message: 'Send Bill on WhatsApp',
+                        child: SizedBox(
+                          height: 44,
+                          width: 44,
+                          child: FilledButton(
+                            onPressed: cartItems.isEmpty
+                                ? null
+                                : () => _sendCurrentBillOnWhatsApp(controller, settings),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF25D366),
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.chat_rounded,
+                              size: 19,
                             ),
                           ),
                         ),

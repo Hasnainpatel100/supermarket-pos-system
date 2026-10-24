@@ -16,6 +16,10 @@ class ControllerSalesReturns extends GetxController {
   final searchController = TextEditingController();
   final RxDouble rxTotalRefunded = 0.0.obs;
   final RxInt rxTotalCount = 0.obs;
+  final RxInt rxTotalUnitsReturned = 0.obs;
+  final RxString rxTopReturnedName = '-'.obs;
+  final RxInt rxTopReturnedQty = 0.obs;
+  final RxList<MostReturnedItem> rxMostReturnedItems = <MostReturnedItem>[].obs;
   final RxBool rxLoading = false.obs;
 
   // Pagination
@@ -74,20 +78,86 @@ class ControllerSalesReturns extends GetxController {
       }
 
       double total = 0.0;
+      int units = 0;
+      final Map<String, _ReturnedItemAccumulator> tracker = {};
+
       for (var r in all) {
         total += (r.refundAmount ?? 0.0);
+        for (var it in r.items) {
+          final rawName = (it.itemName ?? '').trim();
+          final rawBarcode = (it.itemBarcode ?? '').trim();
+          final key = rawName.isNotEmpty
+              ? rawName.toLowerCase()
+              : (rawBarcode.isNotEmpty ? rawBarcode.toLowerCase() : 'unknown');
+          final qty = it.qty ?? 1;
+          units += qty;
+
+          final acc = tracker.putIfAbsent(
+            key,
+            () => _ReturnedItemAccumulator(
+              name: rawName.isNotEmpty
+                  ? rawName
+                  : (rawBarcode.isNotEmpty ? 'Item #$rawBarcode' : 'Item'),
+              barcode: rawBarcode,
+            ),
+          );
+          acc.returnCount += 1;
+          acc.totalQty += qty;
+          acc.totalRefund += (it.total ?? ((it.price ?? 0.0) * qty));
+          if (r.returnDate != null && r.returnDate!.isNotEmpty) {
+            acc.lastReturnDate = r.returnDate;
+          }
+        }
       }
+
       rxTotalRefunded.value = total;
       rxTotalCount.value = all.length;
+      rxTotalUnitsReturned.value = units;
+
+      final ranked = tracker.values
+          .map((a) => MostReturnedItem(
+                itemName: a.name,
+                barcode: a.barcode,
+                returnCount: a.returnCount,
+                totalQty: a.totalQty,
+                totalRefund: a.totalRefund,
+                lastReturnDate: a.lastReturnDate,
+              ))
+          .toList()
+        ..sort((a, b) {
+          final cmp = b.totalQty.compareTo(a.totalQty);
+          return cmp != 0 ? cmp : b.returnCount.compareTo(a.returnCount);
+        });
+
+      rxMostReturnedItems.assignAll(ranked);
+      if (ranked.isNotEmpty) {
+        rxTopReturnedName.value = ranked.first.itemName;
+        rxTopReturnedQty.value = ranked.first.totalQty;
+      } else {
+        rxTopReturnedName.value = '-';
+        rxTopReturnedQty.value = 0;
+      }
     } finally {
       rxLoading.value = false;
     }
   }
 
   void updateSearch(String q) {
-    rxSearchQuery.value = q;
+    String sanitized = q.replaceAll('\r', '').replaceAll('\n', '');
+    if (sanitized.contains('/')) {
+      sanitized = sanitized.replaceAll('/', '-');
+      searchController.value = TextEditingValue(
+        text: sanitized,
+        selection: TextSelection.collapsed(offset: sanitized.length),
+      );
+    }
+    rxSearchQuery.value = sanitized;
     currentPage.value = 0;
     loadReturns();
+  }
+
+  void onSearchSubmitted(String q) {
+    updateSearch(q);
   }
 
   void clearSearch() {
@@ -180,3 +250,36 @@ class ControllerSalesReturns extends GetxController {
     );
   }
 }
+
+class MostReturnedItem {
+  final String itemName;
+  final String barcode;
+  final int returnCount;
+  final int totalQty;
+  final double totalRefund;
+  final String? lastReturnDate;
+
+  MostReturnedItem({
+    required this.itemName,
+    required this.barcode,
+    required this.returnCount,
+    required this.totalQty,
+    required this.totalRefund,
+    this.lastReturnDate,
+  });
+}
+
+class _ReturnedItemAccumulator {
+  final String name;
+  final String barcode;
+  int returnCount = 0;
+  int totalQty = 0;
+  double totalRefund = 0.0;
+  String? lastReturnDate;
+
+  _ReturnedItemAccumulator({
+    required this.name,
+    required this.barcode,
+  });
+}
+

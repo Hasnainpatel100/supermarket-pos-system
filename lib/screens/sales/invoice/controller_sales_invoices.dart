@@ -38,6 +38,10 @@ class ControllerSalesInvoices extends GetxController {
   final Rx<InvoiceDateRange> rxDateRange = InvoiceDateRange.last365Days.obs;
   final RxSet<int> rxSelectedIds = <int>{}.obs;
 
+  // Cached in-memory bills for lightning-fast, zero-lag search
+  List<EntityBill> _allBills = [];
+  Worker? _searchWorker;
+
   // Pagination
   static const int _pageSize = 20;
   final RxInt currentPage = 0.obs;
@@ -78,117 +82,221 @@ class ControllerSalesInvoices extends GetxController {
     super.onInit();
     final ob = Get.find<ServiceObjectBox>();
     _boxBill = ob.box<EntityBill>();
+
+    // Debounce search query to prevent lag/hang while typing
+    _searchWorker = debounce(
+      rxSearchQuery,
+      (_) => _filterInvoices(),
+      time: const Duration(milliseconds: 250),
+    );
+
     loadInvoices();
   }
 
-  void loadInvoices() {
+  @override
+  void onClose() {
+    _searchWorker?.dispose();
+    searchController.dispose();
+    super.onClose();
+  }
+
+  /// Loads bills from ObjectBox, optionally recomputes KPI metrics, and applies filters.
+  void loadInvoices({bool recomputeMetrics = true}) {
     rxLoading.value = true;
     try {
-      final allBills = _boxBill.query().order(EntityBill_.id, flags: Order.descending).build().find();
+      _allBills = _boxBill.query().order(EntityBill_.id, flags: Order.descending).build().find();
 
-      final now = DateTime.now();
-      DateTime? filterFrom;
-
-      switch (rxDateRange.value) {
-        case InvoiceDateRange.today:
-          filterFrom = DateTime(now.year, now.month, now.day);
-          break;
-        case InvoiceDateRange.yesterday:
-          filterFrom = DateTime(now.year, now.month, now.day - 1);
-          break;
-        case InvoiceDateRange.thisWeek:
-          filterFrom = now.subtract(Duration(days: now.weekday - 1));
-          break;
-        case InvoiceDateRange.thisMonth:
-          filterFrom = DateTime(now.year, now.month, 1);
-          break;
-        case InvoiceDateRange.last365Days:
-          filterFrom = now.subtract(const Duration(days: 365));
-          break;
-        case InvoiceDateRange.all:
-          filterFrom = null;
-          break;
+      if (recomputeMetrics) {
+        _computeMetrics(_allBills);
       }
 
-      final query = rxSearchQuery.value.trim().toLowerCase();
-
-      final filtered = allBills.where((bill) {
-        // Date check
-        if (filterFrom != null && bill.createdAtUtcMs != null) {
-          final billTime = DateTime.fromMillisecondsSinceEpoch(bill.createdAtUtcMs!, isUtc: true).toLocal();
-          if (billTime.isBefore(filterFrom)) return false;
-        }
-
-        // Search check
-        if (query.isNotEmpty) {
-          final noMatch = (bill.billNo ?? '').toLowerCase().contains(query);
-          final nameMatch = (bill.customerName ?? '').toLowerCase().contains(query);
-          final phoneMatch = (bill.customerPhone ?? '').toLowerCase().contains(query);
-          if (!noMatch && !nameMatch && !phoneMatch) return false;
-        }
-
-        return true;
-      }).toList();
-
-      rxInvoices.assignAll(filtered);
-      totalCount.value = filtered.length;
-      if (currentPage.value * _pageSize >= totalCount.value && totalCount.value > 0) {
-        currentPage.value = 0;
-      }
-
-      // Compute metrics
-      double total = 0.0;
-      double paid = 0.0;
-      double unpaid = 0.0;
-      int cancelled = 0;
-      double cancelledAmt = 0.0;
-
-      for (var b in allBills) {
-        if (b.status == 'CANCELLED') {
-          cancelled++;
-          cancelledAmt += (b.grandTotal ?? 0.0);
-          continue;
-        }
-        final grand = b.grandTotal ?? 0.0;
-        final rec = b.amountReceived ?? (b.status == 'PAID' ? grand : 0.0);
-        final due = b.dueAmount ?? (grand - rec).clamp(0.0, double.infinity);
-
-        total += grand;
-        paid += rec;
-        unpaid += due;
-      }
-
-      rxTotalSales.value = total;
-      rxTotalPaid.value = paid;
-      rxTotalUnpaid.value = unpaid;
-      rxCancelledCount.value = cancelled;
-      rxCancelledAmount.value = cancelledAmt;
+      _filterInvoices();
     } finally {
       rxLoading.value = false;
     }
   }
 
-  void updateSearch(String q) {
-    rxSearchQuery.value = q;
+  void _computeMetrics(List<EntityBill> bills) {
+    double total = 0.0;
+    double paid = 0.0;
+    double unpaid = 0.0;
+    int cancelled = 0;
+    double cancelledAmt = 0.0;
+
+    for (var b in bills) {
+      if (b.status == 'CANCELLED') {
+        cancelled++;
+        cancelledAmt += (b.grandTotal ?? 0.0);
+        continue;
+      }
+      final grand = b.grandTotal ?? 0.0;
+      final rec = b.amountReceived ?? (b.status == 'PAID' ? grand : 0.0);
+      final due = b.dueAmount ?? (grand - rec).clamp(0.0, double.infinity);
+
+      total += grand;
+      paid += rec;
+      unpaid += due;
+    }
+
+    rxTotalSales.value = total;
+    rxTotalPaid.value = paid;
+    rxTotalUnpaid.value = unpaid;
+    rxCancelledCount.value = cancelled;
+    rxCancelledAmount.value = cancelledAmt;
+  }
+
+  /// Fast in-memory filtering that supports flexible invoice number formatting
+  /// (e.g. BIL/123 matches BIL-123, spaces, dashes, slashes, or raw numbers).
+  void _filterInvoices() {
+    final now = DateTime.now();
+    DateTime? filterFrom;
+
+    switch (rxDateRange.value) {
+      case InvoiceDateRange.today:
+        filterFrom = DateTime(now.year, now.month, now.day);
+        break;
+      case InvoiceDateRange.yesterday:
+        filterFrom = DateTime(now.year, now.month, now.day - 1);
+        break;
+      case InvoiceDateRange.thisWeek:
+        filterFrom = now.subtract(Duration(days: now.weekday - 1));
+        break;
+      case InvoiceDateRange.thisMonth:
+        filterFrom = DateTime(now.year, now.month, 1);
+        break;
+      case InvoiceDateRange.last365Days:
+        filterFrom = now.subtract(const Duration(days: 365));
+        break;
+      case InvoiceDateRange.all:
+        filterFrom = null;
+        break;
+    }
+
+    final query = rxSearchQuery.value.trim();
+    final bool isSpecificBillSearch = query.isNotEmpty &&
+        (query.toLowerCase().startsWith('bil') ||
+            RegExp(r'\d{5,}').hasMatch(query));
+
+    final effectiveFilterFrom = isSpecificBillSearch ? null : filterFrom;
+
+    // 1. Try filtering with both date range and search query
+    List<EntityBill> filtered = _allBills.where((bill) {
+      // Date check
+      if (effectiveFilterFrom != null && bill.createdAtUtcMs != null) {
+        final billTime = DateTime.fromMillisecondsSinceEpoch(bill.createdAtUtcMs!, isUtc: true).toLocal();
+        if (billTime.isBefore(effectiveFilterFrom)) return false;
+      }
+
+      // Search check
+      if (query.isNotEmpty) {
+        if (!_matchesBill(bill, query)) return false;
+      }
+
+      return true;
+    }).toList();
+
+    // 2. Intelligent search fallback: if searching specifically by text / invoice number
+    // and no matches were found within the active date range, search across ALL bills.
+    if (filtered.isEmpty && query.isNotEmpty && filterFrom != null) {
+      filtered = _allBills.where((bill) => _matchesBill(bill, query)).toList();
+    }
+
+    rxInvoices.assignAll(filtered);
+    totalCount.value = filtered.length;
     currentPage.value = 0;
-    loadInvoices();
+  }
+
+  /// Comprehensive matcher that handles delimiter differences (/ vs -),
+  /// punctuation stripping, direct contains, customer name, phone, and bill ID.
+  bool _matchesBill(EntityBill bill, String query) {
+    if (query.isEmpty) return true;
+
+    final qLower = query.toLowerCase().trim();
+    final billNoRaw = (bill.billNo ?? '').toLowerCase().trim();
+
+    // 1. Direct contains check
+    if (billNoRaw.contains(qLower)) return true;
+
+    // 2. Delimiter swap: / replaced with - and vice-versa
+    final qSwapHyphen = qLower.replaceAll('/', '-');
+    if (billNoRaw.contains(qSwapHyphen)) return true;
+
+    final qSwapSlash = qLower.replaceAll('-', '/');
+    if (billNoRaw.contains(qSwapSlash)) return true;
+
+    // 3. Alphanumeric stripped check:
+    // Strips non-alphanumeric chars (/, -, _, #, spaces) so "BIL/1792776259243"
+    // matches "BIL-1792776259243" or "BIL 1792776259243" perfectly.
+    final qAlphaNum = qLower.replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final billNoAlphaNum = billNoRaw.replaceAll(RegExp(r'[^a-z0-9]'), '');
+    if (qAlphaNum.isNotEmpty && billNoAlphaNum.isNotEmpty) {
+      if (billNoAlphaNum.contains(qAlphaNum)) return true;
+    }
+
+    // 4. Match by ObjectBox entity ID
+    final idStr = bill.id.toString();
+    if (idStr == qAlphaNum || idStr.contains(qAlphaNum)) return true;
+
+    // 5. Customer Name & Phone
+    final custName = (bill.customerName ?? '').toLowerCase();
+    if (custName.contains(qLower)) return true;
+
+    final custPhone = (bill.customerPhone ?? '').toLowerCase();
+    if (custPhone.contains(qLower)) return true;
+
+    // 6. E-Way Bill & Payment Mode
+    final eway = (bill.ewayBillNo ?? '').toLowerCase();
+    if (eway.contains(qLower)) return true;
+
+    return false;
+  }
+
+  void updateSearch(String q) {
+    String sanitized = q.replaceAll('\r', '').replaceAll('\n', '');
+    if (sanitized.contains('/')) {
+      sanitized = sanitized.replaceAll('/', '-');
+      searchController.value = TextEditingValue(
+        text: sanitized,
+        selection: TextSelection.collapsed(offset: sanitized.length),
+      );
+    }
+    rxSearchQuery.value = sanitized;
+  }
+
+  void onSearchSubmitted(String q) {
+    String sanitized = q.replaceAll('\r', '').replaceAll('\n', '').replaceAll('/', '-').trim();
+    if (searchController.text != sanitized) {
+      searchController.value = TextEditingValue(
+        text: sanitized,
+        selection: TextSelection.collapsed(offset: sanitized.length),
+      );
+    }
+    rxSearchQuery.value = sanitized;
+    // Trigger immediate search without debounce wait
+    _searchWorker?.dispose();
+    _filterInvoices();
+    _searchWorker = debounce(
+      rxSearchQuery,
+      (_) => _filterInvoices(),
+      time: const Duration(milliseconds: 200),
+    );
   }
 
   void clearSearch() {
     searchController.clear();
     rxSearchQuery.value = '';
-    currentPage.value = 0;
-    loadInvoices();
+    _filterInvoices();
   }
 
   void setSearch(String q) {
-    updateSearch(q);
+    final sanitized = q.replaceAll('/', '-').trim();
+    searchController.text = sanitized;
+    rxSearchQuery.value = sanitized;
   }
 
   void setDateRange(InvoiceDateRange range) {
     rxDateRange.value = range;
-    currentPage.value = 0;
-    loadInvoices();
+    _filterInvoices();
   }
 
   void toggleSelectAll(bool? value) {
@@ -287,7 +395,12 @@ class ControllerSalesInvoices extends GetxController {
               _boxBill.put(bill);
               Get.back();
               loadInvoices();
-              Get.snackbar('Cancelled', 'Invoice #${bill.billNo} marked as cancelled.', backgroundColor: Colors.orange, colorText: Colors.white);
+              Get.snackbar(
+                'Cancelled',
+                'Invoice #${bill.billNo} marked as cancelled.',
+                backgroundColor: Colors.orange,
+                colorText: Colors.white,
+              );
             },
             child: const Text('Yes, Cancel'),
           ),
@@ -309,7 +422,12 @@ class ControllerSalesInvoices extends GetxController {
               _boxBill.remove(bill.id);
               Get.back();
               loadInvoices();
-              Get.snackbar('Deleted', 'Invoice removed.', backgroundColor: Colors.red, colorText: Colors.white);
+              Get.snackbar(
+                'Deleted',
+                'Invoice removed.',
+                backgroundColor: Colors.red,
+                colorText: Colors.white,
+              );
             },
             child: const Text('Delete'),
           ),
@@ -362,7 +480,12 @@ class ControllerSalesInvoices extends GetxController {
     }
 
     loadInvoices();
-    Get.snackbar('Duplicated', 'Invoice duplicated as #$nextNo', backgroundColor: Colors.indigo, colorText: Colors.white);
+    Get.snackbar(
+      'Duplicated',
+      'Invoice duplicated as #$nextNo',
+      backgroundColor: Colors.indigo,
+      colorText: Colors.white,
+    );
   }
 
   String _generateNextBillNo() {

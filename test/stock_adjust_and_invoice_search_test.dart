@@ -408,18 +408,19 @@ void main() {
   });
 
   group('POS Dynamic Tax Calculation & Bill Details Update Tests', () {
+    double calcTax(double gross, double r, bool inc) =>
+        inc ? gross * (r / (100.0 + r)) : gross * (r / 100.0);
+    double calcExTax(bool inc, double t) => inc ? 0.0 : t;
+
     test('Inclusive Tax: item 75000 with 5% GST already includes tax inside 75000', () {
       const price = 75000.0;
       const rate = 5.0;
-      const isInclusive = true;
 
       double lineGross = price * 1;
       double subTotal = lineGross;
-      double taxVal = isInclusive
-          ? lineGross * (rate / (100.0 + rate))
-          : lineGross * (rate / 100.0);
+      double taxVal = calcTax(lineGross, rate, true);
       double tax = double.parse(taxVal.toStringAsFixed(2));
-      double exclusiveTax = isInclusive ? 0.0 : tax;
+      double exclusiveTax = calcExTax(true, tax);
       double grandTotal = subTotal + exclusiveTax;
 
       expect(tax, equals(3571.43));
@@ -429,15 +430,12 @@ void main() {
     test('Exclusive Tax: item 75000 with 5% GST adds tax on top of 75000', () {
       const price = 75000.0;
       const rate = 5.0;
-      const isInclusive = false;
 
       double lineGross = price * 1;
       double subTotal = lineGross;
-      double taxVal = isInclusive
-          ? lineGross * (rate / (100.0 + rate))
-          : lineGross * (rate / 100.0);
+      double taxVal = calcTax(lineGross, rate, false);
       double tax = double.parse(taxVal.toStringAsFixed(2));
-      double exclusiveTax = isInclusive ? 0.0 : tax;
+      double exclusiveTax = calcExTax(false, tax);
       double grandTotal = subTotal + exclusiveTax;
 
       expect(tax, equals(3750.00));

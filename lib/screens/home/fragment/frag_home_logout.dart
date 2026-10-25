@@ -8,6 +8,9 @@ import '../../../repository/repo_storage.dart';
 import '../../../util/app_route.dart';
 import '../controller_home.dart';
 import 'account/controller_home_account.dart';
+import 'pos/controller_home_pos.dart';
+import 'item/controller_home_item.dart';
+import 'dashboard/controller_home_dashboard.dart';
 
 /// Confirmation screen for logging out of the application.
 class FragHomeLogout extends StatelessWidget {
@@ -30,6 +33,15 @@ class FragHomeLogout extends StatelessWidget {
       }
       if (Get.isRegistered<ControllerHomeAccount>()) {
         Get.delete<ControllerHomeAccount>(force: true);
+      }
+      if (Get.isRegistered<ControllerHomePos>()) {
+        Get.delete<ControllerHomePos>(force: true);
+      }
+      if (Get.isRegistered<ControllerHomeItem>()) {
+        Get.delete<ControllerHomeItem>(force: true);
+      }
+      if (Get.isRegistered<ControllerHomeDashboard>()) {
+        Get.delete<ControllerHomeDashboard>(force: true);
       }
     } catch (e) {
       debugPrint('Notice during logout: $e');

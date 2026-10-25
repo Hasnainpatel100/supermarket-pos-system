@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../model/entity_item.dart';
-import 'controller_home_pos.dart';
+import '../../../../service/service_currency.dart';
 
 class PosItemCard extends StatelessWidget {
   final EntityItem item;
@@ -12,7 +12,7 @@ class PosItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ControllerHomePos());
+    final ServiceCurrency serviceCurrency = Get.find<ServiceCurrency>();
 
     final colorScheme = Theme.of(context).colorScheme;
     final stock = item.totalQty ?? 0;
@@ -167,7 +167,7 @@ class PosItemCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            controller.serviceCurrency.rxCurrency.value,
+                            serviceCurrency.rxCurrency.value,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: colorScheme.primary,

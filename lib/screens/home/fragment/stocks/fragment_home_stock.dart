@@ -12,7 +12,9 @@ class FragmentHomeStock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ControllerHomeStock());
+    final controller = Get.isRegistered<ControllerHomeStock>()
+        ? Get.find<ControllerHomeStock>()
+        : Get.put(ControllerHomeStock());
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

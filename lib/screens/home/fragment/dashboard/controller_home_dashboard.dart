@@ -176,8 +176,11 @@ class ControllerHomeDashboard extends GetxController {
     expiredItemCount.value = expiredIds.length;
 
     // ── Low stock: items with totalQty <= 0 ──
-    final allItems = _boxItem.getAll();
-    lowStockItemCount.value = allItems.where((i) => (i.totalQty ?? 0) <= 0 && (i.isActive ?? true)).length;
+    final lowStockQuery = _boxItem
+        .query(EntityItem_.totalQty.lessThan(1).and(EntityItem_.isActive.equals(true)))
+        .build();
+    lowStockItemCount.value = lowStockQuery.count();
+    lowStockQuery.close();
 
     // ── Today ──
     final todayStr = dateFmt.format(now);
@@ -274,10 +277,17 @@ class ControllerHomeDashboard extends GetxController {
     weeklyOverview.value = List.from(inflow);
     overviewLabels.value = List.from(cfLabels);
 
-    // ── Top Selling Items from all bill items ──
-    final allBillItems = _boxBillItem.getAll();
+    // ── Top Selling Items from recent bill items ──
+    final biQuery = _boxBillItem
+        .query()
+        .order(EntityBillItem_.id, flags: Order.descending)
+        .build()
+      ..limit = 1000;
+    final recentBillItems = biQuery.find();
+    biQuery.close();
+
     final qtyMap = <String, int>{};
-    for (final bi in allBillItems) {
+    for (final bi in recentBillItems) {
       final name = bi.itemName ?? 'Unknown';
       qtyMap[name] = (qtyMap[name] ?? 0) + (bi.qty ?? 0);
     }

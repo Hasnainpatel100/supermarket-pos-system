@@ -112,7 +112,9 @@ class FragmentHomePos extends StatelessWidget {
         );
       }
 
-      final controller = Get.put(ControllerHomePos());
+      final controller = Get.isRegistered<ControllerHomePos>()
+          ? Get.find<ControllerHomePos>()
+          : Get.put(ControllerHomePos(), permanent: true);
       final cs = Theme.of(context).colorScheme;
 
       return Scaffold(
@@ -1634,7 +1636,7 @@ void _showCustomUpiDialog(BuildContext context, BillSession session) {
         ),
       ],
     ),
-  );
+  ).then((_) => textController.dispose());
 }
 
 void _showCustomerUpiQrDialog(
@@ -3547,6 +3549,8 @@ class _FoodPhotoCardState extends State<_FoodPhotoCard> {
         return Image.network(
           trimmed,
           fit: BoxFit.cover,
+          cacheWidth: 350,
+          cacheHeight: 350,
           errorBuilder: (ctx, err, stack) => _fallbackTealContainer(),
         );
       } else {
@@ -3555,6 +3559,8 @@ class _FoodPhotoCardState extends State<_FoodPhotoCard> {
           return Image.file(
             file,
             fit: BoxFit.cover,
+            cacheWidth: 350,
+            cacheHeight: 350,
             errorBuilder: (ctx, err, stack) => _fallbackTealContainer(),
           );
         }
@@ -3822,7 +3828,7 @@ void _showImageUploadDialog(
         ),
       ),
     ),
-  );
+  ).then((_) => urlController.dispose());
 }
 
 // ─── View Mode Switcher Button ───────────────────────────────────────────────

@@ -734,7 +734,7 @@ class _ActivityReceiveGoodsState extends State<ActivityReceiveGoods> {
                     icon: const Icon(Icons.close_rounded))
               ],
             ),
-            Image.file(File(path), fit: BoxFit.contain),
+            Image.file(File(path), fit: BoxFit.contain, cacheWidth: 1024),
           ],
         ),
       ),

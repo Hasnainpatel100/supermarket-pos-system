@@ -17,6 +17,9 @@ import '../../util/util_device.dart';
 import '../../widget/dialog_plan_expired_block.dart';
 import '../home/controller_home.dart';
 import '../home/fragment/account/controller_home_account.dart';
+import '../home/fragment/pos/controller_home_pos.dart';
+import '../home/fragment/item/controller_home_item.dart';
+import '../home/fragment/dashboard/controller_home_dashboard.dart';
 
 class ControllerLogin extends GetxController {
   final RepoStorage _repoStorage = Get.find();
@@ -118,6 +121,15 @@ class ControllerLogin extends GetxController {
     }
     if (Get.isRegistered<ControllerHomeAccount>()) {
       Get.delete<ControllerHomeAccount>(force: true);
+    }
+    if (Get.isRegistered<ControllerHomePos>()) {
+      Get.delete<ControllerHomePos>(force: true);
+    }
+    if (Get.isRegistered<ControllerHomeItem>()) {
+      Get.delete<ControllerHomeItem>(force: true);
+    }
+    if (Get.isRegistered<ControllerHomeDashboard>()) {
+      Get.delete<ControllerHomeDashboard>(force: true);
     }
 
     Loader.hideLoader();

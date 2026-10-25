@@ -148,6 +148,7 @@ class BillSession {
   void dispose() {
     amountController.dispose();
     utrController.dispose();
+    customUpiController.dispose();
     for (var c in splitControllers) {
       c.dispose();
     }
@@ -1588,7 +1589,7 @@ class ControllerHomePos extends GetxController {
       actions: [
         TextButton(onPressed: () => Get.back(), child: const Text('Close')),
       ],
-    ));
+    )).then((_) => searchCtrl.dispose());
   }
 
   void _showChangeQtyDialog(int index) {
@@ -1618,7 +1619,7 @@ class ControllerHomePos extends GetxController {
                requestSearchFocus();
             }, child: Text('save'.tr)),
          ],
-      ));
+      )).then((_) => ctrl.dispose());
   }
 
   void _showItemDiscountDialog(int index) {
@@ -1648,7 +1649,7 @@ class ControllerHomePos extends GetxController {
                requestSearchFocus();
             }, child: Text('save'.tr)),
          ],
-      ));
+      )).then((_) => ctrl.dispose());
   }
 
   void _showBillDiscountDialog() {
@@ -1677,7 +1678,7 @@ class ControllerHomePos extends GetxController {
                requestSearchFocus();
             }, child: Text('save'.tr)),
          ],
-      ));
+      )).then((_) => ctrl.dispose());
   }
 
   void _showRemarksDialog() {
@@ -1704,7 +1705,7 @@ class ControllerHomePos extends GetxController {
                requestSearchFocus();
             }, child: Text('save'.tr)),
          ],
-      ));
+      )).then((_) => ctrl.dispose());
   }
 
   Future<void> settleBill() async {
@@ -2233,6 +2234,23 @@ class ControllerHomePos extends GetxController {
     searchFocusNode.dispose();
     cartScrollController.dispose();
     for (var session in rxBillTabs) {
+      for (final cartItem in session.rxCartItems) {
+        final qty = cartItem.qty ?? 0;
+        if (qty > 0) {
+          if (cartItem.batchId != null && cartItem.batchId! > 0) {
+            final batch = _boxBatch.get(cartItem.batchId!);
+            if (batch != null) {
+              batch.quantity = (batch.quantity ?? 0) + qty;
+              _boxBatch.put(batch);
+            }
+          }
+          final stockItem = cartItem.item.target;
+          if (stockItem != null) {
+            stockItem.totalQty = (stockItem.totalQty ?? 0) + qty;
+            _boxItem.put(stockItem);
+          }
+        }
+      }
       session.dispose();
     }
     super.onClose();

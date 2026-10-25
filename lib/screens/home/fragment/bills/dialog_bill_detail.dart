@@ -18,7 +18,9 @@ class DialogBillDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = Get.find<ControllerHomeSettings>();
+    final settings = Get.isRegistered<ControllerHomeSettings>()
+        ? Get.find<ControllerHomeSettings>()
+        : Get.put(ControllerHomeSettings(), permanent: true);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');

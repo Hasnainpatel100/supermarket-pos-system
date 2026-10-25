@@ -114,21 +114,32 @@ class ControllerHome extends GetxController {
     }
   }
 
+  bool _deviceCheckInProgress = false;
+  bool _deviceAuthorized = false;
+
   /// Verifies if this physical machine is authorized under maxPosDevices
   Future<void> checkDeviceLimit(BuildContext context) async {
+    if (_deviceAuthorized || _deviceCheckInProgress) return;
     if (!Get.isRegistered<ServiceBrandContext>() || !Get.isRegistered<ServiceDeviceGuard>()) return;
     final brandCtx = Get.find<ServiceBrandContext>();
     final branch = brandCtx.selectedBranch;
     if (branch == null) return;
 
-    final deviceGuard = Get.find<ServiceDeviceGuard>();
-    final authResult = await deviceGuard.verifyDevice(branch);
-    if (!authResult.isAuthorized && context.mounted) {
-      DialogDeviceLimitBlock.show(
-        context,
-        branch: branch,
-        result: authResult,
-      );
+    _deviceCheckInProgress = true;
+    try {
+      final deviceGuard = Get.find<ServiceDeviceGuard>();
+      final authResult = await deviceGuard.verifyDevice(branch);
+      if (authResult.isAuthorized) {
+        _deviceAuthorized = true;
+      } else if (context.mounted) {
+        DialogDeviceLimitBlock.show(
+          context,
+          branch: branch,
+          result: authResult,
+        );
+      }
+    } finally {
+      _deviceCheckInProgress = false;
     }
   }
 

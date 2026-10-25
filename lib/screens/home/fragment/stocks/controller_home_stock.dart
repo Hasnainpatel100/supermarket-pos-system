@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Condition;
 import 'package:intl/intl.dart';
 
 import '../../../../model/entity_item.dart';
@@ -62,31 +62,33 @@ class ControllerHomeStock extends GetxController {
   }
 
   void loadTransactions() {
-    final query = _boxTxn
-        .query()
-        .order(EntityStockTransaction_.createdAtUtcMs, flags: Order.descending)
-        .build();
-    var all = query.find();
+    final typeFilter = rxFilterType.value;
+    final q = searchQuery.value.trim();
+
+    Condition<EntityStockTransaction>? condition;
+    if (typeFilter != null) {
+      condition = EntityStockTransaction_.type.equals(typeFilter.index);
+    }
+
+    if (q.isNotEmpty) {
+      final textCond = EntityStockTransaction_.referenceId
+          .contains(q, caseSensitive: false)
+          .or(EntityStockTransaction_.remarks.contains(q, caseSensitive: false));
+      condition = condition != null ? condition.and(textCond) : textCond;
+    }
+
+    final qb = _boxTxn.query(condition)
+      ..order(EntityStockTransaction_.createdAtUtcMs, flags: Order.descending);
+    final query = qb.build();
+
+    totalCount.value = query.count();
+    query
+      ..offset = currentPage.value * _pageSize
+      ..limit = _pageSize;
+
+    final paged = query.find();
     query.close();
 
-    // Filter by type
-    final typeFilter = rxFilterType.value;
-    if (typeFilter != null) {
-      all = all.where((t) => t.type == typeFilter.index).toList();
-    }
-
-    // Filter by search (item name / remarks)
-    final q = searchQuery.value.trim().toLowerCase();
-    if (q.isNotEmpty) {
-      all = all.where((t) {
-        final name = (t.referenceId ?? '').toLowerCase();
-        final rem = (t.remarks ?? '').toLowerCase();
-        return name.contains(q) || rem.contains(q);
-      }).toList();
-    }
-
-    totalCount.value = all.length;
-    final paged = all.skip(currentPage.value * _pageSize).take(_pageSize).toList();
     rxListTxn.assignAll(paged);
   }
 

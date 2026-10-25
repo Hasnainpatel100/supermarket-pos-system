@@ -24,7 +24,9 @@ class FragmentHomeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ControllerHomeItem controller = Get.put(ControllerHomeItem());
+    final ControllerHomeItem controller = Get.isRegistered<ControllerHomeItem>()
+        ? Get.find<ControllerHomeItem>()
+        : Get.put(ControllerHomeItem());
     final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
     final canUpdate = homeCtrl?.hasPermission(AppPermissions.inventoryUpdate) ?? true;
     final canAdjust = (homeCtrl?.hasPermission(AppPermissions.stockAdjust) ?? true) || canUpdate;

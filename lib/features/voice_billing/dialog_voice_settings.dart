@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../util/snackbar_util.dart';
@@ -22,6 +23,7 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
   final ServiceAiParser _parser = ServiceAiParser();
   late final TextEditingController _keyController;
   bool _isTesting = false;
+  bool _obscure = false;
 
   @override
   void initState() {
@@ -33,6 +35,14 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
   void dispose() {
     _keyController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pasteFromClipboard() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data?.text != null && data!.text!.trim().isNotEmpty) {
+      _keyController.text = data.text!.trim();
+      SnackbarUtil.showSuccess('Pasted API key from clipboard');
+    }
   }
 
   Future<void> _testConnection() async {
@@ -61,7 +71,7 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
 
   Future<void> _saveAndClose() async {
     await _parser.saveApiKey(_keyController.text.trim());
-    SnackbarUtil.showSuccess('Voice AI settings saved');
+    SnackbarUtil.showSuccess('Voice AI key saved successfully');
     Get.back();
   }
 
@@ -86,32 +96,47 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
         ],
       ),
       content: SizedBox(
-        width: 480,
+        width: 490,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Google Gemini 1.5 / 2.0 Flash is used to transcribe and parse natural speech in Hindi, Marathi, Hinglish, and English.',
+              'Real-time voice recognition uses Google Gemini 1.5/2.0 Flash to transcribe and parse Hindi, Marathi, Hinglish, and English audio.',
               style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _keyController,
-              obscureText: true,
+              obscureText: _obscure,
               decoration: InputDecoration(
-                labelText: 'Google Gemini API Key (Optional)',
+                labelText: 'Google Gemini API Key (Required for live mic)',
                 hintText: 'AIzaSy...',
                 prefixIcon: const Icon(Icons.key_rounded),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear_rounded),
-                  onPressed: () => _keyController.clear(),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility, size: 18),
+                      tooltip: _obscure ? 'Show Key' : 'Hide Key',
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.paste_rounded, size: 18),
+                      tooltip: 'Paste from Clipboard',
+                      onPressed: _pasteFromClipboard,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.clear_rounded, size: 18),
+                      onPressed: () => _keyController.clear(),
+                    ),
+                  ],
                 ),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                helperText: 'Leave empty to use built-in offline smart parser.',
+                helperText: 'Free from Google AI Studio: 1,500 free requests per day.',
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Row(
               children: [
                 OutlinedButton.icon(
@@ -122,7 +147,7 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
                     }
                   },
                   icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('Get Free API Key', style: TextStyle(fontSize: 12)),
+                  label: const Text('Get Free Key (Google AI Studio)', style: TextStyle(fontSize: 12)),
                 ),
                 const Spacer(),
                 FilledButton.tonalIcon(

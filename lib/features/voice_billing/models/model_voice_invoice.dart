@@ -1,6 +1,7 @@
 import 'model_voice_item.dart';
 
 class ModelVoiceInvoice {
+  String? transcript;
   String? customerName;
   String? customerPhone;
   String paymentMode;
@@ -12,6 +13,7 @@ class ModelVoiceInvoice {
   double grandTotal;
 
   ModelVoiceInvoice({
+    this.transcript,
     this.customerName,
     this.customerPhone,
     this.paymentMode = 'Cash',
@@ -45,6 +47,7 @@ class ModelVoiceInvoice {
   }
 
   Map<String, dynamic> toJson() => {
+    'transcript': transcript,
     'customer_name': customerName,
     'customer_phone': customerPhone,
     'payment_mode': paymentMode,
@@ -61,6 +64,7 @@ class ModelVoiceInvoice {
     final parsedItems = rawItems.map((e) => ModelVoiceItem.fromJson(Map<String, dynamic>.from(e as Map))).toList();
 
     final invoice = ModelVoiceInvoice(
+      transcript: json['transcript']?.toString() ?? json['what_i_heard']?.toString(),
       customerName: json['customer_name']?.toString(),
       customerPhone: json['customer_phone']?.toString(),
       paymentMode: (json['payment_mode'] ?? 'Cash').toString(),

@@ -29,14 +29,13 @@ class ServiceVoiceRecorder {
       }
 
       final tempDir = await getTemporaryDirectory();
-      final fileName = 'voice_order_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final fileName = 'voice_order_${DateTime.now().millisecondsSinceEpoch}.wav';
       final filePath = p.join(tempDir.path, fileName);
 
       await _audioRecorder.start(
         const RecordConfig(
-          encoder: AudioEncoder.aacLc,
-          bitRate: 128000,
-          sampleRate: 44100,
+          encoder: AudioEncoder.wav,
+          sampleRate: 16000,
         ),
         path: filePath,
       );

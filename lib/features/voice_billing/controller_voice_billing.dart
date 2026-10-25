@@ -17,6 +17,7 @@ import '../../screens/home/fragment/pos/controller_home_pos.dart';
 import '../../screens/home/fragment/setting/controller_home_settings.dart';
 import 'models/model_voice_invoice.dart';
 import 'models/model_voice_item.dart';
+import 'dialog_voice_settings.dart';
 import 'services/service_ai_parser.dart';
 import 'services/service_catalog_matcher.dart';
 import 'services/service_voice_recorder.dart';
@@ -92,6 +93,8 @@ class ControllerVoiceBilling extends GetxController {
     rxSelectedLanguage.value = lang;
   }
 
+  bool get hasApiKey => _aiParser.savedApiKey.isNotEmpty;
+
   // ─── Recording & Voice Processing ──────────────────────────────────────────
 
   Future<void> toggleRecording() async {
@@ -103,6 +106,14 @@ class ControllerVoiceBilling extends GetxController {
   }
 
   Future<void> startListening() async {
+    if (!hasApiKey) {
+      rxLiveStatus.value = 'Please configure your Gemini API Key first.';
+      if (Get.context != null) {
+        DialogVoiceSettings.show(Get.context!);
+      }
+      return;
+    }
+
     try {
       final path = await _recorder.start();
       if (path != null) {
@@ -139,11 +150,25 @@ class ControllerVoiceBilling extends GetxController {
           audioPath,
           language: rxSelectedLanguage.value,
         );
+        if (parsed.transcript != null && parsed.transcript!.isNotEmpty) {
+          rxLastHeardText.value = parsed.transcript!;
+        }
         await _applyParsedInvoice(parsed);
       }
     } catch (e) {
-      SnackbarUtil.showError('Voice parsing error: $e');
-      rxLiveStatus.value = 'Error analyzing voice. Tap mic to retry.';
+      debugPrint('Voice parsing error: $e');
+      final errStr = e.toString().replaceAll('Exception:', '').trim();
+      if (errStr.contains('GEMINI_API_KEY_MISSING')) {
+        rxLiveStatus.value = 'Gemini API Key required for live mic listening.';
+        rxLastHeardText.value = 'API key missing! Click the Settings gear icon (⚙️) on top right to add your free Gemini Key.';
+        if (Get.context != null) {
+          DialogVoiceSettings.show(Get.context!);
+        }
+      } else {
+        SnackbarUtil.showError(errStr);
+        rxLiveStatus.value = 'Error: $errStr';
+        rxLastHeardText.value = 'Recognition error: $errStr';
+      }
     } finally {
       rxIsAnalyzing.value = false;
     }
@@ -170,6 +195,10 @@ class ControllerVoiceBilling extends GetxController {
   }
 
   Future<void> _applyParsedInvoice(ModelVoiceInvoice parsed) async {
+    if (parsed.transcript != null && parsed.transcript!.isNotEmpty) {
+      rxLastHeardText.value = parsed.transcript!;
+    }
+
     // Match against local database
     await _catalogMatcher.matchInvoice(parsed);
 

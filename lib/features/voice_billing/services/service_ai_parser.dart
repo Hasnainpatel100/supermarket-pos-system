@@ -43,6 +43,7 @@ Rules:
    - If speaker says tax (e.g. "5 percent GST", "12% tax"), extract tax_rate.
 4. Output STRICT JSON format only without markdown blocks:
 {
+  "transcript": "exact transcription of what the speaker said in original language or script",
   "customer_name": "string or null",
   "customer_phone": "string or null",
   "payment_mode": "Cash" | "UPI" | "Card" | "Credit" | "Other",
@@ -61,86 +62,93 @@ Rules:
 }
 ''';
 
-  /// Parses voice audio file directly via Gemini Multimodal API or falls back to local NLP
+  /// Parses voice audio file directly via Gemini Multimodal API
   Future<ModelVoiceInvoice> parseAudioFile(String audioFilePath, {String language = 'hi'}) async {
     final file = File(audioFilePath);
     if (!await file.exists()) {
-      return parseTextWithFallback('', language: language);
+      throw StateError('Audio file was not recorded successfully');
     }
 
     final apiKey = savedApiKey;
     if (apiKey.isEmpty) {
-      debugPrint('No Gemini API key configured. Using local offline voice parser.');
-      return _localNlpFallback('Sample order: 2 kg Sugar, 1 packet Milk, Cash payment', language);
+      throw StateError('GEMINI_API_KEY_MISSING');
     }
 
-    try {
-      final bytes = await file.readAsBytes();
-      final base64Audio = base64Encode(bytes);
+    final bytes = await file.readAsBytes();
+    if (bytes.length < 500) {
+      throw StateError('Audio recording was too short or empty. Please speak again.');
+    }
+    final base64Audio = base64Encode(bytes);
 
-      // Determine mime type
-      String mimeType = 'audio/m4a';
-      final lower = audioFilePath.toLowerCase();
-      if (lower.endsWith('.wav')) {
-        mimeType = 'audio/wav';
-      } else if (lower.endsWith('.mp3')) {
-        mimeType = 'audio/mp3';
-      } else if (lower.endsWith('.aac')) {
-        mimeType = 'audio/aac';
-      }
+    // Determine mime type
+    String mimeType = 'audio/wav';
+    final lower = audioFilePath.toLowerCase();
+    if (lower.endsWith('.wav')) {
+      mimeType = 'audio/wav';
+    } else if (lower.endsWith('.mp3')) {
+      mimeType = 'audio/mp3';
+    } else if (lower.endsWith('.aac')) {
+      mimeType = 'audio/aac';
+    } else if (lower.endsWith('.m4a')) {
+      mimeType = 'audio/mp4';
+    }
 
-      final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
-      );
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
+    );
 
-      final requestBody = {
-        'contents': [
-          {
-            'parts': [
-              {'text': '$_systemPrompt\nThe speaker is speaking in $language.'},
-              {
-                'inlineData': {
-                  'mimeType': mimeType,
-                  'data': base64Audio,
-                }
+    final requestBody = {
+      'contents': [
+        {
+          'parts': [
+            {'text': '$_systemPrompt\nThe speaker is speaking in $language.'},
+            {
+              'inlineData': {
+                'mimeType': mimeType,
+                'data': base64Audio,
               }
-            ]
-          }
-        ],
-        'generationConfig': {
-          'temperature': 0.2,
-          'responseMimeType': 'application/json',
+            }
+          ]
         }
-      };
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestBody),
-      ).timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final candidates = data['candidates'] as List<dynamic>?;
-        if (candidates != null && candidates.isNotEmpty) {
-          final content = candidates[0]['content'];
-          final parts = content['parts'] as List<dynamic>?;
-          if (parts != null && parts.isNotEmpty) {
-            final rawJson = parts[0]['text'].toString();
-            final cleanJson = _cleanJsonString(rawJson);
-            final invoiceMap = jsonDecode(cleanJson) as Map<String, dynamic>;
-            return ModelVoiceInvoice.fromJson(invoiceMap);
-          }
-        }
-      } else {
-        debugPrint('Gemini Audio API error: ${response.statusCode} - ${response.body}');
+      ],
+      'generationConfig': {
+        'temperature': 0.1,
+        'responseMimeType': 'application/json',
       }
-    } catch (e) {
-      debugPrint('Gemini audio parsing failed: $e');
-    }
+    };
 
-    // Fallback if cloud fails
-    return _localNlpFallback('', language);
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(requestBody),
+    ).timeout(const Duration(seconds: 18));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final candidates = data['candidates'] as List<dynamic>?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List<dynamic>?;
+        if (parts != null && parts.isNotEmpty) {
+          final rawJson = parts[0]['text'].toString();
+          final cleanJson = _cleanJsonString(rawJson);
+          final invoiceMap = jsonDecode(cleanJson) as Map<String, dynamic>;
+          return ModelVoiceInvoice.fromJson(invoiceMap);
+        }
+      }
+      throw Exception('Empty response from AI speech recognition');
+    } else {
+      final body = response.body;
+      debugPrint('Gemini Audio API error: ${response.statusCode} - $body');
+      try {
+        final errJson = jsonDecode(body);
+        final msg = errJson['error']?['message'] ?? body;
+        throw Exception('Gemini API (${response.statusCode}): $msg');
+      } catch (e) {
+        if (e is Exception && e.toString().contains('Gemini API')) rethrow;
+        throw Exception('Gemini API Error (${response.statusCode})');
+      }
+    }
   }
 
   /// Parses text query via Gemini or fallback NLP

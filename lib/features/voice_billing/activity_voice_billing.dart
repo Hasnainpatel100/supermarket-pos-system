@@ -18,6 +18,7 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
   final ServiceCurrency _currency = Get.find<ServiceCurrency>();
+  final TextEditingController _manualTextController = TextEditingController();
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
 
   @override
   void dispose() {
+    _manualTextController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
@@ -71,7 +73,8 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _buildLanguageSelector(cs),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+                    _buildApiKeyWarningBanner(context, cs),
                     _buildSpeakingCounterHeader(cs),
                     const SizedBox(height: 28),
                     _buildMicCenterButton(cs),
@@ -392,9 +395,97 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
               ),
             );
           }),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 36,
+                  child: TextField(
+                    controller: _manualTextController,
+                    decoration: InputDecoration(
+                      hintText: 'Or type speech text to test...',
+                      hintStyle: TextStyle(fontSize: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.7)),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onSubmitted: (val) {
+                      if (val.trim().isNotEmpty) {
+                        controller.processText(val);
+                        _manualTextController.clear();
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: () {
+                  final text = _manualTextController.text.trim();
+                  if (text.isNotEmpty) {
+                    controller.processText(text);
+                    _manualTextController.clear();
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Parse', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  Widget _buildApiKeyWarningBanner(BuildContext context, ColorScheme cs) {
+    return Obx(() {
+      if (!controller.hasApiKey) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.amber.shade700, width: 1.2),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.key_rounded, color: Colors.amber, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Gemini API Key Required for Live Mic',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    Text(
+                      'Click Setup Key to paste your free key from Google AI Studio.',
+                      style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              FilledButton.tonal(
+                onPressed: () => DialogVoiceSettings.show(context),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.amber.shade800,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                ),
+                child: const Text('Setup Key', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    });
   }
 
   Widget _buildQuickDemoChips(ColorScheme cs) {

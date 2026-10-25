@@ -110,9 +110,16 @@ Rules:
       return _parseWithGemini(audioFilePath, geminiKey, language: language);
     } else if (groqKey.isNotEmpty) {
       final transcript = await _transcribeWithGroq(audioFilePath, groqKey, language: language);
-      final invoice = await _parseTranscriptWithGroq(transcript, groqKey, language: language);
-      invoice.transcript = transcript;
-      return invoice;
+      try {
+        final invoice = await _parseTranscriptWithGroq(transcript, groqKey, language: language);
+        invoice.transcript = transcript;
+        return invoice;
+      } catch (e) {
+        debugPrint('Groq LLaMA parse failed, falling back to local NLP: $e');
+        final invoice = _localNlpFallback(transcript, language);
+        invoice.transcript = transcript;
+        return invoice;
+      }
     } else {
       throw StateError('API_KEY_MISSING');
     }
@@ -156,58 +163,99 @@ Rules:
     }
   }
 
-  /// Groq Cloud: LLaMA 3.3 70B JSON Parsing
-  Future<ModelVoiceInvoice> _parseTranscriptWithGroq(String transcript, String groqKey, {String language = 'hi'}) async {
+  static String? _cachedWorkingGroqModel;
+
+  static const List<String> _candidateGroqModels = [
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile',
+    'llama-3.1-70b-versatile',
+    'llama3-70b-8192',
+    'llama3-8b-8192',
+    'mixtral-8x7b-32768',
+    'gemma2-9b-it',
+  ];
+
+  /// Groq Cloud: Multi-model resilient JSON parsing
+  Future<ModelVoiceInvoice> _parseTranscriptWithGroq(
+    String transcript,
+    String groqKey, {
+    String language = 'hi',
+  }) async {
     final uri = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
 
-    final requestBody = {
-      'model': 'llama-3.3-70b-versatile',
-      'messages': [
-        {
-          'role': 'system',
-          'content': '$_systemPrompt\nLanguage: $language. Return strict JSON matching schema with transcript field.'
-        },
-        {
-          'role': 'user',
-          'content': 'Customer voice order: "$transcript"'
-        }
-      ],
-      'response_format': {'type': 'json_object'},
-      'temperature': 0.1,
-    };
-
-    final response = await http.post(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $groqKey',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(requestBody),
-    ).timeout(const Duration(seconds: 15));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final choices = data['choices'] as List<dynamic>?;
-      if (choices != null && choices.isNotEmpty) {
-        final content = choices[0]['message']?['content']?.toString() ?? '{}';
-        final clean = _cleanJsonString(content);
-        final map = jsonDecode(clean) as Map<String, dynamic>;
-        map['transcript'] ??= transcript;
-        return ModelVoiceInvoice.fromJson(map);
-      }
-      throw Exception('Empty response from Groq LLaMA');
-    } else {
-      final body = response.body;
-      debugPrint('Groq LLaMA error: ${response.statusCode} - $body');
-      try {
-        final errJson = jsonDecode(body);
-        final msg = errJson['error']?['message'] ?? body;
-        throw Exception('Groq LLaMA (${response.statusCode}): $msg');
-      } catch (e) {
-        if (e is Exception && e.toString().contains('Groq LLaMA')) rethrow;
-        throw Exception('Groq API Error (${response.statusCode})');
+    final modelsToTry = <String>[];
+    if (_cachedWorkingGroqModel != null && _cachedWorkingGroqModel!.isNotEmpty) {
+      modelsToTry.add(_cachedWorkingGroqModel!);
+    }
+    for (final m in _candidateGroqModels) {
+      if (!modelsToTry.contains(m)) {
+        modelsToTry.add(m);
       }
     }
+
+    String lastErrorMsg = '';
+
+    for (final model in modelsToTry) {
+      try {
+        final requestBody = {
+          'model': model,
+          'messages': [
+            {
+              'role': 'system',
+              'content': '$_systemPrompt\nLanguage: $language. Return strict JSON matching schema with transcript field.'
+            },
+            {
+              'role': 'user',
+              'content': 'Customer voice order: "$transcript"'
+            }
+          ],
+          'response_format': {'type': 'json_object'},
+          'temperature': 0.1,
+        };
+
+        final response = await http.post(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $groqKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(requestBody),
+        ).timeout(const Duration(seconds: 15));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final choices = data['choices'] as List<dynamic>?;
+          if (choices != null && choices.isNotEmpty) {
+            final content = choices[0]['message']?['content']?.toString() ?? '{}';
+            final clean = _cleanJsonString(content);
+            final map = jsonDecode(clean) as Map<String, dynamic>;
+            map['transcript'] ??= transcript;
+            _cachedWorkingGroqModel = model;
+            return ModelVoiceInvoice.fromJson(map);
+          }
+          throw Exception('Empty response from Groq LLaMA ($model)');
+        } else if (response.statusCode == 404 || response.statusCode == 400 || response.statusCode == 403) {
+          final body = response.body;
+          debugPrint('Groq model $model returned ${response.statusCode}: $body, trying next candidate model...');
+          lastErrorMsg = 'Groq ($model ${response.statusCode}): $body';
+          continue;
+        } else {
+          final body = response.body;
+          throw Exception('Groq API Error (${response.statusCode}): $body');
+        }
+      } catch (e) {
+        debugPrint('Groq model $model attempt error: $e');
+        lastErrorMsg = e.toString();
+        if (e.toString().contains('404') ||
+            e.toString().contains('does not exist') ||
+            e.toString().contains('access')) {
+          continue;
+        }
+        rethrow;
+      }
+    }
+
+    throw Exception('All Groq models failed: $lastErrorMsg');
   }
 
   /// Google Gemini Multimodal Audio Parsing

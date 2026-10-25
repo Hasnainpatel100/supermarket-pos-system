@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../../../../service/service_storage.dart';
 import '../models/model_voice_invoice.dart';
 import '../models/model_voice_item.dart';
@@ -10,15 +11,39 @@ import '../models/model_voice_item.dart';
 class ServiceAiParser {
   final ServiceStorage _storage = Get.find<ServiceStorage>();
 
+  static const String keyStorageProvider = 'voice_ai_provider';
+  static const String keyStorageGroqKey = 'groq_api_key';
   static const String keyStorageGeminiKey = 'gemini_api_key';
 
-  String get savedApiKey {
-    final key = _storage.readString(keyStorageGeminiKey);
-    return key?.trim() ?? '';
+  String get savedGroqKey => _storage.readString(keyStorageGroqKey)?.trim() ?? '';
+  String get savedGeminiKey => _storage.readString(keyStorageGeminiKey)?.trim() ?? '';
+
+  String get activeProvider {
+    final p = _storage.readString(keyStorageProvider)?.trim();
+    if (p == 'groq' || p == 'gemini') return p!;
+    if (savedGroqKey.isNotEmpty) return 'groq';
+    return 'gemini';
   }
 
-  Future<void> saveApiKey(String key) async {
-    await _storage.writeString(keyStorageGeminiKey, key.trim());
+  bool get hasValidApiKey {
+    if (activeProvider == 'groq') {
+      return savedGroqKey.isNotEmpty;
+    }
+    return savedGeminiKey.isNotEmpty;
+  }
+
+  Future<void> saveSettings({
+    required String provider,
+    String? groqKey,
+    String? geminiKey,
+  }) async {
+    await _storage.writeString(keyStorageProvider, provider);
+    if (groqKey != null) {
+      await _storage.writeString(keyStorageGroqKey, groqKey.trim());
+    }
+    if (geminiKey != null) {
+      await _storage.writeString(keyStorageGeminiKey, geminiKey.trim());
+    }
   }
 
   /// System prompt designed for Indian Retail & Pharmacy voice billing
@@ -62,25 +87,137 @@ Rules:
 }
 ''';
 
-  /// Parses voice audio file directly via Gemini Multimodal API
+  /// Parses voice audio file via Groq Whisper or Gemini Multimodal
   Future<ModelVoiceInvoice> parseAudioFile(String audioFilePath, {String language = 'hi'}) async {
     final file = File(audioFilePath);
     if (!await file.exists()) {
       throw StateError('Audio file was not recorded successfully');
     }
 
-    final apiKey = savedApiKey;
-    if (apiKey.isEmpty) {
-      throw StateError('GEMINI_API_KEY_MISSING');
-    }
+    final provider = activeProvider;
+    final groqKey = savedGroqKey;
+    final geminiKey = savedGeminiKey;
 
-    final bytes = await file.readAsBytes();
+    if (provider == 'groq' && groqKey.isNotEmpty) {
+      final transcript = await _transcribeWithGroq(audioFilePath, groqKey, language: language);
+      if (transcript.trim().isEmpty) {
+        throw StateError('No speech was detected in the audio recording. Please speak clearly.');
+      }
+      final invoice = await _parseTranscriptWithGroq(transcript, groqKey, language: language);
+      invoice.transcript = transcript;
+      return invoice;
+    } else if (geminiKey.isNotEmpty) {
+      return _parseWithGemini(audioFilePath, geminiKey, language: language);
+    } else if (groqKey.isNotEmpty) {
+      final transcript = await _transcribeWithGroq(audioFilePath, groqKey, language: language);
+      final invoice = await _parseTranscriptWithGroq(transcript, groqKey, language: language);
+      invoice.transcript = transcript;
+      return invoice;
+    } else {
+      throw StateError('API_KEY_MISSING');
+    }
+  }
+
+  /// Groq Cloud: Whisper Speech-to-Text
+  Future<String> _transcribeWithGroq(String audioFilePath, String groqKey, {String language = 'hi'}) async {
+    final uri = Uri.parse('https://api.groq.com/openai/v1/audio/transcriptions');
+    final request = http.MultipartRequest('POST', uri);
+    request.headers['Authorization'] = 'Bearer $groqKey';
+    request.fields['model'] = 'whisper-large-v3-turbo';
+    request.fields['response_format'] = 'json';
+    request.fields['temperature'] = '0.0';
+
+    final ext = audioFilePath.split('.').last.toLowerCase();
+    final contentType = ext == 'wav' ? MediaType('audio', 'wav') : MediaType('audio', 'm4a');
+
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      audioFilePath,
+      contentType: contentType,
+    ));
+
+    final streamed = await request.send().timeout(const Duration(seconds: 18));
+    final response = await http.Response.fromStream(streamed);
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return (json['text'] ?? '').toString();
+    } else {
+      final body = response.body;
+      debugPrint('Groq Whisper error: ${response.statusCode} - $body');
+      try {
+        final errJson = jsonDecode(body);
+        final msg = errJson['error']?['message'] ?? body;
+        throw Exception('Groq Whisper (${response.statusCode}): $msg');
+      } catch (e) {
+        if (e is Exception && e.toString().contains('Groq Whisper')) rethrow;
+        throw Exception('Groq Whisper Error (${response.statusCode})');
+      }
+    }
+  }
+
+  /// Groq Cloud: LLaMA 3.3 70B JSON Parsing
+  Future<ModelVoiceInvoice> _parseTranscriptWithGroq(String transcript, String groqKey, {String language = 'hi'}) async {
+    final uri = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
+
+    final requestBody = {
+      'model': 'llama-3.3-70b-versatile',
+      'messages': [
+        {
+          'role': 'system',
+          'content': '$_systemPrompt\nLanguage: $language. Return strict JSON matching schema with transcript field.'
+        },
+        {
+          'role': 'user',
+          'content': 'Customer voice order: "$transcript"'
+        }
+      ],
+      'response_format': {'type': 'json_object'},
+      'temperature': 0.1,
+    };
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $groqKey',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(requestBody),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final choices = data['choices'] as List<dynamic>?;
+      if (choices != null && choices.isNotEmpty) {
+        final content = choices[0]['message']?['content']?.toString() ?? '{}';
+        final clean = _cleanJsonString(content);
+        final map = jsonDecode(clean) as Map<String, dynamic>;
+        map['transcript'] ??= transcript;
+        return ModelVoiceInvoice.fromJson(map);
+      }
+      throw Exception('Empty response from Groq LLaMA');
+    } else {
+      final body = response.body;
+      debugPrint('Groq LLaMA error: ${response.statusCode} - $body');
+      try {
+        final errJson = jsonDecode(body);
+        final msg = errJson['error']?['message'] ?? body;
+        throw Exception('Groq LLaMA (${response.statusCode}): $msg');
+      } catch (e) {
+        if (e is Exception && e.toString().contains('Groq LLaMA')) rethrow;
+        throw Exception('Groq API Error (${response.statusCode})');
+      }
+    }
+  }
+
+  /// Google Gemini Multimodal Audio Parsing
+  Future<ModelVoiceInvoice> _parseWithGemini(String audioFilePath, String apiKey, {String language = 'hi'}) async {
+    final bytes = await File(audioFilePath).readAsBytes();
     if (bytes.length < 500) {
       throw StateError('Audio recording was too short or empty. Please speak again.');
     }
     final base64Audio = base64Encode(bytes);
 
-    // Determine mime type
     String mimeType = 'audio/wav';
     final lower = audioFilePath.toLowerCase();
     if (lower.endsWith('.wav')) {
@@ -136,7 +273,7 @@ Rules:
           return ModelVoiceInvoice.fromJson(invoiceMap);
         }
       }
-      throw Exception('Empty response from AI speech recognition');
+      throw Exception('Empty response from Gemini AI');
     } else {
       final body = response.body;
       debugPrint('Gemini Audio API error: ${response.statusCode} - $body');
@@ -151,53 +288,27 @@ Rules:
     }
   }
 
-  /// Parses text query via Gemini or fallback NLP
+  /// Parses text query via Groq, Gemini, or fallback NLP
   Future<ModelVoiceInvoice> parseTextWithFallback(String transcript, {String language = 'hi'}) async {
     if (transcript.trim().isEmpty) {
       return ModelVoiceInvoice(items: []);
     }
 
-    final apiKey = savedApiKey;
-    if (apiKey.isNotEmpty) {
+    final provider = activeProvider;
+    final groqKey = savedGroqKey;
+    final geminiKey = savedGeminiKey;
+
+    if (provider == 'groq' && groqKey.isNotEmpty) {
       try {
-        final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
-        );
-
-        final requestBody = {
-          'contents': [
-            {
-              'parts': [
-                {'text': '$_systemPrompt\nLanguage: $language\nUser spoken input: "$transcript"'}
-              ]
-            }
-          ],
-          'generationConfig': {
-            'temperature': 0.1,
-            'responseMimeType': 'application/json',
-          }
-        };
-
-        final response = await http.post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(requestBody),
-        ).timeout(const Duration(seconds: 10));
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          final candidates = data['candidates'] as List<dynamic>?;
-          if (candidates != null && candidates.isNotEmpty) {
-            final content = candidates[0]['content'];
-            final parts = content['parts'] as List<dynamic>?;
-            if (parts != null && parts.isNotEmpty) {
-              final rawJson = parts[0]['text'].toString();
-              final cleanJson = _cleanJsonString(rawJson);
-              final invoiceMap = jsonDecode(cleanJson) as Map<String, dynamic>;
-              return ModelVoiceInvoice.fromJson(invoiceMap);
-            }
-          }
-        }
+        final inv = await _parseTranscriptWithGroq(transcript, groqKey, language: language);
+        inv.transcript = transcript;
+        return inv;
+      } catch (e) {
+        debugPrint('Groq text parsing error: $e');
+      }
+    } else if (geminiKey.isNotEmpty) {
+      try {
+        return await _parseTextWithGemini(transcript, geminiKey, language: language);
       } catch (e) {
         debugPrint('Gemini text parsing error: $e');
       }
@@ -205,6 +316,49 @@ Rules:
 
     // Smart Local Offline Regex Parser
     return _localNlpFallback(transcript, language);
+  }
+
+  Future<ModelVoiceInvoice> _parseTextWithGemini(String transcript, String apiKey, {String language = 'hi'}) async {
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
+    );
+
+    final requestBody = {
+      'contents': [
+        {
+          'parts': [
+            {'text': '$_systemPrompt\nLanguage: $language\nUser spoken input: "$transcript"'}
+          ]
+        }
+      ],
+      'generationConfig': {
+        'temperature': 0.1,
+        'responseMimeType': 'application/json',
+      }
+    };
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(requestBody),
+    ).timeout(const Duration(seconds: 12));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final candidates = data['candidates'] as List<dynamic>?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List<dynamic>?;
+        if (parts != null && parts.isNotEmpty) {
+          final rawJson = parts[0]['text'].toString();
+          final cleanJson = _cleanJsonString(rawJson);
+          final invoiceMap = jsonDecode(cleanJson) as Map<String, dynamic>;
+          invoiceMap['transcript'] ??= transcript;
+          return ModelVoiceInvoice.fromJson(invoiceMap);
+        }
+      }
+    }
+    throw Exception('Gemini text recognition failed (${response.statusCode})');
   }
 
   /// Cleans markdown ```json blocks from model response
@@ -238,7 +392,6 @@ Rules:
     }
 
     // 2. Customer Name detection
-    // Patterns: "satyam ke naam se", "ramesh chya navane", "customer john", "alex ke liye"
     final hindiCustMatch = RegExp(r'([a-zA-Z\u0900-\u097F]+)\s*(?:ke\s*naam\s*se|ka\s*bill|ke\s*liye)', caseSensitive: false).firstMatch(text);
     final marathiCustMatch = RegExp(r'([a-zA-Z\u0900-\u097F]+)\s*(?:chya\s*navane|chya\s*navani|che\s*bill)', caseSensitive: false).firstMatch(text);
     final engCustMatch = RegExp(r'(?:customer|client|for|name\s*is)\s+([a-zA-Z]+)', caseSensitive: false).firstMatch(text);
@@ -260,7 +413,6 @@ Rules:
     // 4. Extract Items & Quantities
     final items = <ModelVoiceItem>[];
 
-    // Standard vocabulary dictionary for common items
     final itemVocab = [
       {'key': 'Sugar', 'matches': ['sugar', 'sakhar', 'cheeni', 'chini', 'साखर', 'चीनी'], 'unit': 'kg', 'price': 45.0, 'tax': 5.0},
       {'key': 'Milk', 'matches': ['milk', 'doodh', 'dudh', 'दूध', 'दुध'], 'unit': 'packet', 'price': 32.0, 'tax': 0.0},
@@ -280,11 +432,9 @@ Rules:
       final nameMatches = v['matches'] as List<String>;
       for (final matchWord in nameMatches) {
         if (lower.contains(matchWord.toLowerCase())) {
-          // Detect quantity before or after the item word
           double qty = 1.0;
           String unit = v['unit'] as String;
 
-          // Check for fractional weights
           if (lower.contains('aadha kilo') || lower.contains('ardha kilo') || lower.contains('आधा किलो')) {
             qty = 0.5;
             unit = 'kg';
@@ -295,13 +445,11 @@ Rules:
             qty = 1.5;
             unit = 'kg';
           } else {
-            // Regex for numbers e.g. "2 kilo", "2 kg", "2 packet", "do kilo", "don kilo", "two"
             final qtyRegex = RegExp(r'(\d+(?:\.\d+)?)\s*(?:kilo|kg|packet|pack|ltr|litre|piece|pcs|strip|किलो|पैकेट|लिटर)?\s*' + RegExp.escape(matchWord), caseSensitive: false);
             final m = qtyRegex.firstMatch(text);
             if (m != null && m.group(1) != null) {
               qty = double.tryParse(m.group(1)!) ?? 1.0;
             } else {
-              // Word numbers
               if (lower.contains('do $matchWord') || lower.contains('don $matchWord') || lower.contains('two $matchWord') || lower.contains('२ $matchWord') || lower.contains('2 $matchWord')) {
                 qty = 2.0;
               } else if (lower.contains('teen $matchWord') || lower.contains('three $matchWord') || lower.contains('3 $matchWord')) {
@@ -314,7 +462,6 @@ Rules:
             }
           }
 
-          // Price detection (e.g. "100 rupaye", "at 150")
           double price = v['price'] as double;
           final priceRegex = RegExp(RegExp.escape(matchWord) + r'(?:\s+at|\s+wale|\s+wali)?\s+(\d+(?:\.\d+)?)\s*(?:rs|rupees|rupaye|रुपये)?', caseSensitive: false);
           final pm = priceRegex.firstMatch(text);
@@ -331,12 +478,11 @@ Rules:
             mrp: price,
             taxRate: v['tax'] as double,
           ));
-          break; // Avoid duplicate matching of the same vocabulary entry
+          break;
         }
       }
     }
 
-    // If still no items detected, create a fallback item from the sentence
     if (items.isEmpty && text.trim().isNotEmpty) {
       items.add(ModelVoiceItem(
         itemName: text.length > 25 ? '${text.substring(0, 25)}...' : text,
@@ -349,6 +495,7 @@ Rules:
     }
 
     final invoice = ModelVoiceInvoice(
+      transcript: text,
       customerName: customerName,
       customerPhone: customerPhone,
       paymentMode: paymentMode,

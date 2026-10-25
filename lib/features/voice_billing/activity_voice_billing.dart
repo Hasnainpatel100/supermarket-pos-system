@@ -151,7 +151,7 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
               border: Border.all(color: Colors.amber.shade700, width: 0.8),
             ),
             child: Text(
-              'Gemini Flash AI',
+              controller.activeProviderName,
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.bold,
@@ -461,11 +461,11 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Gemini API Key Required for Live Mic',
+                      'Free AI Key Required for Live Mic (Groq or Gemini)',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     Text(
-                      'Click Setup Key to paste your free key from Google AI Studio.',
+                      'Click Setup Key to paste your free Groq or Gemini key (takes 15 seconds).',
                       style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant),
                     ),
                   ],

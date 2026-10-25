@@ -93,7 +93,8 @@ class ControllerVoiceBilling extends GetxController {
     rxSelectedLanguage.value = lang;
   }
 
-  bool get hasApiKey => _aiParser.savedApiKey.isNotEmpty;
+  bool get hasApiKey => _aiParser.hasValidApiKey;
+  String get activeProviderName => _aiParser.activeProvider == 'groq' ? 'Groq Whisper' : 'Gemini Flash';
 
   // ─── Recording & Voice Processing ──────────────────────────────────────────
 
@@ -107,7 +108,7 @@ class ControllerVoiceBilling extends GetxController {
 
   Future<void> startListening() async {
     if (!hasApiKey) {
-      rxLiveStatus.value = 'Please configure your Gemini API Key first.';
+      rxLiveStatus.value = 'Please configure your Groq or Gemini API Key first.';
       if (Get.context != null) {
         DialogVoiceSettings.show(Get.context!);
       }
@@ -158,9 +159,9 @@ class ControllerVoiceBilling extends GetxController {
     } catch (e) {
       debugPrint('Voice parsing error: $e');
       final errStr = e.toString().replaceAll('Exception:', '').trim();
-      if (errStr.contains('GEMINI_API_KEY_MISSING')) {
-        rxLiveStatus.value = 'Gemini API Key required for live mic listening.';
-        rxLastHeardText.value = 'API key missing! Click the Settings gear icon (⚙️) on top right to add your free Gemini Key.';
+      if (errStr.contains('API_KEY_MISSING') || errStr.contains('GEMINI_API_KEY_MISSING')) {
+        rxLiveStatus.value = 'Free API Key required for live mic listening.';
+        rxLastHeardText.value = 'API key missing! Click the Settings gear icon (⚙️) on top right to add your free Groq or Gemini Key.';
         if (Get.context != null) {
           DialogVoiceSettings.show(Get.context!);
         }

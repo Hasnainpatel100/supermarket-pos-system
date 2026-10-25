@@ -288,6 +288,12 @@ class ControllerSalesInvoices extends GetxController {
     _filterInvoices();
   }
 
+  void resetSearch() {
+    if (rxSearchQuery.value.isNotEmpty || searchController.text.isNotEmpty) {
+      clearSearch();
+    }
+  }
+
   void setSearch(String q) {
     final sanitized = q.replaceAll('/', '-').trim();
     searchController.text = sanitized;

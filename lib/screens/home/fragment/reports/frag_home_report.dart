@@ -231,13 +231,6 @@ class FragHomeReport extends StatelessWidget {
                     )),
                 const Spacer(),
                 _ActionChip(
-                  icon: Icons.picture_as_pdf_rounded,
-                  label: 'export_pdf'.tr,
-                  color: Colors.red.shade600,
-                  onTap: controller.exportPdf,
-                ),
-                const SizedBox(width: 8),
-                _ActionChip(
                   icon: Icons.table_chart_rounded,
                   label: 'export_excel'.tr,
                   color: Colors.green.shade700,

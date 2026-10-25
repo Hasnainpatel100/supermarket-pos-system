@@ -81,6 +81,12 @@ class ControllerHomeSupplier extends GetxController {
     loadSuppliers();
   }
 
+  void resetSearch() {
+    if (searchQuery.value.isNotEmpty || searchController.text.isNotEmpty) {
+      clearSearch();
+    }
+  }
+
   // ─────────────────────────────────────────────
   //  PAGINATION
   // ─────────────────────────────────────────────

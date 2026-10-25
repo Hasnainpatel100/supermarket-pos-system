@@ -187,6 +187,7 @@ class ControllerSalesReport extends GetxController {
 
   // ── Search ──────────────────────────────────────────────────────────────
   final RxString rxSearchQuery = ''.obs;
+  final searchController = TextEditingController();
   Worker? _searchWorker;
 
   // ── Pagination ──────────────────────────────────────────────────────────
@@ -231,6 +232,7 @@ class ControllerSalesReport extends GetxController {
   @override
   void onClose() {
     _searchWorker?.dispose();
+    searchController.dispose();
     super.onClose();
   }
 
@@ -246,7 +248,25 @@ class ControllerSalesReport extends GetxController {
     loadData();
   }
 
-  void setSearchQuery(String q) => rxSearchQuery.value = q;
+  void setSearchQuery(String q) {
+    rxSearchQuery.value = q;
+    if (searchController.text != q) {
+      searchController.text = q;
+    }
+  }
+
+  void clearSearch() {
+    searchController.clear();
+    rxSearchQuery.value = '';
+    currentPage.value = 0;
+    loadData();
+  }
+
+  void resetSearch() {
+    if (rxSearchQuery.value.isNotEmpty || searchController.text.isNotEmpty) {
+      clearSearch();
+    }
+  }
 
   void setDateFilter(SalesDateFilter type) {
     _isTestImportMode = false;

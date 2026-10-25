@@ -216,40 +216,7 @@ class FragSalesReport extends StatelessWidget {
               borderColor: Colors.amber.shade200,
               onTap: controller.importTestExcel,
             ),
-            const SizedBox(width: 6),
-            _exportButton(
-              context,
-              icon: Icons.bolt_rounded,
-              label: '+ 30k Bills',
-              color: Colors.deepPurple.shade700,
-              bgColor: Colors.deepPurple.shade50,
-              borderColor: Colors.deepPurple.shade200,
-              onTap: controller.seed30kTestBills,
-            ),
-            const SizedBox(width: 6),
-            _exportButton(
-              context,
-              icon: Icons.delete_sweep_rounded,
-              label: 'Clear Seeded',
-              color: Colors.red.shade700,
-              bgColor: Colors.red.shade50,
-              borderColor: Colors.red.shade200,
-              onTap: controller.clearSeededSales,
-            ),
           ],
-
-          const SizedBox(width: 6),
-
-          // Export PDF
-          _exportButton(
-            context,
-            icon: Icons.picture_as_pdf_rounded,
-            label: 'PDF',
-            color: Colors.red.shade600,
-            bgColor: Colors.red.shade50,
-            borderColor: Colors.red.shade200,
-            onTap: controller.exportPdf,
-          ),
         ],
       ),
     );
@@ -458,11 +425,21 @@ class FragSalesReport extends StatelessWidget {
                 ],
               ),
               child: TextField(
+                controller: controller.searchController,
                 onChanged: controller.setSearchQuery,
                 decoration: InputDecoration(
                   hintText: _searchHint(controller.rxReportType.value),
                   hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
                   prefixIcon: Icon(Icons.search_rounded, size: 20, color: Colors.indigo.shade400),
+                  suffixIcon: Obx(() {
+                    if (controller.rxSearchQuery.value.isNotEmpty) {
+                      return IconButton(
+                        icon: const Icon(Icons.clear_rounded, size: 16),
+                        onPressed: controller.clearSearch,
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                   filled: true,

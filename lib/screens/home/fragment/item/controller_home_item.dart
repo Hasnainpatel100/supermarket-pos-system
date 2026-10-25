@@ -65,29 +65,40 @@ class ControllerHomeItem extends GetxController {
   // ── Multi-Select State ──
   final RxSet<int> rxSelectedIds = <int>{}.obs;
 
-  bool isSelected(int id) => rxSelectedIds.contains(id);
+  bool isSelected(int? id) => id != null && id > 0 && rxSelectedIds.contains(id);
   bool get hasSelection => rxSelectedIds.isNotEmpty;
   int get selectedCount => rxSelectedIds.length;
   bool get isAllVisibleSelected =>
       rxListItem.isNotEmpty &&
-      rxListItem.every((item) => item.id != null && rxSelectedIds.contains(item.id));
+      rxListItem.every((item) => item.id != null && item.id! > 0 && rxSelectedIds.contains(item.id));
 
   void toggleSelection(int id) {
+    if (id <= 0) return;
     if (rxSelectedIds.contains(id)) {
       rxSelectedIds.remove(id);
     } else {
       rxSelectedIds.add(id);
     }
+    rxSelectedIds.refresh();
   }
 
   void selectAllVisible() {
     for (final item in rxListItem) {
-      if (item.id != null) rxSelectedIds.add(item.id!);
+      if (item.id != null && item.id! > 0) rxSelectedIds.add(item.id!);
     }
+    rxSelectedIds.refresh();
+  }
+
+  void deselectAllVisible() {
+    for (final item in rxListItem) {
+      if (item.id != null) rxSelectedIds.remove(item.id!);
+    }
+    rxSelectedIds.refresh();
   }
 
   void clearSelection() {
     rxSelectedIds.clear();
+    rxSelectedIds.refresh();
   }
 
   /// Debounce search input to avoid querying ObjectBox on every keystroke.
@@ -105,6 +116,7 @@ class ControllerHomeItem extends GetxController {
     if (hasNext) {
       currentPage.value++;
       _fetchPagedItems();
+      _resetHorizontalScroll();
     }
   }
 
@@ -112,6 +124,22 @@ class ControllerHomeItem extends GetxController {
     if (hasPrev) {
       currentPage.value--;
       _fetchPagedItems();
+      _resetHorizontalScroll();
+    }
+  }
+
+  void _resetHorizontalScroll() {
+    if (horizontalScrollController.hasClients && horizontalScrollController.offset > 0) {
+      horizontalScrollController.jumpTo(0.0);
+    }
+  }
+
+  void resetSearch() {
+    if (searchQuery.value.isNotEmpty || searchController.text.isNotEmpty) {
+      searchQuery.value = '';
+      searchController.clear();
+      currentPage.value = 0;
+      loadItems();
     }
   }
 

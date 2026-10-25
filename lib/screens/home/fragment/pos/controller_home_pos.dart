@@ -2227,6 +2227,14 @@ class ControllerHomePos extends GetxController {
     SnackbarUtil.showSuccess('Added "$name" to customers and mapped to cart');
   }
 
+  void resetSearch() {
+    if (searchController.text.isNotEmpty || rxSearchQuery.value.isNotEmpty) {
+      searchController.clear();
+      rxSearchQuery.value = '';
+      loadItems();
+    }
+  }
+
   @override
   void onClose() {
     searchController.dispose();

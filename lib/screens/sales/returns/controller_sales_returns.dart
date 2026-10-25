@@ -167,6 +167,12 @@ class ControllerSalesReturns extends GetxController {
     loadReturns();
   }
 
+  void resetSearch() {
+    if (rxSearchQuery.value.isNotEmpty || searchController.text.isNotEmpty) {
+      clearSearch();
+    }
+  }
+
   void setSearch(String q) {
     updateSearch(q);
   }

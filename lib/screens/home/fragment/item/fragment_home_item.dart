@@ -179,13 +179,17 @@ class FragmentHomeItem extends StatelessWidget {
                         child: ConstrainedBox(
                           constraints: BoxConstraints(minWidth: constraints.maxWidth),
                           child: SingleChildScrollView(
-                            child: DataTable(
+                            child: Obx(() {
+                              // Explicitly register dependency on rxSelectedIds and rxListItem
+                              controller.rxSelectedIds.length;
+                              controller.rxListItem.length;
+                              return DataTable(
                       showCheckboxColumn: true,
                       onSelectAll: (val) {
                         if (val == true) {
                           controller.selectAllVisible();
                         } else {
-                          controller.clearSelection();
+                          controller.deselectAllVisible();
                         }
                       },
                       columnSpacing: 18,
@@ -299,13 +303,16 @@ class FragmentHomeItem extends StatelessWidget {
                       ],
                       rows: controller.rxListItem.map((EntityItem item) {
                         final isActive = item.isActive ?? true;
-                        final itemId = item.id ?? 0;
+                        final itemId = item.id;
                         final isSelected = controller.isSelected(itemId);
 
                         return DataRow(
+                          key: ValueKey('item_row_${item.id ?? item.objectId}'),
                           selected: isSelected,
                           onSelectChanged: (val) {
-                            controller.toggleSelection(itemId);
+                            if (itemId != null && itemId > 0) {
+                              controller.toggleSelection(itemId);
+                            }
                           },
                           color: WidgetStateProperty.resolveWith<Color?>((states) {
                             if (states.contains(WidgetState.selected)) {
@@ -530,8 +537,9 @@ class FragmentHomeItem extends StatelessWidget {
                         );
                       }).toList(),
                       dataRowMaxHeight: 52,
-                    ),
-                  ),
+                    );
+                  }),
+                ),
                 ),
               ),
             );
@@ -561,7 +569,14 @@ class FragmentHomeItem extends StatelessWidget {
     return Obx(() {
       if (!controller.hasSelection) return const SizedBox.shrink();
       final isDark = Theme.of(context).brightness == Brightness.dark;
-      final count = controller.selectedCount;
+      final totalCount = controller.selectedCount;
+      final pageSelectedCount = controller.rxListItem
+          .where((item) => item.id != null && controller.isSelected(item.id!))
+          .length;
+
+      final labelText = (pageSelectedCount == totalCount)
+          ? '$totalCount item${totalCount > 1 ? 's' : ''} selected'
+          : '$totalCount item${totalCount > 1 ? 's' : ''} selected ($pageSelectedCount on this page)';
 
       return Container(
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 6),
@@ -589,7 +604,7 @@ class FragmentHomeItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                '$count item${count > 1 ? 's' : ''} selected',
+                labelText,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 12.5,

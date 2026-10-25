@@ -112,6 +112,12 @@ class ControllerHomeCustomer extends GetxController {
     loadCustomers(); // immediate clear
   }
 
+  void resetSearch() {
+    if (searchQuery.value.isNotEmpty || searchController.text.isNotEmpty) {
+      clearSearch();
+    }
+  }
+
   // ── Inline Form Actions ──
   void openCreateForm([EntityCustomer? customer]) {
     rxEditingCustomer.value = customer;

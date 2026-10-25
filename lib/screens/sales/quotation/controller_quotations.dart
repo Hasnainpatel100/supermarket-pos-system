@@ -108,6 +108,12 @@ class ControllerQuotations extends GetxController {
     loadQuotations();
   }
 
+  void resetSearch() {
+    if (rxSearchQuery.value.isNotEmpty || searchController.text.isNotEmpty) {
+      clearSearch();
+    }
+  }
+
   void setSearch(String q) {
     updateSearch(q);
   }

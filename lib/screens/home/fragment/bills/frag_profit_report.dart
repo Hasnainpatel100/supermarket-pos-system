@@ -211,19 +211,6 @@ class FragProfitReport extends StatelessWidget {
               onTap: controller.importTestExcel,
             ),
           ],
-
-          const SizedBox(width: 6),
-
-          // PDF
-          _exportButton(
-            context,
-            icon: Icons.picture_as_pdf_rounded,
-            label: 'PDF',
-            color: Colors.red.shade600,
-            bgColor: Colors.red.shade50,
-            borderColor: Colors.red.shade200,
-            onTap: controller.exportPdf,
-          ),
         ],
       ),
     );

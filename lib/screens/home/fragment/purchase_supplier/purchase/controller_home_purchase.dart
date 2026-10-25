@@ -114,6 +114,12 @@ class ControllerHomePurchase extends GetxController {
     loadPurchases();
   }
 
+  void resetSearch() {
+    if (searchQuery.value.isNotEmpty || searchController.text.isNotEmpty) {
+      clearSearch();
+    }
+  }
+
   void setStatusFilter(PurchaseStatus? status) {
     filterStatus.value = status;
     currentPage.value = 0;

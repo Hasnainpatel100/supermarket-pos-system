@@ -210,40 +210,7 @@ class FragInventoryReport extends StatelessWidget {
               borderColor: Colors.amber.shade200,
               onTap: controller.importTestExcel,
             ),
-            const SizedBox(width: 6),
-            _exportButton(
-              context,
-              icon: Icons.bolt_rounded,
-              label: '+ 30k Items',
-              color: Colors.deepPurple.shade700,
-              bgColor: Colors.deepPurple.shade50,
-              borderColor: Colors.deepPurple.shade200,
-              onTap: controller.seed30kTestItems,
-            ),
-            const SizedBox(width: 6),
-            _exportButton(
-              context,
-              icon: Icons.delete_sweep_rounded,
-              label: 'Clear Seeded',
-              color: Colors.red.shade700,
-              bgColor: Colors.red.shade50,
-              borderColor: Colors.red.shade200,
-              onTap: controller.clearSeededItems,
-            ),
           ],
-
-          const SizedBox(width: 6),
-
-          // PDF
-          _exportButton(
-            context,
-            icon: Icons.picture_as_pdf_rounded,
-            label: 'PDF',
-            color: Colors.red.shade600,
-            bgColor: Colors.red.shade50,
-            borderColor: Colors.red.shade200,
-            onTap: controller.exportPdf,
-          ),
         ],
       ),
     );

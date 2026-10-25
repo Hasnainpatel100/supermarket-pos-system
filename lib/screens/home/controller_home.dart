@@ -21,6 +21,16 @@ import '../../widget/dialog_plan_expiry.dart';
 
 import 'fragment/account/controller_home_account.dart';
 import 'fragment/account/dialog_start_day_shift.dart';
+import 'fragment/item/controller_home_item.dart';
+import 'fragment/stocks/controller_home_stock.dart';
+import 'fragment/purchase_supplier/purchase/controller_home_purchase.dart';
+import 'fragment/purchase_supplier/supplier/controller_home_supplier.dart';
+import 'fragment/pos/controller_home_pos.dart';
+import 'fragment/customer/controller_home_customer.dart';
+import '../sales/invoice/controller_sales_invoices.dart';
+import '../sales/quotation/controller_quotations.dart';
+import '../sales/returns/controller_sales_returns.dart';
+import 'fragment/bills/controller_sales_report.dart';
 
 class ControllerHome extends GetxController {
   final RepoStorage _repoStorage = Get.find();
@@ -33,8 +43,51 @@ class ControllerHome extends GetxController {
     ever(isDrawerCollapsed, (bool collapsed) {
       _repoStorage.setDrawerCollapsed(collapsed);
     });
+    ever(selectedMainMenu, (EnumMainMenu _) {
+      resetAllScreenSearches();
+    });
     getUserDetails();
     super.onInit();
+  }
+
+  /// Automatically clears search text and filters whenever switching between screens
+  void resetAllScreenSearches() {
+    // 1. Item screen
+    if (Get.isRegistered<ControllerHomeItem>()) {
+      Get.find<ControllerHomeItem>().resetSearch();
+    }
+    // 2. Stock ledger screen
+    if (Get.isRegistered<ControllerHomeStock>()) {
+      Get.find<ControllerHomeStock>().resetSearch();
+    }
+    // 3. Purchase screen
+    if (Get.isRegistered<ControllerHomePurchase>()) {
+      Get.find<ControllerHomePurchase>().resetSearch();
+    }
+    // 4. Supplier screen
+    if (Get.isRegistered<ControllerHomeSupplier>()) {
+      Get.find<ControllerHomeSupplier>().resetSearch();
+    }
+    // 5. Sales screens
+    if (Get.isRegistered<ControllerHomePos>()) {
+      Get.find<ControllerHomePos>().resetSearch();
+    }
+    if (Get.isRegistered<ControllerSalesInvoices>()) {
+      Get.find<ControllerSalesInvoices>().resetSearch();
+    }
+    if (Get.isRegistered<ControllerQuotations>()) {
+      Get.find<ControllerQuotations>().resetSearch();
+    }
+    if (Get.isRegistered<ControllerSalesReturns>()) {
+      Get.find<ControllerSalesReturns>().resetSearch();
+    }
+    if (Get.isRegistered<ControllerSalesReport>()) {
+      Get.find<ControllerSalesReport>().resetSearch();
+    }
+    // Customer screen
+    if (Get.isRegistered<ControllerHomeCustomer>()) {
+      Get.find<ControllerHomeCustomer>().resetSearch();
+    }
   }
 
   void toggleDrawer() {

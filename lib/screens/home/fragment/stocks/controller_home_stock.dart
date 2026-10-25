@@ -105,6 +105,12 @@ class ControllerHomeStock extends GetxController {
     loadTransactions(); // immediate clear
   }
 
+  void resetSearch() {
+    if (searchQuery.value.isNotEmpty || searchController.text.isNotEmpty) {
+      clearSearch();
+    }
+  }
+
   void setTypeFilter(StockTxnType? type) {
     rxFilterType.value = type;
     currentPage.value = 0;

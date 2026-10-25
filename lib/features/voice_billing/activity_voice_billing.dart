@@ -17,15 +17,18 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
   late final ControllerVoiceBilling controller;
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
-  final ServiceCurrency _currency = Get.find<ServiceCurrency>();
   final TextEditingController _manualTextController = TextEditingController();
+
+  String get _currencySymbol =>
+      Get.isRegistered<ServiceCurrency>() ? Get.find<ServiceCurrency>().rxCurrency.value : '₹';
 
   @override
   void initState() {
     super.initState();
-    controller = Get.isRegistered<ControllerVoiceBilling>()
-        ? Get.find<ControllerVoiceBilling>()
-        : Get.put(ControllerVoiceBilling());
+    if (Get.isRegistered<ControllerVoiceBilling>()) {
+      Get.delete<ControllerVoiceBilling>(force: true);
+    }
+    controller = Get.put(ControllerVoiceBilling());
 
     _pulseController = AnimationController(
       vsync: this,
@@ -41,6 +44,9 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
   void dispose() {
     _manualTextController.dispose();
     _pulseController.dispose();
+    if (Get.isRegistered<ControllerVoiceBilling>()) {
+      Get.delete<ControllerVoiceBilling>(force: true);
+    }
     super.dispose();
   }
 
@@ -150,14 +156,14 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.amber.shade700, width: 0.8),
             ),
-            child: Text(
+            child: Obx(() => Text(
               controller.activeProviderName,
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.bold,
                 color: Colors.amber.shade800,
               ),
-            ),
+            )),
           ),
         ],
       ),
@@ -443,7 +449,7 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
 
   Widget _buildApiKeyWarningBanner(BuildContext context, ColorScheme cs) {
     return Obx(() {
-      if (!controller.hasApiKey) {
+      if (!controller.rxHasApiKey.value) {
         return Container(
           margin: const EdgeInsets.only(bottom: 20),
           padding: const EdgeInsets.all(12),
@@ -716,7 +722,7 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${_currency.rxCurrency.value} ${item.price.toStringAsFixed(2)}',
+                  '$_currencySymbol ${item.price.toStringAsFixed(2)}',
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
                 Text(
@@ -730,7 +736,7 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
 
           // Line Total
           Text(
-            '${_currency.rxCurrency.value} ${item.total.toStringAsFixed(2)}',
+            '$_currencySymbol ${item.total.toStringAsFixed(2)}',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(width: 8),
@@ -789,19 +795,19 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Subtotal: ${_currency.rxCurrency.value} ${inv.subTotal.toStringAsFixed(2)}',
+                          'Subtotal: $_currencySymbol ${inv.subTotal.toStringAsFixed(2)}',
                           style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant),
                         ),
                         if (inv.taxTotal > 0)
                           Text(
-                            'Tax: ${_currency.rxCurrency.value} ${inv.taxTotal.toStringAsFixed(2)}',
+                            'Tax: $_currencySymbol ${inv.taxTotal.toStringAsFixed(2)}',
                             style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant),
                           ),
                       ],
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      '${_currency.rxCurrency.value} ${inv.grandTotal.toStringAsFixed(2)}',
+                      '$_currencySymbol ${inv.grandTotal.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,

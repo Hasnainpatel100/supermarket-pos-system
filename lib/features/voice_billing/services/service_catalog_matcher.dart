@@ -85,7 +85,9 @@ class ServiceCatalogMatcher {
     EntityItem? matched;
 
     // A. Check exact barcode or SKU first
-    final barcodeMatch = _boxItem.query(EntityItem_.barcode.equals(cleanName).or(EntityItem_.sku.equals(cleanName))).build().findFirst();
+    final bq = _boxItem.query(EntityItem_.barcode.equals(cleanName).or(EntityItem_.sku.equals(cleanName))).build();
+    final barcodeMatch = bq.findFirst();
+    bq.close();
     if (barcodeMatch != null) {
       matched = barcodeMatch;
     }

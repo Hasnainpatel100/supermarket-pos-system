@@ -19,6 +19,7 @@ import 'controller_home_pos.dart';
 import 'dialog_parked_bills.dart';
 import 'dialog_select_batch.dart';
 import '../../../../features/voice_billing/activity_voice_billing.dart';
+import '../../../../features/voice_billing/controller_voice_billing.dart';
 
 class FragmentHomePos extends StatelessWidget {
   const FragmentHomePos({super.key});
@@ -369,7 +370,12 @@ class _TabBar extends StatelessWidget {
             child: Tooltip(
               message: 'AI Voice Invoicing: Speak to create bills (Hindi / English / Marathi)',
               child: FilledButton.icon(
-                onPressed: () => Get.to(() => const ActivityVoiceBilling()),
+                onPressed: () {
+                  if (Get.isRegistered<ControllerVoiceBilling>()) {
+                    Get.delete<ControllerVoiceBilling>(force: true);
+                  }
+                  Get.to(() => const ActivityVoiceBilling());
+                },
                 icon: const Icon(Icons.mic_rounded, size: 16),
                 label: const Text('AI Voice Bill', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 style: FilledButton.styleFrom(
@@ -3076,7 +3082,12 @@ class _CatalogHeaderBar extends StatelessWidget {
           Tooltip(
             message: 'AI Voice Invoicing: Speak to create bills (Hindi / English / Marathi)',
             child: FilledButton.icon(
-              onPressed: () => Get.to(() => const ActivityVoiceBilling()),
+              onPressed: () {
+                if (Get.isRegistered<ControllerVoiceBilling>()) {
+                  Get.delete<ControllerVoiceBilling>(force: true);
+                }
+                Get.to(() => const ActivityVoiceBilling());
+              },
               icon: const Icon(Icons.mic_rounded, size: 16),
               label: const Text('AI Voice Bill', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               style: FilledButton.styleFrom(

@@ -4,7 +4,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 class ServiceVoiceRecorder {
-  final AudioRecorder _audioRecorder = AudioRecorder();
+  AudioRecorder? _audioRecorder;
+  AudioRecorder get _recorder => _audioRecorder ??= AudioRecorder();
   bool _isRecording = false;
   String? _currentRecordingPath;
 
@@ -13,7 +14,7 @@ class ServiceVoiceRecorder {
 
   Future<bool> hasPermission() async {
     try {
-      return await _audioRecorder.hasPermission();
+      return await _recorder.hasPermission();
     } catch (e) {
       debugPrint('Mic permission check error: $e');
       return true; // Many desktop OSes grant mic implicitly or query via OS dialog
@@ -32,7 +33,7 @@ class ServiceVoiceRecorder {
       final fileName = 'voice_order_${DateTime.now().millisecondsSinceEpoch}.wav';
       final filePath = p.join(tempDir.path, fileName);
 
-      await _audioRecorder.start(
+      await _recorder.start(
         const RecordConfig(
           encoder: AudioEncoder.wav,
           sampleRate: 16000,
@@ -53,7 +54,7 @@ class ServiceVoiceRecorder {
   Future<String?> stop() async {
     try {
       if (_isRecording) {
-        final path = await _audioRecorder.stop();
+        final path = await _recorder.stop();
         _isRecording = false;
         return path ?? _currentRecordingPath;
       }
@@ -66,7 +67,7 @@ class ServiceVoiceRecorder {
 
   Future<void> cancel() async {
     try {
-      await _audioRecorder.cancel();
+      await _recorder.cancel();
     } catch (e) {
       debugPrint('Recorder cancel error: $e');
     } finally {
@@ -76,7 +77,8 @@ class ServiceVoiceRecorder {
 
   void dispose() {
     try {
-      _audioRecorder.dispose();
+      _audioRecorder?.dispose();
     } catch (_) {}
+    _audioRecorder = null;
   }
 }

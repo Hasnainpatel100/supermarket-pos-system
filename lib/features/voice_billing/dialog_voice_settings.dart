@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../util/snackbar_util.dart';
+import 'controller_voice_billing.dart';
 import 'services/service_ai_parser.dart';
 
 class DialogVoiceSettings extends StatefulWidget {
@@ -68,6 +69,9 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
       groqKey: _groqController.text.trim(),
       geminiKey: _geminiController.text.trim(),
     );
+    if (Get.isRegistered<ControllerVoiceBilling>()) {
+      Get.find<ControllerVoiceBilling>().refreshSettings();
+    }
 
     try {
       final res = await _parser.parseTextWithFallback('Customer Ramesh, 2 kg sugar, cash payment');
@@ -89,6 +93,9 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
       groqKey: _groqController.text.trim(),
       geminiKey: _geminiController.text.trim(),
     );
+    if (Get.isRegistered<ControllerVoiceBilling>()) {
+      Get.find<ControllerVoiceBilling>().refreshSettings();
+    }
     SnackbarUtil.showSuccess('Voice AI settings saved successfully');
     Get.back();
   }

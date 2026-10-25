@@ -55,6 +55,9 @@ class ControllerVoiceBilling extends GetxController {
   final notesController = TextEditingController();
   final rxPaymentMode = 'Cash'.obs;
 
+  final rxHasApiKey = false.obs;
+  final rxActiveProvider = ''.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -65,6 +68,9 @@ class ControllerVoiceBilling extends GetxController {
     _boxBillItem = ob.box<EntityBillItem>();
     _boxCustomer = ob.box<EntityCustomer>();
     _boxStockTxn = ob.box<EntityStockTransaction>();
+
+    rxHasApiKey.value = _aiParser.hasValidApiKey;
+    rxActiveProvider.value = _aiParser.activeProvider;
 
     customerNameController.addListener(() {
       rxInvoice.value.customerName = customerNameController.text.trim();
@@ -89,12 +95,17 @@ class ControllerVoiceBilling extends GetxController {
     super.onClose();
   }
 
+  void refreshSettings() {
+    rxHasApiKey.value = _aiParser.hasValidApiKey;
+    rxActiveProvider.value = _aiParser.activeProvider;
+  }
+
   void setLanguage(String lang) {
     rxSelectedLanguage.value = lang;
   }
 
-  bool get hasApiKey => _aiParser.hasValidApiKey;
-  String get activeProviderName => _aiParser.activeProvider == 'groq' ? 'Groq Whisper' : 'Gemini Flash';
+  bool get hasApiKey => rxHasApiKey.value;
+  String get activeProviderName => rxActiveProvider.value == 'groq' ? 'Groq Whisper' : 'Gemini Flash';
 
   // ─── Recording & Voice Processing ──────────────────────────────────────────
 

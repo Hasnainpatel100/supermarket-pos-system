@@ -59,7 +59,7 @@ class ServiceGeminiLiveTranscribe {
     for (final url in endpoints) {
       try {
         debugPrint('[Gemini Live] Connecting to WebSocket endpoint...');
-        onStatusChange?.call('Connecting to Gemini 3.5 Transcribe Live...');
+        onStatusChange?.call('Connecting to Voice Assistant...');
 
         _webSocket = await WebSocket.connect(url).timeout(
           const Duration(seconds: 8),
@@ -121,7 +121,7 @@ class ServiceGeminiLiveTranscribe {
 
         if (ready) {
           _isSessionSetup = true;
-          onStatusChange?.call('Live Transcription connected. Listening...');
+          onStatusChange?.call('Voice Assistant connected. Listening...');
           return true;
         }
       } catch (e) {
@@ -130,7 +130,7 @@ class ServiceGeminiLiveTranscribe {
       }
     }
 
-    onError?.call('Could not connect to Gemini Live Transcription service.');
+    onError?.call('Could not connect to Voice Assistant.');
     return false;
   }
 

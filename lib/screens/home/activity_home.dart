@@ -38,6 +38,8 @@ import 'fragment/account/fragment_home_account.dart';
 import '../sales/invoice/frag_sales_invoices.dart';
 import '../sales/quotation/frag_quotations.dart';
 import '../sales/returns/frag_sales_returns.dart';
+import '../../features/voice_billing/activity_voice_billing.dart';
+import '../../features/voice_billing/activity_voice_sales_history.dart';
 
 class ActivityHome extends StatelessWidget {
   const ActivityHome({super.key});
@@ -176,6 +178,12 @@ class ActivityHome extends StatelessWidget {
     }
     if (menu == EnumMainMenu.pos) {
       return FragmentHomePos();
+    }
+    if (menu == EnumMainMenu.voiceBilling || menu == EnumMainMenu.voiceBillingGroup) {
+      return const ActivityVoiceBilling();
+    }
+    if (menu == EnumMainMenu.voiceSalesHistory) {
+      return const ActivityVoiceSalesHistory();
     }
     if (menu == EnumMainMenu.item) {
       return FragmentHomeItem();

@@ -80,6 +80,9 @@ class AppTranslation extends Translations {
       // Main Menus
       'dashboard': 'Dashboard',
       'pos': 'POS',
+      'ai_voice_billing': 'AI Voice Billing',
+      'voice_billing': 'AI Voice Bill',
+      'voice_sales_history': 'Voice Sales Records',
       'inventory': 'Inventory',
       'pricing_discount': 'Pricing & Discount',
       'purchase_supplier': 'Purchase & Supplier',

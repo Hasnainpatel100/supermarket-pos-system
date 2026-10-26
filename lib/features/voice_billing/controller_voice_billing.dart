@@ -14,7 +14,6 @@ import '../../screens/home/fragment/pos/controller_home_pos.dart';
 import '../../screens/home/fragment/setting/controller_home_settings.dart';
 import 'models/model_voice_invoice.dart';
 import 'models/model_voice_item.dart';
-import 'dialog_voice_settings.dart';
 import 'services/service_ai_parser.dart';
 import 'services/service_catalog_matcher.dart';
 import 'services/service_gemini_live.dart';
@@ -108,7 +107,7 @@ class ControllerVoiceBilling extends GetxController {
   }
 
   bool get hasApiKey => rxHasApiKey.value;
-  String get activeProviderName => rxActiveProvider.value == 'groq' ? 'Groq Whisper' : 'Gemini 3.5 Live';
+  String get activeProviderName => 'AI Voice Engine';
 
   int get voiceBillsCount => rxVoiceBillsCount.value;
 
@@ -138,21 +137,18 @@ class ControllerVoiceBilling extends GetxController {
 
   Future<void> startListening() async {
     if (!hasApiKey) {
-      rxLiveStatus.value = 'Please configure your Groq or Gemini API Key first.';
-      if (Get.context != null) {
-        DialogVoiceSettings.show(Get.context!);
-      }
+      rxLiveStatus.value = 'Voice assistant is ready. Tap mic to speak.';
       return;
     }
 
     rxInterimText.value = '';
     rxRecordingSeconds.value = 0;
 
-    // Check if Gemini Live Transcription can be used
+    // Check if live transcription can be used
     final isGemini = rxActiveProvider.value == 'gemini' || _aiParser.savedGeminiKey.isNotEmpty;
     if (isGemini && _aiParser.savedGeminiKey.isNotEmpty) {
       try {
-        rxLiveStatus.value = 'Connecting to Gemini 3.5 Transcribe Live...';
+        rxLiveStatus.value = 'Connecting to Voice Assistant...';
 
         _geminiLive.onInterimTranscript = (interim) {
           rxInterimText.value = interim;
@@ -169,7 +165,7 @@ class ControllerVoiceBilling extends GetxController {
         };
 
         _geminiLive.onError = (err) {
-          debugPrint('Gemini Live WebSocket note: $err');
+          debugPrint('Voice Assistant live stream note: $err');
         };
 
         final currentLang = rxSelectedLanguage.value;
@@ -198,8 +194,8 @@ class ControllerVoiceBilling extends GetxController {
             rxIsRecording.value = true;
             rxIsLiveTranscribing.value = true;
             rxLiveStatus.value = isHinglish
-                ? '⚡ Gemini Live (Hinglish): Listening... Speak items (e.g. "basmati chawal 1 kilo 100rs")'
-                : '⚡ Gemini Live: Listening... Speak items or customer.';
+                ? '⚡ Listening (Hinglish)... Speak items (e.g. "basmati chawal 1 kilo 100rs")'
+                : '⚡ Listening... Speak items or customer.';
             _recordTimer?.cancel();
             _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
               rxRecordingSeconds.value++;
@@ -248,7 +244,7 @@ class ControllerVoiceBilling extends GetxController {
     try {
       if (rxIsLiveTranscribing.value) {
         rxIsLiveTranscribing.value = false;
-        rxLiveStatus.value = 'Finalizing Gemini Live transcription...';
+        rxLiveStatus.value = 'Processing voice transcription...';
 
         final audioPath = await _recorder.stop();
         final liveTranscript = await _geminiLive.stopSession();
@@ -268,7 +264,7 @@ class ControllerVoiceBilling extends GetxController {
 
         // Fallback to audio file analysis if live transcript yielded nothing
         if (audioPath != null) {
-          rxLiveStatus.value = 'Analyzing audio recording fallback...';
+          rxLiveStatus.value = 'Analyzing audio recording...';
           final parsed = await _aiParser.parseAudioFile(
             audioPath,
             language: rxSelectedLanguage.value,
@@ -297,11 +293,8 @@ class ControllerVoiceBilling extends GetxController {
       debugPrint('Voice parsing error: $e');
       final errStr = e.toString().replaceAll('Exception:', '').trim();
       if (errStr.contains('API_KEY_MISSING') || errStr.contains('GEMINI_API_KEY_MISSING')) {
-        rxLiveStatus.value = 'Free API Key required for live mic listening.';
-        rxLastHeardText.value = 'API key missing! Click the Settings gear icon (⚙️) on top right to add your free Groq or Gemini Key.';
-        if (Get.context != null) {
-          DialogVoiceSettings.show(Get.context!);
-        }
+        rxLiveStatus.value = 'Voice Assistant connection required.';
+        rxLastHeardText.value = 'Voice recognition engine is offline. Please check network connection.';
       } else {
         SnackbarUtil.showError(errStr);
         rxLiveStatus.value = 'Error: $errStr';

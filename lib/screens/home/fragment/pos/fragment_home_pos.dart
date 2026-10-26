@@ -18,8 +18,6 @@ import 'activity_split_bill.dart';
 import 'controller_home_pos.dart';
 import 'dialog_parked_bills.dart';
 import 'dialog_select_batch.dart';
-import '../../../../features/voice_billing/activity_voice_billing.dart';
-import '../../../../features/voice_billing/activity_voice_sales_history.dart';
 
 class FragmentHomePos extends StatelessWidget {
   const FragmentHomePos({super.key});
@@ -365,38 +363,6 @@ class _TabBar extends StatelessWidget {
               ),
             );
           }),
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: Tooltip(
-              message: 'AI Voice Invoicing: Speak to create bills (Hindi / English / Marathi)',
-              child: FilledButton.icon(
-                onPressed: () => Get.to(() => const ActivityVoiceBilling()),
-                icon: const Icon(Icons.mic_rounded, size: 16),
-                label: const Text('AI Voice Bill', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFF59E0B),
-                  foregroundColor: Colors.black87,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: Tooltip(
-              message: 'View all bills sold through Voice AI assistant (Stock untouched)',
-              child: OutlinedButton.icon(
-                onPressed: () => Get.to(() => const ActivityVoiceSalesHistory()),
-                icon: const Icon(Icons.analytics_outlined, size: 16),
-                label: const Text('Voice Sales', style: TextStyle(fontSize: 12)),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: _ViewModeSwitcherButton(controller: controller),
@@ -3086,37 +3052,6 @@ class _CatalogHeaderBar extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-
-          // Voice Billing Button
-          Tooltip(
-            message: 'AI Voice Invoicing: Speak to create bills (Hindi / English / Marathi)',
-            child: FilledButton.icon(
-              onPressed: () => Get.to(() => const ActivityVoiceBilling()),
-              icon: const Icon(Icons.mic_rounded, size: 16),
-              label: const Text('AI Voice Bill', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFF59E0B),
-                foregroundColor: Colors.black87,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Tooltip(
-            message: 'View all bills sold through Voice AI assistant (Stock untouched)',
-            child: OutlinedButton.icon(
-              onPressed: () => Get.to(() => const ActivityVoiceSalesHistory()),
-              icon: const Icon(Icons.analytics_outlined, size: 16),
-              label: const Text('Voice Sales', style: TextStyle(fontSize: 12)),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
 
           // Alternate View Switcher
           _ViewModeSwitcherButton(controller: controller),

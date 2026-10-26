@@ -1,4 +1,7 @@
 {
+  "ai_voice_billing": "AI Voice Billing",
+  "voice_billing": "AI Voice Bill",
+  "voice_sales_history": "Voice Sales Records",
   "sales": "Sales",
   "sales_invoices": "Sales Invoices",
   "quotation_estimate": "Quotation / Estimate",

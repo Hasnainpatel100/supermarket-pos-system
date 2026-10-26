@@ -1,6 +1,9 @@
 enum EnumMainMenu {
   dashboard,
   pos,
+  voiceBillingGroup,
+  voiceBilling,
+  voiceSalesHistory,
   inventory,
   item,
   stocks,

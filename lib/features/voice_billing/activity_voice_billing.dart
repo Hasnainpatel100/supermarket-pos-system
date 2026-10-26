@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../enums/enum_main_menu.dart';
+import '../../screens/home/controller_home.dart';
 import '../../../../service/service_currency.dart';
 import '../../../../util/snackbar_util.dart';
 import 'activity_voice_sales_history.dart';
 import 'controller_voice_billing.dart';
-import 'dialog_voice_settings.dart';
 import 'models/model_voice_item.dart';
 
 class ActivityVoiceBilling extends StatefulWidget {
@@ -96,7 +97,6 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
                     const SizedBox(height: 12),
                     _buildLanguageSelector(cs, isDark),
                     const SizedBox(height: 14),
-                    _buildApiKeyWarningBanner(context, cs),
                     _buildSpeakingCounterHeader(cs),
                     const SizedBox(height: 24),
                     _buildMicCenterButton(cs, isDark),
@@ -139,7 +139,13 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_rounded),
         tooltip: 'Back to POS Screen',
-        onPressed: () => Get.back(),
+        onPressed: () {
+          if (Navigator.canPop(context)) {
+            Get.back();
+          } else if (Get.isRegistered<ControllerHome>()) {
+            Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.pos;
+          }
+        },
       ),
       title: Row(
         children: [
@@ -170,35 +176,13 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
                 'AI Voice Billing Assistant',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.5),
               ),
-              Row(
-                children: [
-                  Text(
-                    'Real-time Speech-to-Invoice',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Obx(() => Text(
-                    controller.activeProviderName,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.amber.shade700,
-                    ),
-                  )),
-                ],
+              Text(
+                'Real-time Speech-to-Invoice',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
               ),
             ],
           ),
@@ -249,15 +233,7 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
             ),
           ),
         ),
-        const SizedBox(width: 8),
-
-        // Settings Button
-        IconButton(
-          icon: const Icon(Icons.tune_rounded),
-          tooltip: 'Configure Gemini API Key & Audio',
-          onPressed: () => DialogVoiceSettings.show(context),
-        ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 12),
       ],
     );
   }
@@ -523,7 +499,7 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
                   const SizedBox(width: 8),
                   Text(
                     controller.rxIsLiveTranscribing.value
-                        ? '⚡ Gemini 3.5 Live... 00:${seconds.toString().padLeft(2, '0')}'
+                        ? '⚡ Live Listening... 00:${seconds.toString().padLeft(2, '0')}'
                         : 'Listening... 00:${seconds.toString().padLeft(2, '0')}',
                     style: const TextStyle(
                       color: Colors.red,
@@ -755,53 +731,6 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
         ],
       ),
     );
-  }
-
-  Widget _buildApiKeyWarningBanner(BuildContext context, ColorScheme cs) {
-    return Obx(() {
-      if (!controller.rxHasApiKey.value) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.amber.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.amber.shade700, width: 1.2),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.key_rounded, color: Colors.amber, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Free Gemini API Key Active',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    Text(
-                      'Setup your key in settings to enable live voice recognition.',
-                      style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-              FilledButton.tonal(
-                onPressed: () => DialogVoiceSettings.show(context),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.amber.shade800,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                ),
-                child: const Text('Setup Key', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-      }
-      return const SizedBox.shrink();
-    });
   }
 
   Widget _buildQuickDemoChips(ColorScheme cs, bool isDark) {

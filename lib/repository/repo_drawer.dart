@@ -94,7 +94,17 @@ class RepoDrawer {
       ],
     ),
 
-    // 2. Sales (Invoices, Quotations, Sales Returns)
+    // 2. AI Voice Bill - Dedicated single item below POS
+    ModelDrawerMenu(
+      menu: EnumMainMenu.voiceBilling,
+      titleKey: 'voice_billing',
+      icon: Icons.mic_rounded,
+      permissions: const [
+        AppPermissions.orderCreate,
+      ],
+    ),
+
+    // 3. Sales (Invoices, Quotations, Sales Returns)
     ModelDrawerMenu(
       menu: EnumMainMenu.salesGroup,
       titleKey: 'sales',

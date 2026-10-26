@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../model/entity_bill.dart';
+import '../../enums/enum_main_menu.dart';
+import '../../screens/home/controller_home.dart';
 import '../../screens/home/fragment/bills/dialog_bill_detail.dart';
 import 'controller_voice_sales_history.dart';
 
@@ -56,7 +58,13 @@ class _ActivityVoiceSalesHistoryState extends State<ActivityVoiceSalesHistory> {
       scrolledUnderElevation: 1,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_rounded),
-        onPressed: () => Get.back(),
+        onPressed: () {
+          if (Navigator.canPop(context)) {
+            Get.back();
+          } else if (Get.isRegistered<ControllerHome>()) {
+            Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.voiceBilling;
+          }
+        },
         tooltip: 'Back',
       ),
       title: Row(

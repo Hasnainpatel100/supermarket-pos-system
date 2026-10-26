@@ -74,6 +74,14 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
     }
 
     try {
+      if (!isGroq) {
+        final liveOk = await _parser.testGeminiLiveSession(key);
+        if (liveOk) {
+          SnackbarUtil.showSuccess('⚡ Gemini 3.5 Transcribe Live connected! Real-time WebSocket streaming ready.');
+          return;
+        }
+      }
+
       final res = await _parser.parseTextWithFallback('Customer Ramesh, 2 kg sugar, cash payment');
       if (res.items.isNotEmpty) {
         SnackbarUtil.showSuccess('${isGroq ? "Groq (Whisper + LLaMA)" : "Gemini"} connected! Parsed ${res.items.length} items successfully');
@@ -191,7 +199,7 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
                               Icon(Icons.auto_awesome_rounded, size: 16, color: !isGroq ? Colors.blue : cs.onSurfaceVariant),
                               const SizedBox(width: 6),
                               Text(
-                                'Google Gemini Flash',
+                                'Gemini 3.5 Live Transcribe',
                                 style: TextStyle(
                                   fontWeight: !isGroq ? FontWeight.bold : FontWeight.w500,
                                   color: !isGroq ? Colors.blue : cs.onSurface,
@@ -282,7 +290,7 @@ class _DialogVoiceSettingsState extends State<DialogVoiceSettings> {
                       ],
                     ),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                    helperText: 'Free from Google AI Studio: 1,500 requests per day.',
+                    helperText: 'Real-time WebSocket streaming with gemini-3.5-transcribe-live (85+ languages, SMART mode).',
                   ),
                 ),
                 const SizedBox(height: 12),

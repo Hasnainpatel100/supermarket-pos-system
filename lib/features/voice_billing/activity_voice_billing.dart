@@ -330,7 +330,7 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
         ),
         child: Row(
           children: [
-            _buildLangChip(cs, '🇮🇳 हिन्दी (Hindi)', 'hi', current == 'hi'),
+            _buildLangChip(cs, '🇮🇳 Hinglish', 'hinglish', current == 'hinglish' || current == 'hi'),
             _buildLangChip(cs, '🌐 English', 'en', current == 'en'),
             _buildLangChip(cs, '🚩 मराठी (Marathi)', 'mr', current == 'mr'),
           ],
@@ -522,7 +522,9 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Listening... 00:${seconds.toString().padLeft(2, '0')}',
+                    controller.rxIsLiveTranscribing.value
+                        ? '⚡ Gemini 3.5 Live... 00:${seconds.toString().padLeft(2, '0')}'
+                        : 'Listening... 00:${seconds.toString().padLeft(2, '0')}',
                     style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
@@ -637,25 +639,75 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
           const SizedBox(height: 8),
           Obx(() {
             final heard = controller.rxLastHeardText.value;
+            final interim = controller.rxInterimText.value;
+            final isLive = controller.rxIsLiveTranscribing.value;
+
             return Container(
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.2)),
-              ),
-              child: Text(
-                heard.isNotEmpty
-                    ? '"$heard"'
-                    : 'Speak into your microphone or click demo prompts below.',
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.4,
-                  fontWeight: heard.isNotEmpty ? FontWeight.w500 : FontWeight.normal,
-                  color: heard.isNotEmpty ? cs.onSurface : cs.onSurfaceVariant.withValues(alpha: 0.7),
-                  fontStyle: heard.isEmpty ? FontStyle.italic : FontStyle.normal,
+                border: Border.all(
+                  color: isLive ? Colors.amber.shade600.withValues(alpha: 0.5) : cs.outlineVariant.withValues(alpha: 0.2),
+                  width: isLive ? 1.5 : 1.0,
                 ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (heard.isNotEmpty)
+                    Text(
+                      '"$heard"',
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        fontWeight: FontWeight.w500,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  if (interim.isNotEmpty) ...[
+                    if (heard.isNotEmpty) const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'LIVE',
+                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.amber),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '"$interim..."',
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.4,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.amber.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (heard.isEmpty && interim.isEmpty)
+                    Text(
+                      'Speak into your microphone or click demo prompts below.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                ],
               ),
             );
           }),
@@ -774,9 +826,9 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
             _buildDemoChip(
               cs,
               isDark,
-              '🛒 Hindi: सत्यम के नाम से 2 किलो चीनी, 1 पैकेट दूध, कैश',
-              'सत्यम के नाम से 2 किलो चीनी, 1 पैकेट दूध, कैश',
-              'hi',
+              '🛒 Hinglish: basmati chawal 1 kilo 100rs, 2 packet maggi 24rs, cash',
+              'basmati chawal 1 kilo 100rs, 2 packet maggi 24rs, cash',
+              'hinglish',
             ),
             _buildDemoChip(
               cs,

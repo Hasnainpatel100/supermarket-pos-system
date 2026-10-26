@@ -17,28 +17,33 @@ import 'models/model_voice_item.dart';
 import 'dialog_voice_settings.dart';
 import 'services/service_ai_parser.dart';
 import 'services/service_catalog_matcher.dart';
+import 'services/service_gemini_live.dart';
+import 'services/service_hinglish_transliteration.dart';
 import 'services/service_voice_recorder.dart';
 
 class ControllerVoiceBilling extends GetxController {
   final ServiceVoiceRecorder _recorder = ServiceVoiceRecorder();
   final ServiceAiParser _aiParser = ServiceAiParser();
   final ServiceCatalogMatcher _catalogMatcher = ServiceCatalogMatcher();
+  final ServiceGeminiLiveTranscribe _geminiLive = ServiceGeminiLiveTranscribe();
 
   late final Box<EntityBill> _boxBill;
   late final Box<EntityBillItem> _boxBillItem;
   late final Box<EntityCustomer> _boxCustomer;
 
-  // Language: 'hi' (Hindi/Hinglish), 'en' (English), 'mr' (Marathi)
-  final rxSelectedLanguage = 'hi'.obs;
+  // Language: 'hinglish' (Hinglish), 'en' (English), 'mr' (Marathi)
+  final rxSelectedLanguage = 'hinglish'.obs;
 
   // Recording & AI State
   final rxIsRecording = false.obs;
   final rxIsAnalyzing = false.obs;
+  final rxIsLiveTranscribing = false.obs;
   final rxRecordingSeconds = 0.obs;
   Timer? _recordTimer;
 
   final rxLiveStatus = 'Keep the counter mic close and just speak.'.obs;
   final rxLastHeardText = ''.obs;
+  final rxInterimText = ''.obs;
 
   // Current Invoice Data
   final rxInvoice = Rx<ModelVoiceInvoice>(ModelVoiceInvoice(items: []));
@@ -85,6 +90,7 @@ class ControllerVoiceBilling extends GetxController {
   @override
   void onClose() {
     _recordTimer?.cancel();
+    _geminiLive.dispose();
     _recorder.dispose();
     customerNameController.dispose();
     customerPhoneController.dispose();
@@ -102,7 +108,7 @@ class ControllerVoiceBilling extends GetxController {
   }
 
   bool get hasApiKey => rxHasApiKey.value;
-  String get activeProviderName => rxActiveProvider.value == 'groq' ? 'Groq Whisper' : 'Gemini Flash';
+  String get activeProviderName => rxActiveProvider.value == 'groq' ? 'Groq Whisper' : 'Gemini 3.5 Live';
 
   int get voiceBillsCount => rxVoiceBillsCount.value;
 
@@ -139,11 +145,82 @@ class ControllerVoiceBilling extends GetxController {
       return;
     }
 
+    rxInterimText.value = '';
+    rxRecordingSeconds.value = 0;
+
+    // Check if Gemini Live Transcription can be used
+    final isGemini = rxActiveProvider.value == 'gemini' || _aiParser.savedGeminiKey.isNotEmpty;
+    if (isGemini && _aiParser.savedGeminiKey.isNotEmpty) {
+      try {
+        rxLiveStatus.value = 'Connecting to Gemini 3.5 Transcribe Live...';
+
+        _geminiLive.onInterimTranscript = (interim) {
+          rxInterimText.value = interim;
+          rxLiveStatus.value = '⚡ [Live]: "$interim"';
+        };
+
+        _geminiLive.onFinalTranscript = (finalText) {
+          rxLastHeardText.value = _geminiLive.finalTranscript;
+          rxInterimText.value = '';
+        };
+
+        _geminiLive.onStatusChange = (status) {
+          rxLiveStatus.value = status;
+        };
+
+        _geminiLive.onError = (err) {
+          debugPrint('Gemini Live WebSocket note: $err');
+        };
+
+        final currentLang = rxSelectedLanguage.value;
+        final isHinglish = currentLang == 'hinglish' || currentLang == 'hi';
+        final langCodes = isHinglish
+            ? ['en', 'hi'] // Bilingual audio capture, Romanized to Hinglish live
+            : currentLang == 'mr'
+                ? ['mr', 'en']
+                : ['en'];
+
+        final connected = await _geminiLive.startSession(
+          apiKey: _aiParser.savedGeminiKey,
+          model: 'gemini-3.5-transcribe-live',
+          languageCodes: langCodes,
+          mode: 'SMART',
+        );
+
+        if (connected) {
+          final streamed = await _recorder.startStreaming(
+            onChunk: (chunk) {
+              _geminiLive.sendAudioChunk(chunk);
+            },
+          );
+
+          if (streamed) {
+            rxIsRecording.value = true;
+            rxIsLiveTranscribing.value = true;
+            rxLiveStatus.value = isHinglish
+                ? '⚡ Gemini Live (Hinglish): Listening... Speak items (e.g. "basmati chawal 1 kilo 100rs")'
+                : '⚡ Gemini Live: Listening... Speak items or customer.';
+            _recordTimer?.cancel();
+            _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+              rxRecordingSeconds.value++;
+              if (rxRecordingSeconds.value >= 25) {
+                stopAndProcess();
+              }
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint('Gemini live stream setup error: $e, falling back to standard recorder');
+      }
+    }
+
+    // Fallback or Groq provider: standard WAV recording
     try {
       final path = await _recorder.start();
       if (path != null) {
         rxIsRecording.value = true;
-        rxRecordingSeconds.value = 0;
+        rxIsLiveTranscribing.value = false;
         rxLiveStatus.value = 'Listening... Speak items, quantities, or customer name.';
         _recordTimer?.cancel();
         _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -169,6 +246,42 @@ class ControllerVoiceBilling extends GetxController {
     rxLiveStatus.value = 'AI is analyzing speech and matching store items...';
 
     try {
+      if (rxIsLiveTranscribing.value) {
+        rxIsLiveTranscribing.value = false;
+        rxLiveStatus.value = 'Finalizing Gemini Live transcription...';
+
+        final audioPath = await _recorder.stop();
+        final liveTranscript = await _geminiLive.stopSession();
+        rxInterimText.value = '';
+
+        if (liveTranscript.trim().isNotEmpty) {
+          rxLastHeardText.value = liveTranscript;
+          rxLiveStatus.value = 'Matching store items and creating bill...';
+          final parsed = await _aiParser.parseTextWithFallback(
+            liveTranscript,
+            language: rxSelectedLanguage.value,
+          );
+          parsed.transcript = liveTranscript;
+          await _applyParsedInvoice(parsed);
+          return;
+        }
+
+        // Fallback to audio file analysis if live transcript yielded nothing
+        if (audioPath != null) {
+          rxLiveStatus.value = 'Analyzing audio recording fallback...';
+          final parsed = await _aiParser.parseAudioFile(
+            audioPath,
+            language: rxSelectedLanguage.value,
+          );
+          if (parsed.transcript != null && parsed.transcript!.isNotEmpty) {
+            rxLastHeardText.value = parsed.transcript!;
+          }
+          await _applyParsedInvoice(parsed);
+          return;
+        }
+      }
+
+      // Standard non-streaming recording flow
       final audioPath = await _recorder.stop();
       if (audioPath != null) {
         final parsed = await _aiParser.parseAudioFile(
@@ -196,19 +309,22 @@ class ControllerVoiceBilling extends GetxController {
       }
     } finally {
       rxIsAnalyzing.value = false;
+      rxIsLiveTranscribing.value = false;
+      rxInterimText.value = '';
     }
   }
 
   /// Processes text speech directly (used by quick demo buttons and typing)
   Future<void> processText(String transcript) async {
     if (transcript.trim().isEmpty) return;
+    final hinglishTranscript = HinglishTransliteration.toHinglish(transcript);
     rxIsAnalyzing.value = true;
-    rxLastHeardText.value = transcript;
+    rxLastHeardText.value = hinglishTranscript;
     rxLiveStatus.value = 'Processing voice transcript...';
 
     try {
       final parsed = await _aiParser.parseTextWithFallback(
-        transcript,
+        hinglishTranscript,
         language: rxSelectedLanguage.value,
       );
       await _applyParsedInvoice(parsed);

@@ -184,7 +184,7 @@ class ControllerVoiceSalesHistory extends GetxController {
     final match = RegExp(r'Lang:\s*([a-zA-Z]+)').firstMatch(note);
     if (match != null && match.group(1) != null) {
       final code = match.group(1)!.toLowerCase();
-      if (code == 'hi') return 'Hindi / Hinglish';
+      if (code == 'hinglish' || code == 'hi') return 'Hinglish';
       if (code == 'mr') return 'Marathi';
       if (code == 'en') return 'English';
       return code.toUpperCase();

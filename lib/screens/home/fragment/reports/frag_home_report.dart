@@ -273,61 +273,78 @@ class FragHomeReport extends StatelessWidget {
               return RepaintBoundary(
                 child: MyCard(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: SingleChildScrollView(
-                      child: DataTable(
-                        columnSpacing: 16,
-                        horizontalMargin: 16,
-                        headingRowColor: WidgetStateProperty.all(
-                          colorScheme.primary.withValues(alpha: 0.04),
-                        ),
-                        headingTextStyle: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: colorScheme.onSurface,
-                        ),
-                        dividerThickness: 0.5,
-                        dataRowMaxHeight: 48,
-                        columns: cols
-                            .map((c) => _buildColumn(context, c.value, _iconForColumn(c.key), _colorForColumn(c.key)))
-                            .toList(),
-                        rows: controller.rxRows.map((row) {
-                          return DataRow(
-                            cells: cols.map((c) {
-                              final val = row[c.key];
-                              if (val is double) {
-                                return DataCell(Text(
-                                  currFmt.format(val),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade800,
-                                  ),
-                                ));
-                              }
-                              if (val is int) {
-                                return DataCell(Text(
-                                  val.toString(),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ));
-                              }
-                              return DataCell(Text(
-                                val?.toString() ?? '-',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey.shade700,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final colCount = cols.length;
+                      final availableWidth = constraints.maxWidth - 32;
+                      final minContentWidth = colCount * 85.0;
+                      final dynamicSpacing = colCount > 1 && availableWidth > minContentWidth
+                          ? ((availableWidth - minContentWidth) / (colCount - 1)).clamp(16.0, 160.0)
+                          : 16.0;
+
+                      return SizedBox(
+                        width: double.infinity,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                            child: SingleChildScrollView(
+                              child: DataTable(
+                                columnSpacing: dynamicSpacing,
+                                horizontalMargin: 16,
+                                headingRowColor: WidgetStateProperty.all(
+                                  colorScheme.primary.withValues(alpha: 0.04),
                                 ),
-                              ));
-                            }).toList(),
-                          );
-                        }).toList(),
-                      ),
-                    ),
+                                headingTextStyle: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: colorScheme.onSurface,
+                                ),
+                                dividerThickness: 0.5,
+                                dataRowMaxHeight: 48,
+                                columns: cols
+                                    .map((c) => _buildColumn(context, c.value, _iconForColumn(c.key), _colorForColumn(c.key)))
+                                    .toList(),
+                                rows: controller.rxRows.map((row) {
+                                  return DataRow(
+                                    cells: cols.map((c) {
+                                      final val = row[c.key];
+                                      if (val is double) {
+                                        return DataCell(Text(
+                                          currFmt.format(val),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey.shade800,
+                                          ),
+                                        ));
+                                      }
+                                      if (val is int) {
+                                        return DataCell(Text(
+                                          val.toString(),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                        ));
+                                      }
+                                      return DataCell(Text(
+                                        val?.toString() ?? '-',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ));
+                                    }).toList(),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               );

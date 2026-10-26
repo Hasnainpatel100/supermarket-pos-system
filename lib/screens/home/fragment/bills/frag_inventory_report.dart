@@ -77,22 +77,46 @@ class FragInventoryReport extends StatelessWidget {
               }
               return MyCard(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: SingleChildScrollView(
-                    child: _buildDataTable(context, controller, colorScheme, currFmt),
-                  ),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final colCount = _columnsFor(controller.rxReportType.value, context).length;
+                          final availableWidth = constraints.maxWidth - 32;
+                          final minContentWidth = colCount * 85.0;
+                          final dynamicSpacing = colCount > 1 && availableWidth > minContentWidth
+                              ? ((availableWidth - minContentWidth) / (colCount - 1)).clamp(16.0, 160.0)
+                              : 16.0;
+
+                          return SizedBox(
+                            width: double.infinity,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                                child: SingleChildScrollView(
+                                  child: _buildDataTable(
+                                    context,
+                                    controller,
+                                    colorScheme,
+                                    currFmt,
+                                    columnSpacing: dynamicSpacing,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const Divider(height: 1, thickness: 0.5),
+                    _buildPagination(context, controller),
+                  ],
                 ),
               );
             }),
           ),
-
-          // ═══════════════════════════════════════════════════════════════
-          // 6. PAGINATION FOOTER
-          // ═══════════════════════════════════════════════════════════════
-          Obx(() => controller.rxRows.isNotEmpty
-              ? _buildPagination(context, controller)
-              : const SizedBox.shrink()),
 
           const SizedBox(height: 8),
         ],
@@ -534,13 +558,14 @@ class FragInventoryReport extends StatelessWidget {
     BuildContext context,
     ControllerInventoryReport controller,
     ColorScheme colorScheme,
-    NumberFormat currFmt,
-  ) {
+    NumberFormat currFmt, {
+    double columnSpacing = 16,
+  }) {
     final type = controller.rxReportType.value;
 
     return DataTable(
-      columnSpacing: 16,
-      horizontalMargin: 16,
+      columnSpacing: columnSpacing,
+      horizontalMargin: 20,
       headingRowColor: WidgetStateProperty.all(colorScheme.primary.withValues(alpha: 0.04)),
       headingTextStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: colorScheme.onSurface),
       dividerThickness: 0.5,

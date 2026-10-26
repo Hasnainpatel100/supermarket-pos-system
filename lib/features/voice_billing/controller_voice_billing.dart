@@ -1,13 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../model/entity_customer.dart';
-import '../../../../model/entity_item.dart';
-import '../../../../model/entity_item_batch.dart';
-import '../../../../model/entity_stock_transaction.dart';
-import '../../../../model/stock_txn_type.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_voice.dart';
@@ -27,12 +24,9 @@ class ControllerVoiceBilling extends GetxController {
   final ServiceAiParser _aiParser = ServiceAiParser();
   final ServiceCatalogMatcher _catalogMatcher = ServiceCatalogMatcher();
 
-  late final Box<EntityItem> _boxItem;
-  late final Box<EntityItemBatch> _boxBatch;
   late final Box<EntityBill> _boxBill;
   late final Box<EntityBillItem> _boxBillItem;
   late final Box<EntityCustomer> _boxCustomer;
-  late final Box<EntityStockTransaction> _boxStockTxn;
 
   // Language: 'hi' (Hindi/Hinglish), 'en' (English), 'mr' (Marathi)
   final rxSelectedLanguage = 'hi'.obs;
@@ -50,27 +44,30 @@ class ControllerVoiceBilling extends GetxController {
   final rxInvoice = Rx<ModelVoiceInvoice>(ModelVoiceInvoice(items: []));
   final rxCartItems = <ModelVoiceItem>[].obs;
 
-  final customerNameController = TextEditingController();
-  final customerPhoneController = TextEditingController();
-  final notesController = TextEditingController();
+  late final TextEditingController customerNameController;
+  late final TextEditingController customerPhoneController;
+  late final TextEditingController notesController;
   final rxPaymentMode = 'Cash'.obs;
 
   final rxHasApiKey = false.obs;
   final rxActiveProvider = ''.obs;
+  final rxVoiceBillsCount = 0.obs;
 
   @override
   void onInit() {
     super.onInit();
     final ob = Get.find<ServiceObjectBox>();
-    _boxItem = ob.box<EntityItem>();
-    _boxBatch = ob.box<EntityItemBatch>();
     _boxBill = ob.box<EntityBill>();
     _boxBillItem = ob.box<EntityBillItem>();
     _boxCustomer = ob.box<EntityCustomer>();
-    _boxStockTxn = ob.box<EntityStockTransaction>();
+
+    customerNameController = TextEditingController();
+    customerPhoneController = TextEditingController();
+    notesController = TextEditingController();
 
     rxHasApiKey.value = _aiParser.hasValidApiKey;
     rxActiveProvider.value = _aiParser.activeProvider;
+    refreshVoiceBillsCount();
 
     customerNameController.addListener(() {
       rxInvoice.value.customerName = customerNameController.text.trim();
@@ -106,6 +103,22 @@ class ControllerVoiceBilling extends GetxController {
 
   bool get hasApiKey => rxHasApiKey.value;
   String get activeProviderName => rxActiveProvider.value == 'groq' ? 'Groq Whisper' : 'Gemini Flash';
+
+  int get voiceBillsCount => rxVoiceBillsCount.value;
+
+  void refreshVoiceBillsCount() {
+    try {
+      final q = _boxBill.query(
+        EntityBill_.poNo.equals('AI_VOICE')
+            .or(EntityBill_.note.contains('[AI_VOICE]'))
+            .or(EntityBill_.billNo.startsWith('VOICE-')),
+      ).build();
+      rxVoiceBillsCount.value = q.count();
+      q.close();
+    } catch (_) {
+      rxVoiceBillsCount.value = 0;
+    }
+  }
 
   // ─── Recording & Voice Processing ──────────────────────────────────────────
 
@@ -323,7 +336,6 @@ class ControllerVoiceBilling extends GetxController {
     _refreshInvoiceTotals();
     final inv = rxInvoice.value;
     final now = DateTime.now().millisecondsSinceEpoch;
-    final dateStr = DateTime.now().toIso8601String().split('T').first;
 
     // Create or find customer
     EntityCustomer? linkedCustomer;
@@ -349,7 +361,7 @@ class ControllerVoiceBilling extends GetxController {
       }
     }
 
-    final billNo = 'BIL-$now';
+    final billNo = 'VOICE-$now';
 
     final bill = EntityBill(
       billNo: billNo,
@@ -364,14 +376,14 @@ class ControllerVoiceBilling extends GetxController {
       amountReceived: inv.grandTotal,
       changeReturned: 0.0,
       dueAmount: 0.0,
-      billDate: dateStr,
-      note: 'Voice Invoiced: ${notesController.text.trim()}',
+      billDate: DateFormat('d/MM/yyyy').format(DateTime.now()),
+      poNo: 'AI_VOICE',
+      note: '[AI_VOICE] | Lang: ${rxSelectedLanguage.value} | Transcript: "${rxLastHeardText.value}"${notesController.text.trim().isNotEmpty ? " | Notes: ${notesController.text.trim()}" : ""}',
       createdAtUtcMs: now,
       updatedAtUtcMs: now,
     );
 
     final billItemsToSave = <EntityBillItem>[];
-    final stockTxnsToSave = <EntityStockTransaction>[];
 
     for (final vi in rxCartItems) {
       final billItem = EntityBillItem(
@@ -392,37 +404,13 @@ class ControllerVoiceBilling extends GetxController {
 
       if (vi.entityItem != null) {
         billItem.item.target = vi.entityItem;
-
-        // Deduct inventory stock
-        final stockItem = vi.entityItem!;
-        final currentStock = stockItem.totalQty ?? 0;
-        stockItem.totalQty = (currentStock - billItem.qty!).clamp(0, 99999999);
-        _boxItem.put(stockItem);
-
-        // Deduct batch stock if applicable
-        if (vi.entityBatch?.id != null && vi.entityBatch!.id! > 0) {
-          final b = _boxBatch.get(vi.entityBatch!.id!);
-          if (b != null) {
-            b.quantity = ((b.quantity ?? 0) - billItem.qty!).clamp(0, 99999999);
-            _boxBatch.put(b);
-          }
-        }
-
-        stockTxnsToSave.add(EntityStockTransaction(
-          itemId: stockItem.id ?? 0,
-          type: StockTxnType.sell.index,
-          quantity: -billItem.qty!,
-          referenceType: 'sell',
-          referenceId: stockItem.name ?? '',
-          remarks: 'Sold via Voice Billing POS',
-          createdAtUtcMs: now,
-        ));
+        // User requested: Do NOT decrement existing stock for voice billing
       }
 
       billItemsToSave.add(billItem);
     }
 
-    // Atomic ObjectBox Transaction
+    // Atomic ObjectBox Transaction: save voice bill without touching inventory stock
     final ob = Get.find<ServiceObjectBox>();
     late EntityBill savedBill;
     ob.store.runInTransaction(TxMode.write, () {
@@ -433,10 +421,6 @@ class ControllerVoiceBilling extends GetxController {
         bi.bill.target = savedBill;
       }
       _boxBillItem.putMany(billItemsToSave);
-
-      if (stockTxnsToSave.isNotEmpty) {
-        _boxStockTxn.putMany(stockTxnsToSave);
-      }
     });
 
     // Voice soundbox announcement
@@ -457,6 +441,7 @@ class ControllerVoiceBilling extends GetxController {
       Get.find<ControllerHomePos>().loadItems();
     }
 
+    refreshVoiceBillsCount();
     SnackbarUtil.showSuccess('Bill #${savedBill.billNo} generated successfully!');
     clearInvoice();
 

@@ -103,11 +103,32 @@ Rules:
       if (transcript.trim().isEmpty) {
         throw StateError('No speech was detected in the audio recording. Please speak clearly.');
       }
-      final invoice = await _parseTranscriptWithGroq(transcript, groqKey, language: language);
-      invoice.transcript = transcript;
-      return invoice;
+      try {
+        final invoice = await _parseTranscriptWithGroq(transcript, groqKey, language: language);
+        invoice.transcript = transcript;
+        return invoice;
+      } catch (e) {
+        debugPrint('Groq LLM parsing failed ($e). Extracting order items with local NLP: "$transcript"');
+        final invoice = _localNlpFallback(transcript, language);
+        invoice.transcript = transcript;
+        return invoice;
+      }
     } else if (geminiKey.isNotEmpty) {
-      return _parseWithGemini(audioFilePath, geminiKey, language: language);
+      try {
+        return await _parseWithGemini(audioFilePath, geminiKey, language: language);
+      } catch (e) {
+        debugPrint('Gemini audio parse error: $e');
+        if (groqKey.isNotEmpty) {
+          try {
+            debugPrint('Attempting backup audio transcription via Groq Whisper...');
+            final transcript = await _transcribeWithGroq(audioFilePath, groqKey, language: language);
+            final invoice = _localNlpFallback(transcript, language);
+            invoice.transcript = transcript;
+            return invoice;
+          } catch (_) {}
+        }
+        rethrow;
+      }
     } else if (groqKey.isNotEmpty) {
       final transcript = await _transcribeWithGroq(audioFilePath, groqKey, language: language);
       try {
@@ -115,7 +136,7 @@ Rules:
         invoice.transcript = transcript;
         return invoice;
       } catch (e) {
-        debugPrint('Groq LLaMA parse failed, falling back to local NLP: $e');
+        debugPrint('Groq parse failed, falling back to local NLP: $e');
         final invoice = _localNlpFallback(transcript, language);
         invoice.transcript = transcript;
         return invoice;
@@ -166,16 +187,38 @@ Rules:
   static String? _cachedWorkingGroqModel;
 
   static const List<String> _candidateGroqModels = [
-    'llama-3.1-8b-instant',
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.8-27b',
+    'qwen/qwen3.6-27b',
     'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
     'llama-3.1-70b-versatile',
-    'llama3-70b-8192',
-    'llama3-8b-8192',
-    'mixtral-8x7b-32768',
-    'gemma2-9b-it',
   ];
 
-  /// Groq Cloud: Multi-model resilient JSON parsing
+  Future<List<String>> _discoverActiveGroqModels(String groqKey) async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.groq.com/openai/v1/models'),
+        headers: {'Authorization': 'Bearer $groqKey'},
+      ).timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final list = (data['data'] as List<dynamic>?)
+            ?.map((m) => m['id']?.toString() ?? '')
+            .where((id) => !id.contains('whisper') && !id.contains('guard') && id.isNotEmpty)
+            .toList() ?? [];
+        if (list.isNotEmpty) {
+          debugPrint('Discovered ${list.length} active models from Groq: $list');
+          return list;
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// Groq Cloud: Multi-model resilient JSON parsing with live catalog discovery
   Future<ModelVoiceInvoice> _parseTranscriptWithGroq(
     String transcript,
     String groqKey, {
@@ -183,14 +226,17 @@ Rules:
   }) async {
     final uri = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
 
+    final liveModels = await _discoverActiveGroqModels(groqKey);
+
     final modelsToTry = <String>[];
     if (_cachedWorkingGroqModel != null && _cachedWorkingGroqModel!.isNotEmpty) {
       modelsToTry.add(_cachedWorkingGroqModel!);
     }
+    for (final m in liveModels) {
+      if (!modelsToTry.contains(m)) modelsToTry.add(m);
+    }
     for (final m in _candidateGroqModels) {
-      if (!modelsToTry.contains(m)) {
-        modelsToTry.add(m);
-      }
+      if (!modelsToTry.contains(m)) modelsToTry.add(m);
     }
 
     String lastErrorMsg = '';
@@ -209,7 +255,6 @@ Rules:
               'content': 'Customer voice order: "$transcript"'
             }
           ],
-          'response_format': {'type': 'json_object'},
           'temperature': 0.1,
         };
 
@@ -233,7 +278,6 @@ Rules:
             _cachedWorkingGroqModel = model;
             return ModelVoiceInvoice.fromJson(map);
           }
-          throw Exception('Empty response from Groq LLaMA ($model)');
         } else if (response.statusCode == 404 || response.statusCode == 400 || response.statusCode == 403) {
           final body = response.body;
           debugPrint('Groq model $model returned ${response.statusCode}: $body, trying next candidate model...');
@@ -248,7 +292,8 @@ Rules:
         lastErrorMsg = e.toString();
         if (e.toString().contains('404') ||
             e.toString().contains('does not exist') ||
-            e.toString().contains('access')) {
+            e.toString().contains('access') ||
+            e.toString().contains('decommissioned')) {
           continue;
         }
         rethrow;
@@ -257,6 +302,17 @@ Rules:
 
     throw Exception('All Groq models failed: $lastErrorMsg');
   }
+
+  static String? _cachedWorkingGeminiModel;
+
+  static const List<String> _geminiCandidateModels = [
+    'gemini-3.5-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-3.5-flash',
+    'gemini-3.5-transcribe',
+    'gemini-3.8-flash',
+    'gemini-flash-latest',
+  ];
 
   /// Google Gemini Multimodal Audio Parsing
   Future<ModelVoiceInvoice> _parseWithGemini(String audioFilePath, String apiKey, {String language = 'hi'}) async {
@@ -278,62 +334,77 @@ Rules:
       mimeType = 'audio/mp4';
     }
 
-    final url = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
-    );
+    final modelsToTry = <String>[];
+    if (_cachedWorkingGeminiModel != null && _cachedWorkingGeminiModel!.isNotEmpty) {
+      modelsToTry.add(_cachedWorkingGeminiModel!);
+    }
+    for (final m in _geminiCandidateModels) {
+      if (!modelsToTry.contains(m)) modelsToTry.add(m);
+    }
 
-    final requestBody = {
-      'contents': [
-        {
-          'parts': [
-            {'text': '$_systemPrompt\nThe speaker is speaking in $language.'},
-            {
-              'inlineData': {
-                'mimeType': mimeType,
-                'data': base64Audio,
-              }
-            }
-          ]
-        }
-      ],
-      'generationConfig': {
-        'temperature': 0.1,
-        'responseMimeType': 'application/json',
-      }
-    };
+    String lastErrorMsg = '';
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(requestBody),
-    ).timeout(const Duration(seconds: 18));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final candidates = data['candidates'] as List<dynamic>?;
-      if (candidates != null && candidates.isNotEmpty) {
-        final content = candidates[0]['content'];
-        final parts = content['parts'] as List<dynamic>?;
-        if (parts != null && parts.isNotEmpty) {
-          final rawJson = parts[0]['text'].toString();
-          final cleanJson = _cleanJsonString(rawJson);
-          final invoiceMap = jsonDecode(cleanJson) as Map<String, dynamic>;
-          return ModelVoiceInvoice.fromJson(invoiceMap);
-        }
-      }
-      throw Exception('Empty response from Gemini AI');
-    } else {
-      final body = response.body;
-      debugPrint('Gemini Audio API error: ${response.statusCode} - $body');
+    for (final model in modelsToTry) {
       try {
-        final errJson = jsonDecode(body);
-        final msg = errJson['error']?['message'] ?? body;
-        throw Exception('Gemini API (${response.statusCode}): $msg');
+        final url = Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey',
+        );
+
+        final requestBody = {
+          'contents': [
+            {
+              'parts': [
+                {'text': '$_systemPrompt\nThe speaker is speaking in $language.'},
+                {
+                  'inlineData': {
+                    'mimeType': mimeType,
+                    'data': base64Audio,
+                  }
+                }
+              ]
+            }
+          ],
+          'generationConfig': {
+            'temperature': 0.1,
+            'responseMimeType': 'application/json',
+          }
+        };
+
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        ).timeout(const Duration(seconds: 18));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final candidates = data['candidates'] as List<dynamic>?;
+          if (candidates != null && candidates.isNotEmpty) {
+            final content = candidates[0]['content'];
+            final parts = content['parts'] as List<dynamic>?;
+            if (parts != null && parts.isNotEmpty) {
+              final rawJson = parts[0]['text'].toString();
+              final cleanJson = _cleanJsonString(rawJson);
+              final invoiceMap = jsonDecode(cleanJson) as Map<String, dynamic>;
+              _cachedWorkingGeminiModel = model;
+              return ModelVoiceInvoice.fromJson(invoiceMap);
+            }
+          }
+          throw Exception('Empty response from Gemini ($model)');
+        } else {
+          final body = response.body;
+          debugPrint('Gemini model $model returned ${response.statusCode}: $body, trying next candidate...');
+          lastErrorMsg = 'Gemini ($model ${response.statusCode}): $body';
+          continue;
+        }
       } catch (e) {
-        if (e is Exception && e.toString().contains('Gemini API')) rethrow;
-        throw Exception('Gemini API Error (${response.statusCode})');
+        debugPrint('Gemini model $model error: $e');
+        lastErrorMsg = e.toString();
+        continue;
       }
     }
+
+    throw Exception('All Gemini models failed: $lastErrorMsg');
   }
 
   /// Parses text query via Groq, Gemini, or fallback NLP
@@ -367,46 +438,69 @@ Rules:
   }
 
   Future<ModelVoiceInvoice> _parseTextWithGemini(String transcript, String apiKey, {String language = 'hi'}) async {
-    final url = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
-    );
+    final modelsToTry = <String>[];
+    if (_cachedWorkingGeminiModel != null && _cachedWorkingGeminiModel!.isNotEmpty) {
+      modelsToTry.add(_cachedWorkingGeminiModel!);
+    }
+    for (final m in _geminiCandidateModels) {
+      if (!modelsToTry.contains(m)) modelsToTry.add(m);
+    }
 
-    final requestBody = {
-      'contents': [
-        {
-          'parts': [
-            {'text': '$_systemPrompt\nLanguage: $language\nUser spoken input: "$transcript"'}
-          ]
+    String lastErrorMsg = '';
+
+    for (final model in modelsToTry) {
+      try {
+        final url = Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey',
+        );
+
+        final requestBody = {
+          'contents': [
+            {
+              'parts': [
+                {'text': '$_systemPrompt\nLanguage: $language\nUser spoken input: "$transcript"'}
+              ]
+            }
+          ],
+          'generationConfig': {
+            'temperature': 0.1,
+            'responseMimeType': 'application/json',
+          }
+        };
+
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        ).timeout(const Duration(seconds: 12));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final candidates = data['candidates'] as List<dynamic>?;
+          if (candidates != null && candidates.isNotEmpty) {
+            final content = candidates[0]['content'];
+            final parts = content['parts'] as List<dynamic>?;
+            if (parts != null && parts.isNotEmpty) {
+              final rawJson = parts[0]['text'].toString();
+              final cleanJson = _cleanJsonString(rawJson);
+              final invoiceMap = jsonDecode(cleanJson) as Map<String, dynamic>;
+              invoiceMap['transcript'] ??= transcript;
+              _cachedWorkingGeminiModel = model;
+              return ModelVoiceInvoice.fromJson(invoiceMap);
+            }
+          }
+        } else {
+          debugPrint('Gemini text model $model returned ${response.statusCode}, trying next candidate...');
+          lastErrorMsg = 'Gemini ($model ${response.statusCode})';
+          continue;
         }
-      ],
-      'generationConfig': {
-        'temperature': 0.1,
-        'responseMimeType': 'application/json',
-      }
-    };
-
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(requestBody),
-    ).timeout(const Duration(seconds: 12));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final candidates = data['candidates'] as List<dynamic>?;
-      if (candidates != null && candidates.isNotEmpty) {
-        final content = candidates[0]['content'];
-        final parts = content['parts'] as List<dynamic>?;
-        if (parts != null && parts.isNotEmpty) {
-          final rawJson = parts[0]['text'].toString();
-          final cleanJson = _cleanJsonString(rawJson);
-          final invoiceMap = jsonDecode(cleanJson) as Map<String, dynamic>;
-          invoiceMap['transcript'] ??= transcript;
-          return ModelVoiceInvoice.fromJson(invoiceMap);
-        }
+      } catch (e) {
+        lastErrorMsg = e.toString();
+        continue;
       }
     }
-    throw Exception('Gemini text recognition failed (${response.statusCode})');
+
+    throw Exception('Gemini text recognition failed: $lastErrorMsg');
   }
 
   /// Cleans markdown ```json blocks from model response

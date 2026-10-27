@@ -169,7 +169,7 @@ class _ActivityVoiceSalesHistoryState extends State<ActivityVoiceSalesHistory> {
                   cs,
                   title: 'Avg. Bill Value',
                   value: '$curr ${avg.toStringAsFixed(1)}',
-                  icon: Icons.insights_rounded,
+                  icon: Icons.insights_rounded,             
                   gradient: const [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
                 ),
               ],

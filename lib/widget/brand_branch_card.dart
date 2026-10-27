@@ -43,276 +43,282 @@ class BrandBranchCard extends StatelessWidget {
               ? Icons.warning_amber_rounded
               : Icons.verified_user_rounded;
 
-      // Collapsed: compact avatar with tooltip and click action
-      if (collapsed) {
-        return Tooltip(
-          message: '${brandCtx.contextSummary}\nPlan: ${plan?.expiryStatusText ?? "Active"}',
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () => _showDetailsDialog(context, brand, branch),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.all(10),
-                    child: Icon(
-                      Icons.store_mall_directory_rounded,
-                      size: 20,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  if (plan != null && (isExpired || isExpiringSoon))
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Container(
-                        width: 9,
-                        height: 9,
-                        decoration: BoxDecoration(
-                          color: planColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = collapsed || constraints.maxWidth < 150;
 
-      // Expanded: full brand + branch card
-      final brandName = brand?.name.en ?? 'No Brand';
-      final branchName = branch?.name.en ?? 'No Branch';
-      final branchCode = branch?.branchCode ?? '';
-      final status = branch?.status.toLowerCase() ?? '';
-      final isActive = status == 'active';
-
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: () => _showDetailsDialog(context, brand, branch),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark
-                    ? colorScheme.primaryContainer.withValues(alpha: 0.25)
-                    : colorScheme.primaryContainer.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: (isExpired || isExpiringSoon)
-                      ? planColor.withValues(alpha: 0.5)
-                      : colorScheme.primary.withValues(alpha: 0.2),
-                  width: (isExpired || isExpiringSoon) ? 1.4 : 1,
-                ),
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // ── Brand Row ────────────────────────────────────────────
-                  Row(
+          // Collapsed: compact avatar with tooltip and click action
+          if (isNarrow) {
+            return Tooltip(
+              message: '${brandCtx.contextSummary}\nPlan: ${plan?.expiryStatusText ?? "Active"}',
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _showDetailsDialog(context, brand, branch),
+                  child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
                       Container(
-                        width: 32,
-                        height: 32,
+                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
+                          color: colorScheme.primaryContainer.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                        padding: const EdgeInsets.all(10),
                         child: Icon(
-                          Icons.storefront_rounded,
-                          size: 18,
+                          Icons.store_mall_directory_rounded,
+                          size: 20,
                           color: colorScheme.primary,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'brand'.tr,
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface.withValues(alpha: 0.5),
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            Text(
-                              brandName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.info_outline_rounded,
-                        size: 14,
-                        color: colorScheme.onSurface.withValues(alpha: 0.35),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-                  Divider(
-                    height: 1,
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // ── Branch Row ───────────────────────────────────────────
-                  Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Colors.deepPurple.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.location_on_rounded,
-                          size: 18,
-                          color: Colors.deepPurple,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'branch'.tr,
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface.withValues(alpha: 0.5),
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    branchName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ),
-                                if (branchCode.isNotEmpty)
-                                  Flexible(
-                                    child: Container(
-                                      margin: const EdgeInsets.only(left: 4),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.primary.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        branchCode,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                          color: colorScheme.primary,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      // Status dot
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isActive ? Colors.green.shade400 : Colors.orange.shade400,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // ── Plan Expiry Button / Chip ─────────────────────────────
-                  if (plan != null) ...[
-                    const SizedBox(height: 8),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: () => DialogPlanExpiry.show(context, branch: branch),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: planColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: planColor.withValues(alpha: 0.35),
-                              width: 1,
+                      if (plan != null && (isExpired || isExpiringSoon))
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            decoration: BoxDecoration(
+                              color: planColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 1.5),
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(planIcon, size: 13, color: planColor),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  plan.expiryStatusText,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
+          // Expanded: full brand + branch card
+          final brandName = brand?.name.en ?? 'No Brand';
+          final branchName = branch?.name.en ?? 'No Branch';
+          final branchCode = branch?.branchCode ?? '';
+          final status = branch?.status.toLowerCase() ?? '';
+          final isActive = status == 'active';
+
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => _showDetailsDialog(context, brand, branch),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? colorScheme.primaryContainer.withValues(alpha: 0.25)
+                        : colorScheme.primaryContainer.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: (isExpired || isExpiringSoon)
+                          ? planColor.withValues(alpha: 0.5)
+                          : colorScheme.primary.withValues(alpha: 0.2),
+                      width: (isExpired || isExpiringSoon) ? 1.4 : 1,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ── Brand Row ────────────────────────────────────────────
+                      Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.storefront_rounded,
+                              size: 18,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'brand'.tr,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                                Text(
+                                  brandName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 10.5,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: planColor,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 14,
+                            color: colorScheme.onSurface.withValues(alpha: 0.35),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+                      Divider(
+                        height: 1,
+                        color: colorScheme.outline.withValues(alpha: 0.2),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // ── Branch Row ───────────────────────────────────────────
+                      Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: Colors.deepPurple.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.location_on_rounded,
+                              size: 18,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'branch'.tr,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        branchName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    if (branchCode.isNotEmpty)
+                                      Flexible(
+                                        child: Container(
+                                          margin: const EdgeInsets.only(left: 4),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: colorScheme.primary.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            branchCode,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w700,
+                                              color: colorScheme.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          // Status dot
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isActive ? Colors.green.shade400 : Colors.orange.shade400,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // ── Plan Expiry Button / Chip ─────────────────────────────
+                      if (plan != null) ...[
+                        const SizedBox(height: 8),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () => DialogPlanExpiry.show(context, branch: branch),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: planColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: planColor.withValues(alpha: 0.35),
+                                  width: 1,
+                                ),
                               ),
-                              Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 9,
-                                color: planColor,
+                              child: Row(
+                                children: [
+                                  Icon(planIcon, size: 13, color: planColor),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      plan.expiryStatusText,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: planColor,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 9,
+                                    color: planColor,
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ],
-                ],
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       );
     });
   }

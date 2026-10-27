@@ -76,11 +76,23 @@ class ActivityHome extends StatelessWidget {
             if (user == null) {
               return SizedBox();
             }
+            final isCollapsed = controller.isDrawerCollapsed.value;
+            final drawerWidth = isCollapsed ? 70.0 : 200.0;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              width: controller.isDrawerCollapsed.value ? 70 : 200,
-              child: RepoDrawer.drawerList(user),
+              width: drawerWidth,
+              child: ClipRect(
+                child: OverflowBox(
+                  alignment: Alignment.topLeft,
+                  minWidth: drawerWidth,
+                  maxWidth: drawerWidth,
+                  child: SizedBox(
+                    width: drawerWidth,
+                    child: RepoDrawer.drawerList(user),
+                  ),
+                ),
+              ),
             );
           }),
 

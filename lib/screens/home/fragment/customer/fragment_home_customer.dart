@@ -433,148 +433,118 @@ class FragmentHomeCustomer extends StatelessWidget {
 
                             /// ── Action Column ──
                             DataCell(
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: colorScheme.primary.withValues(alpha: 0.2),
-                                  ),
+                              PopupMenuButton<String>(
+                                icon: Icon(
+                                  Icons.more_vert_rounded,
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
-                                child: PopupMenuButton<String>(
-                                  icon: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.settings_suggest_rounded,
-                                        size: 16,
-                                        color: colorScheme.primary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'actions'.tr,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: colorScheme.primary,
+                                tooltip: 'actions'.tr,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                onSelected: (value) {
+                                  switch (value) {
+                                    case 'view':
+                                      _showCustomerDetails(context, customer);
+                                      break;
+                                    case 'edit':
+                                      _onEdit(customer, controller);
+                                      break;
+                                    case 'toggle':
+                                      _confirmToggleActive(
+                                        context,
+                                        customer,
+                                        controller,
+                                      );
+                                      break;
+                                    case 'delete':
+                                      _confirmDeleteCustomer(
+                                        context,
+                                        customer,
+                                        controller,
+                                      );
+                                      break;
+                                  }
+                                },
+                                itemBuilder: (_) => [
+                                  PopupMenuItem(
+                                    value: 'view',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.visibility_outlined,
+                                          size: 20,
+                                          color: Colors.blue.shade600,
                                         ),
-                                      ),
-                                      Icon(
-                                        Icons.arrow_drop_down,
-                                        size: 16,
-                                        color: colorScheme.primary,
-                                      ),
-                                    ],
+                                        const SizedBox(width: 12),
+                                        Text('view_details'.tr),
+                                      ],
+                                    ),
                                   ),
-                                  tooltip: 'actions'.tr,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  onSelected: (value) {
-                                    switch (value) {
-                                      case 'view':
-                                        _showCustomerDetails(context, customer);
-                                        break;
-                                      case 'edit':
-                                        _onEdit(customer, controller);
-                                        break;
-                                      case 'toggle':
-                                        _confirmToggleActive(
-                                          context,
-                                          customer,
-                                          controller,
-                                        );
-                                        break;
-                                      case 'delete':
-                                        _confirmDeleteCustomer(
-                                          context,
-                                          customer,
-                                          controller,
-                                        );
-                                        break;
-                                    }
-                                  },
-                                  itemBuilder: (_) => [
+                                  if (canUpdate)
                                     PopupMenuItem(
-                                      value: 'view',
+                                      value: 'edit',
                                       child: Row(
                                         children: [
                                           Icon(
-                                            Icons.visibility_outlined,
+                                            Icons.edit_outlined,
                                             size: 20,
-                                            color: Colors.blue.shade600,
+                                            color: colorScheme.primary,
                                           ),
                                           const SizedBox(width: 12),
-                                          Text('view_details'.tr),
+                                          Text('edit'.tr),
                                         ],
                                       ),
                                     ),
-                                    if (canUpdate)
-                                      PopupMenuItem(
-                                        value: 'edit',
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.edit_outlined,
-                                              size: 20,
-                                              color: colorScheme.primary,
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Text('edit'.tr),
-                                          ],
-                                        ),
-                                      ),
-                                    if (canDelete)
-                                      PopupMenuItem(
-                                        value: 'toggle',
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              isActive
-                                                  ? Icons.toggle_off_rounded
-                                                  : Icons.toggle_on_rounded,
-                                              size: 22,
+                                  if (canDelete)
+                                    PopupMenuItem(
+                                      value: 'toggle',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            isActive
+                                                ? Icons.toggle_off_rounded
+                                                : Icons.toggle_on_rounded,
+                                            size: 22,
+                                            color: isActive
+                                                ? Colors.orange.shade400
+                                                : Colors.green.shade500,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            isActive ? 'deactivate'.tr : 'activate'.tr,
+                                            style: TextStyle(
                                               color: isActive
-                                                  ? Colors.orange.shade400
-                                                  : Colors.green.shade500,
+                                                  ? Colors.orange.shade600
+                                                  : Colors.green.shade600,
+                                              fontWeight: FontWeight.w600,
                                             ),
-                                            const SizedBox(width: 12),
-                                            Text(
-                                              isActive ? 'deactivate'.tr : 'activate'.tr,
-                                              style: TextStyle(
-                                                color: isActive
-                                                    ? Colors.orange.shade600
-                                                    : Colors.green.shade600,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
-                                    if (canDelete)
-                                      PopupMenuItem(
-                                        value: 'delete',
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.delete_outline_rounded,
-                                              size: 20,
-                                              color: Colors.red.shade600,
+                                    ),
+                                  if (canDelete)
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.delete_outline_rounded,
+                                            size: 20,
+                                            color: Colors.red.shade600,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            'delete'.tr,
+                                            style: TextStyle(
+                                              color: Colors.red.shade700,
+                                              fontWeight: FontWeight.w600,
                                             ),
-                                            const SizedBox(width: 12),
-                                            Text(
-                                              'delete'.tr,
-                                              style: TextStyle(
-                                                color: Colors.red.shade700,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
-                                  ],
-                                ),
+                                    ),
+                                ],
                               ),
                             ),
                           ],

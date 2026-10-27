@@ -33,6 +33,8 @@ migrate_working_dir/
 .pub/
 /build/
 /market
+/market_backup*/
+*.mdb
 
 # Symbolication related
 app.*.symbols

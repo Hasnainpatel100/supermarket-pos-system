@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../brand/dialog_brand_api_config.dart';
+// Server configuration dialog removed from login screen for security
 import 'controller_login.dart';
 
 class ActivityLogin extends GetView<ControllerLogin> {
@@ -17,16 +17,6 @@ class ActivityLogin extends GetView<ControllerLogin> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.dns_rounded),
-            tooltip: 'Server Settings',
-            onPressed: () {
-              Get.dialog(const DialogBrandApiConfig());
-            },
-          ),
-          const SizedBox(width: 12),
-        ],
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -37,11 +27,11 @@ class ActivityLogin extends GetView<ControllerLogin> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // ── Branded Header ──
+                  // â”€â”€ Branded Header â”€â”€
                   _buildHeader(colorScheme, isDark),
                   const SizedBox(height: 40),
 
-                  // ── Login Card ──
+                  // â”€â”€ Login Card â”€â”€
                   Card(
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -74,7 +64,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
                           ),
                           const SizedBox(height: 28),
 
-                          // ── Username / Email Field ──
+                          // â”€â”€ Username / Email Field â”€â”€
                           Text(
                             'username'.tr,
                             style:
@@ -130,7 +120,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
                           ),
                           const SizedBox(height: 20),
 
-                          // ── Password Field ──
+                          // â”€â”€ Password Field â”€â”€
                           Text(
                             'password'.tr,
                             style:
@@ -207,7 +197,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
                           ),
                           const SizedBox(height: 28),
 
-                          // ── Login Button ──
+                          // â”€â”€ Login Button â”€â”€
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -235,7 +225,7 @@ class ActivityLogin extends GetView<ControllerLogin> {
 
                   const SizedBox(height: 24),
 
-                  // ── Footer ──
+                  // â”€â”€ Footer â”€â”€
                   Text(
                     'pos_version'.tr,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(

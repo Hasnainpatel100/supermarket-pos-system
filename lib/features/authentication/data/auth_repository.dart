@@ -1,3 +1,4 @@
+﻿import '../../../service/service_object_box.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -108,6 +109,9 @@ class AuthRepository {
       }
       if (response.brandId != null && response.brandId!.isNotEmpty) {
         await _tokenStorage.saveBrandId(response.brandId!);
+        if (Get.isRegistered<ServiceObjectBox>()) {
+          await Get.find<ServiceObjectBox>().switchBrandDatabase(response.brandId!);
+        }
       }
       if (response.branchId != null && response.branchId!.isNotEmpty) {
         await _tokenStorage.saveBranchId(response.branchId!);
@@ -175,6 +179,10 @@ class AuthRepository {
   /// Restores brand and branch context from local storage on app start
   /// (when the user is already logged in and the app is resumed).
   Future<void> restoreSessionContext() async {
+    final activeBrandId = _tokenStorage.getBrandId();
+    if (activeBrandId != null && activeBrandId.isNotEmpty && Get.isRegistered<ServiceObjectBox>()) {
+      await Get.find<ServiceObjectBox>().switchBrandDatabase(activeBrandId);
+    }
     // 1. Restore brand from cache if present
     final brandJson = _tokenStorage.getBrandJson();
     if (brandJson != null && brandJson.isNotEmpty) {
@@ -228,6 +236,9 @@ class AuthRepository {
     await _tokenStorage.clearTokens();
     _brandContext.clear();
     await _repoStorage.setUser('');
+    if (Get.isRegistered<ServiceObjectBox>()) {
+      await Get.find<ServiceObjectBox>().switchBrandDatabase('');
+    }
   }
 
   // ── 2 Functions for Brand & Branch Data Fetching ──────────────────────────

@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
@@ -797,6 +797,48 @@ class ControllerHomeItem extends GetxController {
 
     for (final sheetName in workbook.tables.keys) {
       final sheet = workbook.tables[sheetName]!;
+      if (sheet.rows.isEmpty) continue;
+
+      // ── Detect column indices dynamically from row 0 headers ──
+      final headerRow = sheet.rows[0];
+      int colName = 0;
+      int colSku = 1;
+      int colBarcode = 2;
+      int colUnit = 3;
+      int colCategory = 4;
+      int colCost = 5;
+      int colSelling = 6;
+      int colTaxName = 7;
+      int colTaxRate = 8;
+      int colTaxType = 9;
+      int colExpiry = 10;
+
+      for (int c = 0; c < headerRow.length; c++) {
+        final h = (cellStr(headerRow[c]) ?? '').toLowerCase().trim();
+        if (h.contains('name') && !h.contains('tax')) {
+          colName = c;
+        } else if (h == 'sku') {
+          colSku = c;
+        } else if (h.contains('barcode')) {
+          colBarcode = c;
+        } else if (h.contains('unit')) {
+          colUnit = c;
+        } else if (h.contains('category')) {
+          colCategory = c;
+        } else if (h.contains('cost')) {
+          colCost = c;
+        } else if (h.contains('sell') || h.contains('mrp') || h == 'price') {
+          colSelling = c;
+        } else if (h.contains('tax name') || h == 'tax') {
+          colTaxName = c;
+        } else if (h.contains('tax rate') || h.contains('rate')) {
+          colTaxRate = c;
+        } else if (h.contains('tax type')) {
+          colTaxType = c;
+        } else if (h.contains('expiry')) {
+          colExpiry = c;
+        }
+      }
 
       // Row index 0 = header row → skip it; start at 1
       for (int i = 1; i < sheet.rows.length; i++) {
@@ -804,27 +846,30 @@ class ControllerHomeItem extends GetxController {
         if (row.isEmpty) continue;
 
         try {
-          final name = cellStr(row.isNotEmpty ? row[0] : null);
+          final name = cellStr(row.length > colName ? row[colName] : null);
           if (name == null || name.isEmpty) continue;
 
-          final sku = row.length > 1 ? cellStr(row[1]) : null;
-          final barcode = row.length > 2 ? cellStr(row[2]) : null;
-          final unit = row.length > 3 ? cellStr(row[3]) : null;
-          final category = row.length > 4 ? cellStr(row[4]) : null;
-          final costPrice = row.length > 5 ? cellDouble(row[5]) : null;
-          final sellingPrice = (row.length > 6 ? cellDouble(row[6]) : null) ?? 0.0;
-          final taxName = row.length > 7 ? cellStr(row[7]) : null;
-          final taxRate = row.length > 8 ? cellDouble(row[8]) : null;
+          String? sku = row.length > colSku ? cellStr(row[colSku]) : null;
+          String? barcode = row.length > colBarcode ? cellStr(row[colBarcode]) : null;
+          if (sku != null && sku.isEmpty) sku = null;
+          if (barcode != null && barcode.isEmpty) barcode = null;
+
+          final unit = row.length > colUnit ? cellStr(row[colUnit]) : null;
+          final category = row.length > colCategory ? cellStr(row[colCategory]) : null;
+          final costPrice = row.length > colCost ? cellDouble(row[colCost]) : null;
+          final sellingPrice = (row.length > colSelling ? cellDouble(row[colSelling]) : null) ?? 0.0;
+          final taxName = row.length > colTaxName ? cellStr(row[colTaxName]) : null;
+          final taxRate = row.length > colTaxRate ? cellDouble(row[colTaxRate]) : null;
 
           String taxType = 'exclusive';
-          if (row.length > 9) {
-            final t = (cellStr(row[9]) ?? '').toLowerCase();
+          if (row.length > colTaxType) {
+            final t = (cellStr(row[colTaxType]) ?? '').toLowerCase();
             if (t == 'inclusive') taxType = 'inclusive';
           }
 
           bool hasExpiry = false;
-          if (row.length > 10) {
-            final e = (cellStr(row[10]) ?? '').toLowerCase();
+          if (row.length > colExpiry) {
+            final e = (cellStr(row[colExpiry]) ?? '').toLowerCase();
             hasExpiry = e == 'yes' || e == 'true' || e == '1';
           }
 
@@ -913,9 +958,57 @@ class ControllerHomeItem extends GetxController {
       // ── 3. Parse in background Isolate ────────────────────────────────────
       final parsed = await Isolate.run(() => _parseExcelBytesInIsolate(bytes));
 
-      // ── 4. Atomic Bulk Write in single ACID transaction ───────────────────
+      // ── 4. Robust Conflict Resolution (Upsert to prevent UniqueConstraint crashes) ──
+      int savedCount = 0;
       if (parsed.items.isNotEmpty) {
-        _boxItem.putMany(parsed.items);
+        final existingByBarcode = <String, EntityItem>{};
+        final existingBySku = <String, EntityItem>{};
+        final allExisting = _boxItem.getAll();
+        for (final it in allExisting) {
+          if (it.barcode != null && it.barcode!.isNotEmpty) {
+            existingByBarcode[it.barcode!] = it;
+          }
+          if (it.sku != null && it.sku!.isNotEmpty) {
+            existingBySku[it.sku!] = it;
+          }
+        }
+
+        final itemsToSave = <EntityItem>[];
+        final seenBarcodes = <String>{};
+        final seenSkus = <String>{};
+
+        for (final newItem in parsed.items) {
+          // Deduplicate in-file duplicates to avoid self-collision
+          if (newItem.barcode != null && newItem.barcode!.isNotEmpty) {
+            if (seenBarcodes.contains(newItem.barcode!)) continue;
+            seenBarcodes.add(newItem.barcode!);
+          }
+          if (newItem.sku != null && newItem.sku!.isNotEmpty) {
+            if (seenSkus.contains(newItem.sku!)) continue;
+            seenSkus.add(newItem.sku!);
+          }
+
+          // If item already exists in database, match ID so ObjectBox updates instead of violating constraint
+          EntityItem? match;
+          if (newItem.barcode != null && existingByBarcode.containsKey(newItem.barcode)) {
+            match = existingByBarcode[newItem.barcode];
+          } else if (newItem.sku != null && existingBySku.containsKey(newItem.sku)) {
+            match = existingBySku[newItem.sku];
+          }
+
+          if (match != null) {
+            newItem.id = match.id;
+            newItem.totalQty = match.totalQty;
+            newItem.createdAtUtcMs = match.createdAtUtcMs;
+          }
+
+          itemsToSave.add(newItem);
+        }
+
+        if (itemsToSave.isNotEmpty) {
+          _boxItem.putMany(itemsToSave);
+          savedCount = itemsToSave.length;
+        }
       }
 
       if (Get.isDialogOpen == true) {
@@ -924,7 +1017,7 @@ class ControllerHomeItem extends GetxController {
 
       loadItems();
 
-      final successCount = parsed.items.length;
+      final successCount = savedCount;
       final errorCount = parsed.errorCount;
 
       // ── 5. Result snackbar ────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+﻿import '../../service/service_object_box.dart';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -111,6 +112,12 @@ class ControllerLogin extends GetxController {
     user.lastLoginAt = MyDateTime.getCurrentDateTimeUtc();
     user.lastLoginDevice = await UtilDevice.getDeviceName();
     user.lastLoginIp = await UtilDevice.getIpAddress();
+
+    // ── Switch Local Database for this brand (Multi-Brand Isolation) ──
+    final loggedInBrandId = (result.authResponse?.brandId ?? '').trim();
+    if (loggedInBrandId.isNotEmpty && Get.isRegistered<ServiceObjectBox>()) {
+      await Get.find<ServiceObjectBox>().switchBrandDatabase(loggedInBrandId);
+    }
 
     // Persist user session in RepoStorage
     await _repoStorage.setUser(json.encode(user.toMap()));

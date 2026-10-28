@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import '../../../../model/entity_bill.dart';
+import '../../../../model/entity_bill_item.dart';
 import '../../../../service/service_bill_pdf.dart';
 import '../../../../service/service_whatsapp.dart';
 import '../../../../util/snackbar_util.dart';
@@ -12,11 +13,13 @@ import '../setting/controller_home_settings.dart';
 class DialogBillPrintPreview extends StatefulWidget {
   final EntityBill bill;
   final String? initialPaperSize;
+  final List<EntityBillItem>? previewItems;
 
   const DialogBillPrintPreview({
     super.key,
     required this.bill,
     this.initialPaperSize,
+    this.previewItems,
   });
 
   @override
@@ -36,20 +39,25 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
         : Get.put(ControllerHomeSettings());
 
     final initial = widget.initialPaperSize ??
-        (_settings.rxThermalPaperSize.value.isNotEmpty ? _settings.rxThermalPaperSize.value : '80mm');
+        (_settings.rxThermalPaperSize.value.isNotEmpty
+            ? _settings.rxThermalPaperSize.value
+            : '80mm');
     _rxPaperSize = initial.obs;
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final size = MediaQuery.of(context).size;
+    final dialogWidth = size.width > 700 ? 650.0 : size.width * 0.95;
+    final dialogHeight = size.height > 850 ? 780.0 : size.height * 0.92;
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Container(
-        width: 650,
-        height: 780,
+        width: dialogWidth,
+        height: dialogHeight,
         decoration: BoxDecoration(
           color: cs.surface,
           borderRadius: BorderRadius.circular(20),
@@ -102,7 +110,7 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
                           ),
                         ),
                         Text(
-                          'Bill #${widget.bill.billNo ?? "N/A"}  •  ${widget.bill.customerName ?? "Walk-in"}',
+                          'Bill #${widget.bill.billNo ?? "DRAFT"}  •  ${widget.bill.customerName ?? "Walk-in"}',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 12,
@@ -111,6 +119,19 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
                       ],
                     ),
                   ),
+                  // Quick Print Button
+                  IconButton(
+                    onPressed: () => _printDirectCurrent(),
+                    icon: const Icon(Icons.print_rounded, color: Colors.white),
+                    tooltip: 'Print to Printer',
+                  ),
+                  // WhatsApp Button
+                  IconButton(
+                    onPressed: () => _sharePdfToWhatsApp(context),
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white),
+                    tooltip: 'Share on WhatsApp',
+                  ),
+                  // Close Button
                   IconButton(
                     onPressed: () => Get.back(),
                     icon: const Icon(Icons.close_rounded, color: Colors.white),
@@ -190,36 +211,48 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
                   // Save as Default Pill
                   Obx(() {
                     final current = _rxPaperSize.value;
-                    final isDefault = _settings.rxThermalPaperSize.value.toLowerCase() == current.toLowerCase();
+                    final isDefault =
+                        _settings.rxThermalPaperSize.value.toLowerCase() ==
+                            current.toLowerCase();
                     return Tooltip(
-                      message: isDefault ? 'Current Default Paper Size' : 'Save as Default Thermal Size in Settings',
+                      message: isDefault
+                          ? 'Current Default Paper Size'
+                          : 'Save as Default Thermal Size in Settings',
                       child: InkWell(
                         onTap: isDefault
                             ? null
                             : () async {
                                 _settings.rxThermalPaperSize.value = current;
                                 await _settings.savePrinterSettings();
-                                SnackbarUtil.showSuccess('Default thermal paper size set to $current');
+                                SnackbarUtil.showSuccess(
+                                    'Default thermal paper size set to $current');
                               },
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: isDefault
                                 ? cs.primary.withValues(alpha: 0.12)
                                 : cs.surfaceContainerHighest.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: isDefault ? cs.primary : cs.outlineVariant.withValues(alpha: 0.4),
+                              color: isDefault
+                                  ? cs.primary
+                                  : cs.outlineVariant.withValues(alpha: 0.4),
                             ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                isDefault ? Icons.check_circle_rounded : Icons.star_border_rounded,
+                                isDefault
+                                    ? Icons.check_circle_rounded
+                                    : Icons.star_border_rounded,
                                 size: 14,
-                                color: isDefault ? cs.primary : cs.onSurfaceVariant,
+                                color: isDefault
+                                    ? cs.primary
+                                    : cs.onSurfaceVariant,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -227,7 +260,9 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: isDefault ? cs.primary : cs.onSurfaceVariant,
+                                  color: isDefault
+                                      ? cs.primary
+                                      : cs.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -245,33 +280,56 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
               child: Obx(() {
                 final paperSize = _rxPaperSize.value.toLowerCase();
                 final is56 = paperSize == '56mm' || paperSize.contains('56');
-                final is58 = !is56 && (paperSize == '58mm' || paperSize == '57mm' || paperSize.contains('58'));
+                final is58 = !is56 &&
+                    (paperSize == '58mm' ||
+                        paperSize == '57mm' ||
+                        paperSize.contains('58'));
                 final isA4 = paperSize == 'a4';
+
+                // Use safe, finite heights for layout rasterizer stability
                 final format = isA4
                     ? PdfPageFormat.a4
                     : (is56
-                        ? const PdfPageFormat(56 * PdfPageFormat.mm, double.infinity, marginAll: 1.5 * PdfPageFormat.mm)
+                        ? const PdfPageFormat(
+                            56 * PdfPageFormat.mm,
+                            1600,
+                            marginAll: 1.5 * PdfPageFormat.mm,
+                          )
                         : (is58
-                            ? const PdfPageFormat(58 * PdfPageFormat.mm, double.infinity, marginAll: 2 * PdfPageFormat.mm)
-                            : const PdfPageFormat(72 * PdfPageFormat.mm, double.infinity, marginAll: 2 * PdfPageFormat.mm)));
+                            ? const PdfPageFormat(
+                                58 * PdfPageFormat.mm,
+                                1600,
+                                marginAll: 2 * PdfPageFormat.mm,
+                              )
+                            : const PdfPageFormat(
+                                72 * PdfPageFormat.mm,
+                                1600,
+                                marginAll: 2 * PdfPageFormat.mm,
+                              )));
 
                 return PdfPreview(
                   key: ValueKey('preview_${widget.bill.billNo}_$paperSize'),
-                  dpi: isA4 ? 180 : 140, // Fast crisp rasterization for instant preview
+                  dpi: isA4 ? 180 : 140,
                   initialPageFormat: format,
                   dynamicLayout: false,
                   build: (f) async {
                     if (_pdfBytesCache.containsKey(paperSize)) {
                       return _pdfBytesCache[paperSize]!;
                     }
-                    final doc = await ServiceBillPdf.buildPdfDocument(
-                      widget.bill,
-                      _settings,
-                      paperSize: paperSize,
-                    );
-                    final bytes = await doc.save();
-                    _pdfBytesCache[paperSize] = bytes;
-                    return bytes;
+                    try {
+                      final doc = await ServiceBillPdf.buildPdfDocument(
+                        widget.bill,
+                        _settings,
+                        paperSize: paperSize,
+                        customItems: widget.previewItems,
+                      );
+                      final bytes = await doc.save();
+                      _pdfBytesCache[paperSize] = bytes;
+                      return bytes;
+                    } catch (e) {
+                      debugPrint('[DialogBillPrintPreview] PDF generation error: $e');
+                      rethrow;
+                    }
                   },
                   canChangePageFormat: false,
                   canChangeOrientation: false,
@@ -294,11 +352,50 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
                         const SizedBox(height: 12),
                         Text(
                           'Generating receipt preview...',
-                          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  onError: (context, error) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.error_outline_rounded,
+                                color: Colors.red, size: 44),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Failed to generate receipt preview',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '$error',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 11.5, color: cs.onSurfaceVariant),
+                            ),
+                            const SizedBox(height: 14),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                _pdfBytesCache.clear();
+                                setState(() {});
+                              },
+                              icon: const Icon(Icons.refresh_rounded, size: 16),
+                              label: const Text('Retry Preview'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               }),
             ),
@@ -317,6 +414,7 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
   }) {
     return InkWell(
       onTap: () {
+        _pdfBytesCache.remove(sizeKey.toLowerCase());
         _rxPaperSize.value = sizeKey;
       },
       borderRadius: BorderRadius.circular(10),
@@ -327,7 +425,9 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
           color: isSelected ? cs.primary : cs.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? cs.primary : cs.outlineVariant.withValues(alpha: 0.5),
+            color: isSelected
+                ? cs.primary
+                : cs.outlineVariant.withValues(alpha: 0.5),
             width: isSelected ? 1.5 : 1.0,
           ),
           boxShadow: isSelected
@@ -361,6 +461,25 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
         ),
       ),
     );
+  }
+
+  Future<void> _printDirectCurrent() async {
+    try {
+      final paperSize = _rxPaperSize.value.toLowerCase();
+      final doc = await ServiceBillPdf.buildPdfDocument(
+        widget.bill,
+        _settings,
+        paperSize: paperSize,
+        customItems: widget.previewItems,
+      );
+      final bytes = await doc.save();
+      await Printing.layoutPdf(
+        onLayout: (_) => bytes,
+        name: 'Bill_${widget.bill.billNo ?? "receipt"}',
+      );
+    } catch (e) {
+      SnackbarUtil.showError('Print error: $e');
+    }
   }
 
   Future<void> _sharePdfToWhatsApp(BuildContext context) async {

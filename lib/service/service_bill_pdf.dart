@@ -1,5 +1,4 @@
-import 'dart:io';
-import 'dart:typed_data';
+﻿import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -8,6 +7,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:get/get.dart';
 import '../model/entity_bill.dart';
 import '../model/entity_bill_item.dart';
+import 'package:flutter/foundation.dart';
+import '../objectbox.g.dart';
+import 'service_object_box.dart';
 import '../screens/home/fragment/setting/controller_home_settings.dart';
 import 'service_currency.dart';
 
@@ -40,15 +42,43 @@ class ServiceBillPdf {
 
   /// Builds a [pw.Document] for the given bill and paper size.
   /// Supported [paperSize] values: '80mm', '58mm', '56mm', 'A4'.
+  /// Safely resolves the bill items to render.
+  /// Priority:
+  /// 1. Explicit [customItems] passed (e.g. from active cart / draft preview)
+  /// 2. [bill.items] if already loaded in memory
+  /// 3. Direct database query via [EntityBillItem_.bill] if [bill.id] > 0
+  static List<EntityBillItem> getEffectiveBillItems(
+    EntityBill bill, {
+    List<EntityBillItem>? customItems,
+  }) {
+    if (customItems != null && customItems.isNotEmpty) {
+      return customItems;
+    }
+    if (bill.items.isNotEmpty) {
+      return bill.items.toList();
+    }
+    if (bill.id > 0 && Get.isRegistered<ServiceObjectBox>()) {
+      try {
+        final box = Get.find<ServiceObjectBox>().box<EntityBillItem>();
+        final list = box.query(EntityBillItem_.bill.equals(bill.id)).build().find();
+        if (list.isNotEmpty) return list;
+      } catch (e) {
+        debugPrint('[ServiceBillPdf] Fallback items query error: $e');
+      }
+    }
+    return <EntityBillItem>[];
+  }
   static Future<pw.Document> buildPdfDocument(
     EntityBill bill,
     ControllerHomeSettings settings, {
     String? paperSize,
+    List<EntityBillItem>? customItems,
   }) async {
     final regularFont = await _loadRegularFont();
     final boldFont = await _loadBoldFont();
 
     final pdf = pw.Document();
+    final effectiveItems = getEffectiveBillItems(bill, customItems: customItems);
     final String currencySymbol = Get.isRegistered<ServiceCurrency>()
         ? Get.find<ServiceCurrency>().rxCurrency.value
         : '₹';
@@ -81,6 +111,7 @@ class ServiceBillPdf {
         currencyFormat,
         dateFormat,
         date,
+        itemsList: effectiveItems,
       );
     } else {
       _buildThermalReceipt(
@@ -94,6 +125,7 @@ class ServiceBillPdf {
         dateFormat,
         date,
         paperSize: chosenSize,
+        itemsList: effectiveItems,
       );
     }
 
@@ -149,7 +181,11 @@ class ServiceBillPdf {
     DateTime date, {
     String paperSize = '80mm',
     bool? is58mm,
+    List<EntityBillItem>? itemsList,
   }) {
+    final itemsToRender = (itemsList != null && itemsList.isNotEmpty)
+        ? itemsList
+        : getEffectiveBillItems(bill);
     final storeName = settings.rxStoreName.value;
     final storeAddress = settings.rxStoreAddress.value;
     final storeGstin = settings.rxStoreGstin.value;
@@ -195,14 +231,14 @@ class ServiceBillPdf {
                 marginBottom: 4.5 * PdfPageFormat.mm,
               ));
 
-    final totalQty = bill.items.fold<int>(
+    final totalQty = itemsToRender.fold<int>(
       0,
       (sum, item) => sum + (item.qty ?? 0),
     );
 
     // Calculate customer total savings (discounts + MRP difference)
     double totalSavings = (bill.discount ?? 0);
-    for (final it in bill.items) {
+    for (final it in itemsToRender) {
       totalSavings += (it.discount ?? 0);
       if (it.mrp != null && it.price != null && it.mrp! > it.price!) {
         totalSavings += (it.mrp! - it.price!) * (it.qty ?? 1);
@@ -374,7 +410,7 @@ class ServiceBillPdf {
               _divider(dashed: true),
 
               // ── 56mm / 58mm Clean Compact Item Rows (Line 1: Name, Line 2: Qty x Rate + Tax & Amt) ──
-              ...bill.items.map((item) {
+              ...itemsToRender.map((item) {
                 final rateStr = '$currencySymbol${currencyFormat.format(item.price ?? 0)}';
                 final amtStr = '$currencySymbol${currencyFormat.format(item.total ?? 0)}';
                 final itemName = item.itemName ?? '-';
@@ -489,7 +525,7 @@ class ServiceBillPdf {
               _divider(dashed: true),
 
               // ── 80mm Item Rows ──
-              ...bill.items.map((item) {
+              ...itemsToRender.map((item) {
                 final rateStr = '$currencySymbol${currencyFormat.format(item.price ?? 0)}';
                 final amtStr = '$currencySymbol${currencyFormat.format(item.total ?? 0)}';
                 final itemName = item.itemName ?? '-';
@@ -1127,8 +1163,12 @@ class ServiceBillPdf {
     String currencySymbol,
     NumberFormat currencyFormat,
     DateFormat dateFormat,
-    DateTime date,
-  ) {
+    DateTime date, {
+    List<EntityBillItem>? itemsList,
+  }) {
+    final itemsToRender = (itemsList != null && itemsList.isNotEmpty)
+        ? itemsList
+        : getEffectiveBillItems(bill);
     final storeName = settings.rxStoreName.value;
     final storeAddress = settings.rxStoreAddress.value;
     final storeGstin = settings.rxStoreGstin.value;
@@ -1263,7 +1303,7 @@ class ServiceBillPdf {
                   ],
                 ),
                 // Table Body
-                ...bill.items.asMap().entries.map((entry) {
+                ...itemsToRender.asMap().entries.map((entry) {
                   final i = entry.key;
                   final item = entry.value;
                   return pw.TableRow(
@@ -1489,9 +1529,10 @@ class ServiceBillPdf {
           ],
         ),
       );
-  static List<_GstBreakupRow> _calculateGstBreakup(EntityBill bill) {
+  static List<_GstBreakupRow> _calculateGstBreakup(EntityBill bill, [List<EntityBillItem>? itemsList]) {
+    final items = (itemsList != null && itemsList.isNotEmpty) ? itemsList : getEffectiveBillItems(bill);
     final Map<double, List<EntityBillItem>> grouped = {};
-    for (final item in bill.items) {
+    for (final item in items) {
       final rate = item.taxRate ?? item.item.target?.taxRate ?? ((bill.tax != null && bill.tax! > 0) ? 18.0 : 0.0);
       grouped.putIfAbsent(rate, () => []).add(item);
     }

@@ -1,3 +1,5 @@
+﻿import '../../../../features/voice_billing/dialog_gemini_api_key.dart';
+import '../../../../features/voice_billing/services/service_ai_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:super_market/widget/icon_box.dart';
@@ -111,7 +113,15 @@ class _ProfileTab extends StatelessWidget {
             delegate: SliverChildListDelegate([
               // ── Appearance & Locale ──────────────────────────────────────
               _buildSectionHeader(context, 'appearance_locale'.tr),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
+              _buildThemeSelectorCard(context, themeService, colorScheme),
+              const SizedBox(height: 14),
+              _buildSectionHeader(context, 'AI Voice & Speech Transcribe'),
+              const SizedBox(height: 8),
+              _buildGeminiAiCard(context, colorScheme),
+              const SizedBox(height: 14),
+              _buildSectionHeader(context, 'Language & Regional Preferences'),
+              const SizedBox(height: 8),
               MyCard(
                 child: Column(
                   children: [
@@ -878,6 +888,302 @@ class _ProfileTab extends StatelessWidget {
     );
   }
 }
+
+  Widget _buildThemeSelectorCard(
+    BuildContext context,
+    ServiceTheme themeService,
+    ColorScheme colorScheme,
+  ) {
+    return MyCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const IconBox(
+                icon: Icons.palette_outlined,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'App Theme & Appearance',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    Text(
+                      'Select your preferred visual theme for checkout counters',
+                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Obx(() {
+            final isDark = themeService.rxIsDarkMode.value;
+            return Row(
+              children: [
+                // Light Theme Option
+                Expanded(
+                  child: _themeOptionCard(
+                    title: 'Light Theme',
+                    subtitle: 'Clean & Crisp Day Mode',
+                    icon: Icons.wb_sunny_rounded,
+                    isSelected: !isDark,
+                    colorScheme: colorScheme,
+                    onTap: () {
+                      if (isDark) themeService.switchTheme();
+                    },
+                    previewBg: const Color(0xFFF8FAFC),
+                    previewAccent: const Color(0xFF0D9488),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Dark Theme Option
+                Expanded(
+                  child: _themeOptionCard(
+                    title: 'Dark Theme',
+                    subtitle: 'Low-Glare Night Mode',
+                    icon: Icons.nightlight_round,
+                    isSelected: isDark,
+                    colorScheme: colorScheme,
+                    onTap: () {
+                      if (!isDark) themeService.switchTheme();
+                    },
+                    previewBg: const Color(0xFF0F172A),
+                    previewAccent: const Color(0xFF2DD4BF),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _themeOptionCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+    required ColorScheme colorScheme,
+    required VoidCallback onTap,
+    required Color previewBg,
+    required Color previewAccent,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colorScheme.primary.withValues(alpha: 0.08)
+              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected
+                ? colorScheme.primary
+                : colorScheme.outlineVariant.withValues(alpha: 0.4),
+            width: isSelected ? 2.0 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: colorScheme.primary.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: previewBg,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: previewAccent, width: 2),
+                  ),
+                  child: Icon(icon, size: 16, color: previewAccent),
+                ),
+                const Spacer(),
+                if (isSelected)
+                  Icon(Icons.check_circle_rounded,
+                      color: colorScheme.primary, size: 20)
+                else
+                  Icon(Icons.circle_outlined,
+                      color: colorScheme.outlineVariant, size: 18),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                fontSize: 13,
+                color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGeminiAiCard(BuildContext context, ColorScheme colorScheme) {
+    final parser = ServiceAiParser();
+    final savedKey = parser.savedGeminiKey;
+    final isConfigured = savedKey.isNotEmpty;
+
+    return MyCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF4338CA), Color(0xFF0D9488)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Gemini 3.5 Transcribe Live',
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isConfigured
+                                ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                                : const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isConfigured
+                                  ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                                  : const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Text(
+                            isConfigured
+                                ? 'LIVE STREAM READY ⚡'
+                                : 'OFFLINE NLP READY',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isConfigured
+                                  ? const Color(0xFF059669)
+                                  : const Color(0xFFD97706),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'AI Speech-to-Text streaming for instant hands-free grocery orders',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Status Box
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isConfigured ? Icons.key_rounded : Icons.offline_bolt_rounded,
+                  size: 16,
+                  color: isConfigured
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFF59E0B),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isConfigured
+                        ? 'Key: ${savedKey.length > 8 ? savedKey.substring(0, 8) : savedKey}•••••••• (${savedKey.length} chars)'
+                        : 'No API key set. Using 100% offline local Hinglish/Marathi NLP parser.',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontFamily: isConfigured ? 'monospace' : null,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                FilledButton.tonalIcon(
+                  onPressed: () => DialogGeminiApiKey.show(context),
+                  icon: const Icon(Icons.settings_suggest_rounded, size: 16),
+                  label: Text(isConfigured ? 'Change Key' : 'Configure Key'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    textStyle: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TAB 2: Printer Settings

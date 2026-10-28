@@ -1,0 +1,101 @@
+Name,SKU,Barcode,Unit,Category,Cost Price,Selling Price,Tax Name,Tax Rate (%),Tax Type,Has Expiry,Status
+"Amul Taaza Homogenised Toned Milk 1L",SKU-DB-001,8901262010011,Ltr,"Dairy & Bakery",70.0,75.0,GST,5.0,inclusive,Yes,Active
+"Amul Butter Pasteurized 500g",SKU-DB-002,8901262020027,Pack,"Dairy & Bakery",255.0,275.0,GST,12.0,inclusive,Yes,Active
+"Amul Malai Paneer 200g",SKU-DB-003,8901262030033,Pack,"Dairy & Bakery",85.0,95.0,GST,5.0,inclusive,Yes,Active
+"Amul Cheese Slices 200g (10 Slices)",SKU-DB-004,8901262040049,Pack,"Dairy & Bakery",125.0,140.0,GST,12.0,inclusive,Yes,Active
+"Britannia 100% Whole Wheat Bread 400g",SKU-DB-005,8901063010052,Pack,"Dairy & Bakery",42.0,50.0,GST,0.0,inclusive,Yes,Active
+"Britannia Milk Bread 400g",SKU-DB-006,8901063020068,Pack,"Dairy & Bakery",38.0,45.0,GST,0.0,inclusive,Yes,Active
+"Mother Dairy Fresh Curd / Dahi 400g",SKU-DB-007,8901648010075,Pack,"Dairy & Bakery",32.0,35.0,GST,5.0,inclusive,Yes,Active
+"Amul Fresh Cream 250ml",SKU-DB-008,8901262050086,Pack,"Dairy & Bakery",60.0,67.0,GST,12.0,inclusive,Yes,Active
+"Farm Fresh White Eggs (Pack of 6)",SKU-DB-009,8908001010091,Box,"Dairy & Bakery",42.0,50.0,GST,0.0,inclusive,Yes,Active
+"Amul Masti Spiced Buttermilk 200ml",SKU-DB-010,8901262060108,Pack,"Dairy & Bakery",12.0,15.0,GST,5.0,inclusive,Yes,Active
+"Aashirvaad Shudh Chakki Atta 5kg",SKU-ST-011,8901725010113,Pack,"Staples & Grains",225.0,255.0,GST,5.0,inclusive,No,Active
+"Aashirvaad Shudh Chakki Atta 10kg",SKU-ST-012,8901725020129,Pack,"Staples & Grains",430.0,480.0,GST,5.0,inclusive,No,Active
+"Fortune Rozana Basmati Rice 5kg",SKU-ST-013,8906007280136,Pack,"Staples & Grains",390.0,450.0,GST,5.0,inclusive,No,Active
+"Daawat Super Basmati Rice 1kg",SKU-ST-014,8901537010149,Pack,"Staples & Grains",140.0,165.0,GST,5.0,inclusive,No,Active
+"Tata Sampann Unpolished Toor Dal 1kg",SKU-ST-015,8901042960155,Pack,"Staples & Grains",155.0,175.0,GST,5.0,inclusive,No,Active
+"Tata Sampann Yellow Moong Dal 1kg",SKU-ST-016,8901042970161,Pack,"Staples & Grains",130.0,150.0,GST,5.0,inclusive,No,Active
+"Tata Sampann Chana Dal 1kg",SKU-ST-017,8901042980177,Pack,"Staples & Grains",95.0,115.0,GST,5.0,inclusive,No,Active
+"Tata Salt Vacuum Evaporated Iodized 1kg",SKU-ST-018,8901042990183,Pack,"Staples & Grains",22.0,28.0,GST,0.0,inclusive,No,Active
+"Madhur Pure & Hygienic Refined Sugar 1kg",SKU-ST-019,8906010500191,Pack,"Staples & Grains",48.0,55.0,GST,5.0,inclusive,No,Active
+"Fortune Besan / Gram Flour 500g",SKU-ST-020,8906007290203,Pack,"Staples & Grains",52.0,62.0,GST,5.0,inclusive,No,Active
+"Fortune Maida All-Purpose Flour 500g",SKU-ST-021,8906007300216,Pack,"Staples & Grains",30.0,38.0,GST,5.0,inclusive,No,Active
+"Fortune Suji / Semolina 500g",SKU-ST-022,8906007310222,Pack,"Staples & Grains",32.0,40.0,GST,5.0,inclusive,No,Active
+"Rajdhani Thick Poha 500g",SKU-ST-023,8904005110239,Pack,"Staples & Grains",38.0,46.0,GST,5.0,inclusive,No,Active
+"Fortune Sunlite Refined Sunflower Oil 1L Pouch",SKU-OL-024,8906007320245,Pouch,"Edible Oils & Ghee",130.0,145.0,GST,5.0,inclusive,Yes,Active
+"Fortune Kachi Ghani Mustard Oil 1L Pouch",SKU-OL-025,8906007330251,Pouch,"Edible Oils & Ghee",140.0,155.0,GST,5.0,inclusive,Yes,Active
+"Saffola Gold Pro Healthy Oil 1L Pouch",SKU-OL-026,8901088010266,Pouch,"Edible Oils & Ghee",170.0,190.0,GST,5.0,inclusive,Yes,Active
+"Amul Pure Ghee 1L Tin",SKU-OL-027,8901262070275,Tin,"Edible Oils & Ghee",610.0,670.0,GST,12.0,inclusive,Yes,Active
+"Mother Dairy Cow Ghee 500ml Pouch",SKU-OL-028,8901648020289,Pouch,"Edible Oils & Ghee",320.0,350.0,GST,12.0,inclusive,Yes,Active
+"Figaro Extra Virgin Olive Oil 500ml Glass Bottle",SKU-OL-029,8902008010292,Bottle,"Edible Oils & Ghee",580.0,650.0,GST,12.0,inclusive,Yes,Active
+"Tata Tea Gold 500g Pack",SKU-BV-030,8901042910303,Pack,"Beverages",290.0,330.0,GST,5.0,inclusive,Yes,Active
+"Red Label Strong Blend Tea 500g",SKU-BV-031,8901030010317,Pack,"Beverages",270.0,310.0,GST,5.0,inclusive,Yes,Active
+"Wagh Bakri Premium CTC Tea 500g",SKU-BV-032,8901594010328,Pack,"Beverages",260.0,295.0,GST,5.0,inclusive,Yes,Active
+"Nescafe Classic Instant Coffee Jar 50g",SKU-BV-033,8901058010330,Jar,"Beverages",185.0,210.0,GST,18.0,inclusive,Yes,Active
+"BRU Instant Coffee Granules 100g Pouch",SKU-BV-034,8901030020347,Pouch,"Beverages",215.0,245.0,GST,18.0,inclusive,Yes,Active
+"Bournvita Chocolate Health Drink 500g Jar",SKU-BV-035,8901233010354,Jar,"Beverages",240.0,275.0,GST,18.0,inclusive,Yes,Active
+"Horlicks Classic Malt 500g Jar",SKU-BV-036,8901030030360,Jar,"Beverages",235.0,265.0,GST,18.0,inclusive,Yes,Active
+"Coca Cola Cold Drink Bottle 750ml",SKU-BV-037,8901764010372,Bottle,"Beverages",35.0,40.0,GST,28.0,inclusive,Yes,Active
+"Thums Up Soft Drink Bottle 750ml",SKU-BV-038,8901764020388,Bottle,"Beverages",35.0,40.0,GST,28.0,inclusive,Yes,Active
+"Sprite Lime Flavoured Bottle 750ml",SKU-BV-039,8901764030394,Bottle,"Beverages",35.0,40.0,GST,28.0,inclusive,Yes,Active
+"Maaza Mango Drink 600ml Bottle",SKU-BV-040,8901764040409,Bottle,"Beverages",36.0,42.0,GST,12.0,inclusive,Yes,Active
+"Frooti Mango Juice Tetrapack 160ml",SKU-BV-041,8901614010411,Pack,"Beverages",8.5,10.0,GST,12.0,inclusive,Yes,Active
+"Real Fruit Power Mixed Fruit Juice 1L",SKU-BV-042,8901207010427,Pack,"Beverages",105.0,125.0,GST,12.0,inclusive,Yes,Active
+"Red Bull Energy Drink Can 250ml",SKU-BV-043,9002490100438,Can,"Beverages",110.0,125.0,GST,28.0,inclusive,Yes,Active
+"Bisleri Packaged Drinking Water 1L",SKU-BV-044,8906014400442,Bottle,"Beverages",14.0,20.0,GST,18.0,inclusive,No,Active
+"Parle-G Gold Glucose Biscuits 1kg Family Pack",SKU-SN-045,8901719010457,Pack,"Snacks & Biscuits",110.0,125.0,GST,18.0,inclusive,Yes,Active
+"Britannia Good Day Butter Cookies 600g Value Pack",SKU-SN-046,8901063030463,Pack,"Snacks & Biscuits",120.0,140.0,GST,18.0,inclusive,Yes,Active
+"Britannia Marie Gold Biscuits 300g Super Saver",SKU-SN-047,8901063040479,Pack,"Snacks & Biscuits",42.0,50.0,GST,18.0,inclusive,Yes,Active
+"Cadbury Oreo Original Vanilla Sandwich Biscuits 120g",SKU-SN-048,8901233020483,Pack,"Snacks & Biscuits",32.0,40.0,GST,18.0,inclusive,Yes,Active
+"Sunfeast Dark Fantasy Choco Fills 300g Pack",SKU-SN-049,8901725030495,Pack,"Snacks & Biscuits",130.0,150.0,GST,18.0,inclusive,Yes,Active
+"Lays Classic Salted Potato Chips 50g",SKU-SN-050,8901491100508,Pack,"Snacks & Biscuits",17.0,20.0,GST,12.0,inclusive,Yes,Active
+"Lays India Magic Masala Potato Chips 50g",SKU-SN-051,8901491110514,Pack,"Snacks & Biscuits",17.0,20.0,GST,12.0,inclusive,Yes,Active
+"Kurkure Masala Munch Crisps 85g",SKU-SN-052,8901491120520,Pack,"Snacks & Biscuits",17.0,20.0,GST,12.0,inclusive,Yes,Active
+"Haldirams Nagpur Aloo Bhujia 200g Pouch",SKU-SN-053,8904063200539,Pouch,"Snacks & Biscuits",50.0,60.0,GST,12.0,inclusive,Yes,Active
+"Haldirams Nagpur Moong Dal Namkeen 200g",SKU-SN-054,8904063210545,Pouch,"Snacks & Biscuits",52.0,60.0,GST,12.0,inclusive,Yes,Active
+"Haldirams Khatta Meetha Mixture 200g",SKU-SN-055,8904063220551,Pouch,"Snacks & Biscuits",50.0,60.0,GST,12.0,inclusive,Yes,Active
+"Maggi 2-Minute Masala Instant Noodles 420g (Pack of 6)",SKU-SN-056,8901058020568,Pack,"Instant Foods",78.0,90.0,GST,18.0,inclusive,Yes,Active
+"Sunfeast YiPPee! Magic Masala Noodles 4 Pack",SKU-SN-057,8901725040579,Pack,"Instant Foods",52.0,60.0,GST,18.0,inclusive,Yes,Active
+"Ching Secret Schezwan Chutney 250g Glass Bottle",SKU-SN-058,8901595010587,Bottle,"Instant Foods",72.0,85.0,GST,12.0,inclusive,Yes,Active
+"Kelloggs Corn Flakes Original 475g Box",SKU-SN-059,8901499010595,Box,"Breakfast & Cereals",195.0,230.0,GST,18.0,inclusive,Yes,Active
+"Kelloggs Chocos Crunchy Chocolate 375g",SKU-SN-060,8901499020600,Box,"Breakfast & Cereals",180.0,210.0,GST,18.0,inclusive,Yes,Active
+"Quaker Rolled Oats 1kg Pouch",SKU-SN-061,8901491130611,Pouch,"Breakfast & Cereals",165.0,195.0,GST,5.0,inclusive,Yes,Active
+"Everest Turmeric Powder / Haldi 200g",SKU-SP-062,8901786010626,Pack,"Spices & Condiments",55.0,65.0,GST,5.0,inclusive,Yes,Active
+"Everest Tikhalal Red Chilli Powder 200g",SKU-SP-063,8901786020632,Pack,"Spices & Condiments",82.0,95.0,GST,5.0,inclusive,Yes,Active
+"Everest Coriander Powder / Dhaniya 200g",SKU-SP-064,8901786030648,Pack,"Spices & Condiments",68.0,80.0,GST,5.0,inclusive,Yes,Active
+"MDH Garam Masala 100g Box",SKU-SP-065,8901242010659,Box,"Spices & Condiments",80.0,94.0,GST,5.0,inclusive,Yes,Active
+"MDH Chana Masala 100g Box",SKU-SP-066,8901242020665,Box,"Spices & Condiments",72.0,85.0,GST,5.0,inclusive,Yes,Active
+"Catch Cumin Seeds / Jeera Whole 100g",SKU-SP-067,8901199010672,Pack,"Spices & Condiments",58.0,70.0,GST,5.0,inclusive,No,Active
+"Catch Black Mustard Seeds / Rai 100g",SKU-SP-068,8901199020688,Pack,"Spices & Condiments",25.0,32.0,GST,5.0,inclusive,No,Active
+"Kissan Mixed Fruit Jam 500g Jar",SKU-SP-069,8901030040697,Jar,"Spices & Condiments",145.0,170.0,GST,12.0,inclusive,Yes,Active
+"Maggi Rich Tomato Ketchup Bottle 1kg",SKU-SP-070,8901058030703,Bottle,"Spices & Condiments",135.0,160.0,GST,12.0,inclusive,Yes,Active
+"Veeba Eggless Mayonnaise 250g Pouch",SKU-SP-071,8906069900713,Pouch,"Spices & Condiments",58.0,70.0,GST,12.0,inclusive,Yes,Active
+"Mother Recipe Ginger Garlic Paste 200g Pouch",SKU-SP-072,8901623010723,Pouch,"Spices & Condiments",42.0,50.0,GST,12.0,inclusive,Yes,Active
+"Dettol Original Bathing Soap Bar (Pack of 4x125g)",SKU-PC-073,8901396010738,Pack,"Personal Care",185.0,215.0,GST,18.0,inclusive,No,Active
+"Dove Cream Beauty Bathing Bar 100g (Pack of 3)",SKU-PC-074,8901030050740,Pack,"Personal Care",175.0,205.0,GST,18.0,inclusive,No,Active
+"Lifebuoy Total Germ Protection Soap 125g (Pack of 4)",SKU-PC-075,8901030060756,Pack,"Personal Care",125.0,145.0,GST,18.0,inclusive,No,Active
+"Colgate Strong Teeth Dental Paste 200g Saver Pack",SKU-PC-076,8901314010765,Pack,"Personal Care",105.0,125.0,GST,18.0,inclusive,Yes,Active
+"Closeup Everfresh Red Hot Toothpaste 150g",SKU-PC-077,8901030070779,Pack,"Personal Care",95.0,115.0,GST,18.0,inclusive,Yes,Active
+"Clinic Plus Strong & Long Health Shampoo 340ml",SKU-PC-078,8901030080785,Bottle,"Personal Care",180.0,215.0,GST,18.0,inclusive,Yes,Active
+"Head & Shoulders Anti-Dandruff Smooth Shampoo 340ml",SKU-PC-079,4902430100792,Bottle,"Personal Care",260.0,310.0,GST,18.0,inclusive,Yes,Active
+"Parachute 100% Pure Coconut Hair Oil 500ml",SKU-PC-080,8901088020807,Bottle,"Personal Care",185.0,215.0,GST,5.0,inclusive,Yes,Active
+"Nivea Soft Moisturising Cream 100ml Tub",SKU-PC-081,4005808100813,Tub,"Personal Care",150.0,175.0,GST,18.0,inclusive,Yes,Active
+"Vaseline Pure Skin Petroleum Jelly 100g",SKU-PC-082,8901030090821,Jar,"Personal Care",90.0,110.0,GST,18.0,inclusive,Yes,Active
+"Dettol Liquid Handwash Pump 200ml Original",SKU-PC-083,8901396020836,Bottle,"Personal Care",85.0,99.0,GST,18.0,inclusive,Yes,Active
+"Savlon Antiseptic Disinfectant Liquid 500ml",SKU-PC-084,8901725050844,Bottle,"Personal Care",145.0,170.0,GST,18.0,inclusive,Yes,Active
+"Whisper Choice Ultra Sanitary Pads Regular (Pack of 6)",SKU-PC-085,4902430200850,Pack,"Personal Care",42.0,50.0,GST,0.0,inclusive,No,Active
+"Surf Excel Easy Wash Detergent Powder 1kg",SKU-HH-086,8901030100865,Pack,"Household & Cleaning",128.0,145.0,GST,18.0,inclusive,No,Active
+"Ariel Matic Front Load Washing Powder 1kg",SKU-HH-087,4902430300871,Pack,"Household & Cleaning",230.0,265.0,GST,18.0,inclusive,No,Active
+"Rin Detergent Bar 250g (Pack of 4)",SKU-HH-088,8901030110888,Pack,"Household & Cleaning",68.0,80.0,GST,18.0,inclusive,No,Active
+"Vim Dishwash Bar Lemon 300g (Pack of 3)",SKU-HH-089,8901030120894,Pack,"Household & Cleaning",52.0,60.0,GST,18.0,inclusive,No,Active
+"Pril Dishwash Liquid Lime Degreaser 425ml",SKU-HH-090,8902102010906,Bottle,"Household & Cleaning",95.0,115.0,GST,18.0,inclusive,No,Active
+"Harpic Power Plus Toilet Cleaner Original 1L",SKU-HH-091,8901396030910,Bottle,"Household & Cleaning",170.0,195.0,GST,18.0,inclusive,No,Active
+"Lizol Disinfectant Surface & Floor Cleaner Citrus 1L",SKU-HH-092,8901396040926,Bottle,"Household & Cleaning",185.0,215.0,GST,18.0,inclusive,No,Active
+"Colin Glass & Multi-Surface Cleaner Spray 500ml",SKU-HH-093,8901396050932,Bottle,"Household & Cleaning",90.0,105.0,GST,18.0,inclusive,No,Active
+"Goodknight Gold Flash Mosquito Liquid Refill (Twin Pack)",SKU-HH-094,8901023010948,Pack,"Household & Cleaning",135.0,155.0,GST,18.0,inclusive,Yes,Active
+"Shalimar Premium Garbage Bags Medium (Pack of 30)",SKU-HH-095,8906030900958,Pack,"Household & Cleaning",70.0,90.0,GST,18.0,inclusive,No,Active
+"Cadbury Dairy Milk Chocolate Silk 60g",SKU-CC-096,8901233030963,Pack,"Chocolates & Sweets",70.0,80.0,GST,18.0,inclusive,Yes,Active
+"Nestle KitKat 4-Finger Crisp Chocolate Bar 38.5g",SKU-CC-097,8901058040979,Pack,"Chocolates & Sweets",25.0,30.0,GST,18.0,inclusive,Yes,Active
+"Cadbury 5 Star Chocolate Bar 40g (Pack of 2)",SKU-CC-098,8901233040986,Pack,"Chocolates & Sweets",32.0,40.0,GST,18.0,inclusive,Yes,Active
+"Nutraj California Premium Almonds / Badam 250g",SKU-DF-099,8906017100998,Pack,"Dry Fruits & Nuts",220.0,260.0,GST,12.0,inclusive,Yes,Active
+"Nutraj Whole Cashews / Kaju W320 Grade 250g",SKU-DF-100,8906017111000,Pack,"Dry Fruits & Nuts",240.0,285.0,GST,12.0,inclusive,Yes,Active

@@ -1,3 +1,6 @@
+﻿import '../../model/entity_bill.dart';
+import '../../model/entity_bill_item.dart';
+import '../../screens/home/fragment/bills/dialog_bill_print_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -1159,7 +1162,56 @@ class _ActivityVoiceBillingState extends State<ActivityVoiceBilling>
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () {
+                  final items = controller.rxCartItems;
+                  if (items.isEmpty) {
+                    SnackbarUtil.showWarning('Please add items to preview bill');
+                    return;
+                  }
+                  final inv = controller.rxInvoice.value;
+                  final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+                  final tempBill = EntityBill(
+                    billNo: 'PREVIEW-VOICE',
+                    customerName: controller.customerNameController.text.trim().isNotEmpty
+                        ? controller.customerNameController.text.trim()
+                        : 'Walk-in Customer',
+                    customerPhone: controller.customerPhoneController.text.trim(),
+                    totalAmount: inv.subTotal,
+                    tax: inv.taxTotal,
+                    grandTotal: inv.grandTotal,
+                    paymentMode: controller.rxPaymentMode.value,
+                    status: 'DRAFT',
+                    createdAtUtcMs: now,
+                  );
+                  final previewBillItems = items.map((vi) {
+                    return EntityBillItem(
+                      itemName: vi.itemName,
+                      qty: vi.quantity.toInt(),
+                      price: vi.price,
+                      taxRate: vi.taxRate,
+                      total: vi.total,
+                      discount: 0.0,
+                    );
+                  }).toList();
+
+                  Get.dialog(
+                    DialogBillPrintPreview(
+                      bill: tempBill,
+                      previewItems: previewBillItems,
+                    ),
+                    barrierDismissible: true,
+                  );
+                },
+                icon: const Icon(Icons.visibility_rounded, size: 18),
+                label: const Text('Preview Bill'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(width: 8),
               FilledButton.icon(
                 onPressed: () => controller.generateAndSettleBill(context),
                 icon: const Icon(Icons.bolt_rounded, size: 20),

@@ -1,4 +1,4 @@
-import 'package:get/get.dart';
+﻿import 'package:get/get.dart';
 import 'package:super_market/core/performance/plan_expiry_guard.dart';
 import 'package:super_market/service/service_locale.dart';
 
@@ -59,7 +59,8 @@ class StaticMethods {
     );
 
     // 4. ObjectBox Database (Synchronous Get.put after awaiting init())
-    final objectBoxService = await ServiceObjectBox().init();
+    final savedBrandId = tokenStorage.getBrandId();
+    final objectBoxService = await ServiceObjectBox().init(brandId: savedBrandId);
     Get.put<ServiceObjectBox>(
       objectBoxService,
       permanent: true,

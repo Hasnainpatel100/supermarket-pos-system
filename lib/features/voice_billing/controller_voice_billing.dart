@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -524,12 +524,11 @@ class ControllerVoiceBilling extends GetxController {
     late EntityBill savedBill;
     ob.store.runInTransaction(TxMode.write, () {
       final bId = _boxBill.put(bill);
-      savedBill = _boxBill.get(bId)!;
-
       for (var bi in billItemsToSave) {
-        bi.bill.target = savedBill;
+        bi.bill.targetId = bId;
       }
       _boxBillItem.putMany(billItemsToSave);
+      savedBill = _boxBill.get(bId)!;
     });
 
     // Voice soundbox announcement

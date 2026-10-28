@@ -6,6 +6,7 @@ import '../../../../model/entity_customer.dart';
 import '../../../../model/entity_item.dart';
 import '../../../../model/entity_item_batch.dart';
 import '../../../../model/entity_purchase.dart';
+import '../../../../model/entity_supplier.dart';
 import '../../../../objectbox.g.dart';
 import '../../../../service/service_brand_context.dart';
 import '../../../../service/service_object_box.dart';
@@ -19,6 +20,27 @@ class ControllerHomeDashboard extends GetxController {
   late final Box<EntityCustomer> _boxCustomer;
   late final Box<EntityPurchase> _boxPurchase;
   late final Box<EntityItemBatch> _boxBatch;
+  late final Box<EntitySupplier> _boxSupplier;
+
+  // ── Dreams POS Top 4 KPI Metrics ──
+  final RxDouble totalPurchaseDue = 0.0.obs;
+  final RxDouble totalSalesDue = 0.0.obs;
+  final RxDouble totalSaleAmount = 0.0.obs;
+  final RxDouble totalExpenseAmount = 0.0.obs;
+
+  // ── Dreams POS Row 2 Solid Stat Counts ──
+  final RxInt totalSuppliers = 0.obs;
+  final RxInt totalPurchaseInvoices = 0.obs;
+  final RxInt totalSalesInvoices = 0.obs;
+
+  // ── Purchase & Sales Comparison Bar Chart (Monthly) ──
+  final RxList<double> monthlySales = <double>[].obs;
+  final RxList<double> monthlyPurchases = <double>[].obs;
+  final RxList<String> monthLabels = <String>[].obs;
+
+  // ── Recently Added Products & Low Stock / Expired ──
+  final RxList<EntityItem> recentlyAddedProducts = <EntityItem>[].obs;
+  final RxList<EntityItem> inventoryAlertProducts = <EntityItem>[].obs;
 
   // ── 24-Hour Warning Dismissal Keys & State ──
   static const String keyDismissPlanExpiry = 'dashboard_dismiss_plan_expiry_until';
@@ -77,6 +99,7 @@ class ControllerHomeDashboard extends GetxController {
     _boxCustomer = ob.box<EntityCustomer>();
     _boxPurchase = ob.box<EntityPurchase>();
     _boxBatch = ob.box<EntityItemBatch>();
+    _boxSupplier = ob.box<EntitySupplier>();
     _updateGreeting();
     checkDismissStatus();
     loadData();
@@ -150,6 +173,66 @@ class ControllerHomeDashboard extends GetxController {
     // ── Total counts ──
     totalItems.value = _boxItem.count();
     totalCustomers.value = _boxCustomer.count();
+    totalSuppliers.value = _boxSupplier.count();
+    totalPurchaseInvoices.value = _boxPurchase.count();
+    totalSalesInvoices.value = _boxBill.count();
+
+    // ── Aggregated KPI Values for Dreams POS Top Cards ──
+    final allBills = _boxBill.getAll();
+    totalSaleAmount.value = allBills.fold(0.0, (s, b) => s + (b.grandTotal ?? 0));
+    totalSalesDue.value = allBills.fold(0.0, (s, b) => s + (b.dueAmount ?? 0));
+
+    final allPurchases = _boxPurchase.getAll();
+    double pDue = allPurchases.fold(0.0, (s, p) => s + (p.amountDue ?? 0));
+    if (pDue == 0) {
+      pDue = _boxSupplier.getAll().fold(0.0, (s, sup) => s + (sup.totalOutstanding ?? 0));
+    }
+    totalPurchaseDue.value = pDue;
+    totalExpenseAmount.value = allPurchases.fold(0.0, (s, p) => s + (p.amountPaid ?? (p.totalAmount ?? 0)));
+
+    // ── Monthly Purchase & Sales Comparison (Last 8 Months) ──
+    final mLabels = <String>[];
+    final mSales = <double>[];
+    final mPurchases = <double>[];
+    final monthFmt = DateFormat('MMM');
+    for (int i = 7; i >= 0; i--) {
+      final mDate = DateTime(now.year, now.month - i, 1);
+      final nextMDate = DateTime(mDate.year, mDate.month + 1, 1);
+      final mStartMs = mDate.millisecondsSinceEpoch;
+      final mEndMs = nextMDate.millisecondsSinceEpoch;
+      mLabels.add(monthFmt.format(mDate));
+
+      final monthBills = allBills.where((b) {
+        if (b.billDate == null) return false;
+        try {
+          final parsed = dateFmt.parse(b.billDate!);
+          return parsed.isAfter(mDate.subtract(const Duration(seconds: 1))) &&
+                 parsed.isBefore(nextMDate);
+        } catch (_) {
+          return false;
+        }
+      });
+      mSales.add(monthBills.fold(0.0, (s, b) => s + (b.grandTotal ?? 0)));
+
+      final monthPO = allPurchases.where((p) {
+        final pDate = p.purchaseDateUtcMs ?? 0;
+        return pDate >= mStartMs && pDate < mEndMs;
+      });
+      mPurchases.add(monthPO.fold(0.0, (s, p) => s + (p.totalAmount ?? 0)));
+    }
+    monthLabels.value = mLabels;
+    monthlySales.value = mSales;
+    monthlyPurchases.value = mPurchases;
+
+    // ── Recently Added Products ──
+    final recentItemsQuery = _boxItem.query().order(EntityItem_.id, flags: Order.descending).build();
+    recentlyAddedProducts.value = recentItemsQuery.find().take(6).toList();
+    recentItemsQuery.close();
+
+    // ── Inventory Alerts: Low Stock or Expiring Materials ──
+    final alertQuery = _boxItem.query(EntityItem_.isActive.equals(true)).order(EntityItem_.totalQty).build();
+    inventoryAlertProducts.value = alertQuery.find().take(6).toList();
+    alertQuery.close();
 
     // ── Expiry alerts: count items whose nearest batch expires within 30 days (with stock > 0) ──
     final nowMs = now.millisecondsSinceEpoch;

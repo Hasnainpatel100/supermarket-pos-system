@@ -1,0 +1,70 @@
+Name,SKU,Barcode,Unit,Category,Cost Price,Selling Price,Tax Name,Tax Rate (%),Tax Type,Has Expiry,Stock
+"Tata Tiscon TMT Rebar 8mm Fe 550D","TMT-8MM-TATA","890721400101","Kg","TMT Rebars (Saria)",58.5,62.0,"GST",18.0,"inclusive","No",15000
+"Tata Tiscon TMT Rebar 10mm Fe 550D","TMT-10MM-TATA","890721400102","Kg","TMT Rebars (Saria)",57.5,61.0,"GST",18.0,"inclusive","No",18000
+"Tata Tiscon TMT Rebar 12mm Fe 550D","TMT-12MM-TATA","890721400103","Kg","TMT Rebars (Saria)",56.5,60.0,"GST",18.0,"inclusive","No",25000
+"Tata Tiscon TMT Rebar 16mm Fe 550D","TMT-16MM-TATA","890721400104","Kg","TMT Rebars (Saria)",56.5,60.0,"GST",18.0,"inclusive","No",20000
+"Tata Tiscon TMT Rebar 20mm Fe 550D","TMT-20MM-TATA","890721400105","Kg","TMT Rebars (Saria)",56.5,60.0,"GST",18.0,"inclusive","No",16000
+"Tata Tiscon TMT Rebar 25mm Fe 550D","TMT-25MM-TATA","890721400106","Kg","TMT Rebars (Saria)",57.0,61.0,"GST",18.0,"inclusive","No",12000
+"Tata Tiscon TMT Rebar 32mm Fe 550D","TMT-32MM-TATA","890721400107","Kg","TMT Rebars (Saria)",58.0,62.5,"GST",18.0,"inclusive","No",8500
+"JSW Neosteel TMT Rebar 8mm Fe 550D","TMT-8MM-JSW","890721400108","Kg","TMT Rebars (Saria)",56.5,60.0,"GST",18.0,"inclusive","No",16000
+"JSW Neosteel TMT Rebar 10mm Fe 550D","TMT-10MM-JSW","890721400109","Kg","TMT Rebars (Saria)",55.5,59.0,"GST",18.0,"inclusive","No",20000
+"JSW Neosteel TMT Rebar 12mm Fe 550D","TMT-12MM-JSW","890721400110","Kg","TMT Rebars (Saria)",54.5,58.0,"GST",18.0,"inclusive","No",28000
+"JSW Neosteel TMT Rebar 16mm Fe 550D","TMT-16MM-JSW","890721400111","Kg","TMT Rebars (Saria)",54.5,58.0,"GST",18.0,"inclusive","No",22000
+"JSW Neosteel TMT Rebar 20mm Fe 550D","TMT-20MM-JSW","890721400112","Kg","TMT Rebars (Saria)",54.5,58.0,"GST",18.0,"inclusive","No",15000
+"SAIL TMT Rebar 8mm Fe 500D","TMT-8MM-SAIL","890721400113","Kg","TMT Rebars (Saria)",54.0,57.5,"GST",18.0,"inclusive","No",14000
+"SAIL TMT Rebar 10mm Fe 500D","TMT-10MM-SAIL","890721400114","Kg","TMT Rebars (Saria)",53.0,56.5,"GST",18.0,"inclusive","No",17000
+"SAIL TMT Rebar 12mm Fe 500D","TMT-12MM-SAIL","890721400115","Kg","TMT Rebars (Saria)",52.0,55.5,"GST",18.0,"inclusive","No",24000
+"SAIL TMT Rebar 16mm Fe 500D","TMT-16MM-SAIL","890721400116","Kg","TMT Rebars (Saria)",52.0,55.5,"GST",18.0,"inclusive","No",19000
+"Jindal Panther TMT 10mm Fe 550D","TMT-10MM-JINDAL","890721400117","Kg","TMT Rebars (Saria)",55.0,58.5,"GST",18.0,"inclusive","No",16500
+"Jindal Panther TMT 12mm Fe 550D","TMT-12MM-JINDAL","890721400118","Kg","TMT Rebars (Saria)",54.0,57.5,"GST",18.0,"inclusive","No",21000
+"MS Angle 25x25x3 mm (6 Mtrs)","ANG-25X25X3","890721400119","Pcs","MS Angles",325.0,365.0,"GST",18.0,"inclusive","No",550
+"MS Angle 25x25x5 mm (6 Mtrs)","ANG-25X25X5","890721400120","Pcs","MS Angles",510.0,575.0,"GST",18.0,"inclusive","No",420
+"MS Angle 35x35x5 mm (6 Mtrs)","ANG-35X35X5","890721400121","Pcs","MS Angles",755.0,840.0,"GST",18.0,"inclusive","No",480
+"MS Angle 40x40x5 mm (6 Mtrs)","ANG-40X40X5","890721400122","Pcs","MS Angles",870.0,970.0,"GST",18.0,"inclusive","No",620
+"MS Angle 40x40x6 mm (6 Mtrs)","ANG-40X40X6","890721400123","Pcs","MS Angles",1020.0,1140.0,"GST",18.0,"inclusive","No",360
+"MS Angle 50x50x5 mm (6 Mtrs)","ANG-50X50X5","890721400124","Pcs","MS Angles",1100.0,1225.0,"GST",18.0,"inclusive","No",540
+"MS Angle 50x50x6 mm (6 Mtrs)","ANG-50X50X6","890721400125","Pcs","MS Angles",1300.0,1450.0,"GST",18.0,"inclusive","No",680
+"MS Angle 65x65x6 mm (6 Mtrs)","ANG-65X65X6","890721400126","Pcs","MS Angles",1680.0,1880.0,"GST",18.0,"inclusive","No",410
+"MS Angle 65x65x8 mm (6 Mtrs)","ANG-65X65X8","890721400127","Pcs","MS Angles",2200.0,2450.0,"GST",18.0,"inclusive","No",290
+"MS Angle 75x75x6 mm (6 Mtrs)","ANG-75X75X6","890721400128","Pcs","MS Angles",1980.0,2200.0,"GST",18.0,"inclusive","No",380
+"MS Angle 75x75x8 mm (6 Mtrs)","ANG-75X75X8","890721400129","Pcs","MS Angles",2580.0,2880.0,"GST",18.0,"inclusive","No",270
+"MS Angle 100x100x8 mm (6 Mtrs)","ANG-100X100X8","890721400130","Pcs","MS Angles",3500.0,3900.0,"GST",18.0,"inclusive","No",190
+"MS Channel ISMC 75x40 mm (6 Mtrs)","CH-ISMC-75","890721400131","Pcs","MS Channels (ISMC)",2080.0,2320.0,"GST",18.0,"inclusive","No",340
+"MS Channel ISMC 100x50 mm (6 Mtrs)","CH-ISMC-100","890721400132","Pcs","MS Channels (ISMC)",2780.0,3100.0,"GST",18.0,"inclusive","No",410
+"MS Channel ISMC 125x65 mm (6 Mtrs)","CH-ISMC-125","890721400133","Pcs","MS Channels (ISMC)",3820.0,4250.0,"GST",18.0,"inclusive","No",320
+"MS Channel ISMC 150x75 mm (6 Mtrs)","CH-ISMC-150","890721400134","Pcs","MS Channels (ISMC)",4900.0,5450.0,"GST",18.0,"inclusive","No",260
+"MS Channel ISMC 200x75 mm (6 Mtrs)","CH-ISMC-200","890721400135","Pcs","MS Channels (ISMC)",6500.0,7250.0,"GST",18.0,"inclusive","No",210
+"MS Channel ISMC 250x80 mm (6 Mtrs)","CH-ISMC-250","890721400136","Pcs","MS Channels (ISMC)",8900.0,9900.0,"GST",18.0,"inclusive","No",140
+"MS I-Beam ISMB 100x50 mm (6 Mtrs)","BM-ISMB-100","890721400137","Pcs","MS Beams / Joists (ISMB)",3350.0,3750.0,"GST",18.0,"inclusive","No",250
+"MS I-Beam ISMB 125x70 mm (6 Mtrs)","BM-ISMB-125","890721400138","Pcs","MS Beams / Joists (ISMB)",3880.0,4320.0,"GST",18.0,"inclusive","No",290
+"MS I-Beam ISMB 150x75 mm (6 Mtrs)","BM-ISMB-150","890721400139","Pcs","MS Beams / Joists (ISMB)",4380.0,4880.0,"GST",18.0,"inclusive","No",240
+"MS I-Beam ISMB 175x85 mm (6 Mtrs)","BM-ISMB-175","890721400140","Pcs","MS Beams / Joists (ISMB)",5650.0,6300.0,"GST",18.0,"inclusive","No",180
+"MS I-Beam ISMB 200x100 mm (6 Mtrs)","BM-ISMB-200","890721400141","Pcs","MS Beams / Joists (ISMB)",7400.0,8250.0,"GST",18.0,"inclusive","No",210
+"MS I-Beam ISMB 250x125 mm (6 Mtrs)","BM-ISMB-250","890721400142","Pcs","MS Beams / Joists (ISMB)",10800.0,12050.0,"GST",18.0,"inclusive","No",140
+"MS I-Beam ISMB 300x140 mm (6 Mtrs)","BM-ISMB-300","890721400143","Pcs","MS Beams / Joists (ISMB)",14200.0,15850.0,"GST",18.0,"inclusive","No",90
+"Square Tube 25x25x2 mm (6 Mtrs)","SHS-25X25X2","890721400144","Pcs","Pipes & Hollow Sections",430.0,485.0,"GST",18.0,"inclusive","No",620
+"Square Tube 38x38x2.5 mm (6 Mtrs)","SHS-38X38X2.5","890721400145","Pcs","Pipes & Hollow Sections",790.0,890.0,"GST",18.0,"inclusive","No",450
+"Square Tube 50x50x2.5 mm (6 Mtrs)","SHS-50X50X2.5","890721400146","Pcs","Pipes & Hollow Sections",1080.0,1210.0,"GST",18.0,"inclusive","No",390
+"Square Tube 72x72x3.2 mm (6 Mtrs)","SHS-72X72X3.2","890721400147","Pcs","Pipes & Hollow Sections",1950.0,2180.0,"GST",18.0,"inclusive","No",220
+"Rectangular Tube 50x25x2 mm (6 Mtrs)","RHS-50X25X2","890721400148","Pcs","Pipes & Hollow Sections",650.0,730.0,"GST",18.0,"inclusive","No",510
+"Rectangular Tube 80x40x3 mm (6 Mtrs)","RHS-80X40X3","890721400149","Pcs","Pipes & Hollow Sections",1540.0,1720.0,"GST",18.0,"inclusive","No",320
+"Rectangular Tube 100x50x3.2 mm (6 Mtrs)","RHS-100X50X3.2","890721400150","Pcs","Pipes & Hollow Sections",2150.0,2400.0,"GST",18.0,"inclusive","No",240
+"MS Round Pipe 1" (25 NB Class B, 6m)","PIPE-ROUND-1INCH","890721400151","Pcs","Pipes & Hollow Sections",720.0,810.0,"GST",18.0,"inclusive","No",420
+"MS Round Pipe 1.5" (40 NB Class B, 6m)","PIPE-ROUND-1.5INCH","890721400152","Pcs","Pipes & Hollow Sections",1040.0,1170.0,"GST",18.0,"inclusive","No",360
+"MS Round Pipe 2" (50 NB Class B, 6m)","PIPE-ROUND-2INCH","890721400153","Pcs","Pipes & Hollow Sections",1470.0,1650.0,"GST",18.0,"inclusive","No",340
+"GI Round Pipe 2" (50 NB Galvanized, 6m)","PIPE-GI-2INCH","890721400154","Pcs","Pipes & Hollow Sections",1820.0,2050.0,"GST",18.0,"inclusive","No",210
+"HR Steel Sheet 1.6 mm (8x4 ft)","PLT-HR-1.6MM","890721400155","Sheet","HR / CR Plates & Sheets",1950.0,2180.0,"GST",18.0,"inclusive","No",240
+"HR Steel Sheet 2.0 mm (8x4 ft)","PLT-HR-2.0MM","890721400156","Sheet","HR / CR Plates & Sheets",2440.0,2720.0,"GST",18.0,"inclusive","No",310
+"HR Steel Sheet 2.5 mm (8x4 ft)","PLT-HR-2.5MM","890721400157","Sheet","HR / CR Plates & Sheets",3050.0,3410.0,"GST",18.0,"inclusive","No",280
+"HR Steel Plate 3.15 mm (8x4 ft)","PLT-HR-3.15MM","890721400158","Sheet","HR / CR Plates & Sheets",3840.0,4290.0,"GST",18.0,"inclusive","No",230
+"HR Steel Plate 4.0 mm (8x4 ft)","PLT-HR-4.0MM","890721400159","Sheet","HR / CR Plates & Sheets",4880.0,5450.0,"GST",18.0,"inclusive","No",195
+"HR Steel Plate 5.0 mm (8x4 ft)","PLT-HR-5.0MM","890721400160","Sheet","HR / CR Plates & Sheets",6100.0,6800.0,"GST",18.0,"inclusive","No",160
+"HR Steel Plate 6.0 mm (8x4 ft)","PLT-HR-6.0MM","890721400161","Sheet","HR / CR Plates & Sheets",7320.0,8180.0,"GST",18.0,"inclusive","No",145
+"HR Steel Plate 8.0 mm (8x4 ft)","PLT-HR-8.0MM","890721400162","Sheet","HR / CR Plates & Sheets",9760.0,10900.0,"GST",18.0,"inclusive","No",110
+"HR Steel Plate 10.0 mm (8x4 ft)","PLT-HR-10.0MM","890721400163","Sheet","HR / CR Plates & Sheets",12200.0,13600.0,"GST",18.0,"inclusive","No",90
+"HR Steel Plate 12.0 mm (8x4 ft)","PLT-HR-12.0MM","890721400164","Sheet","HR / CR Plates & Sheets",14640.0,16300.0,"GST",18.0,"inclusive","No",75
+"HR Steel Plate 16.0 mm (8x4 ft)","PLT-HR-16.0MM","890721400165","Sheet","HR / CR Plates & Sheets",19520.0,21800.0,"GST",18.0,"inclusive","No",55
+"MS Chequered Plate 3.0 mm (8x4 ft Tear)","PLT-CHQ-3.0MM","890721400166","Sheet","HR / CR Plates & Sheets",4350.0,4850.0,"GST",18.0,"inclusive","No",140
+"MS Chequered Plate 4.0 mm (8x4 ft Tear)","PLT-CHQ-4.0MM","890721400167","Sheet","HR / CR Plates & Sheets",5750.0,6420.0,"GST",18.0,"inclusive","No",115
+"GI Binding Wire 18 Gauge (25 Kg Bundle)","WIRE-GI-18G","890721400168","Bundle","Binding Wire & Hardware",1720.0,1950.0,"GST",18.0,"inclusive","No",380
+"Black Annealed Wire 20 Gauge (25 Kg)","WIRE-BLK-20G","890721400169","Bundle","Binding Wire & Hardware",1600.0,1820.0,"GST",18.0,"inclusive","No",450

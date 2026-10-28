@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -29,6 +29,7 @@ import '../setting/controller_home_settings.dart';
 import '../../../sales/invoice/controller_sales_invoices.dart';
 import 'package:flutter/services.dart';
 import '../../../customer/activity_customer_form.dart';
+import '../../../../features/steel_pos/controllers/controller_steel_pos.dart';
 import '../../../../isolates/pos_isolate_engine.dart';
 import 'dialog_parked_bills.dart';
 import 'model_parked_bill.dart';
@@ -1771,6 +1772,19 @@ class ControllerHomePos extends GetxController {
       updatedAtUtcMs: now,
     );
     bill.note = session.rxRemark.value;
+
+    // Attach Steel Logistics info if present
+    if (Get.isRegistered<ControllerSteelPos>()) {
+      final steelCtrl = Get.find<ControllerSteelPos>();
+      final vNo = steelCtrl.rxVehicleNo.value.trim();
+      if (vNo.isNotEmpty) bill.vehicleNo = vNo;
+      final site = steelCtrl.rxDeliverySite.value.trim();
+      if (site.isNotEmpty) bill.customerAddress = site;
+      final eway = steelCtrl.rxEwayBillNo.value.trim();
+      if (eway.isNotEmpty) bill.ewayBillNo = eway;
+      final freight = steelCtrl.rxFreightCharges.value + steelCtrl.rxCraneCharges.value;
+      if (freight > 0) bill.additionalCharges = freight;
+    }
 
     // Build items and stock updates in memory first
     final billItemsToSave = <EntityBillItem>[];

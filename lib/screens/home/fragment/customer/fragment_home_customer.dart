@@ -10,6 +10,7 @@ import '../../../../util/snackbar_util.dart';
 import '../../../../core/auth/app_permissions.dart';
 import '../../controller_home.dart';
 import 'controller_home_customer.dart';
+import '../../../customer/activity_customer_form.dart';
 
 class FragmentHomeCustomer extends StatelessWidget {
   const FragmentHomeCustomer({super.key});
@@ -84,7 +85,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                 gradientColors: controller.rxShowCreateForm.value
                     ? [Colors.grey.shade600, Colors.grey.shade800]
                     : [Colors.teal.shade400, Colors.teal.shade700],
-                onTap: controller.toggleCreateForm,
+                onTap: () async { await Get.dialog(const ActivityCustomerForm(), barrierDismissible: false); controller.loadCustomers(); },
               ),
             ),
         ],
@@ -103,7 +104,7 @@ class FragmentHomeCustomer extends StatelessWidget {
       floatingActionButton: canCreate
           ? Obx(
               () => FloatingActionButton.extended(
-                onPressed: controller.toggleCreateForm,
+                onPressed: () async { await Get.dialog(const ActivityCustomerForm(), barrierDismissible: false); controller.loadCustomers(); },
                 icon: Icon(
                   controller.rxShowCreateForm.value
                       ? Icons.close_rounded
@@ -167,8 +168,7 @@ class FragmentHomeCustomer extends StatelessWidget {
 
         return Column(
           children: [
-            if (controller.rxShowCreateForm.value)
-              _buildInlineCustomerFormCard(context, controller),
+            
             Expanded(
               child: MyCard(
                 margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -613,7 +613,7 @@ class FragmentHomeCustomer extends StatelessWidget {
       EntityCustomer customer,
       ControllerHomeCustomer controller,
       ) {
-    controller.openCreateForm(customer);
+    Get.dialog(const ActivityCustomerForm(), arguments: customer, barrierDismissible: false).then((_) => controller.loadCustomers());
   }
 
   void _confirmToggleActive(

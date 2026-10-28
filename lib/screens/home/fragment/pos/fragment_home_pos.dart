@@ -18,6 +18,7 @@ import 'activity_split_bill.dart';
 import 'controller_home_pos.dart';
 import 'dialog_parked_bills.dart';
 import 'dialog_select_batch.dart';
+import '../../../../features/steel_pos/widgets/steel_pos_toolbar.dart';
 
 class FragmentHomePos extends StatelessWidget {
   const FragmentHomePos({super.key});
@@ -159,31 +160,35 @@ class FragmentHomePos extends StatelessWidget {
             }
             return KeyEventResult.ignored;
           },
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
             children: [
-              /// ── LEFT PANEL (65%): ITEM LIST & CATALOG ──
+              const SteelPosToolbar(),
               Expanded(
-                flex: 65,
-                child: Obx(() {
-                  if (controller.rxViewMode.value == PosViewMode.catalogGrid ||
-                      controller.rxViewMode.value == PosViewMode.photoGrid) {
-                    return _CatalogLeftPanel(controller: controller);
-                  }
-                  return _LeftPanel(controller: controller);
-                }),
-              ),
-
-              /// ── RIGHT PANEL (35%): SELECTED ITEM DETAILS & BILLING ──
-              Expanded(
-                flex: 35,
-                child: Obx(() {
-                  if (controller.rxViewMode.value == PosViewMode.catalogGrid ||
-                      controller.rxViewMode.value == PosViewMode.photoGrid) {
-                    return _CatalogSelectedItemsPanel(controller: controller);
-                  }
-                  return _RightPanel(controller: controller);
-                }),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 65,
+                      child: Obx(() {
+                        if (controller.rxViewMode.value == PosViewMode.catalogGrid ||
+                            controller.rxViewMode.value == PosViewMode.photoGrid) {
+                          return _CatalogLeftPanel(controller: controller);
+                        }
+                        return _LeftPanel(controller: controller);
+                      }),
+                    ),
+                    Expanded(
+                      flex: 35,
+                      child: Obx(() {
+                        if (controller.rxViewMode.value == PosViewMode.catalogGrid ||
+                            controller.rxViewMode.value == PosViewMode.photoGrid) {
+                          return _CatalogSelectedItemsPanel(controller: controller);
+                        }
+                        return _RightPanel(controller: controller);
+                      }),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -1329,7 +1334,7 @@ class _CustomerSection extends StatelessWidget {
               SizedBox(
                 height: 38,
                 width: 38,
-                child: IconButton.filledTonal(
+                child: IconButton.filled(
                   onPressed: () {
                     final typedName = searchFieldCtrl?.text.trim();
                     controller.openCustomerForm(
@@ -1339,6 +1344,8 @@ class _CustomerSection extends StatelessWidget {
                   icon: const Icon(Icons.add_rounded, size: 18),
                   tooltip: 'add_new_customer'.tr.isNotEmpty ? 'add_new_customer'.tr : 'Add New Customer',
                   style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF7A00),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     padding: EdgeInsets.zero,
                   ),
@@ -2904,7 +2911,7 @@ class _CategorySidebar extends StatelessWidget {
                 Icon(
                   Icons.grid_view_rounded,
                   size: 17,
-                  color: const Color(0xFF005963),
+                  color: const Color(0xFFFF7A00),
                 ),
                 const SizedBox(width: 8),
                 const Text(
@@ -2912,7 +2919,7 @@ class _CategorySidebar extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13.5,
-                    color: Color(0xFF005963),
+                    color: Color(0xFFFF7A00),
                     letterSpacing: 0.2,
                   ),
                 ),
@@ -2949,8 +2956,11 @@ class _CategorySidebar extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? const Color(0xFF005963)
+                                ? const Color(0xFFFF7A00)
                                 : Colors.transparent,
+                            boxShadow: isSelected
+                                ? [BoxShadow(color: const Color(0xFFFF7A00).withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 2))]
+                                : null,
                             borderRadius: BorderRadius.circular(22),
                           ),
                           child: Text(
@@ -3158,7 +3168,7 @@ class _MarketCatalogCard extends StatelessWidget {
                       child: Icon(
                         Icons.shopping_bag_outlined,
                         size: 22,
-                        color: Colors.white.withValues(alpha: 0.95),
+              
                       ),
                     ),
                     // Small Green Dot in Top-Right Corner
@@ -3572,16 +3582,17 @@ class _FoodPhotoCardState extends State<_FoodPhotoCard> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF53949D), Color(0xFF45838B)],
+          colors: [Color(0xFFFFF7ED), Color(0xFFFFEDD5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
       child: Center(
         child: Icon(
-          Icons.soup_kitchen_rounded,
+          Icons.architecture_rounded,
+          color: const Color(0xFFFF7A00),
           size: 42,
-          color: Colors.white.withValues(alpha: 0.95),
+
         ),
       ),
     );
@@ -4032,12 +4043,12 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                                     ),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? const Color(0xFF005963)
+                                          ? const Color(0xFFFF7A00)
                                           : cs.surfaceContainerHighest.withValues(alpha: 0.5),
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
                                         color: isSelected
-                                            ? const Color(0xFF005963)
+                                            ? const Color(0xFFFF7A00)
                                             : cs.outlineVariant.withValues(alpha: 0.3),
                                       ),
                                     ),
@@ -4720,14 +4731,14 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF004D54), Color(0xFF006D77)],
+                        colors: [Color(0xFFFF7A00), Color(0xFFFF9F43)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF004D54).withValues(alpha: 0.25),
+                          color: const Color(0xFFFF7A00).withValues(alpha: 0.35),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -5198,9 +5209,10 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                               ),
                             ),
                             style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF005963),
+                              backgroundColor: const Color(0xFFFF7A00),
                               foregroundColor: Colors.white,
-                              elevation: 2,
+                              elevation: 3,
+                              shadowColor: const Color(0xFFFF7A00).withValues(alpha: 0.4),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -5329,12 +5341,12 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: isSelected
-                  ? const Color(0xFF005963)
+                  ? const Color(0xFFFF7A00)
                   : cs.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isSelected
-                    ? const Color(0xFF005963)
+                    ? const Color(0xFFFF7A00)
                     : cs.outlineVariant.withValues(alpha: 0.25),
               ),
             ),
@@ -5381,10 +5393,10 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 4),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: const Color(0xFF005963).withValues(alpha: 0.08),
+            color: const Color(0xFFFFF5EB),
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: const Color(0xFF005963).withValues(alpha: 0.2),
+              color: const Color(0xFFFF7A00).withValues(alpha: 0.25),
             ),
           ),
           child: Text(
@@ -5392,7 +5404,7 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
             style: const TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF005963),
+              color: Color(0xFFFF7A00),
             ),
           ),
         ),

@@ -4,44 +4,57 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../enums/enum_main_menu.dart';
 import '../../../../service/service_brand_context.dart';
-import '../../../../widget/dialog_plan_expiry.dart';
 import '../../controller_home.dart';
 import '../item/controller_home_item.dart';
 import 'controller_home_dashboard.dart';
 
 // ────────────────────────────────────────────────────────
-//  Theme Helpers & Dynamic Colors
+//  Dreams POS Color Palette & Theme Configuration
 // ────────────────────────────────────────────────────────
 
-class _DashboardTheme {
-  // Vibrant accents that look good on both light/dark
-  static const purple = Color(0xFF8B5CF6);
-  static const teal = Color(0xFF06B6D4);
-  static const green = Color(0xFF10B981);
-  static const amber = Color(0xFFF59E0B);
-  static const red = Color(0xFFEF4444);
-  static const blue = Color(0xFF3B82F6);
-  static const lightPurple = Color(0xFFBDA5F7);
-  static const lightTeal = Color(0xFF67E8F9);
+class _DreamsTheme {
+  // Brand accents matching Dreams POS screenshot
+  static const orange = Color(0xFFFF9F43);
+  static const darkOrange = Color(0xFFFF7A00);
+  static const lightOrange = Color(0xFFFFF2E5);
 
-  // Derived colors
+  static const cyan = Color(0xFF00CFDE);
+  static const lightCyan = Color(0xFFE0F9FB);
+
+  static const navy = Color(0xFF1B2850);
+
+  static const green = Color(0xFF28C76F);
+  static const lightGreen = Color(0xFFE7F8EE);
+
+  static const red = Color(0xFFEA5455);
+  static const lightRed = Color(0xFFFFECEC);
+
+  static const textMuted = Color(0xFF707E94);
+
   static Color background(BuildContext context) =>
-      Theme.of(context).colorScheme.surfaceContainerLowest;
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF121418)
+          : const Color(0xFFF8F9FA);
 
   static Color cardBg(BuildContext context) =>
-      Theme.of(context).colorScheme.surfaceContainer;
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1E222B)
+          : Colors.white;
 
-  static Color cardBorder(BuildContext context) =>
-      Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3);
+  static Color border(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF2E3544)
+          : const Color(0xFFECEEF1);
 
   static Color textPrimary(BuildContext context) =>
-      Theme.of(context).colorScheme.onSurface;
+      Theme.of(context).brightness == Brightness.dark
+          ? Colors.white
+          : const Color(0xFF2B3674);
 
   static Color textSecondary(BuildContext context) =>
-      Theme.of(context).colorScheme.onSurfaceVariant;
-
-  static Color chartGrid(BuildContext context) =>
-      Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.2);
+      Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF94A3B8)
+          : const Color(0xFF707E94);
 }
 
 class FragHomeDashboard extends StatelessWidget {
@@ -64,102 +77,64 @@ class FragHomeDashboard extends StatelessWidget {
         : Get.put(ControllerHomeDashboard());
 
     return Scaffold(
-      backgroundColor: _DashboardTheme.background(context),
+      backgroundColor: _DreamsTheme.background(context),
       body: Obx(() {
         if (ctrl.isLoading.value) {
           return const Center(
-            child: CircularProgressIndicator(color: _DashboardTheme.purple),
+            child: CircularProgressIndicator(color: _DreamsTheme.darkOrange),
           );
         }
 
         final hasBanner = _isPlanBannerActive(ctrl);
+        final hasExpAlert = (ctrl.expiringItemCount.value > 0 || ctrl.expiredItemCount.value > 0) &&
+            !ctrl.isItemExpiryDismissed.value;
 
         return RefreshIndicator(
-          color: _DashboardTheme.purple,
-          backgroundColor: _DashboardTheme.cardBg(context),
+          color: _DreamsTheme.darkOrange,
+          backgroundColor: _DreamsTheme.cardBg(context),
           onRefresh: () async => ctrl.loadData(),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final availableWidth = constraints.maxWidth;
-              final hasBoundedHeight = constraints.hasBoundedHeight;
-              final availableHeight =
-                  hasBoundedHeight ? constraints.maxHeight : 720.0;
-
-              // Responsive scaling criteria:
-              // 14-inch display: ~1000-1280px wide & 650-750px tall
-              // 22-inch display: ~1680-1920px wide & 900-1080px tall
-              final isLarge = availableWidth >= 1400 || availableHeight >= 850;
-              final horizontalPadding = isLarge ? 24.0 : 16.0;
-              final sectionGap = isLarge ? 16.0 : 12.0;
-
-              // Count how many alert banners are active (respecting 24-hour snooze)
-              final hasExpAlert = (ctrl.expiringItemCount.value > 0 || ctrl.expiredItemCount.value > 0) &&
-                  !ctrl.isItemExpiryDismissed.value;
-              final alertBannerCount = (hasBanner ? 1 : 0) + (hasExpAlert ? 1 : 0);
-
-              // Estimate height consumed by fixed elements
-              final headerHeight = isLarge ? 90.0 : 76.0;  // taller for greeting
-              final bannerHeight = (isLarge ? 58.0 : 50.0) * alertBannerCount;
-              final statCardsHeight = isLarge ? 106.0 : 88.0;
-              final bottomPadding = isLarge ? 20.0 : 14.0;
-
-              // Total vertical gap spacing
-              final totalGaps = sectionGap * (3 + alertBannerCount) + bottomPadding;
-              final fixedConsumed = headerHeight + bannerHeight + statCardsHeight + totalGaps;
-
-              // Calculate available height for the two chart rows
-              final remainingForRows = availableHeight - fixedConsumed;
-
-              // Row 2 takes ~54% of remaining space, Row 3 takes ~46%
-              final row2Height = (remainingForRows * 0.54).clamp(240.0, 500.0);
-              final row3Height = (remainingForRows * 0.46).clamp(210.0, 420.0);
+              final isLarge = constraints.maxWidth >= 1300;
+              final hPadding = isLarge ? 24.0 : 16.0;
+              final gap = isLarge ? 18.0 : 14.0;
 
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: availableHeight,
-                  ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // ── Header with Greeting ──
-                        _buildHeader(context, ctrl, isLarge, horizontalPadding),
+                padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // ── Dreams POS Top Action / Greeting Header ──
+                    _buildTopHeader(context, ctrl, isLarge),
+                    SizedBox(height: gap),
 
-                        // ── Plan Expiry Alert Banner ──
-                        if (hasBanner) ...[
-                          _buildPlanExpiryBanner(
-                              context, ctrl, isLarge, horizontalPadding),
-                          SizedBox(height: sectionGap),
-                        ],
+                    // ── Alerts if any ──
+                    if (hasBanner) ...[
+                      _buildPlanExpiryBanner(context, ctrl, isLarge),
+                      SizedBox(height: gap),
+                    ],
+                    if (hasExpAlert) ...[
+                      _buildItemExpiryBanner(context, ctrl, isLarge),
+                      SizedBox(height: gap),
+                    ],
 
-                        // ── Item Expiry Alert Banner ──
-                        if (hasExpAlert) ...[
-                          _buildItemExpiryBanner(context, ctrl, isLarge, horizontalPadding),
-                          SizedBox(height: sectionGap),
-                        ],
+                    // ── ROW 1: 4 KPI Cards with circular pill badges ──
+                    _buildRow1KPICards(context, ctrl, isLarge),
+                    SizedBox(height: gap),
 
-                        // ── Top Stat Cards ──
-                        _buildStatCards(
-                            context, ctrl, isLarge, horizontalPadding),
+                    // ── ROW 2: 4 Solid Colored Block Cards ──
+                    _buildRow2SolidCards(context, ctrl, isLarge),
+                    SizedBox(height: gap),
 
-                        SizedBox(height: sectionGap),
+                    // ── ROW 3: Purchase & Sales Chart + Recently Added Products ──
+                    _buildRow3ChartAndRecent(context, ctrl, isLarge),
+                    SizedBox(height: gap),
 
-                        // ── Row 2: Total Sales line chart | CashFlow bar chart ──
-                        _buildRow2(context, ctrl, isLarge, horizontalPadding,
-                            row2Height),
-
-                        SizedBox(height: sectionGap),
-
-                        // ── Row 3: Top Selling Items | Weekly Overview | Payment Mode ──
-                        _buildRow3(context, ctrl, isLarge, horizontalPadding,
-                            row3Height),
-
-                        SizedBox(height: bottomPadding),
-                      ],
-                    ),
-                  ),
+                    // ── ROW 4: Expired / Low Stock Materials Table ──
+                    _buildRow4InventoryWatch(context, ctrl, isLarge),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               );
             },
@@ -169,198 +144,911 @@ class FragHomeDashboard extends StatelessWidget {
     );
   }
 
-  // ──────────────────────────────────────────────────────
-  //  Plan Expiry Alert Banner
-  // ──────────────────────────────────────────────────────
-  Widget _buildPlanExpiryBanner(
-      BuildContext context, ControllerHomeDashboard ctrl, bool isLarge, double horizontalPadding) {
-    if (!Get.isRegistered<ServiceBrandContext>()) return const SizedBox.shrink();
-    final ServiceBrandContext brandCtx = Get.find();
-
-    return Obx(() {
-      if (ctrl.isPlanExpiryDismissed.value) return const SizedBox.shrink();
-      final branch = brandCtx.rxSelectedBranch.value;
-      final plan = branch?.planDetails;
-      if (plan == null) return const SizedBox.shrink();
-
-      if (!plan.isExpiringSoon && !plan.isExpired) {
-        return const SizedBox.shrink();
-      }
-
-      final isExpired = plan.isExpired;
-      final color = isExpired ? const Color(0xFFEF4444) : const Color(0xFFF59E0B);
-      final icon =
-          isExpired ? Icons.error_outline_rounded : Icons.warning_amber_rounded;
-      final branchName = branch?.name.en ?? 'Branch';
-
-      return Container(
-        margin: EdgeInsets.fromLTRB(
-            horizontalPadding, 0, horizontalPadding, isLarge ? 12 : 10),
-        padding: EdgeInsets.symmetric(
-          horizontal: isLarge ? 20 : 16,
-          vertical: isLarge ? 14 : 12,
-        ),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
-          border: Border.all(color: color.withValues(alpha: 0.4), width: 1.2),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(isLarge ? 10 : 8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: isLarge ? 22 : 20),
-            ),
-            SizedBox(width: isLarge ? 14 : 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    isExpired
-                        ? 'Plan Expired for $branchName'
-                        : 'Plan Expiring Soon: ${plan.expiryStatusText}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: isLarge ? 14 : 13,
-                      color: color,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isExpired
-                        ? 'Your subscription expired on ${plan.formattedExpiry}. Contact administrator to renew.'
-                        : 'Your branch subscription will expire on ${plan.formattedExpiry}. Please renew in advance.',
-                    style: TextStyle(
-                      fontSize: isLarge ? 12.5 : 11.5,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            FilledButton.tonal(
-              onPressed: () => DialogPlanExpiry.show(context, branch: branch),
-              style: FilledButton.styleFrom(
-                backgroundColor: color.withValues(alpha: 0.2),
-                foregroundColor: color,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isLarge ? 16 : 12,
-                  vertical: isLarge ? 10 : 8,
-                ),
-              ),
-              child: Text(
-                'View Plan',
-                style: TextStyle(
-                  fontSize: isLarge ? 13 : 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            OutlinedButton.icon(
-              onPressed: () => ctrl.dismissPlanExpiryBanner(),
-              icon: const Icon(Icons.alarm_off_rounded, size: 14),
-              label: const Text('Dismiss (24h)'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: color,
-                side: BorderSide(color: color.withValues(alpha: 0.45)),
-                padding: EdgeInsets.symmetric(
-                  horizontal: isLarge ? 12 : 10,
-                  vertical: isLarge ? 10 : 8,
-                ),
-                textStyle: TextStyle(
-                  fontSize: isLarge ? 12 : 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-
-  // ──────────────────────────────────────────────────────
-  //  Item Expiry Alert Banner
-  // ──────────────────────────────────────────────────────
-  Widget _buildItemExpiryBanner(BuildContext context, ControllerHomeDashboard ctrl,
-      bool isLarge, double horizontalPadding) {
-    final expiring = ctrl.expiringItemCount.value;
-    final expired = ctrl.expiredItemCount.value;
-    final isExpired = expired > 0;
-    final color = isExpired ? const Color(0xFFEF4444) : const Color(0xFFF59E0B);
-    final icon = isExpired ? Icons.error_outline_rounded : Icons.event_busy_rounded;
-
-    String title;
-    String subtitle;
-    if (expired > 0 && expiring > 0) {
-      title = '⚠️ $expired item batch(es) expired, $expiring expiring within 30 days';
-      subtitle = 'Remove expired stock immediately to avoid selling bad products.';
-    } else if (expired > 0) {
-      title = '🔴 $expired item batch(es) have already expired!';
-      subtitle = 'Go to Items → View Batches to remove or mark them.';
-    } else {
-      title = '🟡 $expiring item(s) have batches expiring within 30 days';
-      subtitle = 'Review and reorder before they expire.';
-    }
-
-    return Container(
-      margin: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 0),
-      padding: EdgeInsets.symmetric(
-        horizontal: isLarge ? 20 : 16,
-        vertical: isLarge ? 12 : 10,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
-        border: Border.all(color: color.withValues(alpha: 0.4), width: 1.2),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(isLarge ? 8 : 7),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.18),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: isLarge ? 20 : 18),
+  // ────────────────────────────────────────────────────────
+  //  Dreams Top Header (Greeting, Date Badge, Refresh)
+  // ────────────────────────────────────────────────────────
+  Widget _buildTopHeader(BuildContext context, ControllerHomeDashboard ctrl, bool isLarge) {
+    return Row(
+      children: [
+        // Brand / Greeting Pill
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isLarge ? 16 : 12,
+            vertical: isLarge ? 10 : 8,
           ),
-          SizedBox(width: isLarge ? 14 : 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          decoration: BoxDecoration(
+            color: _DreamsTheme.cardBg(context),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _DreamsTheme.border(context)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _DreamsTheme.lightOrange,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.shopping_bag_outlined,
+                  color: _DreamsTheme.darkOrange,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Obx(() => Text(
+                ctrl.greetingText.value,
+                style: TextStyle(
+                  fontSize: isLarge ? 15 : 13.5,
+                  fontWeight: FontWeight.bold,
+                  color: _DreamsTheme.textPrimary(context),
+                ),
+              )),
+            ],
+          ),
+        ),
+        const Spacer(),
+
+        // Current Date Tag
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isLarge ? 14 : 10,
+            vertical: isLarge ? 8 : 6,
+          ),
+          decoration: BoxDecoration(
+            color: _DreamsTheme.cardBg(context),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _DreamsTheme.border(context)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.calendar_month_rounded,
+                size: 16,
+                color: _DreamsTheme.darkOrange,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
+                style: TextStyle(
+                  color: _DreamsTheme.textPrimary(context),
+                  fontSize: isLarge ? 13 : 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+
+        // Refresh Button
+        InkWell(
+          onTap: ctrl.loadData,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isLarge ? 14 : 10,
+              vertical: isLarge ? 8 : 6,
+            ),
+            decoration: BoxDecoration(
+              color: _DreamsTheme.cardBg(context),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _DreamsTheme.border(context)),
+            ),
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: isLarge ? 13 : 12,
-                    color: color,
-                  ),
+                const Icon(
+                  Icons.refresh_rounded,
+                  size: 16,
+                  color: _DreamsTheme.textMuted,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(width: 6),
                 Text(
-                  subtitle,
+                  'refresh'.tr,
                   style: TextStyle(
-                    fontSize: isLarge ? 12 : 11,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.75),
+                    fontSize: isLarge ? 12.5 : 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: _DreamsTheme.textSecondary(context),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+        ),
+      ],
+    );
+  }
+
+  // ────────────────────────────────────────────────────────
+  //  Row 1: Top 4 KPI Cards with circular colored icon badges
+  // ────────────────────────────────────────────────────────
+  Widget _buildRow1KPICards(BuildContext context, ControllerHomeDashboard ctrl, bool isLarge) {
+    final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+
+    return LayoutBuilder(builder: (context, constraints) {
+      final isNarrow = constraints.maxWidth < 900;
+      final cardWidth = isNarrow
+          ? (constraints.maxWidth - 12) / 2
+          : (constraints.maxWidth - 36) / 4;
+
+      final cards = [
+        _DreamsKpiCard(
+          title: 'Total Purchase Due',
+          amount: currency.format(ctrl.totalPurchaseDue.value),
+          icon: Icons.receipt_long_rounded,
+          iconBg: _DreamsTheme.lightOrange,
+          iconColor: _DreamsTheme.darkOrange,
+          isLarge: isLarge,
+        ),
+        _DreamsKpiCard(
+          title: 'Total Sales Due',
+          amount: currency.format(ctrl.totalSalesDue.value),
+          icon: Icons.account_balance_wallet_outlined,
+          iconBg: _DreamsTheme.lightGreen,
+          iconColor: _DreamsTheme.green,
+          isLarge: isLarge,
+        ),
+        _DreamsKpiCard(
+          title: 'Total Sale Amount',
+          amount: currency.format(ctrl.totalSaleAmount.value),
+          icon: Icons.arrow_downward_rounded,
+          iconBg: _DreamsTheme.lightCyan,
+          iconColor: _DreamsTheme.cyan,
+          isLarge: isLarge,
+        ),
+        _DreamsKpiCard(
+          title: 'Total Expense Amount',
+          amount: currency.format(ctrl.totalExpenseAmount.value),
+          icon: Icons.arrow_upward_rounded,
+          iconBg: _DreamsTheme.lightRed,
+          iconColor: _DreamsTheme.red,
+          isLarge: isLarge,
+        ),
+      ];
+
+      if (isNarrow) {
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: cards.map((c) => SizedBox(width: cardWidth, child: c)).toList(),
+        );
+      }
+
+      return Row(
+        children: [
+          Expanded(child: cards[0]),
+          const SizedBox(width: 12),
+          Expanded(child: cards[1]),
+          const SizedBox(width: 12),
+          Expanded(child: cards[2]),
+          const SizedBox(width: 12),
+          Expanded(child: cards[3]),
+        ],
+      );
+    });
+  }
+
+  // ────────────────────────────────────────────────────────
+  //  Row 2: 4 Bold Solid Colored Block Cards
+  // ────────────────────────────────────────────────────────
+  Widget _buildRow2SolidCards(BuildContext context, ControllerHomeDashboard ctrl, bool isLarge) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final isNarrow = constraints.maxWidth < 900;
+      final cardWidth = isNarrow
+          ? (constraints.maxWidth - 12) / 2
+          : (constraints.maxWidth - 36) / 4;
+
+      final cards = [
+        _DreamsSolidCard(
+          count: '${ctrl.totalCustomers.value}',
+          label: 'Customers',
+          backgroundColor: _DreamsTheme.orange,
+          icon: Icons.person_rounded,
+          isLarge: isLarge,
+          onTap: () {
+            if (Get.isRegistered<ControllerHome>()) {
+              Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.customer;
+            }
+          },
+        ),
+        _DreamsSolidCard(
+          count: '${ctrl.totalSuppliers.value}',
+          label: 'Suppliers',
+          backgroundColor: _DreamsTheme.cyan,
+          icon: Icons.person_add_alt_1_rounded,
+          isLarge: isLarge,
+          onTap: () {
+            if (Get.isRegistered<ControllerHome>()) {
+              Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.supplier;
+            }
+          },
+        ),
+        _DreamsSolidCard(
+          count: '${ctrl.totalPurchaseInvoices.value}',
+          label: 'Purchase Invoice',
+          backgroundColor: _DreamsTheme.navy,
+          icon: Icons.receipt_rounded,
+          isLarge: isLarge,
+          onTap: () {
+            if (Get.isRegistered<ControllerHome>()) {
+              Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.purchase;
+            }
+          },
+        ),
+        _DreamsSolidCard(
+          count: '${ctrl.totalSalesInvoices.value}',
+          label: 'Sales Invoice',
+          backgroundColor: _DreamsTheme.green,
+          icon: Icons.description_rounded,
+          isLarge: isLarge,
+          onTap: () {
+            if (Get.isRegistered<ControllerHome>()) {
+              Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.pos;
+            }
+          },
+        ),
+      ];
+
+      if (isNarrow) {
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: cards.map((c) => SizedBox(width: cardWidth, child: c)).toList(),
+        );
+      }
+
+      return Row(
+        children: [
+          Expanded(child: cards[0]),
+          const SizedBox(width: 12),
+          Expanded(child: cards[1]),
+          const SizedBox(width: 12),
+          Expanded(child: cards[2]),
+          const SizedBox(width: 12),
+          Expanded(child: cards[3]),
+        ],
+      );
+    });
+  }
+
+  // ────────────────────────────────────────────────────────
+  //  Row 3: Dual-bar "Purchase & Sales" Chart + Recently Added
+  // ────────────────────────────────────────────────────────
+  Widget _buildRow3ChartAndRecent(BuildContext context, ControllerHomeDashboard ctrl, bool isLarge) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final isStacked = constraints.maxWidth < 1000;
+
+      final chartCard = _buildPurchaseSalesChartCard(context, ctrl, isLarge);
+      final recentProductsCard = _buildRecentlyAddedProductsCard(context, ctrl, isLarge);
+
+      if (isStacked) {
+        return Column(
+          children: [
+            chartCard,
+            const SizedBox(height: 14),
+            recentProductsCard,
+          ],
+        );
+      }
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 62, child: chartCard),
+          const SizedBox(width: 14),
+          Expanded(flex: 38, child: recentProductsCard),
+        ],
+      );
+    });
+  }
+
+  Widget _buildPurchaseSalesChartCard(BuildContext context, ControllerHomeDashboard ctrl, bool isLarge) {
+    final currentYear = DateTime.now().year.toString();
+
+    return Container(
+      padding: EdgeInsets.all(isLarge ? 20 : 16),
+      decoration: BoxDecoration(
+        color: _DreamsTheme.cardBg(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _DreamsTheme.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Row(
+            children: [
+              Text(
+                'Purchase & Sales',
+                style: TextStyle(
+                  fontSize: isLarge ? 17 : 15,
+                  fontWeight: FontWeight.bold,
+                  color: _DreamsTheme.textPrimary(context),
+                ),
+              ),
+              const Spacer(),
+              // Legends
+              _buildLegendDot(_DreamsTheme.green, 'Sales'),
+              const SizedBox(width: 14),
+              _buildLegendDot(_DreamsTheme.red, 'Purchase'),
+              const SizedBox(width: 16),
+              // Year Filter Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _DreamsTheme.background(context),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _DreamsTheme.border(context)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      currentYear,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _DreamsTheme.textSecondary(context),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: _DreamsTheme.textMuted),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Chart Area
+          SizedBox(
+            height: isLarge ? 280 : 240,
+            child: Obx(() {
+              final labels = ctrl.monthLabels;
+              final sales = ctrl.monthlySales;
+              final purchases = ctrl.monthlyPurchases;
+
+              if (labels.isEmpty) {
+                return const Center(child: Text('No transaction history yet'));
+              }
+
+              // Compute dynamic scale
+              double maxVal = 1000;
+              for (final s in sales) {
+                if (s > maxVal) maxVal = s;
+              }
+              for (final p in purchases) {
+                if (p > maxVal) maxVal = p;
+              }
+              final maxY = maxVal * 1.25;
+
+              final groups = List.generate(labels.length, (i) {
+                final sVal = (i < sales.length) ? sales[i] : 0.0;
+                final pVal = (i < purchases.length) ? purchases[i] : 0.0;
+
+                return BarChartGroupData(
+                  x: i,
+                  barsSpace: 4,
+                  barRods: [
+                    BarChartRodData(
+                      toY: sVal > 0 ? sVal : 0.001,
+                      color: _DreamsTheme.green,
+                      width: isLarge ? 10 : 8,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    BarChartRodData(
+                      toY: pVal > 0 ? pVal : 0.001,
+                      color: _DreamsTheme.red,
+                      width: isLarge ? 10 : 8,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ],
+                );
+              });
+
+              return BarChart(
+                BarChartData(
+                  maxY: maxY,
+                  minY: 0,
+                  barGroups: groups,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: maxY / 4,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: _DreamsTheme.border(context),
+                      strokeWidth: 1,
+                      dashArray: [4, 4],
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 42,
+                        getTitlesWidget: (val, meta) {
+                          if (val == 0) return const SizedBox.shrink();
+                          final compact = NumberFormat.compact(locale: 'en_IN').format(val);
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: Text(
+                              compact,
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: _DreamsTheme.textSecondary(context),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 26,
+                        getTitlesWidget: (val, meta) {
+                          final idx = val.toInt();
+                          if (idx >= 0 && idx < labels.length) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                labels[idx],
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: _DreamsTheme.textSecondary(context),
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: _DreamsTheme.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentlyAddedProductsCard(BuildContext context, ControllerHomeDashboard ctrl, bool isLarge) {
+    final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+
+    return Container(
+      height: isLarge ? 362 : 322,
+      padding: EdgeInsets.all(isLarge ? 20 : 16),
+      decoration: BoxDecoration(
+        color: _DreamsTheme.cardBg(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _DreamsTheme.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Recently Added Products',
+                style: TextStyle(
+                  fontSize: isLarge ? 17 : 15,
+                  fontWeight: FontWeight.bold,
+                  color: _DreamsTheme.textPrimary(context),
+                ),
+              ),
+              const Spacer(),
+              const Icon(Icons.more_vert_rounded, size: 20, color: _DreamsTheme.textMuted),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Table Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: _DreamsTheme.background(context),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 36,
+                  child: Text('Sno', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: _DreamsTheme.textMuted)),
+                ),
+                const Expanded(
+                  child: Text('Products', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: _DreamsTheme.textMuted)),
+                ),
+                Text('Price', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: _DreamsTheme.textMuted)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Table Rows
+          Expanded(
+            child: Obx(() {
+              final items = ctrl.recentlyAddedProducts;
+              if (items.isEmpty) {
+                return const Center(child: Text('No products added yet', style: TextStyle(fontSize: 12, color: _DreamsTheme.textMuted)));
+              }
+
+              return ListView.separated(
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length.clamp(0, 5),
+                separatorBuilder: (context, index) => Divider(height: 1, color: _DreamsTheme.border(context)),
+                itemBuilder: (context, i) {
+                  final item = items[i];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 36,
+                          child: Text(
+                            '${i + 1}',
+                            style: TextStyle(fontSize: 12, color: _DreamsTheme.textSecondary(context)),
+                          ),
+                        ),
+                        Container(
+                          width: 28,
+                          height: 28,
+                          margin: const EdgeInsets.only(right: 10),
+                          decoration: BoxDecoration(
+                            color: _DreamsTheme.lightOrange,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(Icons.inventory_2_outlined, size: 16, color: _DreamsTheme.darkOrange),
+                        ),
+                        Expanded(
+                          child: Text(
+                            item.name ?? 'Item #${item.id}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: _DreamsTheme.textPrimary(context),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          currency.format(item.sellingPrice ?? 0),
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: _DreamsTheme.textPrimary(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────
+  //  Row 4: Bottom Table (Expired / Low Stock Materials Watch)
+  // ────────────────────────────────────────────────────────
+  Widget _buildRow4InventoryWatch(BuildContext context, ControllerHomeDashboard ctrl, bool isLarge) {
+    return Container(
+      padding: EdgeInsets.all(isLarge ? 20 : 16),
+      decoration: BoxDecoration(
+        color: _DreamsTheme.cardBg(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _DreamsTheme.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Inventory Alert & Material Watch',
+                style: TextStyle(
+                  fontSize: isLarge ? 17 : 15,
+                  fontWeight: FontWeight.bold,
+                  color: _DreamsTheme.textPrimary(context),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _DreamsTheme.lightRed,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'Watchlist',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: _DreamsTheme.red,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () {
+                  if (Get.isRegistered<ControllerHome>()) {
+                    Get.find<ControllerHome>().selectedMainMenu.value = EnumMainMenu.item;
+                  }
+                },
+                icon: const Icon(Icons.arrow_forward_rounded, size: 16, color: _DreamsTheme.darkOrange),
+                label: const Text('View All Inventory', style: TextStyle(color: _DreamsTheme.darkOrange, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Table Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: _DreamsTheme.background(context),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              children: [
+                SizedBox(width: 44, child: Text('SNo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _DreamsTheme.textMuted))),
+                SizedBox(width: 130, child: Text('Product Code', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _DreamsTheme.textMuted))),
+                Expanded(flex: 3, child: Text('Product Name / Section', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _DreamsTheme.textMuted))),
+                Expanded(flex: 2, child: Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _DreamsTheme.textMuted))),
+                SizedBox(width: 120, child: Text('Stock Status', textAlign: TextAlign.right, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _DreamsTheme.textMuted))),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Table Body
+          Obx(() {
+            final items = ctrl.inventoryAlertProducts;
+            if (items.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text('All yard stock levels are healthy! 🎉', style: TextStyle(color: _DreamsTheme.textMuted)),
+                ),
+              );
+            }
+
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length.clamp(0, 6),
+              separatorBuilder: (context, index) => Divider(height: 1, color: _DreamsTheme.border(context)),
+              itemBuilder: (context, idx) {
+                final item = items[idx];
+                final qty = item.totalQty ?? 0;
+                final isOutOfStock = qty <= 0;
+                final isLow = qty > 0 && qty < 10;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 44,
+                        child: Text('${idx + 1}', style: TextStyle(fontSize: 12.5, color: _DreamsTheme.textSecondary(context))),
+                      ),
+                      SizedBox(
+                        width: 130,
+                        child: Text(
+                          item.barcode ?? (item.sku ?? 'IT${1000 + item.id!}'),
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: _DreamsTheme.textPrimary(context),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 24,
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: _DreamsTheme.lightOrange,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Icon(Icons.architecture_rounded, size: 14, color: _DreamsTheme.darkOrange),
+                            ),
+                            Expanded(
+                              child: Text(
+                                item.name ?? 'Steel Item',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _DreamsTheme.textPrimary(context),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          item.category ?? 'Structural Steel',
+                          style: TextStyle(fontSize: 12.5, color: _DreamsTheme.textSecondary(context)),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 120,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isOutOfStock
+                                  ? _DreamsTheme.lightRed
+                                  : isLow
+                                      ? _DreamsTheme.lightOrange
+                                      : _DreamsTheme.lightGreen,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              isOutOfStock
+                                  ? 'Out of Stock'
+                                  : '$qty ${item.unit ?? "Pcs"} Left',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isOutOfStock
+                                    ? _DreamsTheme.red
+                                    : isLow
+                                        ? _DreamsTheme.darkOrange
+                                        : _DreamsTheme.green,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────
+  //  Alert Banners (Subscription / Item Expiry)
+  // ────────────────────────────────────────────────────────
+  Widget _buildPlanExpiryBanner(BuildContext context, ControllerHomeDashboard ctrl, bool isLarge) {
+    if (!Get.isRegistered<ServiceBrandContext>()) return const SizedBox.shrink();
+    final ServiceBrandContext brandCtx = Get.find();
+    final branch = brandCtx.rxSelectedBranch.value;
+    final plan = branch?.planDetails;
+    if (plan == null) return const SizedBox.shrink();
+
+    final isExpired = plan.isExpired;
+    final color = isExpired ? _DreamsTheme.red : _DreamsTheme.orange;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: color, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              isExpired
+                  ? 'Your subscription has expired! Please renew immediately.'
+                  : 'Subscription expiring soon on ${plan.formattedExpiry}.',
+              style: TextStyle(fontWeight: FontWeight.bold, color: color),
+            ),
+          ),
+          OutlinedButton(
+            onPressed: () => ctrl.dismissPlanExpiryBanner(),
+            child: const Text('Dismiss (24h)'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemExpiryBanner(BuildContext context, ControllerHomeDashboard ctrl, bool isLarge) {
+    final expired = ctrl.expiredItemCount.value;
+    final expiring = ctrl.expiringItemCount.value;
+    final color = expired > 0 ? _DreamsTheme.red : _DreamsTheme.orange;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded, color: color, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              expired > 0
+                  ? '$expired batches expired! Review inventory.'
+                  : '$expiring batches expiring soon.',
+              style: TextStyle(fontWeight: FontWeight.bold, color: color),
+            ),
+          ),
           FilledButton.tonal(
             onPressed: () {
               if (Get.isRegistered<ControllerHome>()) {
@@ -372,361 +1060,7 @@ class FragHomeDashboard extends StatelessWidget {
                 );
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: color.withValues(alpha: 0.18),
-              foregroundColor: color,
-              padding: EdgeInsets.symmetric(
-                horizontal: isLarge ? 14 : 10,
-                vertical: isLarge ? 8 : 6,
-              ),
-            ),
-            child: Text(
-              'View Items',
-              style: TextStyle(fontSize: isLarge ? 12 : 11, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(width: 6),
-          OutlinedButton.icon(
-            onPressed: () => ctrl.dismissItemExpiryBanner(),
-            icon: const Icon(Icons.alarm_off_rounded, size: 14),
-            label: const Text('Dismiss (24h)'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: color,
-              side: BorderSide(color: color.withValues(alpha: 0.45)),
-              padding: EdgeInsets.symmetric(
-                horizontal: isLarge ? 12 : 10,
-                vertical: isLarge ? 8 : 6,
-              ),
-              textStyle: TextStyle(
-                fontSize: isLarge ? 12 : 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────────────────────
-  //  Header with Greeting
-  // ──────────────────────────────────────────────────────
-  Widget _buildHeader(BuildContext context, ControllerHomeDashboard ctrl,
-      bool isLarge, double horizontalPadding) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        horizontalPadding,
-        isLarge ? 18 : 14,
-        horizontalPadding,
-        isLarge ? 12 : 8,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(isLarge ? 12 : 10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [_DashboardTheme.purple, _DashboardTheme.teal],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
-            ),
-            child: Icon(
-              Icons.storefront_rounded,
-              color: Colors.white,
-              size: isLarge ? 22 : 20,
-            ),
-          ),
-          SizedBox(width: isLarge ? 14 : 12),
-          // Greeting line
-          Obx(() => Text(
-            ctrl.greetingText.value,
-            style: TextStyle(
-              color: _DashboardTheme.textPrimary(context),
-              fontSize: isLarge ? 20 : 18,
-              fontWeight: FontWeight.bold,
-            ),
-          )),
-          const Spacer(),
-          // Adjusted Date Badge in Corner
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: isLarge ? 12 : 10,
-              vertical: isLarge ? 8 : 6,
-            ),
-            decoration: BoxDecoration(
-              color: _DashboardTheme.cardBg(context),
-              borderRadius: BorderRadius.circular(isLarge ? 10 : 8),
-              border: Border.all(color: _DashboardTheme.cardBorder(context)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: isLarge ? 14 : 12,
-                  color: _DashboardTheme.purple,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
-                  style: TextStyle(
-                    color: _DashboardTheme.textPrimary(context),
-                    fontSize: isLarge ? 13 : 11.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: isLarge ? 10 : 8),
-          _PillButton(
-            label: 'refresh'.tr,
-            icon: Icons.refresh_rounded,
-            onTap: ctrl.loadData,
-            isLarge: isLarge,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────────────────────
-  //  Top Stat Cards (with gradient accent colours)
-  // ──────────────────────────────────────────────────────
-  Widget _buildStatCards(BuildContext context, ControllerHomeDashboard ctrl,
-      bool isLarge, double horizontalPadding) {
-    final fmt = NumberFormat.compactCurrency(locale: 'en_IN', symbol: '₹');
-    final cardGap = isLarge ? 14.0 : 10.0;
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      child: Row(
-        children: [
-          _StatCard(
-            title: 'todays_sales'.tr,
-            value: fmt.format(ctrl.todaySales.value),
-            subtitle: '${ctrl.todayOrders.value} ${'orders'.tr}',
-            icon: Icons.currency_rupee_rounded,
-            accentColors: [const Color(0xFF8B5CF6), const Color(0xFF06B6D4)],
-            isLarge: isLarge,
-          ),
-          SizedBox(width: cardGap),
-          _StatCard(
-            title: 'todays_orders'.tr,
-            value: '${ctrl.todayOrders.value}',
-            subtitle: 'bills_today'.tr,
-            icon: Icons.receipt_long_rounded,
-            accentColors: [const Color(0xFF10B981), const Color(0xFF3B82F6)],
-            isLarge: isLarge,
-          ),
-          SizedBox(width: cardGap),
-          _StatCard(
-            title: 'avg_bill'.tr,
-            value: fmt.format(ctrl.averageBill.value),
-            subtitle: 'per_order'.tr,
-            icon: Icons.trending_up_rounded,
-            accentColors: [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
-            isLarge: isLarge,
-          ),
-          SizedBox(width: cardGap),
-          _StatCard(
-            title: 'total_items'.tr,
-            value: '${ctrl.totalItems.value}',
-            subtitle: 'in_system'.tr,
-            icon: Icons.inventory_2_rounded,
-            accentColors: [const Color(0xFF3B82F6), const Color(0xFF8B5CF6)],
-            isLarge: isLarge,
-          ),
-          SizedBox(width: cardGap),
-          _StatCard(
-            title: 'total_customers'.tr,
-            value: '${ctrl.totalCustomers.value}',
-            subtitle: 'total'.tr,
-            icon: Icons.people_alt_rounded,
-            accentColors: [const Color(0xFF10B981), const Color(0xFF06B6D4)],
-            isLarge: isLarge,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────────────────────
-  //  Row 2: Total Sales (line) + CashFlow (stacked bar)
-  // ──────────────────────────────────────────────────────
-  Widget _buildRow2(BuildContext context, ControllerHomeDashboard ctrl,
-      bool isLarge, double horizontalPadding, double rowHeight) {
-    final cardGap = isLarge ? 18.0 : 14.0;
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Total Sales line chart
-          Expanded(
-            flex: 55,
-            child: _DashCard(
-              height: rowHeight,
-              isLarge: isLarge,
-              title: 'total_sales'.tr,
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _Legend(
-                    color: _DashboardTheme.textPrimary(context),
-                    label: 'this_week'.tr,
-                    isLarge: isLarge,
-                  ),
-                  SizedBox(width: isLarge ? 16 : 12),
-                  _Legend(
-                    color: _DashboardTheme.lightTeal,
-                    label: 'last_week'.tr,
-                    isLarge: isLarge,
-                  ),
-                ],
-              ),
-              child: _TotalSalesChart(
-                thisWeek: ctrl.thisWeekSales.toList(),
-                lastWeek: ctrl.lastWeekSales.toList(),
-                labels: ctrl.weekLabels.toList(),
-                isLarge: isLarge,
-              ),
-            ),
-          ),
-          SizedBox(width: cardGap),
-          // CashFlow stacked bar chart
-          Expanded(
-            flex: 45,
-            child: _DashCard(
-              height: rowHeight,
-              isLarge: isLarge,
-              title: 'cashflow'.tr,
-              trailing: _PillButton(
-                label: 'weekly'.tr,
-                icon: Icons.keyboard_arrow_down_rounded,
-                onTap: () {},
-                isLarge: isLarge,
-              ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: _CashFlowChart(
-                      inflow: ctrl.cashInflow.toList(),
-                      outflow: ctrl.cashOutflow.toList(),
-                      labels: ctrl.cashflowLabels.toList(),
-                      isLarge: isLarge,
-                    ),
-                  ),
-                  SizedBox(height: isLarge ? 10 : 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      _Legend(
-                        color: _DashboardTheme.lightPurple,
-                        label: 'inflow'.tr,
-                        isLarge: isLarge,
-                      ),
-                      SizedBox(width: isLarge ? 20 : 16),
-                      _Legend(
-                        color: _DashboardTheme.blue,
-                        label: 'outflow'.tr,
-                        isLarge: isLarge,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────────────────────
-  //  Row 3: Top Selling | Weekly Overview | Payment Mode
-  // ──────────────────────────────────────────────────────
-  Widget _buildRow3(BuildContext context, ControllerHomeDashboard ctrl,
-      bool isLarge, double horizontalPadding, double rowHeight) {
-    final cardGap = isLarge ? 18.0 : 14.0;
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Selling Items donut
-          Expanded(
-            flex: 33,
-            child: _DashCard(
-              height: rowHeight,
-              isLarge: isLarge,
-              title: 'top_selling_items'.tr,
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _PillButton(
-                    label: 'today'.tr,
-                    icon: Icons.keyboard_arrow_down_rounded,
-                    onTap: () {},
-                    isLarge: isLarge,
-                  ),
-                  SizedBox(width: isLarge ? 8 : 6),
-                  _PillButton(
-                    label: 'limit_5'.tr,
-                    icon: Icons.keyboard_arrow_down_rounded,
-                    onTap: () {},
-                    isLarge: isLarge,
-                  ),
-                ],
-              ),
-              child: _TopItemsDonut(
-                items: ctrl.topSellingItems.toList(),
-                isLarge: isLarge,
-              ),
-            ),
-          ),
-          SizedBox(width: cardGap),
-          // Weekly overview bar chart
-          Expanded(
-            flex: 34,
-            child: _DashCard(
-              height: rowHeight,
-              isLarge: isLarge,
-              title: 'dashboard_overview'.tr,
-              trailing: _PillButton(
-                label: 'weekly'.tr,
-                icon: Icons.keyboard_arrow_down_rounded,
-                onTap: () {},
-                isLarge: isLarge,
-              ),
-              child: _WeeklyOverviewChart(
-                values: ctrl.weeklyOverview.toList(),
-                labels: ctrl.overviewLabels.toList(),
-                isLarge: isLarge,
-              ),
-            ),
-          ),
-          SizedBox(width: cardGap),
-          // Payment Mode donut
-          Expanded(
-            flex: 33,
-            child: _DashCard(
-              height: rowHeight,
-              isLarge: isLarge,
-              title: 'payment_mode'.tr,
-              child: _PaymentDonut(
-                breakdown: Map<String, double>.from(ctrl.paymentBreakdown),
-                isLarge: isLarge,
-              ),
-            ),
+            child: const Text('View Items'),
           ),
         ],
       ),
@@ -735,936 +1069,168 @@ class FragHomeDashboard extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────
-//  Reusable Widgets
+//  Row 1: Individual KPI Card
 // ────────────────────────────────────────────────────────
-
-class _StatCard extends StatelessWidget {
+class _DreamsKpiCard extends StatelessWidget {
   final String title;
-  final String value;
-  final String? subtitle;
-  final IconData? icon;
-  final List<Color>? accentColors;
+  final String amount;
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
   final bool isLarge;
 
-  const _StatCard({
+  const _DreamsKpiCard({
     required this.title,
-    required this.value,
-    this.subtitle,
-    this.icon,
-    this.accentColors,
-    this.isLarge = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = accentColors ?? [_DashboardTheme.purple, _DashboardTheme.teal];
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: _DashboardTheme.cardBg(context),
-          borderRadius: BorderRadius.circular(isLarge ? 14 : 12),
-          border: Border.all(color: _DashboardTheme.cardBorder(context)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Gradient accent bar at top
-            Container(
-              height: 4,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: colors),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isLarge ? 18 : 14,
-                vertical: isLarge ? 12 : 8,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      // Gradient icon box
-                      if (icon != null)
-                        Container(
-                          padding: EdgeInsets.all(isLarge ? 7 : 5),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [colors[0].withValues(alpha: isDark ? 0.3 : 0.15),
-                                       colors[1].withValues(alpha: isDark ? 0.2 : 0.08)],
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(icon, size: isLarge ? 16 : 14, color: colors[0]),
-                        ),
-                      if (icon != null) SizedBox(width: isLarge ? 8 : 6),
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            color: _DashboardTheme.textSecondary(context),
-                            fontSize: isLarge ? 13 : 11.5,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: isLarge ? 10 : 6),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: ShaderMask(
-                      shaderCallback: (bounds) => LinearGradient(colors: colors)
-                          .createShader(bounds),
-                      child: Text(
-                        value,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: isLarge ? 26 : 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    SizedBox(height: isLarge ? 4 : 2),
-                    Text(
-                      subtitle!,
-                    style: TextStyle(
-                      color: _DashboardTheme.textSecondary(context),
-                      fontSize: isLarge ? 12 : 11,
-                    ),
-                  ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DashCard extends StatelessWidget {
-  final String title;
-  final Widget? trailing;
-  final Widget child;
-  final double? height;
-  final bool isLarge;
-
-  const _DashCard({
-    required this.title,
-    required this.child,
-    this.trailing,
-    this.height,
-    this.isLarge = false,
+    required this.amount,
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.isLarge,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: height,
-      padding: EdgeInsets.all(isLarge ? 20 : 16),
-      decoration: BoxDecoration(
-        color: _DashboardTheme.cardBg(context),
-        borderRadius: BorderRadius.circular(isLarge ? 16 : 14),
-        border: Border.all(color: _DashboardTheme.cardBorder(context)),
+      padding: EdgeInsets.symmetric(
+        horizontal: isLarge ? 18 : 14,
+        vertical: isLarge ? 18 : 14,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: _DashboardTheme.textPrimary(context),
-                  fontSize: isLarge ? 15.5 : 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (trailing != null) ...[
-                const Spacer(),
-                trailing!,
-              ],
-            ],
+      decoration: BoxDecoration(
+        color: _DreamsTheme.cardBg(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _DreamsTheme.border(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
-          SizedBox(height: isLarge ? 12 : 8),
-          Expanded(child: child),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Circular Icon Pill
+          Container(
+            width: isLarge ? 48 : 42,
+            height: isLarge ? 48 : 42,
+            decoration: BoxDecoration(
+              color: iconBg,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: isLarge ? 22 : 20),
+          ),
+          SizedBox(width: isLarge ? 14 : 10),
+          // Amount + Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  amount,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isLarge ? 19 : 17,
+                    fontWeight: FontWeight.w800,
+                    color: _DreamsTheme.textPrimary(context),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isLarge ? 12 : 11,
+                    fontWeight: FontWeight.w500,
+                    color: _DreamsTheme.textSecondary(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _PillButton extends StatelessWidget {
+// ────────────────────────────────────────────────────────
+//  Row 2: Individual Solid Colored Block Card
+// ────────────────────────────────────────────────────────
+class _DreamsSolidCard extends StatelessWidget {
+  final String count;
   final String label;
-  final IconData? icon;
-  final VoidCallback onTap;
+  final Color backgroundColor;
+  final IconData icon;
   final bool isLarge;
+  final VoidCallback onTap;
 
-  const _PillButton({
+  const _DreamsSolidCard({
+    required this.count,
     required this.label,
+    required this.backgroundColor,
+    required this.icon,
+    required this.isLarge,
     required this.onTap,
-    this.icon,
-    this.isLarge = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: isLarge ? 12 : 10,
-          vertical: isLarge ? 6 : 5,
+          horizontal: isLarge ? 22 : 16,
+          vertical: isLarge ? 20 : 16,
         ),
         decoration: BoxDecoration(
-          color: _DashboardTheme.green.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _DashboardTheme.green.withValues(alpha: 0.2)),
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: backgroundColor.withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: _DashboardTheme.green,
-                fontSize: isLarge ? 12 : 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (icon != null) ...[
-              const SizedBox(width: 2),
-              Icon(icon, color: _DashboardTheme.green, size: isLarge ? 16 : 14),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Legend extends StatelessWidget {
-  final Color color;
-  final String label;
-  final bool isLarge;
-
-  const _Legend({
-    required this.color,
-    required this.label,
-    this.isLarge = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: isLarge ? 10 : 8,
-          height: isLarge ? 10 : 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        SizedBox(width: isLarge ? 6 : 5),
-        Text(
-          label,
-          style: TextStyle(
-            color: _DashboardTheme.textSecondary(context),
-            fontSize: isLarge ? 12 : 11,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────
-//  Total Sales: This Week vs Last Week (line chart)
-// ────────────────────────────────────────────────────────
-class _TotalSalesChart extends StatelessWidget {
-  final List<double> thisWeek;
-  final List<double> lastWeek;
-  final List<String> labels;
-  final bool isLarge;
-
-  const _TotalSalesChart({
-    required this.thisWeek,
-    required this.lastWeek,
-    required this.labels,
-    this.isLarge = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Ensure we have data; use 7 points
-    final tw = List.generate(7, (i) => i < thisWeek.length ? thisWeek[i] : 0.0);
-    final lw = List.generate(7, (i) => i < lastWeek.length ? lastWeek[i] : 0.0);
-    final lbl = List.generate(7, (i) => i < labels.length ? labels[i] : '');
-
-    final allValues = [...tw, ...lw];
-    final maxVal = allValues.reduce((a, b) => a > b ? a : b);
-    final maxY = maxVal <= 0 ? 1000.0 : maxVal * 1.3;
-
-    return LineChart(
-      LineChartData(
-        minY: 0,
-        maxY: maxY,
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: maxY / 4,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: _DashboardTheme.chartGrid(context),
-            strokeWidth: 1,
-          ),
-        ),
-        borderData: FlBorderData(show: false),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: isLarge ? 50 : 44,
-              getTitlesWidget: (val, _) => Text(
-                _compact(val),
-                style: TextStyle(
-                  fontSize: isLarge ? 10.5 : 9,
-                  color: _DashboardTheme.textSecondary(context),
-                ),
-              ),
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (val, _) {
-                final idx = val.toInt();
-                if (idx < 0 || idx >= lbl.length) {
-                  return const SizedBox.shrink();
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    lbl[idx],
-                    style: TextStyle(
-                      fontSize: isLarge ? 11 : 10,
-                      color: _DashboardTheme.textSecondary(context),
-                    ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  count,
+                  style: TextStyle(
+                    fontSize: isLarge ? 26 : 22,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
                   ),
-                );
-              },
-            ),
-          ),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        lineTouchData: LineTouchData(
-          touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => _DashboardTheme.cardBg(context),
-            getTooltipItems: (spots) => spots
-                .map((s) => LineTooltipItem(
-                      '₹${_compact(s.y)}',
-                      TextStyle(
-                        color: s.barIndex == 0
-                            ? _DashboardTheme.textPrimary(context)
-                            : _DashboardTheme.lightTeal,
-                        fontWeight: FontWeight.bold,
-                        fontSize: isLarge ? 12 : 11,
-                      ),
-                    ))
-                .toList(),
-          ),
-        ),
-        lineBarsData: [
-          // This week – solid
-          LineChartBarData(
-            spots: List.generate(7, (i) => FlSpot(i.toDouble(), tw[i])),
-            isCurved: true,
-            curveSmoothness: 0.4,
-            color: _DashboardTheme.textPrimary(context),
-            barWidth: isLarge ? 3.0 : 2.5,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                colors: [
-                  _DashboardTheme.textPrimary(context).withValues(alpha: 0.12),
-                  _DashboardTheme.textPrimary(context).withValues(alpha: 0.0),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-          // Last week – dashed teal
-          LineChartBarData(
-            spots: List.generate(7, (i) => FlSpot(i.toDouble(), lw[i])),
-            isCurved: true,
-            curveSmoothness: 0.4,
-            color: _DashboardTheme.lightTeal,
-            barWidth: isLarge ? 2.5 : 2,
-            isStrokeCapRound: true,
-            dashArray: [6, 4],
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(show: false),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _compact(double v) {
-    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
-    return v.toStringAsFixed(0);
-  }
-}
-
-// ────────────────────────────────────────────────────────
-//  CashFlow: Stacked bar (Inflow purple | Outflow blue)
-// ────────────────────────────────────────────────────────
-class _CashFlowChart extends StatelessWidget {
-  final List<double> inflow;
-  final List<double> outflow;
-  final List<String> labels;
-  final bool isLarge;
-
-  const _CashFlowChart({
-    required this.inflow,
-    required this.outflow,
-    required this.labels,
-    this.isLarge = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final allVals = [...inflow, ...outflow];
-    final maxVal = allVals.reduce((a, b) => a > b ? a : b);
-    final maxY = maxVal <= 0 ? 1000.0 : maxVal * 1.3;
-
-    final groups = List.generate(inflow.length, (i) {
-      final inF = inflow[i];
-      final outF = outflow[i];
-      final total = inF + outF;
-      return BarChartGroupData(
-        x: i,
-        barRods: [
-          BarChartRodData(
-            toY: total > 0 ? total : 0.001,
-            color: _DashboardTheme.lightPurple,
-            width: isLarge ? 24 : 18,
-            borderRadius: BorderRadius.circular(4),
-            rodStackItems: [
-              if (outF > 0)
-                BarChartRodStackItem(0, outF, _DashboardTheme.blue),
-              if (inF > 0)
-                BarChartRodStackItem(outF, total, _DashboardTheme.lightPurple),
-            ],
-          ),
-        ],
-      );
-    });
-
-    return BarChart(
-      BarChartData(
-        maxY: maxY,
-        barGroups: groups,
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: maxY / 4,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: _DashboardTheme.chartGrid(context),
-            strokeWidth: 1,
-          ),
-        ),
-        borderData: FlBorderData(show: false),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: isLarge ? 48 : 40,
-              getTitlesWidget: (val, _) => Text(
-                _compact(val),
-                style: TextStyle(
-                  fontSize: isLarge ? 10.5 : 9,
-                  color: _DashboardTheme.textSecondary(context),
                 ),
-              ),
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (val, _) {
-                final idx = val.toInt();
-                if (idx < 0 || idx >= labels.length) {
-                  return const SizedBox.shrink();
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    labels[idx],
-                    style: TextStyle(
-                      fontSize: isLarge ? 11 : 10,
-                      color: _DashboardTheme.textSecondary(context),
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: isLarge ? 13 : 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
-                );
-              },
-            ),
-          ),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        barTouchData: BarTouchData(
-          touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => _DashboardTheme.cardBg(context),
-            getTooltipItem: (group, groupIndex, rod, rodIndex) {
-              return BarTooltipItem(
-                '₹${_compact(rod.toY)}',
-                TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isLarge ? 12 : 11,
                 ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _compact(double v) {
-    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
-    return v.toStringAsFixed(0);
-  }
-}
-
-// ────────────────────────────────────────────────────────
-//  Top Selling Items: Donut + legend
-// ────────────────────────────────────────────────────────
-class _TopItemsDonut extends StatelessWidget {
-  final List<Map<String, dynamic>> items;
-  final bool isLarge;
-
-  static const _palette = [
-    _DashboardTheme.purple,
-    _DashboardTheme.blue,
-    _DashboardTheme.green,
-    _DashboardTheme.amber,
-    _DashboardTheme.lightTeal,
-  ];
-
-  const _TopItemsDonut({
-    required this.items,
-    this.isLarge = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+              ],
+            ),
             Icon(
-              Icons.pie_chart_outline,
-              color: _DashboardTheme.chartGrid(context),
-              size: isLarge ? 56 : 48,
-            ),
-            SizedBox(height: isLarge ? 10 : 8),
-            Text(
-              'No sales data',
-              style: TextStyle(
-                color: _DashboardTheme.textSecondary(context),
-                fontSize: isLarge ? 13 : 12,
-              ),
+              icon,
+              size: isLarge ? 38 : 32,
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ],
-        ),
-      );
-    }
-
-    final totalQty =
-        items.fold<int>(0, (sum, m) => sum + (m['qty'] as int? ?? 0));
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final donutSize = (constraints.maxHeight * 0.90).clamp(130.0, 220.0);
-        final centerSpaceRadius = (donutSize * 0.24).clamp(32.0, 52.0);
-        final sectionRadius = (donutSize * 0.26).clamp(36.0, 58.0);
-        final titleFontSize = (donutSize * 0.065).clamp(9.0, 12.0);
-
-        return Row(
-          children: [
-            // Donut
-            SizedBox(
-              width: donutSize,
-              height: donutSize,
-              child: PieChart(
-                PieChartData(
-                  sectionsSpace: 2,
-                  centerSpaceRadius: centerSpaceRadius,
-                  sections: List.generate(items.length, (i) {
-                    final qty = (items[i]['qty'] as int? ?? 0).toDouble();
-                    final pct = totalQty > 0 ? qty / totalQty * 100 : 0;
-                    return PieChartSectionData(
-                      color: _palette[i % _palette.length],
-                      value: qty,
-                      title: '${pct.toStringAsFixed(0)}%',
-                      radius: sectionRadius,
-                      titleStyle: TextStyle(
-                        fontSize: titleFontSize,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ),
-            SizedBox(width: isLarge ? 14 : 10),
-            // Legend
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(items.length, (i) {
-                    final name = items[i]['name'] as String;
-                    final qty = items[i]['qty'] as int? ?? 0;
-                    final color = _palette[i % _palette.length];
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: isLarge ? 5 : (items.length > 4 ? 2.5 : 4),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: isLarge ? 11 : 10,
-                            height: isLarge ? 11 : 10,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: isLarge ? 8 : 6),
-                          Expanded(
-                            child: Text(
-                              name,
-                              style: TextStyle(
-                                color: _DashboardTheme.textPrimary(context),
-                                fontSize: isLarge ? 12.5 : 11,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            '$qty',
-                            style: TextStyle(
-                              color: _DashboardTheme.textPrimary(context),
-                              fontSize: isLarge ? 13 : 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────
-//  Weekly Overview: solid purple bar chart
-// ────────────────────────────────────────────────────────
-class _WeeklyOverviewChart extends StatelessWidget {
-  final List<double> values;
-  final List<String> labels;
-  final bool isLarge;
-
-  const _WeeklyOverviewChart({
-    required this.values,
-    required this.labels,
-    this.isLarge = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final maxVal = values.isEmpty
-        ? 1000.0
-        : values.reduce((a, b) => a > b ? a : b);
-    final maxY = maxVal <= 0 ? 1000.0 : maxVal * 1.3;
-
-    return BarChart(
-      BarChartData(
-        maxY: maxY,
-        barGroups: List.generate(values.length, (i) {
-          return BarChartGroupData(
-            x: i,
-            barRods: [
-              BarChartRodData(
-                toY: values[i] > 0 ? values[i] : 0.001,
-                color: _DashboardTheme.lightPurple,
-                width: isLarge ? 28 : 22,
-                borderRadius: BorderRadius.circular(isLarge ? 6 : 5),
-              ),
-            ],
-          );
-        }),
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: maxY / 4,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: _DashboardTheme.chartGrid(context),
-            strokeWidth: 1,
-          ),
-        ),
-        borderData: FlBorderData(show: false),
-        titlesData: FlTitlesData(
-          leftTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (val, _) {
-                final idx = val.toInt();
-                if (idx < 0 || idx >= labels.length) {
-                  return const SizedBox.shrink();
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    labels[idx],
-                    style: TextStyle(
-                      fontSize: isLarge ? 11 : 10,
-                      color: _DashboardTheme.textSecondary(context),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        barTouchData: BarTouchData(
-          touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => _DashboardTheme.cardBg(context),
-            getTooltipItem: (group, groupIndex, rod, rodIndex) {
-              return BarTooltipItem(
-                '₹${_compact(rod.toY)}',
-                TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isLarge ? 12 : 11,
-                ),
-              );
-            },
-          ),
         ),
       ),
     );
-  }
-
-  String _compact(double v) {
-    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
-    return v.toStringAsFixed(0);
-  }
-}
-
-// ────────────────────────────────────────────────────────
-//  Payment Mode: Donut chart
-// ────────────────────────────────────────────────────────
-class _PaymentDonut extends StatelessWidget {
-  final Map<String, double> breakdown;
-  final bool isLarge;
-
-  static const _palette = [
-    _DashboardTheme.blue,
-    _DashboardTheme.teal,
-    _DashboardTheme.green,
-    _DashboardTheme.amber,
-    _DashboardTheme.purple,
-    _DashboardTheme.red,
-  ];
-
-  const _PaymentDonut({
-    required this.breakdown,
-    this.isLarge = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (breakdown.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.pie_chart_outline,
-              color: _DashboardTheme.cardBorder(context),
-              size: isLarge ? 56 : 48,
-            ),
-            SizedBox(height: isLarge ? 10 : 8),
-            Text(
-              'No data today',
-              style: TextStyle(
-                color: _DashboardTheme.textSecondary(context),
-                fontSize: isLarge ? 13 : 12,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final total = breakdown.values.fold(0.0, (a, b) => a + b);
-    final entries = breakdown.entries.toList();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final donutSize = (constraints.maxHeight * 0.90).clamp(130.0, 220.0);
-        final centerSpaceRadius = (donutSize * 0.24).clamp(32.0, 50.0);
-        final sectionRadius = (donutSize * 0.26).clamp(36.0, 56.0);
-
-        return Row(
-          children: [
-            // Donut
-            SizedBox(
-              width: donutSize,
-              height: donutSize,
-              child: PieChart(
-                PieChartData(
-                  sectionsSpace: 2,
-                  centerSpaceRadius: centerSpaceRadius,
-                  sections: List.generate(entries.length, (i) {
-                    final color = _palette[i % _palette.length];
-                    return PieChartSectionData(
-                      color: color,
-                      value: entries[i].value,
-                      title: '',
-                      radius: sectionRadius,
-                    );
-                  }),
-                ),
-              ),
-            ),
-            SizedBox(width: isLarge ? 12 : 8),
-            // Legend
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(entries.length, (i) {
-                    final e = entries[i];
-                    final color = _palette[i % _palette.length];
-                    final pct = total > 0 ? e.value / total * 100 : 0;
-                    final label = _modeLabel(e.key);
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: isLarge ? 5 : (entries.length > 4 ? 2.5 : 4),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: isLarge ? 11 : 10,
-                            height: isLarge ? 11 : 10,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: isLarge ? 8 : 6),
-                          Expanded(
-                            child: Text(
-                              label,
-                              style: TextStyle(
-                                color: _DashboardTheme.textPrimary(context),
-                                fontSize: isLarge ? 12 : 11,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            '${_compactDouble(e.value)} (${pct.toStringAsFixed(0)}%)',
-                            style: TextStyle(
-                              color: _DashboardTheme.textPrimary(context),
-                              fontSize: isLarge ? 13 : 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  String _compactDouble(double v) {
-    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    return v.toStringAsFixed(0);
-  }
-
-  String _modeLabel(String key) {
-    switch (key.toUpperCase()) {
-      case 'CASH':
-        return 'Cash';
-      case 'CARD':
-        return 'Card';
-      case 'UPI':
-        return 'UPI / GPay';
-      case 'SPLIT':
-        return 'Split';
-      case 'NETBANKING':
-        return 'Net Banking';
-      case 'DUE':
-        return 'Due';
-      default:
-        return key;
-    }
   }
 }

@@ -1,0 +1,38 @@
+Name,SKU,Barcode,Unit,Category,Cost Price,Selling Price,Stock Qty,Tax Name,Tax Rate (%),Tax Type,Has Expiry,Status
+"Tata Tiscon TMT Rebar 8mm Fe 550D",TMT-8MM-TATA,STEEL-TAT-TMT-8MM,Kg,"TMT Rebars (Saria)",58.5,62.0,35000,GST,18.0,inclusive,No,Active
+"Tata Tiscon TMT Rebar 10mm Fe 550D",TMT-10MM-TATA,STEEL-TAT-TMT-10MM,Kg,"TMT Rebars (Saria)",58.0,61.5,40000,GST,18.0,inclusive,No,Active
+"Tata Tiscon TMT Rebar 12mm Fe 550D",TMT-12MM-TATA,STEEL-TAT-TMT-12MM,Kg,"TMT Rebars (Saria)",57.5,61.0,50000,GST,18.0,inclusive,No,Active
+"Tata Tiscon TMT Rebar 16mm Fe 550D",TMT-16MM-TATA,STEEL-TAT-TMT-16MM,Kg,"TMT Rebars (Saria)",57.5,61.0,45000,GST,18.0,inclusive,No,Active
+"Tata Tiscon TMT Rebar 20mm Fe 550D",TMT-20MM-TATA,STEEL-TAT-TMT-20MM,Kg,"TMT Rebars (Saria)",57.5,61.0,30000,GST,18.0,inclusive,No,Active
+"Tata Tiscon TMT Rebar 25mm Fe 550D",TMT-25MM-TATA,STEEL-TAT-TMT-25MM,Kg,"TMT Rebars (Saria)",57.5,61.0,20000,GST,18.0,inclusive,No,Active
+"JSW Neosteel TMT Rebar 8mm Fe 550D",TMT-8MM-JSW,STEEL-JSW-TMT-8MM,Kg,"TMT Rebars (Saria)",57.0,60.5,30000,GST,18.0,inclusive,No,Active
+"JSW Neosteel TMT Rebar 10mm Fe 550D",TMT-10MM-JSW,STEEL-JSW-TMT-10MM,Kg,"TMT Rebars (Saria)",56.5,60.0,35000,GST,18.0,inclusive,No,Active
+"JSW Neosteel TMT Rebar 12mm Fe 550D",TMT-12MM-JSW,STEEL-JSW-TMT-12MM,Kg,"TMT Rebars (Saria)",56.0,59.5,45000,GST,18.0,inclusive,No,Active
+"JSW Neosteel TMT Rebar 16mm Fe 550D",TMT-16MM-JSW,STEEL-JSW-TMT-16MM,Kg,"TMT Rebars (Saria)",56.0,59.5,35000,GST,18.0,inclusive,No,Active
+"JSW Neosteel TMT Rebar 20mm Fe 550D",TMT-20MM-JSW,STEEL-JSW-TMT-20MM,Kg,"TMT Rebars (Saria)",56.0,59.5,25000,GST,18.0,inclusive,No,Active
+"JSW Neosteel TMT Rebar 25mm Fe 550D",TMT-25MM-JSW,STEEL-JSW-TMT-25MM,Kg,"TMT Rebars (Saria)",56.0,59.5,15000,GST,18.0,inclusive,No,Active
+"SAIL TMT Rebar 10mm Fe 500D",TMT-10MM-SAIL,STEEL-SAI-TMT-10MM,Kg,"TMT Rebars (Saria)",55.0,58.5,25000,GST,18.0,inclusive,No,Active
+"SAIL TMT Rebar 12mm Fe 500D",TMT-12MM-SAIL,STEEL-SAI-TMT-12MM,Kg,"TMT Rebars (Saria)",54.5,58.0,30000,GST,18.0,inclusive,No,Active
+"SAIL TMT Rebar 16mm Fe 500D",TMT-16MM-SAIL,STEEL-SAI-TMT-16MM,Kg,"TMT Rebars (Saria)",54.5,58.0,25000,GST,18.0,inclusive,No,Active
+"MS Angle 25x25x3 mm (1.12 kg/m)",ANG-25X25X3,STEEL-ANG-25X25X3,Kg,"MS Angles",49.0,53.5,12000,GST,18.0,inclusive,No,Active
+"MS Angle 35x35x5 mm (2.60 kg/m)",ANG-35X35X5,STEEL-ANG-35X35X5,Kg,"MS Angles",49.0,53.5,15000,GST,18.0,inclusive,No,Active
+"MS Angle 40x40x5 mm (3.00 kg/m)",ANG-40X40X5,STEEL-ANG-40X40X5,Kg,"MS Angles",48.5,53.0,20000,GST,18.0,inclusive,No,Active
+"MS Angle 50x50x6 mm (4.50 kg/m)",ANG-50X50X6,STEEL-ANG-50X50X6,Kg,"MS Angles",48.5,53.0,25000,GST,18.0,inclusive,No,Active
+"MS Angle 65x65x6 mm (5.80 kg/m)",ANG-65X65X6,STEEL-ANG-65X65X6,Kg,"MS Angles",48.5,53.0,18000,GST,18.0,inclusive,No,Active
+"MS Angle 75x75x6 mm (6.80 kg/m)",ANG-75X75X6,STEEL-ANG-75X75X6,Kg,"MS Angles",48.5,53.0,15000,GST,18.0,inclusive,No,Active
+"MS Channel ISMC 75x40 mm (7.14 kg/m)",CH-ISMC-75,STEEL-CH-ISMC-75,Kg,"MS Channels (ISMC)",49.0,54.0,15000,GST,18.0,inclusive,No,Active
+"MS Channel ISMC 100x50 mm (9.56 kg/m)",CH-ISMC-100,STEEL-CH-ISMC-100,Kg,"MS Channels (ISMC)",49.0,54.0,25000,GST,18.0,inclusive,No,Active
+"MS Channel ISMC 125x65 mm (13.1 kg/m)",CH-ISMC-125,STEEL-CH-ISMC-125,Kg,"MS Channels (ISMC)",49.0,54.0,20000,GST,18.0,inclusive,No,Active
+"MS Channel ISMC 150x75 mm (16.8 kg/m)",CH-ISMC-150,STEEL-CH-ISMC-150,Kg,"MS Channels (ISMC)",49.5,54.5,18000,GST,18.0,inclusive,No,Active
+"MS Channel ISMC 200x75 mm (22.3 kg/m)",CH-ISMC-200,STEEL-CH-ISMC-200,Kg,"MS Channels (ISMC)",50.0,55.0,15000,GST,18.0,inclusive,No,Active
+"MS I-Beam ISMB 100 (11.5 kg/m)",BM-ISMB-100,STEEL-BM-ISMB-100,Kg,"MS Beams / Joists (ISMB)",50.0,55.0,15000,GST,18.0,inclusive,No,Active
+"MS I-Beam ISMB 125 (13.3 kg/m)",BM-ISMB-125,STEEL-BM-ISMB-125,Kg,"MS Beams / Joists (ISMB)",50.0,55.0,18000,GST,18.0,inclusive,No,Active
+"MS I-Beam ISMB 150 (15.0 kg/m)",BM-ISMB-150,STEEL-BM-ISMB-150,Kg,"MS Beams / Joists (ISMB)",50.5,55.5,20000,GST,18.0,inclusive,No,Active
+"MS I-Beam ISMB 200 (25.4 kg/m)",BM-ISMB-200,STEEL-BM-ISMB-200,Kg,"MS Beams / Joists (ISMB)",51.0,56.0,15000,GST,18.0,inclusive,No,Active
+"Square Hollow Tube 25x25x2 mm (1.44 kg/m)",PIPE-SHS-25X25,STEEL-SHS-25X25,Kg,"Pipes & Hollow Sections",51.0,56.5,10000,GST,18.0,inclusive,No,Active
+"Square Hollow Tube 50x50x2.5 mm (3.70 kg/m)",PIPE-SHS-50X50,STEEL-SHS-50X50,Kg,"Pipes & Hollow Sections",51.0,56.5,15000,GST,18.0,inclusive,No,Active
+"MS Round Pipe 2" Class B (5.03 kg/m)",PIPE-RND-2INCH,STEEL-RND-2INCH,Kg,"Pipes & Hollow Sections",52.0,57.0,12000,GST,18.0,inclusive,No,Active
+"HR Steel Sheet 2.0 mm (8x4 ft)",PLT-HR-2MM,STEEL-PLT-HR-2MM,Kg,"HR / CR Plates & Sheets",52.0,57.5,20000,GST,18.0,inclusive,No,Active
+"HR Steel Plate 5.0 mm (8x4 ft)",PLT-HR-5MM,STEEL-PLT-HR-5MM,Kg,"HR / CR Plates & Sheets",51.5,57.0,25000,GST,18.0,inclusive,No,Active
+"HR Steel Plate 10.0 mm (8x4 ft)",PLT-HR-10MM,STEEL-PLT-HR-10MM,Kg,"HR / CR Plates & Sheets",51.0,56.5,30000,GST,18.0,inclusive,No,Active
+"MS Annealed Binding Wire 18 Gauge (25kg Bundle)",WIRE-BIND-18G,STEEL-WIRE-BIND-18G,Kg,"Binding Wire & Meshes",58.0,64.0,5000,GST,18.0,inclusive,No,Active

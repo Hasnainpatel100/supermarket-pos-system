@@ -3,67 +3,66 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppThemes {
   // --- COLOR PALETTE DEFINITIONS ---
-  
   static ColorScheme _buildColorScheme(Brightness brightness) {
     if (brightness == Brightness.light) {
       return const ColorScheme(
         brightness: Brightness.light,
-        primary: Color(0xFF0D9488),          // Teal 600
+        primary: Color(0xFFFF7A00),          // Dreams Vibrant Orange
         onPrimary: Colors.white,
-        primaryContainer: Color(0xFFCCFBF1), // Teal 100
-        onPrimaryContainer: Color(0xFF115E59), // Teal 800
-        secondary: Color(0xFF0F766E),        // Teal 700
+        primaryContainer: Color(0xFFFFF2E5), // Soft warm orange container
+        onPrimaryContainer: Color(0xFF993B00), // Deep burnt orange text
+        secondary: Color(0xFFFA8B0C),        // Warm Amber Orange
         onSecondary: Colors.white,
-        secondaryContainer: Color(0xFFE2EBE5),
-        onSecondaryContainer: Color(0xFF0F3A30),
-        tertiary: Color(0xFF0369A1),         // Sky 700
+        secondaryContainer: Color(0xFFFFEDE0),
+        onSecondaryContainer: Color(0xFF7A3700),
+        tertiary: Color(0xFF00CFDD),         // Sky Cyan accent
         onTertiary: Colors.white,
-        tertiaryContainer: Color(0xFFE0F2FE),
-        onTertiaryContainer: Color(0xFF0369A1),
-        error: Color(0xFFEF4444),
+        tertiaryContainer: Color(0xFFE0F9FB),
+        onTertiaryContainer: Color(0xFF006670),
+        error: Color(0xFFEA5455),            // Soft Coral Red
         onError: Colors.white,
-        errorContainer: Color(0xFFFEE2E2),
-        onErrorContainer: Color(0xFF991B1B),
-        surface: Colors.white,
-        onSurface: Color(0xFF0F172A),        // Slate 900
-        onSurfaceVariant: Color(0xFF3F4E46),  // Muted dark slate-green
-        outline: Color(0xFFCBD5E1),          // Slate 300
-        outlineVariant: Color(0xFFE2E8F0),
-        surfaceContainerLowest: Color(0xFFFAFAFA), // Softest tinted white
-        surfaceContainerLow: Color(0xFFF4F7F5),
-        surfaceContainer: Color(0xFFEDF1EE),
-        surfaceContainerHigh: Color(0xFFE4EAE5),
-        surfaceContainerHighest: Color(0xFFDBE2DC),
+        errorContainer: Color(0xFFFEE8E8),
+        onErrorContainer: Color(0xFF8F1D1E),
+        surface: Colors.white,               // Crisp White surface
+        onSurface: Color(0xFF1B2850),        // Deep Navy Slate text
+        onSurfaceVariant: Color(0xFF6B7280), // Modern gray subtitle
+        outline: Color(0xFFE5E7EB),          // Subtle gray outline
+        outlineVariant: Color(0xFFF3F4F6),
+        surfaceContainerLowest: Color(0xFFF8F9FA), // Soft clean background
+        surfaceContainerLow: Color(0xFFF3F4F6),
+        surfaceContainer: Colors.white,      // Pure white card container
+        surfaceContainerHigh: Color(0xFFF8F9FA),
+        surfaceContainerHighest: Color(0xFFE8ECEF),
       );
     } else {
       return const ColorScheme(
         brightness: Brightness.dark,
-        primary: Color(0xFF2DD4BF),          // Teal 400
-        onPrimary: Color(0xFF003733),
-        primaryContainer: Color(0xFF0D9488), // Teal 600
-        onPrimaryContainer: Color(0xFFCCFBF1),
-        secondary: Color(0xFF14B8A6),        // Teal 500
-        onSecondary: Color(0xFF003733),
-        secondaryContainer: Color(0xFF202A25),
-        onSecondaryContainer: Color(0xFFC0CDC6),
-        tertiary: Color(0xFF38BDF8),         // Sky 400
-        onTertiary: Color(0xFF00354E),
-        tertiaryContainer: Color(0xFF0369A1),
-        onTertiaryContainer: Color(0xFFE0F2FE),
-        error: Color(0xFFF87171),
+        primary: Color(0xFFFF9F43),          // Warm Golden Orange
+        onPrimary: Color(0xFF381A00),
+        primaryContainer: Color(0xFF7A3700),
+        onPrimaryContainer: Color(0xFFFFDBC2),
+        secondary: Color(0xFFFA8B0C),
+        onSecondary: Color(0xFF381A00),
+        secondaryContainer: Color(0xFF4A2500),
+        onSecondaryContainer: Color(0xFFFFDBC2),
+        tertiary: Color(0xFF00CFDD),
+        onTertiary: Color(0xFF00373C),
+        tertiaryContainer: Color(0xFF005860),
+        onTertiaryContainer: Color(0xFFE0F9FB),
+        error: Color(0xFFFF6B6B),
         onError: Color(0xFF550000),
-        errorContainer: Color(0xFF991B1B),
-        onErrorContainer: Color(0xFFFEE2E2),
-        surface: Color(0xFF141A17),          // Dark teal-grey surface
-        onSurface: Color(0xFFFAFAFA),
-        onSurfaceVariant: Color(0xFFC0CDC6),
-        outline: Color(0xFF3E4E46),
-        outlineVariant: Color(0xFF2E3B35),
-        surfaceContainerLowest: Color(0xFF090D0B), // Darkest container surface
-        surfaceContainerLow: Color(0xFF0F1412),
-        surfaceContainer: Color(0xFF141A17),
-        surfaceContainerHigh: Color(0xFF1B221E),
-        surfaceContainerHighest: Color(0xFF222B26),
+        errorContainer: Color(0xFF8F1D1E),
+        onErrorContainer: Color(0xFFFEE8E8),
+        surface: Color(0xFF161D31),          // Dark Navy/Slate surface
+        onSurface: Color(0xFFF8F9FA),
+        onSurfaceVariant: Color(0xFF94A3B8),
+        outline: Color(0xFF334155),
+        outlineVariant: Color(0xFF1E293B),
+        surfaceContainerLowest: Color(0xFF0F172A), // Deep Slate
+        surfaceContainerLow: Color(0xFF1E293B),
+        surfaceContainer: Color(0xFF161D31),      // Card background
+        surfaceContainerHigh: Color(0xFF283046),
+        surfaceContainerHighest: Color(0xFF343D55),
       );
     }
   }

@@ -17,6 +17,9 @@ class ActivityCustomerForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final EntityCustomer? editingCustomer = Get.arguments as EntityCustomer?;
+    if (Get.isRegistered<ControllerCustomerForm>()) {
+      Get.delete<ControllerCustomerForm>(force: true);
+    }
     final controller = Get.put(
       ControllerCustomerForm(
         editingCustomer: editingCustomer,
@@ -25,15 +28,15 @@ class ActivityCustomerForm extends StatelessWidget {
       ),
     );
     final isEditing = editingCustomer != null;
-    final colorScheme = Theme.of(context).colorScheme;
+
 
     return AppDialog(
-      maxWidth: 650,
+      maxWidth: 680,
       maxHeight: 700,
       header: DialogHeader(
         title: isEditing ? 'edit_customer'.tr : 'new_customer'.tr,
         icon: isEditing ? Icons.manage_accounts_rounded : Icons.person_add_rounded,
-        iconColor: colorScheme.primary,
+        iconColor: isEditing ? const Color(0xFFFF9F43) : const Color(0xFFFF7A00),
       ),
       body: DialogBody(
         child: Form(

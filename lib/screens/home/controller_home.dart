@@ -7,6 +7,8 @@ import '../../core/auth/app_permissions.dart';
 import '../../core/performance/plan_expiry_guard.dart';
 import '../../enums/enum_main_menu.dart';
 import '../../enums/enum_permission.dart';
+import '../../core/app_type/app_type_service.dart';
+import '../../core/storage/token_storage.dart';
 import '../../features/authentication/data/auth_repository.dart';
 import '../../model/entity_user.dart';
 import '../../model/model_drawer_menu.dart';
@@ -110,6 +112,15 @@ class ControllerHome extends GetxController {
     // ✅ Ensure active Brand and Branch context is restored / fetched
     if (Get.isRegistered<AuthRepository>()) {
       await Get.find<AuthRepository>().restoreSessionContext();
+    }
+
+    // ✅ Restore the persisted business vertical (MARKET by default) so the
+    // correct toolbar slot, print format, and KPIs are active on resume.
+    if (Get.isRegistered<TokenStorage>() && Get.isRegistered<AppTypeService>()) {
+      final savedAppType = Get.find<TokenStorage>().getAppType();
+      if (savedAppType != null && savedAppType.trim().isNotEmpty) {
+        await Get.find<AppTypeService>().applyAppType(savedAppType);
+      }
     }
 
     // ✅ Load user's saved Expiry Alarm Days setting and enforce expiry check

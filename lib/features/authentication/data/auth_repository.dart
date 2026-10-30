@@ -85,17 +85,18 @@ class AuthRepository {
         deviceName: 'Counter ($osName)',
       );
 
-      // ── 1. Strictly enforce appType == 'MARKET' requirement ────────────────
+      // ── 1. Strictly enforce supported appType requirement ────────────────
       final appTypeUpper = (response.appType ?? '').trim().toUpperCase();
+      final supportedTypes = ['STEEL', 'MARKET', 'APPAREL', 'ELECTRONICS', 'JEWELLERY', 'OPTICAL', 'FOOTWEAR'];
 
-      if (appTypeUpper != 'MARKET') {
+      if (!supportedTypes.contains(appTypeUpper) && appTypeUpper.isNotEmpty) {
         if (kDebugMode) {
-          debugPrint('🚫 [AuthRepository] Login rejected: appType "$appTypeUpper" is not MARKET');
+          debugPrint('🚫 [AuthRepository] Login rejected: appType "$appTypeUpper" is not supported');
         }
         return AuthResult(
           success: false,
           errorMessage:
-              'Access denied: Only MARKET accounts are permitted to login. Current appType: "${response.appType ?? 'none'}".',
+              'Access denied: Unsupported appType "$appTypeUpper".',
           isFromApi: true,
         );
       }
@@ -261,9 +262,10 @@ class AuthRepository {
         }
       }
 
-      // Fallback: If not found directly by ID, query brands list for MARKET
+      // Fallback: If not found directly by ID, query brands list for the active appType
       if (brand == null) {
-        final allBrands = await brandApi.getBrands(appType: 'MARKET');
+        final activeAppType = _tokenStorage.getAppType() ?? 'MARKET';
+        final allBrands = await brandApi.getBrands(appType: activeAppType);
         if (allBrands.success && allBrands.data != null && allBrands.data!.isNotEmpty) {
           if (brandId.isNotEmpty) {
             brand = allBrands.data!.firstWhereOrNull((b) => b.id == brandId);

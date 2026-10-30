@@ -2,6 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/app_type/app_type_service.dart';
+import '../../../../core/app_type/enum_app_type.dart';
 import '../../../../enums/enum_main_menu.dart';
 import '../../../../service/service_brand_context.dart';
 import '../../../../widget/dialog_plan_expiry.dart';
@@ -508,52 +510,59 @@ class FragHomeDashboard extends StatelessWidget {
     final cardGap = isLarge ? 14.0 : 10.0;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      child: Row(
+      child: Column(
         children: [
-          _StatCard(
-            title: 'todays_sales'.tr,
-            value: fmt.format(ctrl.todaySales.value),
-            subtitle: '${ctrl.todayOrders.value} ${'orders'.tr}',
-            icon: Icons.currency_rupee_rounded,
-            accentColors: [const Color(0xFF8B5CF6), const Color(0xFF06B6D4)],
-            isLarge: isLarge,
+          Row(
+            children: [
+              _StatCard(
+                title: 'todays_sales'.tr,
+                value: fmt.format(ctrl.todaySales.value),
+                subtitle: '${ctrl.todayOrders.value} ${'orders'.tr}',
+                icon: Icons.currency_rupee_rounded,
+                accentColors: [const Color(0xFF8B5CF6), const Color(0xFF06B6D4)],
+                isLarge: isLarge,
+              ),
+              SizedBox(width: cardGap),
+              _StatCard(
+                title: 'todays_orders'.tr,
+                value: '${ctrl.todayOrders.value}',
+                subtitle: 'bills_today'.tr,
+                icon: Icons.receipt_long_rounded,
+                accentColors: [const Color(0xFF10B981), const Color(0xFF3B82F6)],
+                isLarge: isLarge,
+              ),
+              SizedBox(width: cardGap),
+              _StatCard(
+                title: 'avg_bill'.tr,
+                value: fmt.format(ctrl.averageBill.value),
+                subtitle: 'per_order'.tr,
+                icon: Icons.trending_up_rounded,
+                accentColors: [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
+                isLarge: isLarge,
+              ),
+              SizedBox(width: cardGap),
+              _StatCard(
+                title: 'total_items'.tr,
+                value: '${ctrl.totalItems.value}',
+                subtitle: 'in_system'.tr,
+                icon: Icons.inventory_2_rounded,
+                accentColors: [const Color(0xFF3B82F6), const Color(0xFF8B5CF6)],
+                isLarge: isLarge,
+              ),
+              SizedBox(width: cardGap),
+              _StatCard(
+                title: 'total_customers'.tr,
+                value: '${ctrl.totalCustomers.value}',
+                subtitle: 'total'.tr,
+                icon: Icons.people_alt_rounded,
+                accentColors: [const Color(0xFF10B981), const Color(0xFF06B6D4)],
+                isLarge: isLarge,
+              ),
+            ],
           ),
-          SizedBox(width: cardGap),
-          _StatCard(
-            title: 'todays_orders'.tr,
-            value: '${ctrl.todayOrders.value}',
-            subtitle: 'bills_today'.tr,
-            icon: Icons.receipt_long_rounded,
-            accentColors: [const Color(0xFF10B981), const Color(0xFF3B82F6)],
-            isLarge: isLarge,
-          ),
-          SizedBox(width: cardGap),
-          _StatCard(
-            title: 'avg_bill'.tr,
-            value: fmt.format(ctrl.averageBill.value),
-            subtitle: 'per_order'.tr,
-            icon: Icons.trending_up_rounded,
-            accentColors: [const Color(0xFFF59E0B), const Color(0xFFEF4444)],
-            isLarge: isLarge,
-          ),
-          SizedBox(width: cardGap),
-          _StatCard(
-            title: 'total_items'.tr,
-            value: '${ctrl.totalItems.value}',
-            subtitle: 'in_system'.tr,
-            icon: Icons.inventory_2_rounded,
-            accentColors: [const Color(0xFF3B82F6), const Color(0xFF8B5CF6)],
-            isLarge: isLarge,
-          ),
-          SizedBox(width: cardGap),
-          _StatCard(
-            title: 'total_customers'.tr,
-            value: '${ctrl.totalCustomers.value}',
-            subtitle: 'total'.tr,
-            icon: Icons.people_alt_rounded,
-            accentColors: [const Color(0xFF10B981), const Color(0xFF06B6D4)],
-            isLarge: isLarge,
-          ),
+          SizedBox(height: cardGap),
+          // ── Reactive Vertical KPI Row ──
+          _VerticalKpiRow(ctrl: ctrl, isLarge: isLarge),
         ],
       ),
     );
@@ -1666,5 +1675,60 @@ class _PaymentDonut extends StatelessWidget {
       default:
         return key;
     }
+  }
+}
+
+// ─── Reactive Vertical KPI Row ───────────────────────────────────────────────
+
+class _VerticalKpiRow extends StatelessWidget {
+  final ControllerHomeDashboard ctrl;
+  final bool isLarge;
+
+  const _VerticalKpiRow({required this.ctrl, required this.isLarge});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final profile = AppTypeService.to.currentProfile;
+      final type = profile.type;
+
+      final List<Widget> kpis = [];
+
+      kpis.add(_buildKpi(context, 'Footfall', '${ctrl.verticalFootfallToday.value}', Icons.people, profile.primaryColor));
+
+      if (type == AppType.steel) {
+        kpis.add(_buildKpi(context, 'Tonnage (MT)', ctrl.verticalDispatchTonnage.value.toStringAsFixed(1), Icons.local_shipping, profile.primaryColor));
+        kpis.add(_buildKpi(context, 'Khata Due', '₹${ctrl.verticalKhataDue.value.toStringAsFixed(0)}', Icons.account_balance_wallet, Colors.orange));
+      } else if (type == AppType.jewellery) {
+        kpis.add(_buildKpi(context, 'Gold Stock (G)', ctrl.verticalGoldGrams.value.toStringAsFixed(2), Icons.diamond, profile.primaryColor));
+        kpis.add(_buildKpi(context, 'Khata Due', '₹${ctrl.verticalKhataDue.value.toStringAsFixed(0)}', Icons.account_balance_wallet, Colors.orange));
+      } else if (type == AppType.electronics) {
+        kpis.add(_buildKpi(context, 'IMEI in Stock', '${ctrl.verticalImeiInStock.value}', Icons.badge, profile.primaryColor));
+      } else if (type == AppType.apparel) {
+        kpis.add(_buildKpi(context, 'Exchange %', '${ctrl.verticalExchangePercent.value.toStringAsFixed(1)}%', Icons.sync_alt, profile.primaryColor));
+      }
+
+      return Row(children: kpis.map((k) => Expanded(child: k)).toList());
+    });
+  }
+
+  Widget _buildKpi(BuildContext context, String title, String value, IconData icon, Color color) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 4),
+          Text(title, style: TextStyle(fontSize: 10, color: color)),
+          Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
   }
 }

@@ -23,6 +23,9 @@ class EntityCustomer {
   String? zipCode;
   String? notes;
 
+  /// Outstanding ledger / khata balance for this customer (positive = due from customer).
+  double? dueAmount;
+
   bool? isActive;
   bool? isVip;
 

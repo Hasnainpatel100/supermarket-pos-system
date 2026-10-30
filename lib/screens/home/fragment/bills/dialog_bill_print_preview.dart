@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
+import '../../../../core/app_type/app_type_service.dart';
+import '../../../../core/app_type/enum_app_type.dart';
 import '../../../../model/entity_bill.dart';
 import '../../../../model/entity_bill_item.dart';
 import '../../../../service/service_bill_pdf.dart';
@@ -38,10 +40,17 @@ class _DialogBillPrintPreviewState extends State<DialogBillPrintPreview> {
         ? Get.find<ControllerHomeSettings>()
         : Get.put(ControllerHomeSettings());
 
+    final profile = AppTypeService.to.currentProfile;
+    final isA4Vertical = profile.type == AppType.steel ||
+        profile.type == AppType.jewellery ||
+        profile.type == AppType.electronics;
+
     final initial = widget.initialPaperSize ??
-        (_settings.rxThermalPaperSize.value.isNotEmpty
-            ? _settings.rxThermalPaperSize.value
-            : '80mm');
+        (isA4Vertical
+            ? 'A4'
+            : (_settings.rxThermalPaperSize.value.isNotEmpty
+                ? _settings.rxThermalPaperSize.value
+                : '80mm'));
     _rxPaperSize = initial.obs;
   }
 

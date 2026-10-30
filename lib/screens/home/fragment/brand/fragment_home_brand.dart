@@ -878,7 +878,7 @@ class FragmentHomeBrand extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Create a brand or sync with the REST API server to get started.',
+            'No brands registered yet.',
             style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 20),

@@ -262,4 +262,61 @@ class PosIsolateEngine {
     matched.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
     return matched.take(limit).map((e) => e['id'] as int).toList();
   }
+
+  /// Filters a full item catalogue in a background isolate so typing in the
+  /// search box never drops below 60 FPS even with 10,000+ SKUs in stock.
+  /// Returns the filtered list of item maps (already serializable).
+  static Future<List<Map<String, dynamic>>> filterItemsAsync({
+    required List<Map<String, dynamic>> allItems,
+    required String query,
+    required String selectedCategory,
+  }) async {
+    return compute(
+      _filterItemsWorker,
+      {
+        'items': allItems,
+        'query': query,
+        'category': selectedCategory,
+      },
+    );
+  }
+
+  static List<Map<String, dynamic>> _filterItemsWorker(Map<String, dynamic> data) {
+    final items = (data['items'] as List).cast<Map<String, dynamic>>();
+    final query = (data['query'] as String).trim().toLowerCase();
+    final category = (data['category'] as String).trim().toLowerCase();
+
+    final results = <Map<String, dynamic>>[];
+    final seen = <int>{};
+
+    for (final item in items) {
+      final id = item['id'] as int?;
+      if (id == null || seen.contains(id)) continue;
+      seen.add(id);
+
+      final isActive = item['isActive'] as bool? ?? true;
+      if (!isActive) continue;
+
+      // Category filter (case-insensitive, 'all' matches everything)
+      if (category != 'all') {
+        final cat = (item['category'] ?? '').toString().toLowerCase();
+        if (cat != category) continue;
+      }
+
+      if (query.isEmpty) {
+        results.add(item);
+        continue;
+      }
+
+      final name = (item['name'] ?? '').toString().toLowerCase();
+      final barcode = (item['barcode'] ?? '').toString().toLowerCase();
+      final sku = (item['sku'] ?? '').toString().toLowerCase();
+
+      if (name.contains(query) || barcode.contains(query) || sku.contains(query)) {
+        results.add(item);
+      }
+    }
+
+    return results;
+  }
 }

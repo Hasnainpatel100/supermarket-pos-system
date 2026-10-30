@@ -446,7 +446,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Add a new supplier to get started'.tr,
+            'No suppliers in this category'.tr,
             style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
           ),
         ],

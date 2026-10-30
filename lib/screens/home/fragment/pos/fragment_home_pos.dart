@@ -7,6 +7,7 @@ import 'package:barcode_widget/barcode_widget.dart';
 import '../../../../model/entity_item.dart';
 import '../../../../model/entity_customer.dart';
 import '../../../../model/entity_bill.dart';
+import '../../../../util/pos_typography.dart';
 import '../../../../util/snackbar_util.dart';
 import '../account/controller_home_account.dart';
 import '../account/dialog_start_day_shift.dart';
@@ -18,6 +19,15 @@ import 'activity_split_bill.dart';
 import 'controller_home_pos.dart';
 import 'dialog_parked_bills.dart';
 import 'dialog_select_batch.dart';
+import '../../../../core/app_type/app_type_service.dart';
+import '../../../../core/app_type/enum_app_type.dart';
+import '../../../../features/verticals/market/widgets/market_toolbar_slot.dart';
+import '../../../../features/verticals/steel/widgets/steel_toolbar_slot.dart';
+import '../../../../features/verticals/apparel/widgets/apparel_filter_slot.dart';
+import '../../../../features/verticals/electronics/widgets/electronics_toolbar_slot.dart';
+import '../../../../features/verticals/jewellery/widgets/jewellery_rate_bar_slot.dart';
+import '../../../../features/verticals/optical/widgets/optical_rx_slot.dart';
+import '../../../../features/verticals/footwear/widgets/footwear_size_selector_slot.dart';
 
 class FragmentHomePos extends StatelessWidget {
   const FragmentHomePos({super.key});
@@ -211,6 +221,25 @@ class _LeftPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
+          Obx(() {
+            final profile = AppTypeService.to.rxCurrentProfile.value;
+            switch (profile.type) {
+              case AppType.market:
+                return const MarketToolbarSlot();
+              case AppType.steel:
+                return SteelToolbarSlot();
+              case AppType.apparel:
+                return const ApparelFilterSlot();
+              case AppType.electronics:
+                return const ElectronicsToolbarSlot();
+              case AppType.jewellery:
+                return JewelleryRateSlot();
+              case AppType.optical:
+                return OpticalRxSlot();
+              case AppType.footwear:
+                return FootwearSizeSlot();
+            }
+          }),
           _TabBar(controller: controller),
           _SearchBar(controller: controller),
           Expanded(child: Obx(() {
@@ -803,7 +832,7 @@ class _SearchBarState extends State<_SearchBar> {
               controller: widget.controller.searchController,
               focusNode: widget.controller.searchFocusNode,
               decoration: InputDecoration(
-                hintText: 'search_name_code_barcode'.tr,
+                hintText: 'Search by ${AppTypeService.to.currentProfile.codeLabel}...',
                 hintStyle: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.6), fontSize: 13),
                 prefixIcon: Icon(Icons.search_rounded, color: cs.primary, size: 20),
                 suffixIcon: Padding(
@@ -901,7 +930,7 @@ class _CartDataTable extends StatelessWidget {
             DataTable(
             showCheckboxColumn: false,
             headingRowColor: WidgetStateProperty.resolveWith((_) => cs.surfaceContainerHighest),
-            headingTextStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, color: cs.onSurface, letterSpacing: 0.3),
+            headingTextStyle: PosTypography.tableHeader(context),
             dataRowMinHeight: 42,
             dataRowMaxHeight: 48,
             horizontalMargin: 16,
@@ -1192,11 +1221,24 @@ class _CustomerSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      selected.name ?? 'unknown'.tr,
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurface),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            selected.name ?? 'unknown'.tr,
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: cs.onSurface),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (selected.dueAmount != null && selected.dueAmount! > 0.001) ...[
+                          const SizedBox(width: 6),
+                          _KhataDueBadge(
+                            dueAmount: selected.dueAmount!,
+                            cs: cs,
+                          ),
+                        ],
+                      ],
                     ),
                     Text(
                       [selected.phone, selected.city].where((s) => s != null && s.isNotEmpty).join(' • '),
@@ -1869,6 +1911,94 @@ Future<void> _sendCurrentBillOnWhatsApp(ControllerHomePos controller, Controller
 
 // ─── Payment Section ─────────────────────────────────────────────────────────
 
+class _KhataDueBadge extends StatelessWidget {
+  final double dueAmount;
+  final ColorScheme cs;
+
+  const _KhataDueBadge({required this.dueAmount, required this.cs});
+
+  void _showKhataPopup(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+            SizedBox(width: 8),
+            Text('Customer Khata Due', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'This customer has an outstanding ledger balance. Proceeding with cash checkout will not automatically clear the khata entry.',
+              style: TextStyle(fontSize: 12.5),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.account_balance_wallet_outlined, color: Colors.red, size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Overdue: ₹${dueAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Khata Due: ₹${dueAmount.toStringAsFixed(2)} — tap for details',
+      child:GestureDetector(
+        onTap: () => _showKhataPopup(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+          ),
+          child: Text(
+            'Khata Due: ₹${dueAmount.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PaymentSection extends StatelessWidget {
   final ControllerHomePos controller;
   const _PaymentSection({required this.controller});
@@ -2379,20 +2509,14 @@ class _PaymentSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: fg,
-                  ),
+                  style: PosTypography.badge(context).copyWith(color: fg),
                 ),
                 const Spacer(),
                 Text(
                   "$currency${(isDue || isChange ? amount : (isBalanced ? session.rxAmountReceived.value : session.rxGrandTotal.value)).toStringAsFixed(2)}",
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: fg,
-                  ),
+                  style: isChange
+                      ? PosTypography.grandTotal(context).copyWith(color: Colors.green.shade700)
+                      : PosTypography.grandTotal(context).copyWith(color: fg),
                 ),
               ],
             ),

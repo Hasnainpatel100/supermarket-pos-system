@@ -125,7 +125,7 @@ class FragmentHomeItem extends StatelessWidget {
                   subtitle = 'Try checking for typos or searching a different term.';
                 } else {
                   title = 'No items found';
-                  subtitle = 'Add a new item to get started';
+                  subtitle = 'No items in this category';
                 }
 
                 return Center(

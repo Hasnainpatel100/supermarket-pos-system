@@ -139,7 +139,6 @@ class FragmentHomeCustomer extends StatelessWidget {
                 const GenericEmptyState(
                   icon: Icons.person_off_rounded,
                   title: 'no_customers_found',
-                  subtitle: 'add_new_customer_to_get_started',
                   gradientColors: [Color(0xFFBFDBFE), Color(0xFFDDD6FE)],
                 ),
                 if (canCreate) ...[

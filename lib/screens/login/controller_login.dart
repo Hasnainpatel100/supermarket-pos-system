@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import '../../commons/loader.dart';
 import '../../core/storage/token_storage.dart';
 import '../../features/authentication/data/auth_repository.dart';
+import '../../core/app_type/app_type_service.dart';
 import '../../model/model_branch.dart';
 import '../../repository/repo_storage.dart';
 import '../../service/service_brand_context.dart';
@@ -59,14 +60,15 @@ class ControllerLogin extends GetxController {
       return;
     }
 
-    // ── Enforce strict MARKET check (only MARKET accounts allowed) ──
+    // ── Enforce supported appType check (all 7 verticals allowed) ──
     final appType = (result.authResponse?.appType ?? '').trim().toUpperCase();
     final userType = (result.authResponse?.userType ?? '').trim().toUpperCase();
+    final supportedTypes = ['STEEL', 'MARKET', 'APPAREL', 'ELECTRONICS', 'JEWELLERY', 'OPTICAL', 'FOOTWEAR'];
 
-    if (appType != 'MARKET') {
+    if (!supportedTypes.contains(appType) && appType.isNotEmpty) {
       Loader.hideLoader();
       SnackbarUtil.showError(
-        'Access denied: Only accounts with appType "MARKET" are authorized to login.',
+        'Access denied: Unsupported appType "$appType".',
       );
       // Clear tokens since this user shouldn't be logged in
       if (Get.isRegistered<AuthRepository>()) {
@@ -118,6 +120,10 @@ class ControllerLogin extends GetxController {
     if (loggedInBrandId.isNotEmpty && Get.isRegistered<ServiceObjectBox>()) {
       await Get.find<ServiceObjectBox>().switchBrandDatabase(loggedInBrandId);
     }
+
+    // ── Apply Business Vertical (POS-wide Architecture) ──
+    final resolvedAppType = (result.authResponse?.appType ?? 'MARKET').trim();
+    await Get.find<AppTypeService>().applyAppType(resolvedAppType);
 
     // Persist user session in RepoStorage
     await _repoStorage.setUser(json.encode(user.toMap()));

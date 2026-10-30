@@ -7,6 +7,8 @@ import '../../../../model/entity_item.dart';
 import '../../../../model/entity_item_batch.dart';
 import '../../../../model/entity_purchase.dart';
 import '../../../../objectbox.g.dart';
+import '../../../../core/app_type/app_type_service.dart';
+import '../../../../core/app_type/enum_app_type.dart';
 import '../../../../service/service_brand_context.dart';
 import '../../../../service/service_object_box.dart';
 import '../../../../service/service_storage.dart';
@@ -66,6 +68,16 @@ class ControllerHomeDashboard extends GetxController {
   final RxMap<String, double> paymentBreakdown = <String, double>{}.obs;
 
   final RxBool isLoading = true.obs;
+
+  // ── Vertical-Specific KPIs (driven by AppTypeService.currentProfile) ──
+  final RxInt verticalFootfallToday = 0.obs;
+  final RxInt verticalPendingOrders = 0.obs;
+  final RxDouble verticalDispatchTonnage = 0.0.obs;
+  final RxDouble verticalKhataDue = 0.0.obs;
+  final RxInt verticalActiveVehicles = 0.obs;
+  final RxDouble verticalGoldGrams = 0.0.obs;
+  final RxInt verticalImeiInStock = 0.obs;
+  final RxDouble verticalExchangePercent = 0.0.obs;
 
   @override
   void onInit() {
@@ -300,6 +312,157 @@ class ControllerHomeDashboard extends GetxController {
         .toList();
 
     isLoading.value = false;
+    _loadVerticalKpis();
+  }
+
+  /// Computes vertical-specific KPIs driven by AppTypeService.currentProfile.
+  /// Each vertical highlights its own primary business metric.
+  void _loadVerticalKpis() {
+    final type = AppTypeService.to.currentType;
+
+    switch (type) {
+      case AppType.market:
+        verticalFootfallToday.value = todayOrders.value;
+        verticalPendingOrders.value = 0;
+        verticalDispatchTonnage.value = 0.0;
+        verticalKhataDue.value = 0.0;
+        verticalActiveVehicles.value = 0;
+        verticalGoldGrams.value = 0.0;
+        verticalImeiInStock.value = 0;
+        verticalExchangePercent.value = 0.0;
+        break;
+
+      case AppType.steel:
+        verticalFootfallToday.value = todayOrders.value;
+        verticalPendingOrders.value = _boxPurchase.count();
+        verticalDispatchTonnage.value = _sumDispatchTonnageToday();
+        verticalKhataDue.value = _sumCustomerKhataDue();
+        verticalActiveVehicles.value = 0;
+        verticalGoldGrams.value = 0.0;
+        verticalImeiInStock.value = 0;
+        verticalExchangePercent.value = 0.0;
+        break;
+
+      case AppType.jewellery:
+        verticalFootfallToday.value = todayOrders.value;
+        verticalPendingOrders.value = 0;
+        verticalDispatchTonnage.value = 0.0;
+        verticalKhataDue.value = _sumCustomerKhataDue();
+        verticalActiveVehicles.value = 0;
+        verticalGoldGrams.value = _sumGoldStockGrams();
+        verticalImeiInStock.value = 0;
+        verticalExchangePercent.value = 0.0;
+        break;
+
+      case AppType.electronics:
+        verticalFootfallToday.value = todayOrders.value;
+        verticalPendingOrders.value = 0;
+        verticalDispatchTonnage.value = 0.0;
+        verticalKhataDue.value = _sumCustomerKhataDue();
+        verticalActiveVehicles.value = 0;
+        verticalGoldGrams.value = 0.0;
+        verticalImeiInStock.value = _countImeiInStock();
+        verticalExchangePercent.value = 0.0;
+        break;
+
+      case AppType.apparel:
+        verticalFootfallToday.value = todayOrders.value;
+        verticalPendingOrders.value = 0;
+        verticalDispatchTonnage.value = 0.0;
+        verticalKhataDue.value = _sumCustomerKhataDue();
+        verticalActiveVehicles.value = 0;
+        verticalGoldGrams.value = 0.0;
+        verticalImeiInStock.value = 0;
+        verticalExchangePercent.value = todayOrders.value > 0
+            ? (paymentBreakdown['CASH'] ?? 0.0) / todaySales.value * 100
+            : 0.0;
+        break;
+
+      case AppType.optical:
+      case AppType.footwear:
+        verticalFootfallToday.value = todayOrders.value;
+        verticalPendingOrders.value = 0;
+        verticalDispatchTonnage.value = 0.0;
+        verticalKhataDue.value = _sumCustomerKhataDue();
+        verticalActiveVehicles.value = 0;
+        verticalGoldGrams.value = 0.0;
+        verticalImeiInStock.value = 0;
+        verticalExchangePercent.value = 0.0;
+        break;
+    }
+  }
+
+  double _sumDispatchTonnageToday() {
+    try {
+      final q = _boxBillItem
+          .query(
+            EntityBillItem_.unit
+                .equals('MT', caseSensitive: false)
+                .or(EntityBillItem_.unit.equals('kg', caseSensitive: false)),
+          )
+          .build();
+      final items = q.find();
+      q.close();
+      double total = 0.0;
+      for (final bi in items) {
+        final unit = (bi.unit ?? '').toLowerCase();
+        final qty = (bi.qty ?? 1).toDouble();
+        final lineTotal = (bi.total ?? 0.0);
+        if (unit == 'mt') {
+          total += lineTotal > 0 ? lineTotal : qty;
+        } else if (unit == 'kg') {
+          total += qty / 1000.0;
+        }
+      }
+      return total;
+    } catch (_) {
+      return 0.0;
+    }
+  }
+
+  double _sumCustomerKhataDue() {
+    try {
+      final q = _boxCustomer.query().build();
+      final customers = q.find();
+      q.close();
+      double total = 0.0;
+      for (final c in customers) {
+        if (c.dueAmount != null && c.dueAmount! > 0) {
+          total += c.dueAmount!;
+        }
+      }
+      return total;
+    } catch (_) {
+      return 0.0;
+    }
+  }
+
+  double _sumGoldStockGrams() {
+    try {
+      final q = _boxItem
+          .query(EntityItem_.unit.equals('Gram', caseSensitive: false))
+          .build();
+      final items = q.find();
+      q.close();
+      double total = 0.0;
+      for (final it in items) {
+        total += (it.totalQty ?? 0).toDouble();
+      }
+      return total;
+    } catch (_) {
+      return 0.0;
+    }
+  }
+
+  int _countImeiInStock() {
+    try {
+      final q = _boxItem
+          .query(EntityItem_.sku.notEquals(''))
+          .build();
+      return q.count();
+    } catch (_) {
+      return 0;
+    }
   }
 
   /// Returns the Monday of the week containing [date]

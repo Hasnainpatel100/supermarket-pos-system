@@ -504,7 +504,7 @@ class FragmentHomePurchase extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   color: colorScheme.onSurface)),
           const SizedBox(height: 6),
-          Text('Create a new purchase order to get started'.tr,
+          Text('No purchases in this category'.tr,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade400)),
         ],
       ),

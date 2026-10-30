@@ -4,6 +4,7 @@ import 'package:super_market/service/service_locale.dart';
 
 import '../core/network/dio_client.dart';
 import '../core/storage/token_storage.dart';
+import '../core/app_type/app_type_service.dart';
 import '../features/authentication/data/auth_api.dart';
 import '../features/authentication/data/auth_repository.dart';
 import '../repository/repo_brand.dart';
@@ -73,6 +74,11 @@ class StaticMethods {
     );
 
     // 6. UI Preferences Services
+    Get.put<AppTypeService>(
+      AppTypeService(),
+      permanent: true,
+    );
+
     Get.put<ServiceTheme>(
       ServiceTheme().onInit(storage: storage),
       permanent: true,

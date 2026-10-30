@@ -20,7 +20,8 @@ class PosItemCard extends StatelessWidget {
 
     return Opacity(
       opacity: isOutOfStock ? 0.6 : 1.0,
-      child: Container(
+      child: RepaintBoundary(
+        child: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
@@ -201,6 +202,7 @@ class PosItemCard extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
@@ -808,6 +808,7 @@ class ControllerHomeItem extends GetxController {
       int colCategory = 4;
       int colCost = 5;
       int colSelling = 6;
+      int colStock = -1;
       int colTaxName = 7;
       int colTaxRate = 8;
       int colTaxType = 9;
@@ -835,6 +836,8 @@ class ControllerHomeItem extends GetxController {
           colTaxRate = c;
         } else if (h.contains('tax type')) {
           colTaxType = c;
+        } else if (h.contains('stock') || h.contains('qty') || h.contains('quantity')) {
+          colStock = c;
         } else if (h.contains('expiry')) {
           colExpiry = c;
         }
@@ -865,6 +868,12 @@ class ControllerHomeItem extends GetxController {
           if (row.length > colTaxType) {
             final t = (cellStr(row[colTaxType]) ?? '').toLowerCase();
             if (t == 'inclusive') taxType = 'inclusive';
+          }
+
+          int parsedStockQty = 0;
+          if (colStock >= 0 && row.length > colStock) {
+            final sq = cellDouble(row[colStock]);
+            if (sq != null && sq > 0) parsedStockQty = sq.round();
           }
 
           bool hasExpiry = false;
@@ -905,7 +914,7 @@ class ControllerHomeItem extends GetxController {
             priceAfterTax: priceAfterTax,
             hasExpiry: hasExpiry,
             isActive: true,
-            totalQty: 0,
+            totalQty: parsedStockQty,
             createdAtUtcMs: now,
             updatedAtUtcMs: now,
           ));
@@ -998,7 +1007,10 @@ class ControllerHomeItem extends GetxController {
 
           if (match != null) {
             newItem.id = match.id;
-            newItem.totalQty = match.totalQty;
+            // If the incoming excel row specified a stock qty, update to that stock; otherwise preserve match.totalQty
+            newItem.totalQty = (newItem.totalQty != null && newItem.totalQty! > 0)
+                ? newItem.totalQty
+                : (match.totalQty ?? 0);
             newItem.createdAtUtcMs = match.createdAtUtcMs;
           }
 
@@ -1008,6 +1020,24 @@ class ControllerHomeItem extends GetxController {
         if (itemsToSave.isNotEmpty) {
           _boxItem.putMany(itemsToSave);
           savedCount = itemsToSave.length;
+
+          // Record opening stock transaction for items with positive stock
+          final txns = <EntityStockTransaction>[];
+          for (final it in itemsToSave) {
+            final q = it.totalQty ?? 0;
+            if (q > 0) {
+              txns.add(EntityStockTransaction(
+                itemId: it.id ?? 0,
+                type: StockTxnType.add.index,
+                quantity: q,
+                createdAtUtcMs: DateTime.now().toUtc().millisecondsSinceEpoch,
+                remarks: 'Initial Bulk Excel Import',
+              ));
+            }
+          }
+          if (txns.isNotEmpty) {
+            _boxStockTxn.putMany(txns);
+          }
         }
       }
 
@@ -1016,6 +1046,13 @@ class ControllerHomeItem extends GetxController {
       }
 
       loadItems();
+
+      // Refresh POS controller categories and items immediately
+      if (Get.isRegistered<ControllerHomePos>()) {
+        final posCtrl = Get.find<ControllerHomePos>();
+        posCtrl.loadCategories();
+        posCtrl.loadItems();
+      }
 
       final successCount = savedCount;
       final errorCount = parsed.errorCount;

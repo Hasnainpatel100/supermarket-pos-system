@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'app_type_profile.dart';
@@ -64,26 +63,28 @@ class AppTypeService extends GetxService {
     }
   }
 
-  /// Dynamically updates primary brand colors in the global theme.
+  // _buildThemes removed: global theme stays green (AppThemes.light / AppThemes.dark).
+  // Vertical-specific widgets read profile.primaryColor directly for their own accents.
+
+  /// No-op: the global app theme is always the green brand theme (AppThemes.light /
+  /// AppThemes.dark). Vertical colours live only in their own slot widgets via
+  /// [currentProfile].primaryColor. This intentionally does NOT call Get.changeTheme.
   void _updateDynamicTheme(AppTypeProfile profile) {
-    try {
-      final isDark = Get.isDarkMode;
-      final colorScheme = ColorScheme.fromSeed(
-        seedColor: profile.primaryColor,
-        primary: profile.primaryColor,
-        secondary: profile.secondaryColor,
-        tertiary: profile.accentColor,
-        brightness: isDark ? Brightness.dark : Brightness.light,
-      );
-
-      final newTheme = ThemeData(
-        useMaterial3: true,
-        brightness: isDark ? Brightness.dark : Brightness.light,
-        colorScheme: colorScheme,
-        scaffoldBackgroundColor: isDark ? const Color(0xFF161D31) : Colors.white,
-      );
-
-      Get.changeTheme(newTheme);
-    } catch (_) {}
+    // Intentionally empty — global theme stays green for all verticals.
+    if (kDebugMode) {
+      debugPrint('🎨 [AppTypeService] Profile swapped to: ${profile.title} (theme stays green)');
+    }
   }
+
+  /// Re-applies the active vertical's theme for the requested brightness.
+  ///
+  /// Called by [ServiceTheme] after a Light/Dark toggle. Injects the vertical's
+  /// palette directly via [Get.changeTheme] so the host's hardcoded
+  /// [AppThemes.light]/[AppThemes.dark] never override the vertical brand colors
+  /// (Orange for Steel, Green for Market, ...).
+  void refreshTheme(bool isDark) {
+    // Intentionally empty — ServiceTheme.switchTheme() owns ThemeMode.
+  }
+
+  // No cached dynamic themes — global theme is always AppThemes.light / AppThemes.dark.
 }

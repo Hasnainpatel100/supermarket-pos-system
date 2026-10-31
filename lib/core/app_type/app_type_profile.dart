@@ -26,6 +26,7 @@ class AppTypeProfile {
   final String partyLabel;
   final String codeLabel;
   final List<String> unitsList;
+  final List<String> categories;
 
   // ── Feature Gates ────────────────────────────────────────────────
   final bool enableWeighbridge;
@@ -53,6 +54,7 @@ class AppTypeProfile {
     required this.partyLabel,
     required this.codeLabel,
     required this.unitsList,
+    this.categories = const [],
     this.enableWeighbridge = false,
     this.enableSectionCalculator = false,
     this.enableWeightScaleUsb = false,

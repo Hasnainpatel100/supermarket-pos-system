@@ -1,3 +1,4 @@
+import '../../../../core/app_type/app_type_service.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -299,17 +300,8 @@ class ControllerHomePos extends GetxController {
     query.close();
 
     if (distinctCats.isEmpty) {
-      // Default supermarket categories matching the market app photo
-      rxCategories.assignAll([
-        'All',
-        'Beverages',
-        'Dairy',
-        'Electronics',
-        'Fruits',
-        'Groceries',
-        'Snacks',
-        'Stationeries',
-      ]);
+      final fallbackCats = AppTypeService.to.currentProfile.categories;
+      rxCategories.assignAll(['All', ...fallbackCats]);
     } else {
       final list = <String>['All'];
       for (final cat in distinctCats) {

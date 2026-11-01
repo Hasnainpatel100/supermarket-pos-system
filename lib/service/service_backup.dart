@@ -70,6 +70,7 @@ class ServiceBackup {
       }
 
       // 2. Pre-flight validations ─────────────────────────────────────────────
+      onProgress(0.0, 'Checking database and disk space…');
       final dbDir = await _repo.getDatabaseDirectory();
 
       if (!Directory(dbDir).existsSync()) {

@@ -22,6 +22,14 @@ import 'dialogs/dialog_print_barcode.dart';
 class FragmentHomeItem extends StatelessWidget {
   const FragmentHomeItem({super.key});
 
+  // Approximate combined width of every column except Name (checkbox, spacing
+  // and margins included). The Name column takes the remaining width so the
+  // whole table, up to the Actions column, fits the card without horizontal
+  // scrolling. On very narrow windows the table is scaled down to fit.
+  static const double _fixedColumnsWidth = 980;
+  static const double _minNameWidth = 160;
+  static const double _maxNameWidth = 420;
+
   @override
   Widget build(BuildContext context) {
     final ControllerHomeItem controller = Get.isRegistered<ControllerHomeItem>()
@@ -169,22 +177,20 @@ class FragmentHomeItem extends StatelessWidget {
                   margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
+                      final nameWidth = (constraints.maxWidth - _fixedColumnsWidth)
+                          .clamp(_minNameWidth, _maxNameWidth)
+                          .toDouble();
                       return Scrollbar(
-                        controller: controller.horizontalScrollController,
+                        controller: controller.verticalScrollController,
                         thumbVisibility: true,
-                        trackVisibility: true,
                         child: SingleChildScrollView(
-                          controller: controller.horizontalScrollController,
-                          scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: constraints.maxWidth,
-                            height: constraints.maxHeight,
-                            child: Scrollbar(
-                              controller: controller.verticalScrollController,
-                              thumbVisibility: true,
-                              child: SingleChildScrollView(
-                                controller: controller.verticalScrollController,
-                                child: Obx(() {
+                          controller: controller.verticalScrollController,
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.topLeft,
+                              child: Obx(() {
                                   // Explicitly register dependency on rxSelectedIds and rxListItem
                                   controller.rxSelectedIds.length;
                                   controller.rxListItem.length;
@@ -197,8 +203,8 @@ class FragmentHomeItem extends StatelessWidget {
                           controller.deselectAllVisible();
                         }
                       },
-                      columnSpacing: 18,
-                      horizontalMargin: 18,
+                      columnSpacing: 14,
+                      horizontalMargin: 14,
                       headingRowColor: WidgetStateProperty.all(colorScheme.primary.withValues(alpha: 0.04)),
                       headingTextStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: colorScheme.onSurface),
                       dividerThickness: 0.5,
@@ -327,15 +333,23 @@ class FragmentHomeItem extends StatelessWidget {
                             return null;
                           }),
                           cells: [
-                            // Name
-                            DataCell(Text(
-                              item.name ?? '-',
-                              style: TextStyle(
-                                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                                color: isActive ? null : Colors.grey,
-                                fontStyle: isActive ? FontStyle.normal : FontStyle.italic,
+                            // Name — fixed width so the remaining columns always fit
+                            DataCell(SizedBox(
+                              width: nameWidth,
+                              child: Tooltip(
+                                message: item.name ?? '-',
+                                waitDuration: const Duration(milliseconds: 500),
+                                child: Text(
+                                  item.name ?? '-',
+                                  style: TextStyle(
+                                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                                    color: isActive ? null : Colors.grey,
+                                    fontStyle: isActive ? FontStyle.normal : FontStyle.italic,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
                             )),
 
                             // SKU
@@ -547,7 +561,6 @@ class FragmentHomeItem extends StatelessWidget {
                 ),
               ),
             ),
-          ),
         );
       },
     ),
@@ -736,40 +749,6 @@ class FragmentHomeItem extends StatelessWidget {
           Text(
             'total_items_count'.trParams({'count': '${controller.totalCount.value}'}),
             style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
-          ),
-          // ── Horizontal Table Scroll Navigation ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.compare_arrows_rounded, size: 16, color: colorScheme.primary),
-                const SizedBox(width: 6),
-                Text(
-                  'Scroll Table:',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
-                ),
-                const SizedBox(width: 8),
-                IconButton.filledTonal(
-                  icon: const Icon(Icons.arrow_back_rounded, size: 16),
-                  tooltip: 'Scroll Left',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: controller.scrollLeft,
-                ),
-                const SizedBox(width: 4),
-                IconButton.filledTonal(
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                  tooltip: 'Scroll Right (Expiry & Actions)',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: controller.scrollRight,
-                ),
-              ],
-            ),
           ),
           Row(
             children: [

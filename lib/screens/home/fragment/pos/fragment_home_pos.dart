@@ -3151,9 +3151,7 @@ class _CatalogHeaderBar extends StatelessWidget {
                 focusNode: controller.searchFocusNode,
                 onChanged: (val) => controller.rxSearchQuery.value = val,
                 decoration: InputDecoration(
-                  hintText: 'search_item_hint'.tr.isEmpty
-                      ? 'Search Items...'
-                      : 'search_item_hint'.tr,
+                  hintText: 'Search Item Name',
                   hintStyle: TextStyle(
                     fontSize: 13,
                     color: cs.onSurfaceVariant.withValues(alpha: 0.7),

@@ -6,6 +6,7 @@ import '../../../../model/backup_info.dart';
 import '../../../../service/service_backup.dart';
 import '../../../../service/service_storage.dart';
 import '../../controller_home.dart';
+import 'dialog_backup_progress.dart';
 
 /// GetX controller that owns all reactive state for the Backup & Recovery UI.
 ///
@@ -24,6 +25,8 @@ class ControllerBackup extends GetxController {
   final rxHistory       = <BackupHistoryItem>[].obs;
   final rxLastBackupDate = Rx<DateTime?>(null);
   final rxError         = ''.obs;
+
+  bool _isProgressDialogOpen = false;
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -61,8 +64,10 @@ class ControllerBackup extends GetxController {
       onProgress: (progress, label) {
         rxProgress.value      = progress;
         rxProgressLabel.value = label;
+        _showProgressDialog();
       },
       onSuccess: (item) {
+        _hideProgressDialog();
         rxIsBackingUp.value = false;
         rxBackupLocation.value = _service.getSavedBackupLocation() ?? '';
         _refreshHistory();
@@ -72,6 +77,7 @@ class ControllerBackup extends GetxController {
         );
       },
       onError: (error) {
+        _hideProgressDialog();
         rxIsBackingUp.value = false;
         rxError.value = error;
         _showError('Backup Failed', error);
@@ -92,9 +98,12 @@ class ControllerBackup extends GetxController {
         rxIsRestoring.value   = true;
         rxProgress.value      = progress;
         rxProgressLabel.value = label;
+        _showProgressDialog();
       },
       onValidated: (BackupInfo info) async {
-        // Show confirmation dialog
+        // Hide the loader while the user reads the confirmation dialog;
+        // it reappears with the next progress update.
+        _hideProgressDialog();
         final result = await Get.dialog<bool>(
           _RestoreConfirmDialog(info: info),
           barrierDismissible: false,
@@ -102,10 +111,12 @@ class ControllerBackup extends GetxController {
         return result == true;
       },
       onSuccess: () {
+        _hideProgressDialog();
         rxIsRestoring.value = false;
         _showRestartDialog();
       },
       onError: (error) {
+        _hideProgressDialog();
         rxIsRestoring.value = false;
         if (!error.contains('cancelled')) {
           rxError.value = error;
@@ -183,6 +194,28 @@ class ControllerBackup extends GetxController {
   }
 
   // ── Dialogs ───────────────────────────────────────────────────────────────
+
+  /// Shows the blocking loading dialog (no-op if it is already visible).
+  void _showProgressDialog() {
+    if (_isProgressDialogOpen) return;
+    _isProgressDialogOpen = true;
+    Get.dialog(
+      DialogBackupProgress(controller: this),
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+    ).whenComplete(() => _isProgressDialogOpen = false);
+  }
+
+  /// Closes the loading dialog. Pops the navigator directly instead of using
+  /// `Get.back()`, which would close an open snackbar instead of the dialog.
+  void _hideProgressDialog() {
+    if (!_isProgressDialogOpen) return;
+    _isProgressDialogOpen = false;
+    final navigator = Get.key.currentState;
+    if (navigator != null && (Get.isDialogOpen ?? false)) {
+      navigator.pop();
+    }
+  }
 
   void _showSuccess(String title, String message) {
     Get.snackbar(

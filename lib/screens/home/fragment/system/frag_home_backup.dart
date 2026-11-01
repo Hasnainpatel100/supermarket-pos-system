@@ -163,7 +163,7 @@ class _ProgressView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Obx(() => Text(
-              controller.rxIsBackingUp.value ? 'creating_backup'.tr : 'restoring_backup'.tr,
+              controller.rxIsBackingUp.value ? 'Creating Backup' : 'Restoring Backup',
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
             )),
         const SizedBox(height: 10),

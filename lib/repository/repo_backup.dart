@@ -128,6 +128,100 @@ class RepoBackup {
     String? infoFilePath,
     void Function(double progress, String label)? onProgress,
   }) async {
+    // Compression is CPU/IO heavy. Run it on a background isolate so the UI
+    // (loading dialog, spinner) keeps animating. Progress is streamed back
+    // through a port as [progress, label] pairs.
+    final jobs = entries.map((e) => <String>[e.sourcePath, e.zipName]).toList();
+    final port = ReceivePort();
+    final sub = port.listen((message) {
+      if (message is List && message.length == 2) {
+        onProgress?.call(message[0] as double, message[1] as String);
+      }
+    });
+    try {
+      await _runZipIsolate(jobs, infoFilePath, destZipPath, port.sendPort);
+      return;
+    } catch (e) {
+      debugPrint('Background ZIP failed, falling back to main isolate: $e');
+    } finally {
+      await sub.cancel();
+      port.close();
+    }
+
+    await _createZipOnMainIsolate(
+      entries: entries,
+      destZipPath: destZipPath,
+      infoFilePath: infoFilePath,
+      onProgress: onProgress,
+    );
+  }
+
+  /// Kept static so the isolate closure only captures sendable values.
+  static Future<void> _runZipIsolate(
+    List<List<String>> jobs,
+    String? infoFilePath,
+    String destZipPath,
+    SendPort progressPort,
+  ) {
+    return Isolate.run(
+      () => _writeZipInIsolate(jobs, infoFilePath, destZipPath, progressPort),
+    );
+  }
+
+  static Future<void> _writeZipInIsolate(
+    List<List<String>> jobs,
+    String? infoFilePath,
+    String destZipPath,
+    SendPort progressPort,
+  ) async {
+    // Collect every file first so progress can be reported as a percentage.
+    final files = <MapEntry<File, String>>[];
+    for (final job in jobs) {
+      final sourcePath = job[0];
+      final zipName = job[1];
+      final type = FileSystemEntity.typeSync(sourcePath);
+      if (type == FileSystemEntityType.file) {
+        files.add(MapEntry(File(sourcePath), zipName));
+      } else if (type == FileSystemEntityType.directory) {
+        final dir = Directory(sourcePath);
+        for (final entity in dir.listSync(recursive: true, followLinks: false)) {
+          if (entity is File) {
+            final relative = p.relative(entity.path, from: dir.path);
+            files.add(MapEntry(
+              entity,
+              p.join(zipName, relative).replaceAll(r'\', '/'),
+            ));
+          }
+        }
+      }
+    }
+
+    final encoder = ZipFileEncoder();
+    encoder.create(destZipPath);
+    try {
+      if (infoFilePath != null && File(infoFilePath).existsSync()) {
+        await encoder.addFile(File(infoFilePath), 'backup_info.json');
+      }
+      final total = files.isEmpty ? 1 : files.length;
+      for (var i = 0; i < files.length; i++) {
+        final entry = files[i];
+        await encoder.addFile(entry.key, entry.value);
+        progressPort.send(<Object>[
+          (i + 1) / total,
+          'Compressing ${p.basename(entry.key.path)}',
+        ]);
+      }
+    } finally {
+      await encoder.close();
+    }
+  }
+
+  Future<void> _createZipOnMainIsolate({
+    required List<BackupZipEntry> entries,
+    required String destZipPath,
+    String? infoFilePath,
+    void Function(double progress, String label)? onProgress,
+  }) async {
     final encoder = ZipFileEncoder();
     encoder.create(destZipPath);
     try {

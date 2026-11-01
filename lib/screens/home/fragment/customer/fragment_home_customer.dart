@@ -73,19 +73,11 @@ class FragmentHomeCustomer extends StatelessWidget {
         ),
         actions: [
           if (canCreate)
-            Obx(
-              () => GradientActionButton(
-                icon: controller.rxShowCreateForm.value
-                    ? Icons.close_rounded
-                    : Icons.person_add_rounded,
-                label: controller.rxShowCreateForm.value
-                    ? (controller.isEditing ? 'Cancel Edit' : 'Close Form')
-                    : 'new_customer'.tr,
-                gradientColors: controller.rxShowCreateForm.value
-                    ? [Colors.grey.shade600, Colors.grey.shade800]
-                    : [Colors.teal.shade400, Colors.teal.shade700],
-                onTap: controller.toggleCreateForm,
-              ),
+            GradientActionButton(
+              icon: Icons.person_add_rounded,
+              label: 'new_customer'.tr,
+              gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
+              onTap: () => _openCustomerDialog(controller),
             ),
         ],
         bottom: PreferredSize(
@@ -101,50 +93,34 @@ class FragmentHomeCustomer extends StatelessWidget {
       ),
 
       floatingActionButton: canCreate
-          ? Obx(
-              () => FloatingActionButton.extended(
-                onPressed: controller.toggleCreateForm,
-                icon: Icon(
-                  controller.rxShowCreateForm.value
-                      ? Icons.close_rounded
-                      : Icons.person_add_rounded,
-                ),
-                label: Text(
-                  controller.rxShowCreateForm.value
-                      ? (controller.isEditing ? 'Cancel Edit' : 'Close Form')
-                      : 'new_customer'.tr,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                backgroundColor: controller.rxShowCreateForm.value
-                    ? Colors.grey.shade700
-                    : colorScheme.primary,
-                foregroundColor: Colors.white,
-                elevation: 4,
+          ? FloatingActionButton.extended(
+              onPressed: () => _openCustomerDialog(controller),
+              icon: const Icon(Icons.person_add_rounded),
+              label: Text(
+                'new_customer'.tr,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
+              backgroundColor: colorScheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 4,
             )
           : null,
 
       body: Obx(() {
         if (controller.rxListCustomer.isEmpty) {
-          if (controller.rxShowCreateForm.value) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 80),
-              child: _buildInlineCustomerFormCard(context, controller),
-            );
-          }
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const GenericEmptyState(
                   icon: Icons.person_off_rounded,
-                  title: 'no_customers_found',
+                  title: 'No Customers Found',
                   gradientColors: [Color(0xFFBFDBFE), Color(0xFFDDD6FE)],
                 ),
                 if (canCreate) ...[
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
-                    onPressed: () => controller.openCreateForm(),
+                    onPressed: () => _openCustomerDialog(controller),
                     icon: const Icon(Icons.person_add_rounded, size: 20),
                     label: Text(
                       'new_customer'.tr,
@@ -166,8 +142,6 @@ class FragmentHomeCustomer extends StatelessWidget {
 
         return Column(
           children: [
-            if (controller.rxShowCreateForm.value)
-              _buildInlineCustomerFormCard(context, controller),
             Expanded(
               child: MyCard(
                 margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -612,7 +586,33 @@ class FragmentHomeCustomer extends StatelessWidget {
       EntityCustomer customer,
       ControllerHomeCustomer controller,
       ) {
+    _openCustomerDialog(controller, customer);
+  }
+
+  /// Opens the create / edit customer form as a modal dialog over the list.
+  /// The form state is reset once the dialog closes (save, cancel or close).
+  Future<void> _openCustomerDialog(
+    ControllerHomeCustomer controller, [
+    EntityCustomer? customer,
+  ]) async {
     controller.openCreateForm(customer);
+    await Get.dialog(
+      Builder(
+        builder: (dialogContext) => Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860),
+            child: SingleChildScrollView(
+              child: _buildInlineCustomerFormCard(dialogContext, controller),
+            ),
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+    controller.closeCreateForm();
   }
 
   void _confirmToggleActive(
@@ -823,7 +823,7 @@ class FragmentHomeCustomer extends StatelessWidget {
     final isEditing = controller.isEditing;
 
     return Card(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      margin: EdgeInsets.zero,
       elevation: 6,
       shadowColor: colorScheme.primary.withValues(alpha: 0.15),
       shape: RoundedRectangleBorder(
@@ -893,7 +893,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                   IconButton(
                     tooltip: 'close'.tr,
                     icon: const Icon(Icons.close_rounded),
-                    onPressed: controller.closeCreateForm,
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
@@ -997,7 +997,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   OutlinedButton(
-                    onPressed: controller.closeCreateForm,
+                    onPressed: () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -1007,7 +1007,14 @@ class FragmentHomeCustomer extends StatelessWidget {
                   const SizedBox(width: 10),
                   Obx(
                     () => ElevatedButton.icon(
-                      onPressed: controller.rxIsSaving.value ? null : controller.saveCustomerFromForm,
+                      onPressed: controller.rxIsSaving.value
+                          ? null
+                          : () async {
+                              final saved = await controller.saveCustomerFromForm();
+                              if (saved && context.mounted) {
+                                Navigator.of(context).pop();
+                              }
+                            },
                       icon: controller.rxIsSaving.value
                           ? const SizedBox(
                               width: 16,

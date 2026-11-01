@@ -163,7 +163,9 @@ class ControllerHomeCustomer extends GetxController {
     rxIsVip.value = false;
   }
 
-  Future<void> saveCustomerFromForm() async {
+  /// Validates and saves the form. Returns `true` when the customer was saved
+  /// so the caller (the customer dialog) can close itself.
+  Future<bool> saveCustomerFromForm() async {
     if (!(createFormKey.currentState?.validate() ?? false)) {
       Get.snackbar(
         'Required',
@@ -172,7 +174,7 @@ class ControllerHomeCustomer extends GetxController {
         backgroundColor: Colors.red.withValues(alpha: 0.15),
         colorText: Colors.red.shade700,
       );
-      return;
+      return false;
     }
 
     final phone = phoneController.text.trim();
@@ -184,7 +186,7 @@ class ControllerHomeCustomer extends GetxController {
         backgroundColor: Colors.red.withValues(alpha: 0.15),
         colorText: Colors.red.shade700,
       );
-      return;
+      return false;
     }
 
     final email = emailController.text.trim();
@@ -196,7 +198,7 @@ class ControllerHomeCustomer extends GetxController {
         backgroundColor: Colors.red.withValues(alpha: 0.15),
         colorText: Colors.red.shade700,
       );
-      return;
+      return false;
     }
 
     rxIsSaving.value = true;
@@ -226,7 +228,6 @@ class ControllerHomeCustomer extends GetxController {
       }
 
       final isEdit = rxEditingCustomer.value != null;
-      closeCreateForm();
 
       Get.snackbar(
         'Success',
@@ -236,6 +237,7 @@ class ControllerHomeCustomer extends GetxController {
         colorText: Colors.green.shade800,
         duration: const Duration(seconds: 3),
       );
+      return true;
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -244,6 +246,7 @@ class ControllerHomeCustomer extends GetxController {
         backgroundColor: Colors.red.withValues(alpha: 0.15),
         colorText: Colors.red.shade700,
       );
+      return false;
     } finally {
       rxIsSaving.value = false;
     }

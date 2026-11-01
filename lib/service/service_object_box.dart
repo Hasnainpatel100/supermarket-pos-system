@@ -109,7 +109,7 @@ class ServiceObjectBox extends GetxService {
       debugPrint('🔄 [ServiceObjectBox] Switching database from brand "$_currentBrandId" to "$clean"');
     }
 
-    // ── Evict all controllers holding live Box<T> references BEFORE closing
+    // ── Evict all controllers holding live `Box<T>` references BEFORE closing
     // the previous store. This prevents "Store is already closed" crashes and
     // guarantees no in-memory cart/bill data leaks across brands. The
     // incoming screen lazily re-instantiates each controller with fresh boxes.
@@ -134,7 +134,7 @@ class ServiceObjectBox extends GetxService {
     }
   }
 
-  /// Evicts every GetX controller that holds a live ObjectBox Box<T> reference.
+  /// Evicts every GetX controller that holds a live ObjectBox `Box<T>` reference.
   /// Safe to call even when a controller is not registered.
   void _evictBrandControllers() {
     if (Get.isRegistered<ControllerHomePos>()) Get.delete<ControllerHomePos>(force: true);

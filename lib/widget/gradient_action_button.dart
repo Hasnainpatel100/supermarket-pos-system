@@ -18,6 +18,7 @@ class PrimaryActionButton extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final Color? backgroundColor;
   final Color? foregroundColor;
+  final List<Color>? gradientColors;
 
   const PrimaryActionButton({
     super.key,
@@ -27,6 +28,7 @@ class PrimaryActionButton extends StatelessWidget {
     this.padding,
     this.backgroundColor,
     this.foregroundColor,
+    this.gradientColors,
   });
 
   @override
@@ -82,6 +84,7 @@ class SecondaryActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final EdgeInsetsGeometry? padding;
+  final List<Color>? gradientColors;
 
   const SecondaryActionButton({
     super.key,
@@ -89,6 +92,7 @@ class SecondaryActionButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.padding,
+    this.gradientColors,
   });
 
   @override
@@ -129,3 +133,6 @@ class SecondaryActionButton extends StatelessWidget {
     );
   }
 }
+
+/// Backwards-compatible alias for PrimaryActionButton.
+typedef GradientActionButton = PrimaryActionButton;

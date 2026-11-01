@@ -25,6 +25,8 @@ class SearchAppBarField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onClear;
   final List<TextInputFormatter>? inputFormatters;
+  final bool hasQuery;
+  final Color? iconColor;
 
   const SearchAppBarField({
     super.key,
@@ -34,6 +36,8 @@ class SearchAppBarField extends StatelessWidget {
     this.onSubmitted,
     this.onClear,
     this.inputFormatters,
+    this.hasQuery = false,
+    this.iconColor,
   });
 
   @override

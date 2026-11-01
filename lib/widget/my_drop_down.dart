@@ -29,7 +29,7 @@ class MyDropDown<T> extends StatelessWidget {
       onChanged: onChanged,
       validator: (val) {
         if (required && val == null) {
-          return '${label} is required';
+          return '$label is required';
         }
         return null;
       },

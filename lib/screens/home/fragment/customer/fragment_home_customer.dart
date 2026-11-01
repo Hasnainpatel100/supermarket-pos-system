@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:super_market/widget/app_button.dart';
 import 'package:super_market/widget/generic_empty_state.dart';
 import 'package:super_market/widget/my_card.dart';
 import 'package:super_market/widget/search_app_bar_field.dart';
-import 'package:super_market/widget/primary_action_button.dart';
-import 'package:super_market/widget/app_bar_title.dart';
+import 'package:super_market/widget/gradient_action_button.dart';
+import 'package:super_market/widget/gradient_app_bar_title.dart';
 import '../../../../model/entity_customer.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../../core/auth/app_permissions.dart';

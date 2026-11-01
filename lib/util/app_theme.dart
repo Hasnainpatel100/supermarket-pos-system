@@ -452,7 +452,6 @@ class AppThemes {
         foregroundColor: baseColorScheme.onPrimary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 6,
-        shadowColor: baseColorScheme.onSurface.withValues(alpha: 0.2),
       ),
 
       popupMenuTheme: PopupMenuThemeData(

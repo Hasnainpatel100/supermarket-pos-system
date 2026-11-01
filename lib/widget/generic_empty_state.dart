@@ -20,6 +20,7 @@ class GenericEmptyState extends StatelessWidget {
   final String? subtitle;
   final double iconSize;
   final Color? iconColor;
+  final List<Color>? gradientColors;
 
   const GenericEmptyState({
     super.key,
@@ -28,6 +29,7 @@ class GenericEmptyState extends StatelessWidget {
     this.subtitle,
     this.iconSize = 72,
     this.iconColor,
+    this.gradientColors,
   });
 
   @override

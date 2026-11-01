@@ -18,6 +18,7 @@ class AppBarTitle extends StatelessWidget {
   final String? subtitle;
   final Color? iconColor;
   final Color? iconBackgroundColor;
+  final List<Color>? gradientColors;
 
   const AppBarTitle({
     super.key,
@@ -26,6 +27,7 @@ class AppBarTitle extends StatelessWidget {
     this.subtitle,
     this.iconColor,
     this.iconBackgroundColor,
+    this.gradientColors,
   });
 
   @override
@@ -70,3 +72,6 @@ class AppBarTitle extends StatelessWidget {
     );
   }
 }
+
+/// Backwards-compatible alias for AppBarTitle.
+typedef GradientAppBarTitle = AppBarTitle;

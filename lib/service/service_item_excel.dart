@@ -538,8 +538,8 @@ class ServiceItemExcel {
 
       sheet.appendRow([
         'Name', 'SKU', 'Barcode', 'Unit', 'Category',
-        'Cost Price', 'Selling Price', 'Stock Qty',
-        'Tax Name', 'Tax Rate (%)', 'Tax Type', 'Has Expiry', 'Status',
+        'Cost Price', 'Selling Price', 'Tax Name', 'Tax Rate', 'Tax Type',
+        'Has Expiry', 'Status', 'Stock Qty',
       ]);
 
       for (final item in items) {
@@ -551,12 +551,12 @@ class ServiceItemExcel {
           item.category      ?? '',
           item.costPrice     ?? 0.0,
           item.sellingPrice  ?? 0.0,
-          item.totalQty      ?? 0,
           item.taxName       ?? '',
           item.taxRate       ?? 0.0,
           item.taxType       ?? '',
           item.hasExpiry == true ? 'Yes' : 'No',
           item.isActive  == true ? 'Active' : 'Inactive',
+          item.totalQty      ?? 0,
         ]);
       }
 
@@ -634,6 +634,8 @@ class ServiceItemExcel {
           final name = str(0);
           if (name.isEmpty) continue;
 
+          final sq = dbl(12);
+          final parsedQty = (sq != null && sq > 0) ? sq.round() : 0;
           importedItems.add(EntityItem(
             name:         name,
             sku:          str(1).isEmpty  ? null : str(1),
@@ -642,12 +644,12 @@ class ServiceItemExcel {
             category:     str(4).isEmpty  ? null : str(4),
             costPrice:    dbl(5),
             sellingPrice: dbl(6) ?? 0.0,
-            taxName:      str(8).isEmpty  ? null : str(8),
-            taxRate:      dbl(9),
-            taxType:      str(10).isEmpty ? null : str(10),
-            hasExpiry:    str(11).toLowerCase() == 'yes',
-            isActive:     str(12).toLowerCase() != 'inactive',
-            totalQty:     0,
+            taxName:      str(7).isEmpty  ? null : str(7),
+            taxRate:      dbl(8),
+            taxType:      str(9).isEmpty  ? null : str(9),
+            hasExpiry:    str(10).toLowerCase() == 'yes',
+            isActive:     str(11).toLowerCase() != 'inactive',
+            totalQty:     parsedQty,
           ));
         }
       }

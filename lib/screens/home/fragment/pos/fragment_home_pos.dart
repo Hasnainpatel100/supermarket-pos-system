@@ -660,22 +660,26 @@ class _SearchBarState extends State<_SearchBar> {
                               final option = _options[index];
                               final isHighlighted = index == _highlightedIndex;
 
-                              return InkWell(
-                                canRequestFocus: false,
-                                onTap: () => _selectOption(option, explicitBatchSelection: true),
-                                onHover: (hovered) {
-                                  if (hovered && _highlightedIndex != index) {
-                                    setState(() {
-                                      _highlightedIndex = index;
-                                    });
+                              return MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                onEnter: (_) {
+                                  if (_highlightedIndex != index) {
+                                    setState(() => _highlightedIndex = index);
                                   }
                                 },
-                                child: Container(
-                                  color: isHighlighted
-                                      ? cs.primaryContainer.withValues(alpha: 0.5)
-                                      : Colors.transparent,
-                                  child: ListTile(
-                                    dense: true,
+                                child: GestureDetector(
+                                  // Opaque hit-testing makes the entire row (including
+                                  // padding) tappable, not just the ListTile content.
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    _selectOption(option, explicitBatchSelection: option.hasBatch);
+                                  },
+                                  child: Container(
+                                    color: isHighlighted
+                                        ? cs.primaryContainer.withValues(alpha: 0.5)
+                                        : Colors.transparent,
+                                    child: ListTile(
+                                      dense: true,
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
                                     leading: CircleAvatar(
                                       radius: 16,
@@ -769,6 +773,7 @@ class _SearchBarState extends State<_SearchBar> {
                                     ),
                                   ),
                                 ),
+                              ),
                               );
                             },
                           ),
@@ -1033,8 +1038,17 @@ class _ActionBar extends StatelessWidget {
         runSpacing: 6,
         children: [
           _ActionChip(icon: Icons.pin_rounded, label: 'qty_f2'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f2)),
-          _ActionChip(icon: Icons.discount_outlined, label: 'item_disc_f3'.tr, onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f3)),
-          _ActionChip(icon: Icons.person_search_rounded, label: 'Customer (F4)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f4)),
+          _ActionChip(
+            icon: Icons.discount_outlined,
+            label: 'item_disc_f3'.tr,
+            onPressed: () {
+              // Guard against an out-of-range index: no cart row may be selected yet
+              // (rxSelectedCartIndex defaults to -1), which would throw a RangeError.
+              final sel = controller.activeSession.rxSelectedCartIndex.value;
+              if (sel >= 0) controller.showItemDiscountDialog(sel);
+            },
+          ),
+          _ActionChip(icon: Icons.person_search_rounded, label: 'Customer (F4)', onPressed: () => controller.openCustomerForm()),
           _ActionChip(icon: Icons.pause_circle_outline_rounded, label: 'Hold (F5)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f5)),
           _ActionChip(icon: Icons.inventory_2_outlined, label: 'Parked (F6)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f6)),
           _ActionChip(icon: Icons.percent_rounded, label: 'Discount (F7)', onPressed: () => controller.handleShortcut(LogicalKeyboardKey.f7)),
@@ -4587,7 +4601,7 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                                   InkWell(
                                     onTap: () {
                                       session.rxSelectedCartIndex.value = index;
-                                      controller.handleShortcut(LogicalKeyboardKey.f3);
+                                      controller.showItemDiscountDialog(index);
                                     },
                                     borderRadius: BorderRadius.circular(6),
                                     child: Container(
@@ -4706,7 +4720,7 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           InkWell(
-                            onTap: () => controller.handleShortcut(LogicalKeyboardKey.f4),
+                            onTap: () => controller.showBillDiscountDialog(),
                             borderRadius: BorderRadius.circular(4),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),

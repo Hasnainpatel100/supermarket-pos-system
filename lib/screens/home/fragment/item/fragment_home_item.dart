@@ -161,29 +161,34 @@ class FragmentHomeItem extends StatelessWidget {
                 );
               }
 
-              return Column(
-                children: [
-                  Expanded(
-                    child: RepaintBoundary(
-                      child: MyCard(
-                        margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Scrollbar(
-                      controller: controller.horizontalScrollController,
-                      thumbVisibility: true,
-                      trackVisibility: true,
-                      child: SingleChildScrollView(
+              // The card fills the available height and only the table rows scroll
+              // inside it, so the app bar, filter chips and pagination stay pinned
+              // within the window bounds.
+              return RepaintBoundary(
+                child: MyCard(
+                  margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Scrollbar(
                         controller: controller.horizontalScrollController,
-                        scrollDirection: Axis.horizontal,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                          child: SingleChildScrollView(
-                            child: Obx(() {
-                              // Explicitly register dependency on rxSelectedIds and rxListItem
-                              controller.rxSelectedIds.length;
-                              controller.rxListItem.length;
-                              return DataTable(
+                        thumbVisibility: true,
+                        trackVisibility: true,
+                        child: SingleChildScrollView(
+                          controller: controller.horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: constraints.maxWidth,
+                            height: constraints.maxHeight,
+                            child: Scrollbar(
+                              controller: controller.verticalScrollController,
+                              thumbVisibility: true,
+                              child: SingleChildScrollView(
+                                controller: controller.verticalScrollController,
+                                child: Obx(() {
+                                  // Explicitly register dependency on rxSelectedIds and rxListItem
+                                  controller.rxSelectedIds.length;
+                                  controller.rxListItem.length;
+                                  return DataTable(
                       showCheckboxColumn: true,
                       onSelectAll: (val) {
                         if (val == true) {
@@ -540,20 +545,18 @@ class FragmentHomeItem extends StatelessWidget {
                     );
                   }),
                 ),
-                ),
               ),
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     ),
   ),
-  // ── Pagination Footer ──
-  _buildPagination(context, controller),
-],
 );
       }),
     ),
+    // ── Pagination Footer (pinned below the scrolling table) ──
+    _buildPagination(context, controller),
   ],
 ),
     );

@@ -26,6 +26,10 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
   late final ControllerHomeItem controller;
   final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
 
+  /// Items tracked with expiry batches can ONLY be adjusted through batches.
+  /// Items without expiry can be adjusted directly by count.
+  bool get hasExpiry => widget.entityItem.hasExpiry == true;
+
   // Toggle mode: true = Increment, false = Decrement
   final RxBool isIncrement = true.obs;
 
@@ -191,8 +195,14 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
         } else {
           SnackbarUtil.showError('Failed to save batches');
         }
+      } else if (hasExpiry) {
+        // Items with expiry tracking MUST be adjusted through batches
+        SnackbarUtil.showError(
+          'This item is tracked with expiry. Please add stock through batches above.',
+        );
+        return;
       } else {
-        // Direct manual increment count
+        // Direct manual increment count (only for items without expiry)
         final qty = int.tryParse(manualIncrementQtyCtrl.text.trim()) ?? 0;
         if (qty <= 0) {
           SnackbarUtil.showError('Enter a valid quantity to increment or add batches above');
@@ -471,6 +481,8 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
           if (rxAddedBatches.isNotEmpty) {
             final total = rxAddedBatches.fold<int>(0, (sum, b) => sum + (b.quantity ?? 0));
             buttonLabel = 'Add $total Units (${rxAddedBatches.length} Batches)';
+          } else if (hasExpiry) {
+            buttonLabel = 'Add Batches to Save';
           } else {
             final qty = int.tryParse(manualIncrementQtyCtrl.text) ?? 0;
             buttonLabel = qty > 0 ? 'Add $qty Units' : 'Save Increment';
@@ -505,6 +517,16 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
   // Increment View (Multi-Batch Builder & Direct Count)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildIncrementView(ColorScheme cs, bool isDark) {
+    // Expiry-tracked items must be incremented by creating batches.
+    // Items without expiry are incremented directly by count. The two modes are
+    // mutually exclusive so neither can be applied to the wrong kind of item.
+    return hasExpiry
+        ? _buildBatchIncrementSection(cs, isDark)
+        : _buildDirectIncrementSection(cs, isDark);
+  }
+
+  /// Batch creation form — used only for items tracked with expiry.
+  Widget _buildBatchIncrementSection(ColorScheme cs, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -641,7 +663,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
         ),
         const SizedBox(height: 14),
 
-        // Added Batches Table or Empty Manual Option
+        // Added Batches Table or Empty State
         Obx(() {
           if (rxAddedBatches.isEmpty) {
             return Container(
@@ -658,54 +680,10 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
                     children: [
                       Icon(Icons.info_outline_rounded, size: 18, color: cs.onSurfaceVariant),
                       const SizedBox(width: 8),
-                      Text(
-                        'No batches added yet. Add batches above, or increment directly by count below:',
-                        style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Direct Increment Qty: ', style: TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 10),
-                      IconButton(
-                        onPressed: () {
-                          final current = int.tryParse(manualIncrementQtyCtrl.text) ?? 1;
-                          if (current > 1) {
-                            manualIncrementQtyCtrl.text = (current - 1).toString();
-                          }
-                        },
-                        icon: const Icon(Icons.remove, size: 20),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.grey.withValues(alpha: 0.15),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 70,
-                        child: TextField(
-                          controller: manualIncrementQtyCtrl,
-                          textAlign: TextAlign.center,
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () {
-                          final current = int.tryParse(manualIncrementQtyCtrl.text) ?? 1;
-                          manualIncrementQtyCtrl.text = (current + 1).toString();
-                        },
-                        icon: const Icon(Icons.add, size: 20),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.grey.withValues(alpha: 0.15),
+                      Flexible(
+                        child: Text(
+                          'No batches added yet. Add batches above to increment stock for this expiry-tracked item.',
+                          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
                         ),
                       ),
                     ],
@@ -786,12 +764,110 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
     );
   }
 
+  /// Direct count increment — used only for items without expiry tracking.
+  Widget _buildDirectIncrementSection(ColorScheme cs, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FormSection(
+            icon: Icons.playlist_add_rounded,
+            color: Colors.green.shade700,
+            title: 'Add Stock by Count',
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'This item is not tracked by expiry, so stock is added directly without creating batches.',
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Direct Increment Qty: ',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: 10),
+              IconButton(
+                onPressed: () {
+                  final current = int.tryParse(manualIncrementQtyCtrl.text) ?? 1;
+                  if (current > 1) {
+                    manualIncrementQtyCtrl.text = (current - 1).toString();
+                  }
+                },
+                icon: const Icon(Icons.remove, size: 20),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.grey.withValues(alpha: 0.15),
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 78,
+                child: TextField(
+                  controller: manualIncrementQtyCtrl,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () {
+                  final current = int.tryParse(manualIncrementQtyCtrl.text) ?? 1;
+                  manualIncrementQtyCtrl.text = (current + 1).toString();
+                },
+                icon: const Icon(Icons.add, size: 20),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.grey.withValues(alpha: 0.15),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // Decrement View (Select Batches or Manual Counting)
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildDecrementView(ColorScheme cs, bool isDark) {
     final availableBatches = rxAvailableBatches;
     final bool hasBatches = availableBatches.isNotEmpty;
+
+    // Items with expiry tracking can ONLY be decremented through batches.
+    if (hasExpiry && !hasBatches) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.25)),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.info_outline_rounded, size: 18, color: cs.onSurfaceVariant),
+            const SizedBox(height: 8),
+            Text(
+              'No active batches available for this expiry-tracked item.',
+              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
 
     if (!hasBatches || forceManualDecrement.value) {
       // ── Manual Count Decrement (Used when no batch is available or explicitly toggled) ──

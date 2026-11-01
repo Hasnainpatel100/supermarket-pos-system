@@ -33,6 +33,7 @@ import '../../../customer/activity_customer_form.dart';
 import '../../../../isolates/pos_isolate_engine.dart';
 import 'dialog_parked_bills.dart';
 import 'model_parked_bill.dart';
+import 'widget_pos_customer_sheet.dart';
 
 enum PosViewMode {
   classicTable, // 1st view: Standard Table View with barcode scanner & table
@@ -1565,6 +1566,10 @@ class ControllerHomePos extends GetxController {
     }
   }
 
+  void changeItemQty(int index) {
+    _showChangeQtyDialog(index);
+  }
+
   void _showCustomerSelectDialog() {
     final searchCtrl = TextEditingController();
     Get.dialog(AlertDialog(
@@ -2190,8 +2195,19 @@ class ControllerHomePos extends GetxController {
     SnackbarUtil.showSuccess('Bill #${bill.billNo} loaded into cart for editing');
   }
 
+  void showBillDiscountDialog() {
+    _showBillDiscountDialog();
+  }
+
+  void showItemDiscountDialog(int index) {
+    _showItemDiscountDialog(index);
+  }
+
+  /// Opens the compact in-place customer card on the POS billing screen.
+  ///
+  /// The cashier never leaves billing: the card is a modal sheet, and the
+  /// customer it creates is auto-selected on the active bill.
   Future<void> openCustomerForm({String? initialName, String? initialPhone}) async {
-    final countBefore = _boxCustomer.count();
     final nameToPass = initialName?.trim().isNotEmpty == true
         ? initialName!.trim()
         : (activeSession.rxQuickCustomerName.value.trim().isNotEmpty
@@ -2203,22 +2219,30 @@ class ControllerHomePos extends GetxController {
             ? activeSession.rxQuickCustomerPhone.value.trim()
             : null);
 
-    await Get.dialog(
-      ActivityCustomerForm(
+    // Await the sheet so the new customer is only selected once it is actually
+    // saved — the sheet pops the created customer as its result.
+    final EntityCustomer? savedCustomer =
+        await showModalBottomSheet<EntityCustomer>(
+      context: Get.context!,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.32),
+      builder: (context) => PosCustomerSheet(
         initialName: nameToPass,
         initialPhone: phoneToPass,
       ),
-      barrierDismissible: false,
     );
-    loadCustomers();
-    if (_boxCustomer.count() > countBefore) {
-      final newCustomer = _boxCustomer.query().order(EntityCustomer_.id, flags: Order.descending).build().findFirst();
-      if (newCustomer != null) {
-        activeSession.rxSelectedCustomer.value = newCustomer;
-        activeSession.rxQuickCustomerName.value = '';
-        activeSession.rxQuickCustomerPhone.value = '';
-      }
+
+    if (savedCustomer != null) {
+      loadCustomers();
+      activeSession.rxSelectedCustomer.value = savedCustomer;
+      activeSession.rxQuickCustomerName.value = '';
+      activeSession.rxQuickCustomerPhone.value = '';
+      SnackbarUtil.showSuccess(
+        '${savedCustomer.name ?? 'Customer'} added and selected for this bill',
+      );
     }
+
     requestSearchFocus();
   }
 

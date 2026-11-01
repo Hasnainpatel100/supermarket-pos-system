@@ -145,18 +145,6 @@ class RepoDrawer {
       ],
     ),
 
-    // 3. Accounts & Register (Day/Shift Management, Cash In / Out)
-    ModelDrawerMenu(
-      menu: EnumMainMenu.account,
-      titleKey: 'account',
-      icon: Icons.account_balance_wallet_rounded,
-      permissions: const [
-        AppPermissions.accountRead,
-        AppPermissions.accountManage,
-        AppPermissions.accountCreate,
-      ],
-    ),
-
     // 4. Products & Catalog (Items)
     ModelDrawerMenu(
       menu: EnumMainMenu.item,
@@ -180,7 +168,19 @@ class RepoDrawer {
       ],
     ),
 
-    // 6. Purchases & Suppliers
+    // 6. Accounts & Register (Day/Shift Management, Cash In / Out)
+    ModelDrawerMenu(
+      menu: EnumMainMenu.account,
+      titleKey: 'account',
+      icon: Icons.account_balance_wallet_rounded,
+      permissions: const [
+        AppPermissions.accountRead,
+        AppPermissions.accountManage,
+        AppPermissions.accountCreate,
+      ],
+    ),
+
+    // 7. Purchases & Suppliers
     ModelDrawerMenu(
       menu: EnumMainMenu.purchaseSupplier,
       titleKey: 'purchase_supplier',

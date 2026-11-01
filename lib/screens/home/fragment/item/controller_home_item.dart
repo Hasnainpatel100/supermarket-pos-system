@@ -132,6 +132,9 @@ class ControllerHomeItem extends GetxController {
     if (horizontalScrollController.hasClients && horizontalScrollController.offset > 0) {
       horizontalScrollController.jumpTo(0.0);
     }
+    if (verticalScrollController.hasClients && verticalScrollController.offset > 0) {
+      verticalScrollController.jumpTo(0.0);
+    }
   }
 
   void resetSearch() {
@@ -149,6 +152,11 @@ class ControllerHomeItem extends GetxController {
 
   // ── Horizontal Table Scrolling ──
   final horizontalScrollController = ScrollController();
+
+  // ── Vertical Table Scrolling ──
+  // Rows scroll inside the table card so the page itself never scrolls and the
+  // app bar, filter chips and pagination stay pinned within the window.
+  final verticalScrollController = ScrollController();
 
   void scrollLeft() {
     if (horizontalScrollController.hasClients) {
@@ -337,6 +345,13 @@ class ControllerHomeItem extends GetxController {
   }
 
   bool adjustStockDirect(EntityItem item, int delta, {String? reason, String? remarks}) {
+    // Check if item has expiry before allowing direct stock adjustment
+    if (item.hasExpiry == true) {
+      // For items with expiry, stock adjustment must go through batch selection
+      // Return false to indicate direct adjustment is not allowed for expiry items
+      return false;
+    }
+
     final ok = adjustStock(item, delta);
     if (ok) {
       _logTxn(
@@ -756,6 +771,7 @@ class ControllerHomeItem extends GetxController {
   @override
   void onClose() {
     horizontalScrollController.dispose();
+    verticalScrollController.dispose();
     _searchDebouncer.dispose();
     searchController.dispose();
     super.onClose();

@@ -2,59 +2,46 @@ import 'package:flutter/material.dart';
 
 /// Standard app-bar title used across list fragments (items, customers, suppliers, purchases).
 ///
-/// Replaces the copy-pasted Container + LinearGradient + Icon + Column pattern
-/// found in 8+ fragment files.
-///
 /// Usage:
 /// ```dart
 /// appBar: AppBar(
-///   title: GradientAppBarTitle(
+///   title: AppBarTitle(
 ///     icon: Icons.inventory_2_rounded,
 ///     title: 'item_list_title'.tr,
 ///     subtitle: 'manage_inventory'.tr,
-///     gradientColors: [Colors.blue.shade400, Colors.blue.shade700],
 ///   ),
 /// )
 /// ```
-class GradientAppBarTitle extends StatelessWidget {
+class AppBarTitle extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
-  final List<Color> gradientColors;
-  final Color? shadowColor;
+  final Color? iconColor;
+  final Color? iconBackgroundColor;
 
-  const GradientAppBarTitle({
+  const AppBarTitle({
     super.key,
     required this.icon,
     required this.title,
     this.subtitle,
-    required this.gradientColors,
-    this.shadowColor,
+    this.iconColor,
+    this.iconBackgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
+    final bg = iconBackgroundColor ?? cs.secondaryContainer;
+    final fg = iconColor ?? cs.secondary;
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: gradientColors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: (shadowColor ?? gradientColors.first).withValues(alpha: 0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: bg,
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(icon, color: fg, size: 22),
         ),
         const SizedBox(width: 12),
         Column(
@@ -62,14 +49,18 @@ class GradientAppBarTitle extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 19,
+                color: cs.onSurface,
+              ),
             ),
             if (subtitle != null)
               Text(
                 subtitle!,
                 style: TextStyle(
-                  fontSize: 11,
-                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  color: cs.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),

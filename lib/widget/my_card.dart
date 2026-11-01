@@ -14,13 +14,16 @@ class MyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Card(
       margin: margin,
       elevation: 0,
+      color: cs.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+          color: cs.outline.withValues(alpha: 0.5),
+          width: 1,
         ),
       ),
       child: padding == EdgeInsets.zero

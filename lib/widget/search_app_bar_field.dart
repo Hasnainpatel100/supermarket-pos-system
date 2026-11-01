@@ -2,21 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Standard search field used in appBar.bottom across list fragments.
-///
-/// Replaces the copy-pasted PreferredSize + Container + TextField pattern
-/// found in customer, item, supplier, and purchase fragments.
+/// Clean, theme-aware design with subtle border and focus state.
 ///
 /// Usage:
 /// ```dart
 /// appBar: AppBar(
 ///   bottom: PreferredSize(
-///     preferredSize: const Size.fromHeight(60),
+///     preferredSize: const Size.fromHeight(64),
 ///     child: SearchAppBarField(
 ///       controller: controller.searchController,
 ///       hint: 'search_item'.tr,
 ///       onChanged: controller.updateSearch,
 ///       onClear: controller.clearSearch,
-///       hasQuery: controller.searchQuery.isNotEmpty,
 ///     ),
 ///   ),
 /// )
@@ -27,10 +24,6 @@ class SearchAppBarField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onClear;
-  final bool hasQuery;
-  final Color? backgroundColor;
-  final Color? iconColor;
-  final Color? closeIconColor;
   final List<TextInputFormatter>? inputFormatters;
 
   const SearchAppBarField({
@@ -40,27 +33,18 @@ class SearchAppBarField extends StatelessWidget {
     this.onChanged,
     this.onSubmitted,
     this.onClear,
-    this.hasQuery = false,
-    this.backgroundColor,
-    this.iconColor,
-    this.closeIconColor,
     this.inputFormatters,
   });
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       decoration: BoxDecoration(
-        color: backgroundColor ?? Theme.of(context).cardColor,
+        color: cs.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: TextField(
         controller: controller,
@@ -68,17 +52,15 @@ class SearchAppBarField extends StatelessWidget {
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: Icon(Icons.search_rounded,
-              color: iconColor ?? Colors.blue.shade600, size: 22),
+          hintStyle: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.5), fontSize: 14),
+          prefixIcon: Icon(Icons.search_rounded, color: cs.onSurfaceVariant, size: 22),
           suffixIcon: ValueListenableBuilder<TextEditingValue>(
             valueListenable: controller,
             builder: (context, value, _) {
-              final show = hasQuery || value.text.isNotEmpty;
+              final show = value.text.isNotEmpty;
               return show
                   ? IconButton(
-                      icon: Icon(Icons.close_rounded,
-                          color: closeIconColor ?? Colors.red.shade400, size: 20),
+                      icon: Icon(Icons.close_rounded, color: cs.onSurfaceVariant, size: 20),
                       onPressed: onClear,
                     )
                   : const SizedBox.shrink();
@@ -88,10 +70,17 @@ class SearchAppBarField extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: cs.secondary, width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
           filled: true,
-          fillColor: backgroundColor ?? Theme.of(context).cardColor,
+          fillColor: cs.surfaceContainerLowest,
         ),
         onChanged: onChanged,
         onSubmitted: onSubmitted,

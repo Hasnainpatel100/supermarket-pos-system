@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Standard empty state widget for list views.
-///
-/// Replaces the copy-pasted Center > Column > gradient icon circle + title/subtitle
-/// pattern found in 10+ fragment files.
+/// Clean, modern design with soft shadows and no gradients.
 ///
 /// Usage:
 /// ```dart
@@ -12,7 +10,6 @@ import 'package:flutter/material.dart';
 ///       icon: Icons.inventory_2_outlined,
 ///       title: 'No items found',
 ///       subtitle: 'Add a new item to get started',
-///       gradientColors: [Colors.blue.shade100, Colors.cyan.shade100],
 ///     )
 ///   : _buildTable(),
 /// )
@@ -21,7 +18,6 @@ class GenericEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
-  final List<Color> gradientColors;
   final double iconSize;
   final Color? iconColor;
 
@@ -30,50 +26,53 @@ class GenericEmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     this.subtitle,
-    required this.gradientColors,
-    this.iconSize = 64,
+    this.iconSize = 72,
     this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
+    final iconBgColor = iconColor ?? cs.secondary;
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: gradientColors,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: iconBgColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+                border: Border.all(color: iconBgColor.withValues(alpha: 0.2), width: 1),
               ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: gradientColors.first.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
+              child: Icon(icon, size: iconSize, color: iconBgColor),
             ),
-            child: Icon(icon, size: iconSize, color: iconColor ?? gradientColors.last),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 20),
             Text(
-              subtitle!,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+              title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface,
+                letterSpacing: -0.3,
+              ),
             ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                subtitle!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: cs.onSurfaceVariant,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

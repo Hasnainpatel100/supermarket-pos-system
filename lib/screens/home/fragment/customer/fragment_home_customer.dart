@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:super_market/widget/gradient_action_button.dart';
-import 'package:super_market/widget/gradient_app_bar_title.dart';
+import 'package:super_market/widget/app_button.dart';
 import 'package:super_market/widget/generic_empty_state.dart';
 import 'package:super_market/widget/my_card.dart';
 import 'package:super_market/widget/search_app_bar_field.dart';
+import 'package:super_market/widget/primary_action_button.dart';
+import 'package:super_market/widget/app_bar_title.dart';
 import '../../../../model/entity_customer.dart';
 import '../../../../util/snackbar_util.dart';
 import '../../../../core/auth/app_permissions.dart';
@@ -65,29 +66,26 @@ class FragmentHomeCustomer extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: GradientAppBarTitle(
+        title: AppBarTitle(
           icon: Icons.people_alt_rounded,
           title: 'customers'.tr,
           subtitle: 'manage_customer_base'.tr,
-          gradientColors: [Colors.blue.shade400, Colors.blue.shade700],
         ),
         actions: [
           if (canCreate)
-            GradientActionButton(
+            PrimaryActionButton(
               icon: Icons.person_add_rounded,
               label: 'new_customer'.tr,
-              gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
               onTap: () => _openCustomerDialog(controller),
             ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
+          preferredSize: const Size.fromHeight(64),
           child: SearchAppBarField(
             controller: controller.searchController,
             hint: 'search_customer_hint'.tr,
             onChanged: controller.updateSearch,
             onClear: controller.clearSearch,
-            hasQuery: controller.searchQuery.isNotEmpty,
           ),
         ),
       ),
@@ -101,7 +99,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               backgroundColor: colorScheme.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: colorScheme.onPrimary,
               elevation: 4,
             )
           : null,
@@ -530,7 +528,7 @@ class FragmentHomeCustomer extends StatelessWidget {
               ),
             ),
             // ── Pagination Footer ──
-            _buildPagination(context, controller),
+            Obx(() => _buildPagination(context, controller)),
           ],
         );
       }),

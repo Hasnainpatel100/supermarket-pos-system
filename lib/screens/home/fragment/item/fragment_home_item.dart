@@ -569,7 +569,7 @@ class FragmentHomeItem extends StatelessWidget {
       }),
     ),
     // ── Pagination Footer (pinned below the scrolling table) ──
-    _buildPagination(context, controller),
+    Obx(() => _buildPagination(context, controller)),
   ],
 ),
     );

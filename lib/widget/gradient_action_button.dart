@@ -1,71 +1,123 @@
 import 'package:flutter/material.dart';
 
-/// Gradient action button used in appBar actions across list fragments.
-///
-/// Replaces the copy-pasted Container + LinearGradient + InkWell + Row pattern
-/// found in item, supplier, purchase, and customer fragments.
+/// Primary action button used in appBar actions across list fragments.
+/// Uses the theme's primary color with proper elevation and shadow.
 ///
 /// Usage:
 /// ```dart
-/// GradientActionButton(
+/// PrimaryActionButton(
 ///   icon: Icons.add_circle_outline_rounded,
 ///   label: 'add_item'.tr,
-///   gradientColors: [Colors.teal.shade400, Colors.teal.shade700],
 ///   onTap: () => Get.dialog(const ActivityItemForm()),
 /// )
 /// ```
-class GradientActionButton extends StatelessWidget {
+class PrimaryActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final List<Color> gradientColors;
   final VoidCallback onTap;
   final EdgeInsetsGeometry? padding;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
-  const GradientActionButton({
+  const PrimaryActionButton({
     super.key,
     required this.icon,
     required this.label,
-    required this.gradientColors,
+    required this.onTap,
+    this.padding,
+    this.backgroundColor,
+    this.foregroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final bg = backgroundColor ?? cs.primary;
+    final fg = foregroundColor ?? cs.onPrimary;
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: bg.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 18, color: fg),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: fg,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Secondary action button for appBar - outlined style.
+class SecondaryActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final EdgeInsetsGeometry? padding;
+
+  const SecondaryActionButton({
+    super.key,
+    required this.icon,
+    required this.label,
     required this.onTap,
     this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      margin: const EdgeInsets.only(right: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: gradientColors.first.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.only(right: 12),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: padding ??
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Container(
+            padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: cs.outline, width: 1),
+            ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 18, color: Colors.white),
+                Icon(icon, size: 18, color: cs.onSurface),
                 const SizedBox(width: 8),
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
                 ),

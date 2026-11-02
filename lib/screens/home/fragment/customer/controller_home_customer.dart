@@ -57,14 +57,10 @@ class ControllerHomeCustomer extends GetxController {
     loadCustomers();
 
     // Debounce search — waits 300ms after last keystroke before querying
-    debounce(
-      searchQuery,
-      (_) {
-        currentPage.value = 0;
-        loadCustomers();
-      },
-      time: const Duration(milliseconds: 300),
-    );
+    debounce(searchQuery, (_) {
+      currentPage.value = 0;
+      loadCustomers();
+    }, time: const Duration(milliseconds: 300));
   }
 
   @override
@@ -90,7 +86,7 @@ class ControllerHomeCustomer extends GetxController {
 
     final query = queryBuilder.build();
     totalCount.value = query.count();
-    
+
     query
       ..offset = currentPage.value * _pageSize
       ..limit = _pageSize;
@@ -204,7 +200,8 @@ class ControllerHomeCustomer extends GetxController {
     rxIsSaving.value = true;
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
 
-    final customer = rxEditingCustomer.value ??
+    final customer =
+        rxEditingCustomer.value ??
         EntityCustomer(isActive: true, createdAtUtcMs: now);
 
     customer.name = nameController.text.trim();

@@ -17,49 +17,67 @@ class FragmentHomeCustomer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ControllerHomeCustomer controller =
-    Get.isRegistered<ControllerHomeCustomer>()
+        Get.isRegistered<ControllerHomeCustomer>()
         ? Get.find<ControllerHomeCustomer>()
         : Get.put(ControllerHomeCustomer());
-    final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>() ? Get.find<ControllerHome>() : null;
-    final role = (homeCtrl?.rxUser.value?.role ?? '').trim().toUpperCase().replaceAll('_', '');
-    final isAdminOrManager = homeCtrl?.isSuperAdmin == true ||
-        ['SUPERADMIN', 'ADMIN', 'STOREADMIN', 'MANAGER', 'OWNER'].contains(role);
+    final ControllerHome? homeCtrl = Get.isRegistered<ControllerHome>()
+        ? Get.find<ControllerHome>()
+        : null;
+    final role = (homeCtrl?.rxUser.value?.role ?? '')
+        .trim()
+        .toUpperCase()
+        .replaceAll('_', '');
+    final isAdminOrManager =
+        homeCtrl?.isSuperAdmin == true ||
+        [
+          'SUPERADMIN',
+          'ADMIN',
+          'STOREADMIN',
+          'MANAGER',
+          'OWNER',
+        ].contains(role);
     final hasNoGranularPerms = homeCtrl?.hasNoPermissions ?? true;
 
-    final canCreate = isAdminOrManager ||
+    final canCreate =
+        isAdminOrManager ||
         hasNoGranularPerms ||
         (homeCtrl?.hasAnyPermission([
-          'CREATE_CUSTOMER',
-          'CUSTOMER_CREATE',
-          'ADD_CUSTOMER',
-          'CUSTOMER_ADD',
-          'CUSTOMER_MANAGE',
-          'CUSTOMERS_ALL',
-          AppPermissions.customerCreate,
-        ]) ?? true) ||
+              'CREATE_CUSTOMER',
+              'CUSTOMER_CREATE',
+              'ADD_CUSTOMER',
+              'CUSTOMER_ADD',
+              'CUSTOMER_MANAGE',
+              'CUSTOMERS_ALL',
+              AppPermissions.customerCreate,
+            ]) ??
+            true) ||
         (homeCtrl?.hasPermission(AppPermissions.orderCreate) ?? true);
 
-    final canUpdate = isAdminOrManager ||
+    final canUpdate =
+        isAdminOrManager ||
         hasNoGranularPerms ||
         (homeCtrl?.hasAnyPermission([
-          'UPDATE_CUSTOMER',
-          'CUSTOMER_UPDATE',
-          'EDIT_CUSTOMER',
-          'CUSTOMER_EDIT',
-          'CUSTOMER_MANAGE',
-          'CUSTOMERS_ALL',
-          AppPermissions.customerUpdate,
-        ]) ?? true);
+              'UPDATE_CUSTOMER',
+              'CUSTOMER_UPDATE',
+              'EDIT_CUSTOMER',
+              'CUSTOMER_EDIT',
+              'CUSTOMER_MANAGE',
+              'CUSTOMERS_ALL',
+              AppPermissions.customerUpdate,
+            ]) ??
+            true);
 
-    final canDelete = isAdminOrManager ||
+    final canDelete =
+        isAdminOrManager ||
         hasNoGranularPerms ||
         (homeCtrl?.hasAnyPermission([
-          'DELETE_CUSTOMER',
-          'CUSTOMER_DELETE',
-          'CUSTOMER_MANAGE',
-          'CUSTOMERS_ALL',
-          AppPermissions.customerDelete,
-        ]) ?? true);
+              'DELETE_CUSTOMER',
+              'CUSTOMER_DELETE',
+              'CUSTOMER_MANAGE',
+              'CUSTOMERS_ALL',
+              AppPermissions.customerDelete,
+            ]) ??
+            true);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -89,19 +107,7 @@ class FragmentHomeCustomer extends StatelessWidget {
         ),
       ),
 
-      floatingActionButton: canCreate
-          ? FloatingActionButton.extended(
-              onPressed: () => _openCustomerDialog(controller),
-              icon: const Icon(Icons.person_add_rounded),
-              label: Text(
-                'new_customer'.tr,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
-              elevation: 4,
-            )
-          : null,
+      floatingActionButton: null,
 
       body: Obx(() {
         if (controller.rxListCustomer.isEmpty) {
@@ -118,17 +124,30 @@ class FragmentHomeCustomer extends StatelessWidget {
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
                     onPressed: () => _openCustomerDialog(controller),
-                    icon: const Icon(Icons.person_add_rounded, size: 20),
+                    icon: const Icon(
+                      Icons.person_add_rounded,
+                      size: 20,
+                      color: Colors.white,
+                    ),
                     label: Text(
                       'new_customer'.tr,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 4,
+                      backgroundColor: const Color(0xFF10B981),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 2,
                     ),
                   ),
                 ],
@@ -295,14 +314,14 @@ class FragmentHomeCustomer extends StatelessWidget {
                         ),
                       ],
                       rows: controller.rxListCustomer.map((
-                          EntityCustomer customer,
-                          ) {
+                        EntityCustomer customer,
+                      ) {
                         final isActive = customer.isActive ?? true;
 
                         return DataRow(
                           color: WidgetStateProperty.resolveWith<Color?>((
-                              states,
-                              ) {
+                            states,
+                          ) {
                             if (!isActive) {
                               return Colors.grey.withValues(alpha: 0.05);
                             }
@@ -343,7 +362,9 @@ class FragmentHomeCustomer extends StatelessWidget {
                                 customer.phone ?? '-',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: isActive ? colorScheme.onSurface : Colors.grey,
+                                  color: isActive
+                                      ? colorScheme.onSurface
+                                      : Colors.grey,
                                 ),
                               ),
                             ),
@@ -354,7 +375,9 @@ class FragmentHomeCustomer extends StatelessWidget {
                                 customer.city ?? '-',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: isActive ? colorScheme.onSurfaceVariant : Colors.grey,
+                                  color: isActive
+                                      ? colorScheme.onSurfaceVariant
+                                      : Colors.grey,
                                 ),
                               ),
                             ),
@@ -482,7 +505,9 @@ class FragmentHomeCustomer extends StatelessWidget {
                                           ),
                                           const SizedBox(width: 12),
                                           Text(
-                                            isActive ? 'deactivate'.tr : 'activate'.tr,
+                                            isActive
+                                                ? 'deactivate'.tr
+                                                : 'activate'.tr,
                                             style: TextStyle(
                                               color: isActive
                                                   ? Colors.orange.shade600
@@ -534,7 +559,10 @@ class FragmentHomeCustomer extends StatelessWidget {
     );
   }
 
-  Widget _buildPagination(BuildContext context, ControllerHomeCustomer controller) {
+  Widget _buildPagination(
+    BuildContext context,
+    ControllerHomeCustomer controller,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -542,7 +570,9 @@ class FragmentHomeCustomer extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'total_customers_count'.trParams({'count': '${controller.totalCount.value}'}),
+            'total_customers_count'.trParams({
+              'count': '${controller.totalCount.value}',
+            }),
             style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           Row(
@@ -552,15 +582,29 @@ class FragmentHomeCustomer extends StatelessWidget {
                 icon: const Icon(Icons.chevron_left_rounded, size: 18),
                 label: Text('prev'.tr),
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: Colors.blue.withValues(alpha:0.1), borderRadius: BorderRadius.circular(10)),
-                child: Text('page_number'.trParams({'number': '${controller.currentPage.value + 1}'}),
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'page_number'.trParams({
+                    'number': '${controller.currentPage.value + 1}',
+                  }),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade700,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -569,7 +613,9 @@ class FragmentHomeCustomer extends StatelessWidget {
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
                 label: Text('next'.tr),
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -579,10 +625,7 @@ class FragmentHomeCustomer extends StatelessWidget {
     );
   }
 
-  void _onEdit(
-      EntityCustomer customer,
-      ControllerHomeCustomer controller,
-      ) {
+  void _onEdit(EntityCustomer customer, ControllerHomeCustomer controller) {
     _openCustomerDialog(controller, customer);
   }
 
@@ -596,7 +639,10 @@ class FragmentHomeCustomer extends StatelessWidget {
     await Get.dialog(
       Builder(
         builder: (dialogContext) => Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 40,
+            vertical: 24,
+          ),
           backgroundColor: Colors.transparent,
           elevation: 0,
           child: ConstrainedBox(
@@ -613,18 +659,23 @@ class FragmentHomeCustomer extends StatelessWidget {
   }
 
   void _confirmToggleActive(
-      BuildContext context,
-      EntityCustomer customer,
-      ControllerHomeCustomer controller,
-      ) {
+    BuildContext context,
+    EntityCustomer customer,
+    ControllerHomeCustomer controller,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     final isCurrentlyActive = customer.isActive ?? true;
 
     Get.defaultDialog(
-      title: isCurrentlyActive ? 'deactivate_customer'.tr : 'activate_customer'.tr,
+      title: isCurrentlyActive
+          ? 'deactivate_customer'.tr
+          : 'activate_customer'.tr,
       titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      middleText: (isCurrentlyActive ? 'deactivate_customer_confirm' : 'activate_customer_confirm')
-          .trParams({'item': customer.name ?? ''}),
+      middleText:
+          (isCurrentlyActive
+                  ? 'deactivate_customer_confirm'
+                  : 'activate_customer_confirm')
+              .trParams({'item': customer.name ?? ''}),
       confirm: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -643,10 +694,19 @@ class FragmentHomeCustomer extends StatelessWidget {
           controller.toggleActive(customer);
           Get.back();
           SnackbarUtil.showSuccess(
-            (!(isCurrentlyActive) ? 'customer_activated' : 'customer_deactivated').trParams({'item': customer.name ?? ''}),
+            (!(isCurrentlyActive)
+                    ? 'customer_activated'
+                    : 'customer_deactivated')
+                .trParams({'item': customer.name ?? ''}),
           );
         },
-        label: Text(isCurrentlyActive ? 'deactivate'.tr : 'activate'.tr, style: TextStyle(color: isCurrentlyActive ? colorScheme.error : colorScheme.primary, fontWeight: FontWeight.bold)),
+        label: Text(
+          isCurrentlyActive ? 'deactivate'.tr : 'activate'.tr,
+          style: TextStyle(
+            color: isCurrentlyActive ? colorScheme.error : colorScheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(
@@ -662,15 +722,20 @@ class FragmentHomeCustomer extends StatelessWidget {
   }
 
   void _confirmDeleteCustomer(
-      BuildContext context,
-      EntityCustomer customer,
-      ControllerHomeCustomer controller,
-      ) {
+    BuildContext context,
+    EntityCustomer customer,
+    ControllerHomeCustomer controller,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
     Get.defaultDialog(
       title: 'delete_customer'.tr,
-      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red),
-      middleText: 'Are you sure you want to permanently delete customer "${customer.name ?? ""}"?',
+      titleStyle: const TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 18,
+        color: Colors.red,
+      ),
+      middleText:
+          'Are you sure you want to permanently delete customer "${customer.name ?? ""}"?',
       confirm: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -686,9 +751,17 @@ class FragmentHomeCustomer extends StatelessWidget {
         onPressed: () {
           controller.deleteCustomer(customer);
           Get.back();
-          SnackbarUtil.showSuccess('Customer "${customer.name ?? ""}" deleted.');
+          SnackbarUtil.showSuccess(
+            'Customer "${customer.name ?? ""}" deleted.',
+          );
         },
-        label: Text('delete'.tr, style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.bold)),
+        label: Text(
+          'delete'.tr,
+          style: TextStyle(
+            color: colorScheme.error,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(
@@ -843,7 +916,10 @@ class FragmentHomeCustomer extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: isEditing
-                            ? [Colors.orange.shade500, Colors.deepOrange.shade700]
+                            ? [
+                                Colors.orange.shade500,
+                                Colors.deepOrange.shade700,
+                              ]
                             : [Colors.teal.shade500, Colors.teal.shade800],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -864,9 +940,7 @@ class FragmentHomeCustomer extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isEditing
-                              ? 'edit_customer'.tr
-                              : 'new_customer'.tr,
+                          isEditing ? 'edit_customer'.tr : 'new_customer'.tr,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -894,7 +968,10 @@ class FragmentHomeCustomer extends StatelessWidget {
               ),
 
               const SizedBox(height: 16),
-              Divider(height: 1, color: colorScheme.outline.withValues(alpha: 0.15)),
+              Divider(
+                height: 1,
+                color: colorScheme.outline.withValues(alpha: 0.15),
+              ),
               const SizedBox(height: 16),
 
               // ── Responsive Form Content ──
@@ -908,9 +985,21 @@ class FragmentHomeCustomer extends StatelessWidget {
                         const SizedBox(height: 10),
                         Row(
                           children: [
-                            Expanded(child: _buildPhoneField(controller, isDark, colorScheme)),
+                            Expanded(
+                              child: _buildPhoneField(
+                                controller,
+                                isDark,
+                                colorScheme,
+                              ),
+                            ),
                             const SizedBox(width: 10),
-                            Expanded(child: _buildEmailField(controller, isDark, colorScheme)),
+                            Expanded(
+                              child: _buildEmailField(
+                                controller,
+                                isDark,
+                                colorScheme,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),
@@ -918,17 +1007,44 @@ class FragmentHomeCustomer extends StatelessWidget {
                         const SizedBox(height: 10),
                         Row(
                           children: [
-                            Expanded(flex: 2, child: _buildCityField(controller, isDark, colorScheme)),
+                            Expanded(
+                              flex: 2,
+                              child: _buildCityField(
+                                controller,
+                                isDark,
+                                colorScheme,
+                              ),
+                            ),
                             const SizedBox(width: 10),
-                            Expanded(flex: 2, child: _buildStateField(controller, isDark, colorScheme)),
+                            Expanded(
+                              flex: 2,
+                              child: _buildStateField(
+                                controller,
+                                isDark,
+                                colorScheme,
+                              ),
+                            ),
                             const SizedBox(width: 10),
-                            Expanded(flex: 1, child: _buildZipField(controller, isDark, colorScheme)),
+                            Expanded(
+                              flex: 1,
+                              child: _buildZipField(
+                                controller,
+                                isDark,
+                                colorScheme,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),
                         Row(
                           children: [
-                            Expanded(child: _buildNotesField(controller, isDark, colorScheme)),
+                            Expanded(
+                              child: _buildNotesField(
+                                controller,
+                                isDark,
+                                colorScheme,
+                              ),
+                            ),
                             const SizedBox(width: 10),
                             _buildVipSwitch(controller, isDark, colorScheme),
                           ],
@@ -942,30 +1058,85 @@ class FragmentHomeCustomer extends StatelessWidget {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(flex: 3, child: _buildNameField(controller, isDark, colorScheme)),
+                          Expanded(
+                            flex: 3,
+                            child: _buildNameField(
+                              controller,
+                              isDark,
+                              colorScheme,
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(flex: 2, child: _buildPhoneField(controller, isDark, colorScheme)),
+                          Expanded(
+                            flex: 2,
+                            child: _buildPhoneField(
+                              controller,
+                              isDark,
+                              colorScheme,
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(flex: 2, child: _buildEmailField(controller, isDark, colorScheme)),
+                          Expanded(
+                            flex: 2,
+                            child: _buildEmailField(
+                              controller,
+                              isDark,
+                              colorScheme,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(flex: 3, child: _buildAddressField(controller, isDark, colorScheme)),
+                          Expanded(
+                            flex: 3,
+                            child: _buildAddressField(
+                              controller,
+                              isDark,
+                              colorScheme,
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(flex: 2, child: _buildCityField(controller, isDark, colorScheme)),
+                          Expanded(
+                            flex: 2,
+                            child: _buildCityField(
+                              controller,
+                              isDark,
+                              colorScheme,
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(flex: 2, child: _buildStateField(controller, isDark, colorScheme)),
+                          Expanded(
+                            flex: 2,
+                            child: _buildStateField(
+                              controller,
+                              isDark,
+                              colorScheme,
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(flex: 1, child: _buildZipField(controller, isDark, colorScheme)),
+                          Expanded(
+                            flex: 1,
+                            child: _buildZipField(
+                              controller,
+                              isDark,
+                              colorScheme,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Expanded(child: _buildNotesField(controller, isDark, colorScheme)),
+                          Expanded(
+                            child: _buildNotesField(
+                              controller,
+                              isDark,
+                              colorScheme,
+                            ),
+                          ),
                           const SizedBox(width: 12),
                           _buildVipSwitch(controller, isDark, colorScheme),
                         ],
@@ -986,16 +1157,26 @@ class FragmentHomeCustomer extends StatelessWidget {
                     icon: const Icon(Icons.cleaning_services_rounded, size: 16),
                     label: const Text('Clear'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     child: Text('cancel'.tr),
                   ),
@@ -1005,7 +1186,8 @@ class FragmentHomeCustomer extends StatelessWidget {
                       onPressed: controller.rxIsSaving.value
                           ? null
                           : () async {
-                              final saved = await controller.saveCustomerFromForm();
+                              final saved = await controller
+                                  .saveCustomerFromForm();
                               if (saved && context.mounted) {
                                 Navigator.of(context).pop();
                               }
@@ -1014,16 +1196,28 @@ class FragmentHomeCustomer extends StatelessWidget {
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
-                          : Icon(Icons.save_rounded, size: 18, color: colorScheme.onPrimary),
+                          : Icon(
+                              Icons.save_rounded,
+                              size: 18,
+                              color: colorScheme.onPrimary,
+                            ),
                       label: Text(
                         isEditing ? 'update_customer'.tr : 'save_customer'.tr,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         elevation: 2,
                       ),
                     ),
@@ -1037,7 +1231,11 @@ class FragmentHomeCustomer extends StatelessWidget {
     );
   }
 
-  Widget _buildNameField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+  Widget _buildNameField(
+    ControllerHomeCustomer controller,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
     return TextFormField(
       controller: controller.nameController,
       decoration: InputDecoration(
@@ -1046,7 +1244,9 @@ class FragmentHomeCustomer extends StatelessWidget {
         prefixIcon: const Icon(Icons.person_rounded, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : Colors.grey.shade50,
       ),
       validator: (val) {
         if (val == null || val.trim().isEmpty) {
@@ -1057,7 +1257,11 @@ class FragmentHomeCustomer extends StatelessWidget {
     );
   }
 
-  Widget _buildPhoneField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+  Widget _buildPhoneField(
+    ControllerHomeCustomer controller,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
     return TextFormField(
       controller: controller.phoneController,
       keyboardType: TextInputType.phone,
@@ -1067,12 +1271,18 @@ class FragmentHomeCustomer extends StatelessWidget {
         prefixIcon: const Icon(Icons.phone_rounded, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : Colors.grey.shade50,
       ),
     );
   }
 
-  Widget _buildEmailField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+  Widget _buildEmailField(
+    ControllerHomeCustomer controller,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
     return TextFormField(
       controller: controller.emailController,
       keyboardType: TextInputType.emailAddress,
@@ -1082,12 +1292,18 @@ class FragmentHomeCustomer extends StatelessWidget {
         prefixIcon: const Icon(Icons.email_rounded, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : Colors.grey.shade50,
       ),
     );
   }
 
-  Widget _buildAddressField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+  Widget _buildAddressField(
+    ControllerHomeCustomer controller,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
     return TextFormField(
       controller: controller.addressController,
       decoration: InputDecoration(
@@ -1096,12 +1312,18 @@ class FragmentHomeCustomer extends StatelessWidget {
         prefixIcon: const Icon(Icons.home_rounded, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : Colors.grey.shade50,
       ),
     );
   }
 
-  Widget _buildCityField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+  Widget _buildCityField(
+    ControllerHomeCustomer controller,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
     return TextFormField(
       controller: controller.cityController,
       decoration: InputDecoration(
@@ -1109,24 +1331,36 @@ class FragmentHomeCustomer extends StatelessWidget {
         prefixIcon: const Icon(Icons.location_city_rounded, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : Colors.grey.shade50,
       ),
     );
   }
 
-  Widget _buildStateField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+  Widget _buildStateField(
+    ControllerHomeCustomer controller,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
     return TextFormField(
       controller: controller.stateController,
       decoration: InputDecoration(
         labelText: 'state'.tr,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : Colors.grey.shade50,
       ),
     );
   }
 
-  Widget _buildZipField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+  Widget _buildZipField(
+    ControllerHomeCustomer controller,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
     return TextFormField(
       controller: controller.zipController,
       keyboardType: TextInputType.number,
@@ -1134,12 +1368,18 @@ class FragmentHomeCustomer extends StatelessWidget {
         labelText: 'zip_code'.tr,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : Colors.grey.shade50,
       ),
     );
   }
 
-  Widget _buildNotesField(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+  Widget _buildNotesField(
+    ControllerHomeCustomer controller,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
     return TextFormField(
       controller: controller.notesController,
       maxLines: 1,
@@ -1149,22 +1389,32 @@ class FragmentHomeCustomer extends StatelessWidget {
         prefixIcon: const Icon(Icons.note_alt_outlined, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
-        fillColor: isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : Colors.grey.shade50,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : Colors.grey.shade50,
       ),
     );
   }
 
-  Widget _buildVipSwitch(ControllerHomeCustomer controller, bool isDark, ColorScheme colorScheme) {
+  Widget _buildVipSwitch(
+    ControllerHomeCustomer controller,
+    bool isDark,
+    ColorScheme colorScheme,
+  ) {
     return Obx(
       () => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: controller.rxIsVip.value
               ? Colors.amber.withValues(alpha: 0.1)
-              : (isDark ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.2) : Colors.grey.shade100),
+              : (isDark
+                    ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.2)
+                    : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: controller.rxIsVip.value ? Colors.amber.shade400 : Colors.grey.shade300,
+            color: controller.rxIsVip.value
+                ? Colors.amber.shade400
+                : Colors.grey.shade300,
           ),
         ),
         child: Row(
@@ -1172,7 +1422,9 @@ class FragmentHomeCustomer extends StatelessWidget {
           children: [
             Icon(
               Icons.star_rounded,
-              color: controller.rxIsVip.value ? Colors.amber.shade700 : Colors.grey.shade400,
+              color: controller.rxIsVip.value
+                  ? Colors.amber.shade700
+                  : Colors.grey.shade400,
               size: 22,
             ),
             const SizedBox(width: 8),
@@ -1181,7 +1433,9 @@ class FragmentHomeCustomer extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: controller.rxIsVip.value ? Colors.amber.shade800 : colorScheme.onSurface,
+                color: controller.rxIsVip.value
+                    ? Colors.amber.shade800
+                    : colorScheme.onSurface,
               ),
             ),
             const SizedBox(width: 8),

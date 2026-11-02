@@ -825,7 +825,7 @@ class ControllerHomeItem extends GetxController {
 
   /// ⚡ HIGH-PERFORMANCE: Decodes and parses Excel rows in a separate Dart Isolate
   /// so the UI thread stays at 60 FPS without dropping a single frame.
-  ({List<EntityItem> items, int errorCount}) _parseExcelBytesInIsolate(Uint8List bytes) {
+  static ({List<EntityItem> items, int errorCount}) _parseExcelBytesInIsolate(Uint8List bytes) {
     final Excel workbook = Excel.decodeBytes(bytes);
     final List<EntityItem> items = [];
     int errorCount = 0;
@@ -1016,7 +1016,7 @@ class ControllerHomeItem extends GetxController {
       );
 
       // ── 3. Parse in background Isolate ────────────────────────────────────
-      final parsed = await Isolate.run(() => _parseExcelBytesInIsolate(bytes));
+      final parsed = await Isolate.run(() => ControllerHomeItem._parseExcelBytesInIsolate(bytes));
 
       // ── 4. Robust Conflict Resolution (Upsert to prevent UniqueConstraint crashes) ──
       int savedCount = 0;
@@ -1173,8 +1173,6 @@ class ItemControllerHelper {
     if (all.isEmpty) return '1';
 
     int maxNum = 0;
-    String? commonPrefix;
-    String? commonPrefix;
 
     for (final b in all) {
       final str = (b.batchNo ?? '').trim();

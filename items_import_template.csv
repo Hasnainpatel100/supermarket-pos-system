@@ -1,0 +1,51 @@
+Name,SKU,Barcode,Unit,Category,Cost,MRP,Stock,Tax Name,Tax Rate,Tax Type,Expiry
+Aashirvaad Atta 5kg,ST-ATT-001,8901234567001,pack,Staples,180,210,50,GST,5,inclusive,yes
+India Gate Basmati Rice 1kg,ST-RCE-001,8901234567002,kg,Staples,120,150,40,GST,5,inclusive,yes
+Tata Salt 1kg,ST-SLT-001,8901234567003,kg,Staples,20,25,100,GST,0,inclusive,no
+Toor Dal 1kg,ST-DAL-001,8901234567004,kg,Staples,130,160,30,GST,5,inclusive,yes
+Sugar 1kg,ST-SUG-001,8901234567005,kg,Staples,40,48,80,GST,5,inclusive,no
+Amul Taaza Milk 1L,DY-MLK-001,8901234567006,ltr,Dairy,62,70,60,GST,5,inclusive,yes
+Amul Butter 100g,DY-BTR-001,8901234567007,pcs,Dairy,50,60,40,GST,12,inclusive,yes
+Amul Paneer 200g,DY-PNR-001,8901234567008,pcs,Dairy,85,100,20,GST,5,inclusive,yes
+Mother Dairy Curd 400g,DY-CRD-001,8901234567009,pcs,Dairy,35,42,30,GST,5,inclusive,yes
+Amul Cheese Cubes 200g,DY-CHS-001,8901234567010,pcs,Dairy,110,135,20,GST,18,inclusive,yes
+Haldi Powder 100g,SP-HAL-001,8901234567011,g,Spices,35,45,50,GST,5,inclusive,no
+Dhaniya Powder 100g,SP-DHN-001,8901234567012,g,Spices,40,50,45,GST,5,inclusive,no
+Mirchi Powder 100g,SP-MRC-001,8901234567013,g,Spices,55,70,40,GST,5,inclusive,no
+Garam Masala 50g,SP-GRM-001,8901234567014,g,Spices,45,60,35,GST,5,inclusive,no
+Fortune Sunflower Oil 1L,OIL-SUN-001,8901234567015,ltr,Oil,130,160,25,GST,5,inclusive,yes
+Mustard Oil 1L,OIL-MUS-001,8901234567016,ltr,Oil,145,180,20,GST,5,inclusive,yes
+Amul Desi Ghee 500ml,OIL-GHE-001,8901234567017,pack,Oil,270,320,15,GST,12,inclusive,yes
+Parle-G 100g,SN-PAR-001,8901234567018,pcs,Biscuits,8,10,100,GST,18,inclusive,yes
+Maggi Masala Noodles,SN-MAG-001,8901234567019,pcs,Snacks,12,14,80,GST,18,inclusive,yes
+Good Day Butter 100g,SN-GDY-001,8901234567020,pcs,Biscuits,25,30,60,GST,18,inclusive,yes
+Kurkure Masala Munch,SN-KUR-001,8901234567021,pcs,Snacks,18,20,50,GST,12,inclusive,yes
+Lays Classic Salted,SN-LAY-001,8901234567022,pcs,Snacks,18,20,50,GST,12,inclusive,yes
+Tata Tea Gold 500g,BV-TEA-001,8901234567023,pack,Beverages,210,250,40,GST,5,inclusive,yes
+Nescafe Classic 50g,BV-NES-001,8901234567024,pcs,Beverages,140,170,25,GST,18,inclusive,yes
+Frooti 500ml,BV-FRT-001,8901234567025,pcs,Beverages,35,40,40,GST,12,inclusive,yes
+RoohAfza 750ml,BV-ROH-001,8901234567026,pcs,Beverages,150,180,20,GST,12,inclusive,yes
+Dettol Liquid 100ml,PC-DET-001,8901234567027,pcs,PersonalCare,75,90,40,GST,18,inclusive,no
+Lifebuoy Soap 100g,PC-LFB-001,8901234567028,pcs,PersonalCare,30,38,70,GST,18,inclusive,no
+Surf Excel Matic 1kg,CL-SUR-001,8901234567029,kg,Cleaning,220,260,30,GST,18,inclusive,no
+Vim Dish Bar 200g,CL-VIM-001,8901234567030,pcs,Cleaning,25,30,60,GST,18,inclusive,no
+Colgate Dental Cream 100g,PC-COL-001,8901234567031,pcs,PersonalCare,50,65,50,GST,18,inclusive,no
+Moong Dal 1kg,ST-MON-001,8901234567032,kg,Staples,110,130,30,GST,5,inclusive,yes
+Chana Dal 1kg,ST-CHA-001,8901234567033,kg,Staples,90,110,35,GST,5,inclusive,yes
+Parle Marie 200g,SN-MAR-001,8901234567034,pcs,Biscuits,25,30,40,GST,18,inclusive,yes
+Britannia Bourbon 100g,SN-BRT-001,8901234567035,pcs,Biscuits,22,25,45,GST,18,inclusive,yes
+Bingo Mad Angles,SN-BIN-001,8901234567036,pcs,Snacks,18,20,50,GST,12,inclusive,yes
+Patanjali Honey 500g,ST-HON-001,8901234567037,pcs,Staples,140,170,20,GST,5,inclusive,yes
+Saffola Oats 400g,ST-OAT-001,8901234567038,pack,Staples,110,135,25,GST,5,inclusive,yes
+Pepsodent Toothpaste 100g,PC-PEP-001,8901234567039,pcs,PersonalCare,45,60,40,GST,18,inclusive,no
+Lux Soap 100g,PC-LUX-001,8901234567040,pcs,PersonalCare,35,42,60,GST,18,inclusive,no
+Harpic Toilet Cleaner 500ml,CL-HAR-001,8901234567041,pcs,Cleaning,85,100,30,GST,18,inclusive,no
+Lizol Floor Cleaner 500ml,CL-LIZ-001,8901234567042,pcs,Cleaning,90,110,25,GST,18,inclusive,no
+Santoor Soap 100g,PC-SAN-001,8901234567043,pcs,PersonalCare,30,35,50,GST,18,inclusive,no
+Clinic Plus Shampoo 80ml,PC-CLI-001,8901234567044,pcs,PersonalCare,60,75,30,GST,18,inclusive,no
+Maggi Atta Noodles,SN-MAG-002,8901234567045,pcs,Snacks,25,30,40,GST,18,inclusive,yes
+Tropicana Mixed Fruit 1L,BV-TRO-001,8901234567046,ltr,Beverages,90,110,20,GST,12,inclusive,yes
+Bournvita 500g,BV-BRV-001,8901234567047,pack,Beverages,220,260,25,GST,18,inclusive,yes
+Kissan Ketchup 500g,ST-KET-001,8901234567048,pack,Staples,85,100,30,GST,12,inclusive,yes
+Dettol Soap 100g,PC-DET-002,8901234567049,pcs,PersonalCare,35,45,50,GST,18,inclusive,no
+Haldiraam Bhujia 150g,SN-HAL-001,8901234567050,pcs,Snacks,35,42,40,GST,12,inclusive,yes

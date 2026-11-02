@@ -8,23 +8,23 @@ class AppThemes {
     if (brightness == Brightness.light) {
       return const ColorScheme(
         brightness: Brightness.light,
-        primary: Color(0xFF060606),          // Near-black — buttons & toggles
+        primary: Color(0xFF0D9488),          // Teal 600 — signature POS teal
         onPrimary: Colors.white,
-        primaryContainer: Color(0xFFE6E6E6),
-        onPrimaryContainer: Color(0xFF0A0A0A),
-        secondary: Color(0xFF0D9488),        // Teal 600 — accents, focus, active
+        primaryContainer: Color(0xFFCCFBF1), // Teal 100 — subtle background
+        onPrimaryContainer: Color(0xFF115E59), // Teal 800 — strong text
+        secondary: Color(0xFF0F766E),        // Teal 700 — secondary actions
         onSecondary: Colors.white,
-        secondaryContainer: Color(0xFFCCFBF1),
-        onSecondaryContainer: Color(0xFF115E59),
-        tertiary: Color(0xFF0F766E),        // Teal 700
+        secondaryContainer: Color(0xFFE2EBE5),
+        onSecondaryContainer: Color(0xFF0F3A30),
+        tertiary: Color(0xFF14B8A6),        // Teal 500
         onTertiary: Colors.white,
         error: Color(0xFFEF4444),
         onError: Colors.white,
         errorContainer: Color(0xFFFEE2E2),
         onErrorContainer: Color(0xFF991B1B),
         surface: Colors.white,
-        onSurface: Color(0xFF161616),        // Near-black text
-        onSurfaceVariant: Color(0xFF6B6B6B),  // Muted grey
+        onSurface: Color(0xFF0F172A),        // Slate 900 — strong text
+        onSurfaceVariant: Color(0xFF3F4E46), // Teal grey — medium emphasis
         outline: Color(0xFFDEDEDE),          // Edge grey
         outlineVariant: Color(0xFFECECEC),   // Line grey
         surfaceContainerLowest: Color(0xFFF5F5F5), // Well grey
@@ -36,26 +36,26 @@ class AppThemes {
     } else {
       return const ColorScheme(
         brightness: Brightness.dark,
-        primary: Color(0xFFF8F8F8),          // Near-white — buttons & toggles
-        onPrimary: Color(0xFF0B0B0B),
-        primaryContainer: Color(0xFF2A2A2A),
-        onPrimaryContainer: Color(0xFFF0F0F0),
-        secondary: Color(0xFF2DD4BF),        // Teal 400 — accents, focus, active
+        primary: Color(0xFF2DD4BF),        // Teal 400 — signature POS teal
+        onPrimary: Color(0xFF003733),
+        primaryContainer: Color(0xFF0D9488), // Teal 600 — selected container
+        onPrimaryContainer: Color(0xFFCCFBF1),
+        secondary: Color(0xFF14B8A6),        // Teal 500
         onSecondary: Color(0xFF003733),
         secondaryContainer: Color(0xFF0D9488),
         onSecondaryContainer: Color(0xFFCCFBF1),
-        tertiary: Color(0xFF14B8A6),        // Teal 500
+        tertiary: Color(0xFF0F766E),        // Teal 700
         onTertiary: Color(0xFF003733),
         error: Color(0xFFF87171),
         onError: Color(0xFF550000),
         errorContainer: Color(0xFF991B1B),
         onErrorContainer: Color(0xFFFEE2E2),
-        surface: Color(0xFF1B1B1B),          // Card surface
-        onSurface: Color(0xFFF2F2F2),
+        surface: Color(0xFF141A17),          // Dark teal-grey surface
+        onSurface: Color(0xFFF4F7F5),
         onSurfaceVariant: Color(0xFF9C9C9C),
         outline: Color(0xFF333333),
         outlineVariant: Color(0xFF262626),
-        surfaceContainerLowest: Color(0xFF0B0B0B), // Canvas
+        surfaceContainerLowest: Color(0xFF090D0B), // Canvas
         surfaceContainerLow: Color(0xFF121212),
         surfaceContainer: Color(0xFF181818),
         surfaceContainerHigh: Color(0xFF1F1F1F),
@@ -498,7 +498,7 @@ class AppThemes {
       chipTheme: ChipThemeData(
         backgroundColor: baseColorScheme.surfaceContainerLowest,
         disabledColor: baseColorScheme.surfaceContainerLow,
-        selectedColor: baseColorScheme.secondary.withValues(alpha: 0.14),
+        selectedColor: baseColorScheme.primary.withValues(alpha: 0.14),
         secondarySelectedColor: baseColorScheme.secondary,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         labelStyle: GoogleFonts.plusJakartaSans(

@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntitySaleItem {
 @Id()
-int? id;
+int id = 0;
 
 int? saleId;
 int? itemId;
@@ -20,7 +20,7 @@ String objectId = ObjectId().hexString;  //mongo id
 
 
 EntitySaleItem({
-this.id,
+this.id = 0,
 this.saleId,
 this.itemId,
 this.quantity,

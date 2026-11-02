@@ -56,8 +56,8 @@ class _FragSalesInvoicesState extends State<FragSalesInvoices> {
           title: 'Sales Invoices'.tr,
           subtitle: 'Track and manage customer billing & invoices'.tr,
           gradientColors: isDark
-              ? [Colors.teal.shade300, Colors.teal.shade600]
-              : [Colors.teal.shade500, Colors.teal.shade800],
+              ? [colorScheme.primary, colorScheme.primaryContainer]
+              : [colorScheme.primary, colorScheme.primaryContainer],
         ),
         actions: [
           // Date Filter Dropdown

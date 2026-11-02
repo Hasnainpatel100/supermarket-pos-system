@@ -1,10 +1,10 @@
+import 'package:objectid/objectid.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../model/entity_item.dart';
 import '../../model/entity_item_batch.dart';
 import '../../model/entity_tax.dart';
 import '../../objectbox.g.dart';
-import 'package:objectid/objectid.dart';
 import '../../service/service_item.dart';
 import '../../service/service_object_box.dart';
 import '../../service/service_item_excel.dart';
@@ -184,7 +184,7 @@ class ControllerItemForm extends GetxController {
         final boxBatch = Get.find<ServiceObjectBox>().box<EntityItemBatch>();
         final existingBatches = boxBatch
             .query(EntityItemBatch_.itemId
-                .equals(editingItem!.id!)
+                .equals(editingItem!.id)
                 .and(EntityItemBatch_.quantity.greaterThan(0)))
             .order(EntityItemBatch_.id)
             .build()
@@ -394,10 +394,10 @@ class ControllerItemForm extends GetxController {
       // Persist batches if added
       if (rxBatches.isNotEmpty) {
         final boxBatch = Get.find<ServiceObjectBox>().box<EntityItemBatch>();
-        if (editingItem != null && editingItem!.id != null) {
-          final old = boxBatch.query(EntityItemBatch_.itemId.equals(editingItem!.id!)).build().find();
+        if (editingItem != null) {
+          final old = boxBatch.query(EntityItemBatch_.itemId.equals(editingItem!.id)).build().find();
           for (final ob in old) {
-            if (ob.id != null) boxBatch.remove(ob.id!);
+            boxBatch.remove(ob.id);
           }
         }
         int totalBatchQty = 0;
@@ -409,6 +409,11 @@ class ControllerItemForm extends GetxController {
           b.costPrice ??= savedItem.costPrice;
           boxBatch.put(b);
           totalBatchQty += (b.quantity ?? 0);
+        }
+
+        // Fix: Generate unique objectId for new item if not already set
+        if (savedItem.objectId.isEmpty) {
+          savedItem.objectId = ObjectId().hexString;
         }
         savedItem.totalQty = totalBatchQty;
         savedItem.hasExpiry = true;

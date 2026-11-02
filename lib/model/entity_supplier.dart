@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntitySupplier {
   @Id()
-  int? id;
+  int id = 0;
 
   @Unique()
   String? supplierCode;
@@ -39,7 +39,7 @@ class EntitySupplier {
   int? updatedDate;
 
   EntitySupplier({
-    this.id,
+    this.id = 0,
     this.supplierCode,
     this.mongoId,
     this.name,

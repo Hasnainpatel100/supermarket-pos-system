@@ -601,7 +601,7 @@ class ControllerInventoryReport extends GetxController {
     // ── OPTIMIZATION 3b: Bulk-load ALL purchase+sale txns for out-of-stock ─
     // One single query for all relevant transactions ordered by date desc,
     // then group by itemId in Dart — eliminates the per-item inner query loop.
-    final outItemIds = outItems.map((e) => e.id ?? 0).where((id) => id > 0).toList();
+    final outItemIds = outItems.map((e) => e.id).where((id) => id > 0).toList();
     final Map<int, EntityStockTransaction?> lastPurchase = {};
     final Map<int, EntityStockTransaction?> lastSale    = {};
 
@@ -635,7 +635,7 @@ class ControllerInventoryReport extends GetxController {
 
     final rows = <OutOfStockRow>[];
     for (final item in outItems) {
-      final id = item.id ?? 0;
+      final id = item.id;
       final lastP = lastPurchase[id];
       final lastS = lastSale[id];
 
@@ -799,7 +799,7 @@ class ControllerInventoryReport extends GetxController {
       final next = prev + (tx.quantity ?? 0);
       runningBalances[itemId] = next;
       if (tx.type == StockTxnType.adjust.index) {
-        adjBalances[tx.id ?? 0] = (prev, next);
+        adjBalances[tx.id] = (prev, next);
       }
     }
 
@@ -824,7 +824,7 @@ class ControllerInventoryReport extends GetxController {
       // Use cache — no individual _boxItem.get() calls
       final itemName = _itemNameCache[itemId] ?? tx.referenceId ?? 'Unknown';
       final diff = tx.quantity ?? 0;
-      final (prevQty, newQty) = adjBalances[tx.id ?? 0] ?? (0, 0);
+      final (prevQty, newQty) = adjBalances[tx.id] ?? (0, 0);
 
       // For value impact, look up costPrice only if needed — use a lazy cache
       final item = itemId > 0 ? _boxItem.get(itemId) : null;

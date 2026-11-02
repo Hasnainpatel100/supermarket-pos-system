@@ -38,6 +38,8 @@ class FragmentHomePos extends StatelessWidget {
         ? Get.find<ControllerHomeAccount>()
         : Get.put(ControllerHomeAccount(), permanent: true);
 
+    final cs = Theme.of(context).colorScheme;
+
     return Obx(() {
       if (!accountCtrl.isShiftOpen) {
         final bool isDayOpen = accountCtrl.isDayOpen;
@@ -53,7 +55,7 @@ class FragmentHomePos extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: cs.onSurface.withValues(alpha: 0.08),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -125,7 +127,6 @@ class FragmentHomePos extends StatelessWidget {
       final controller = Get.isRegistered<ControllerHomePos>()
           ? Get.find<ControllerHomePos>()
           : Get.put(ControllerHomePos(), permanent: true);
-      final cs = Theme.of(context).colorScheme;
 
       return Scaffold(
         backgroundColor: cs.surfaceContainerLowest,
@@ -378,13 +379,13 @@ class _TabBar extends StatelessWidget {
                   icon: Badge(
                     isLabelVisible: count > 0,
                     label: Text('$count'),
-                    backgroundColor: Colors.amber.shade900,
+                    backgroundColor: cs.primary,
                     child: const Icon(Icons.inventory_2_outlined, size: 16),
                   ),
                   label: Text('Parked ($count)', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   style: FilledButton.styleFrom(
-                    backgroundColor: count > 0 ? Colors.amber.withValues(alpha: 0.2) : cs.surfaceContainerHighest,
-                    foregroundColor: count > 0 ? Colors.amber.shade900 : cs.onSurface,
+                    backgroundColor: count > 0 ? cs.primary.withValues(alpha: 0.2) : cs.surfaceContainerHighest,
+                    foregroundColor: count > 0 ? cs.primary : cs.onSurface,
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -684,7 +685,7 @@ class _SearchBarState extends State<_SearchBar> {
                                     leading: CircleAvatar(
                                       radius: 16,
                                       backgroundColor: option.hasBatch
-                                          ? (isHighlighted ? Colors.amber.shade800 : Colors.amber.shade100)
+                                          ? (isHighlighted ? cs.primary : cs.primaryContainer)
                                           : (isHighlighted ? cs.primary : cs.primaryContainer),
                                       child: option.hasBatch
                                           ? Icon(
@@ -981,7 +982,7 @@ class _CartDataTable extends StatelessWidget {
                   DataCell(Text((item.price ?? 0).toStringAsFixed(2), style: const TextStyle(fontSize: 12))),
                   DataCell(Text(
                     (item.discount ?? 0).toStringAsFixed(2),
-                    style: TextStyle(fontSize: 12, color: (item.discount ?? 0) > 0 ? Colors.red.shade400 : cs.onSurfaceVariant),
+                    style: TextStyle(fontSize: 12, color: (item.discount ?? 0) > 0 ? cs.error : cs.onSurfaceVariant),
                   )),
                   DataCell(Text(
                     (item.total ?? 0).toStringAsFixed(2),
@@ -1453,8 +1454,8 @@ class _CustomerSection extends StatelessWidget {
                       icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
                       tooltip: 'Save to Customer Master & Map to Cart',
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.teal,
-                        foregroundColor: Colors.white,
+                        backgroundColor: cs.tertiary,
+                        foregroundColor: cs.onTertiary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         padding: EdgeInsets.zero,
                       ),
@@ -1585,7 +1586,7 @@ class _SummaryCard extends StatelessWidget {
                 if (session.rxDiscountAmount.value > 0)
                   Text(
                     "-Disc: $currency${session.rxDiscountAmount.value.toStringAsFixed(2)}",
-                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.green.shade700),
+                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: cs.secondary),
                   )
                 else if (session.rxRoundOffAmount.value.abs() > 0.001)
                   Text(
@@ -1758,7 +1759,7 @@ void _showCustomerUpiQrDialog(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300, width: 2),
+                border: Border.all(color: cs.outlineVariant, width: 2),
                 boxShadow: [
                   BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
                 ],
@@ -1819,7 +1820,7 @@ void _showCustomerUpiQrDialog(
                 icon: const Icon(Icons.check_circle_outline_rounded, size: 17),
                 label: const Text('Close QR'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.purple.shade700,
+                  backgroundColor: cs.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   padding: const EdgeInsets.symmetric(vertical: 10),
@@ -3497,7 +3498,7 @@ class _FoodPhotoCardState extends State<_FoodPhotoCard> {
     if (widget.item.sku != null && widget.item.sku!.isNotEmpty) {
       return widget.item.sku!;
     }
-    return 'F${(widget.item.id ?? 0).toString().padLeft(3, '0')}';
+    return 'F${(widget.item.id).toString().padLeft(3, '0')}';
   }
 
   bool _isVeg() {
@@ -3857,10 +3858,8 @@ void _showImageUploadDialog(
                 ),
                 onPressed: () async {
                   Get.back();
-                  if (item.id != null) {
-                    await controller.pickAndSetItemImage(item.id!);
-                  }
-                },
+                  await controller.pickAndSetItemImage(item.id);
+                                },
               ),
             ),
             const SizedBox(height: 14),
@@ -3927,8 +3926,8 @@ void _showImageUploadDialog(
                     ),
                     onPressed: () async {
                       final url = urlController.text.trim();
-                      if (url.isNotEmpty && item.id != null) {
-                        await controller.setItemImage(item.id!, url);
+                      if (url.isNotEmpty) {
+                        await controller.setItemImage(item.id, url);
                         Get.back();
                         SnackbarUtil.showSuccess('Card background image updated successfully');
                       }
@@ -3950,12 +3949,10 @@ void _showImageUploadDialog(
                   icon: const Icon(Icons.delete_outline_rounded, size: 18),
                   label: const Text('Remove Custom Image'),
                   onPressed: () async {
-                    if (item.id != null) {
-                      await controller.removeItemImage(item.id!);
-                      Get.back();
-                      SnackbarUtil.showInfo('Reverted to default card background');
-                    }
-                  },
+                    await controller.removeItemImage(item.id);
+                    Get.back();
+                    SnackbarUtil.showInfo('Reverted to default card background');
+                                    },
                 ),
               ),
             ],
@@ -4564,7 +4561,7 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
                                             child: Icon(
                                               qty <= 1 ? Icons.delete_outline_rounded : Icons.remove_rounded,
                                               size: 15,
-                                              color: qty <= 1 ? Colors.red.shade400 : cs.onSurfaceVariant,
+                                              color: qty <= 1 ? cs.error : cs.onSurfaceVariant,
                                             ),
                                           ),
                                         ),
@@ -5537,6 +5534,7 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
   }
 
   void _confirmClearCart(BuildContext context, ControllerHomePos controller) {
+    final cs = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -5562,7 +5560,7 @@ class _CatalogSelectedItemsPanel extends StatelessWidget {
               Navigator.of(ctx).pop();
               controller.clearCart();
             },
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: FilledButton.styleFrom(backgroundColor: cs.error),
             child: const Text('Clear All'),
           ),
         ],

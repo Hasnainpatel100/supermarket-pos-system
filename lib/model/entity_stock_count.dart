@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntityStockCount {
   @Id()
-  int? id;
+  int id = 0;
 
   int? itemId;
 
@@ -24,7 +24,7 @@ class EntityStockCount {
 
 
   EntityStockCount({
-    this.id,
+    this.id = 0,
     this.itemId,
     this.systemQty,
     this.physicalQty,

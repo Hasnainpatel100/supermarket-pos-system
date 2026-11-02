@@ -35,14 +35,14 @@ class AppButton extends StatelessWidget {
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(foregroundColor ?? cs.onPrimary),
+                  valueColor: AlwaysStoppedAnimation<Color>(cs.onPrimary),
                 ),
               )
-            : (icon != null ? Icon(icon, size: 18) : const SizedBox.shrink()),
+            : (icon != null ? Icon(icon, size: 18, color: cs.onPrimary) : const SizedBox.shrink()),
         label: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
         style: FilledButton.styleFrom(
-          backgroundColor: backgroundColor ?? cs.primary,
-          foregroundColor: foregroundColor ?? cs.onPrimary,
+          backgroundColor: cs.primary,
+          foregroundColor: cs.onPrimary,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
           padding: const EdgeInsets.symmetric(horizontal: 20),
         ),

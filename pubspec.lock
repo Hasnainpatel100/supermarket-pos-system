@@ -61,10 +61,10 @@ packages:
     dependency: transitive
     description:
       name: basic_utils
-      sha256: "8815477fcf58499e42326bd858e391442425fa57db9a45e48e15224c62049262"
+      sha256: "2064b21d3c41ed7654bc82cc476fd65542e04d60059b74d5eed490a4da08fc6c"
       url: "https://pub.dev"
     source: hosted
-    version: "5.5.4"
+    version: "5.7.0"
   bidi:
     dependency: transitive
     description:
@@ -225,14 +225,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.7"
-  cryptography:
-    dependency: transitive
-    description:
-      name: cryptography
-      sha256: "3eda3029d34ec9095a27a198ac9785630fe525c0eb6a49f3d575272f8e792ef0"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.9.0"
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -484,10 +476,10 @@ packages:
     dependency: "direct main"
     description:
       name: google_fonts
-      sha256: "6b6f10f0ce3c42f6552d1c70d2c28d764cf22bb487f50f66cca31dcd5194f4d6"
+      sha256: "2776c66b3e97c6cdd58d1bd3281548b074b64f1fd5c8f82391f7456e38849567"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.4"
+    version: "4.0.5"
   graphs:
     dependency: transitive
     description:
@@ -500,10 +492,10 @@ packages:
     dependency: "direct main"
     description:
       name: http
-      sha256: "5895291c13fa8a3bd82e76d5627f69e0d85ca6a30dcac95c4ea19a5d555879c2"
+      sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
       url: "https://pub.dev"
     source: hosted
-    version: "0.13.6"
+    version: "1.6.0"
   http_multi_server:
     dependency: transitive
     description:
@@ -652,26 +644,26 @@ packages:
     dependency: "direct main"
     description:
       name: objectbox
-      sha256: "9fb2810156e8f78d82ecf672c36a1aba2c1de16d7903675335e00e374bdc3ba8"
+      sha256: "3d1cb5f9aa564f95c76ba251299f6cb1591c3dd8ff05fd76fa0549d899d9fe31"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.1"
+    version: "4.1.0"
   objectbox_flutter_libs:
     dependency: "direct main"
     description:
       name: objectbox_flutter_libs
-      sha256: dca86b2d1074110573b69cbd9afb6b67ab9d2c824704c6ac5187e546418baf9c
+      sha256: "4f54ebbd7a3b72f1a5ef4fea76cb01cc36440a4cac1f63bfb6719afba400eedb"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.1"
+    version: "4.1.0"
   objectbox_generator:
     dependency: "direct dev"
     description:
       name: objectbox_generator
-      sha256: c22c59c27edb90e709da00f0b2e788a5774a4cdce12d393d117a39500877cfb7
+      sha256: "777924e14daf18603a023b346333acac1c4fce9fe4a715b85d98cfcc723d9a1a"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.1"
+    version: "4.1.0"
   objectid:
     dependency: "direct main"
     description:

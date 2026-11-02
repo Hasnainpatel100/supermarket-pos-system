@@ -38,19 +38,13 @@ class FragQuotations extends StatelessWidget {
           icon: Icons.request_quote_rounded,
           title: 'Quotation / Estimate'.tr,
           subtitle: 'Create price quotes & convert to invoices'.tr,
-          gradientColors: isDark
-              ? [Colors.amber.shade400, Colors.orange.shade700]
-              : [Colors.amber.shade700, Colors.orange.shade800],
         ),
         actions: [
           // Create Quotation Button
           GradientActionButton(
             icon: Icons.add_circle_outline_rounded,
             label: 'Create Quotation'.tr,
-            gradientColors: isDark
-                ? [Colors.amber.shade500, Colors.orange.shade700]
-                : [Colors.amber.shade600, Colors.orange.shade800],
-            onTap: () => controller.openCreateQuotation(),
+                        onTap: () => controller.openCreateQuotation(),
           ),
           const SizedBox(width: 8),
         ],
@@ -82,7 +76,7 @@ class FragQuotations extends StatelessWidget {
                       icon: Icons.request_quote_outlined,
                       title: 'No Quotations Found'.tr,
                       subtitle: 'Provide price estimates to potential customers and convert them to invoices.'.tr,
-                      gradientColors: [Colors.amber.shade300, Colors.orange.shade400],
+                      iconColor: colorScheme.primary,
                     )
                   : RepaintBoundary(
                       child: MyCard(
@@ -111,7 +105,7 @@ class FragQuotations extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: Colors.blue.withValues(alpha: 0.12),
+                                          color: colorScheme.primary.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(Icons.calendar_today_rounded, size: 14, color: isDark ? Colors.blue.shade300 : Colors.blue.shade700),
@@ -128,7 +122,7 @@ class FragQuotations extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: Colors.amber.withValues(alpha: 0.15),
+                                          color: colorScheme.primary.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(Icons.tag_rounded, size: 14, color: isDark ? Colors.amber.shade300 : Colors.amber.shade800),
@@ -145,7 +139,7 @@ class FragQuotations extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: Colors.indigo.withValues(alpha: 0.12),
+                                          color: colorScheme.primary.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(Icons.person_rounded, size: 14, color: isDark ? Colors.indigo.shade300 : Colors.indigo.shade700),
@@ -162,7 +156,7 @@ class FragQuotations extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: Colors.purple.withValues(alpha: 0.12),
+                                          color: colorScheme.primary.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(Icons.timer_outlined, size: 14, color: isDark ? Colors.purple.shade300 : Colors.purple.shade700),
@@ -180,7 +174,7 @@ class FragQuotations extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: Colors.teal.withValues(alpha: 0.12),
+                                          color: colorScheme.primary.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(Icons.payments_rounded, size: 14, color: isDark ? Colors.teal.shade300 : Colors.teal.shade700),
@@ -197,7 +191,7 @@ class FragQuotations extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
-                                          color: Colors.green.withValues(alpha: 0.12),
+                                          color: colorScheme.primary.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Icon(Icons.toggle_on_rounded, size: 14, color: isDark ? Colors.green.shade300 : Colors.green.shade700),

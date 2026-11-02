@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntitySale {
   @Id()
-  int? id;
+  int id = 0;
 
   @Unique()
   String? billNo;
@@ -22,7 +22,7 @@ class EntitySale {
   int? createdAtUtcMs;
 
   EntitySale({
-    this.id,
+    this.id = 0,
     this.billNo,
     this.customerId,
     this.totalAmount,

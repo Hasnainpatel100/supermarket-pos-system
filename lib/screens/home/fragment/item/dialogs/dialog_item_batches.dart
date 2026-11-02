@@ -67,7 +67,7 @@ class _DialogItemBatchesState extends State<DialogItemBatches> {
 
   void _loadBatches() {
     final allBatches = _boxBatch
-        .query(EntityItemBatch_.itemId.equals(widget.entityItem.id ?? 0))
+        .query(EntityItemBatch_.itemId.equals(widget.entityItem.id))
         .order(EntityItemBatch_.expiryDateUtcMs)
         .build()
         .find();
@@ -75,8 +75,8 @@ class _DialogItemBatchesState extends State<DialogItemBatches> {
     final activeBatches = <EntityItemBatch>[];
     for (final b in allBatches) {
       if ((b.quantity ?? 0) <= 0) {
-        if (b.id != null && b.id! > 0) {
-          _boxBatch.remove(b.id!);
+        if (b.id > 0) {
+          _boxBatch.remove(b.id);
         }
       } else {
         activeBatches.add(b);
@@ -152,7 +152,7 @@ class _DialogItemBatchesState extends State<DialogItemBatches> {
 
     // Log stock transaction
     _boxStockTxn.put(EntityStockTransaction(
-      itemId: widget.entityItem.id ?? 0,
+      itemId: widget.entityItem.id,
       type: StockTxnType.add.index,
       quantity: qty,
       referenceType: 'batch_add',
@@ -191,12 +191,10 @@ class _DialogItemBatchesState extends State<DialogItemBatches> {
         style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
         onPressed: () {
           final qty = batch.quantity ?? 0;
-          if (batch.id != null) {
-            _boxBatch.remove(batch.id!);
-          }
-          final current = widget.entityItem.totalQty ?? 0;
+          _boxBatch.remove(batch.id);
+                  final current = widget.entityItem.totalQty ?? 0;
           widget.entityItem.totalQty = (current - qty).clamp(0, 999999999);
-          final remaining = _boxBatch.query(EntityItemBatch_.itemId.equals(widget.entityItem.id ?? 0)).build().count();
+          final remaining = _boxBatch.query(EntityItemBatch_.itemId.equals(widget.entityItem.id)).build().count();
           widget.entityItem.hasExpiry = remaining > 0;
           widget.entityItem.updatedAtUtcMs = DateTime.now().toUtc().millisecondsSinceEpoch;
           _boxItem.put(widget.entityItem);

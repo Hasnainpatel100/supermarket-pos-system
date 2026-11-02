@@ -313,7 +313,7 @@
     },
     {
       "id": "3:7474113114096540497",
-      "lastPropertyId": "17:1492736068601028755",
+      "lastPropertyId": "18:7204187038095871167",
       "name": "EntityCustomer",
       "properties": [
         {
@@ -392,6 +392,11 @@
           "type": 9,
           "flags": 2080,
           "indexId": "147:7695861318322997334"
+        },
+        {
+          "id": "18:7204187038095871167",
+          "name": "dueAmount",
+          "type": 8
         }
       ],
       "relations": []

@@ -298,7 +298,7 @@ class ControllerCreateSalesReturn extends GetxController {
         : rawNo;
 
     // Check duplicate return number before ObjectBox throws UniqueViolationException
-    final targetId = editingReturn?.id ?? 0;
+    final targetId = editingReturn?.id;
     final existingWithSameNo = _boxReturn
         .query(EntitySalesReturn_.returnNo.equals(finalReturnNo))
         .build()
@@ -378,7 +378,7 @@ class ControllerCreateSalesReturn extends GetxController {
             _boxItem.put(stockItem);
 
             _boxStockTxn.put(EntityStockTransaction(
-              itemId: stockItem.id ?? 0,
+              itemId: stockItem.id,
               type: StockTxnType.returnStock.index,
               quantity: returnQty,
               referenceType: 'sales_return',

@@ -617,6 +617,7 @@ class FragmentHomeCustomer extends StatelessWidget {
       EntityCustomer customer,
       ControllerHomeCustomer controller,
       ) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isCurrentlyActive = customer.isActive ?? true;
 
     Get.defaultDialog(
@@ -626,20 +627,17 @@ class FragmentHomeCustomer extends StatelessWidget {
           .trParams({'item': customer.name ?? ''}),
       confirm: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isCurrentlyActive
-              ? Colors.orange.shade400
-              : Colors.green.shade500,
-          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         ),
         icon: Icon(
           isCurrentlyActive
               ? Icons.toggle_off_rounded
               : Icons.toggle_on_rounded,
           size: 20,
+          color: isCurrentlyActive ? colorScheme.error : colorScheme.primary,
         ),
         onPressed: () {
           controller.toggleActive(customer);
@@ -648,7 +646,7 @@ class FragmentHomeCustomer extends StatelessWidget {
             (!(isCurrentlyActive) ? 'customer_activated' : 'customer_deactivated').trParams({'item': customer.name ?? ''}),
           );
         },
-        label: Text(isCurrentlyActive ? 'deactivate'.tr : 'activate'.tr),
+        label: Text(isCurrentlyActive ? 'deactivate'.tr : 'activate'.tr, style: TextStyle(color: isCurrentlyActive ? colorScheme.error : colorScheme.primary, fontWeight: FontWeight.bold)),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(
@@ -668,29 +666,29 @@ class FragmentHomeCustomer extends StatelessWidget {
       EntityCustomer customer,
       ControllerHomeCustomer controller,
       ) {
+    final colorScheme = Theme.of(context).colorScheme;
     Get.defaultDialog(
       title: 'delete_customer'.tr,
       titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red),
       middleText: 'Are you sure you want to permanently delete customer "${customer.name ?? ""}"?',
       confirm: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red.shade600,
-          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         ),
-        icon: const Icon(
+        icon: Icon(
           Icons.delete_forever_rounded,
           size: 20,
+          color: colorScheme.error,
         ),
         onPressed: () {
           controller.deleteCustomer(customer);
           Get.back();
           SnackbarUtil.showSuccess('Customer "${customer.name ?? ""}" deleted.');
         },
-        label: Text('delete'.tr),
+        label: Text('delete'.tr, style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.bold)),
       ),
       cancel: OutlinedButton(
         style: OutlinedButton.styleFrom(
@@ -1018,14 +1016,12 @@ class FragmentHomeCustomer extends StatelessWidget {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Icon(Icons.save_rounded, size: 18),
+                          : Icon(Icons.save_rounded, size: 18, color: colorScheme.onPrimary),
                       label: Text(
                         isEditing ? 'update_customer'.tr : 'save_customer'.tr,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isEditing ? Colors.deepOrange.shade600 : colorScheme.primary,
-                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         elevation: 2,

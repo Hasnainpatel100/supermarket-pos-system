@@ -473,7 +473,7 @@ class ControllerCreateSalesInvoice extends GetxController {
           _boxItem.put(stockItem);
 
           _boxStockTxn.put(EntityStockTransaction(
-            itemId: stockItem.id ?? 0,
+            itemId: stockItem.id,
             type: StockTxnType.sell.index,
             quantity: -qty,
             referenceType: 'sales_invoice',

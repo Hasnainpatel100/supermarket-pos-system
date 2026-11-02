@@ -297,7 +297,7 @@ class _DialogSelectBatchState extends State<DialogSelectBatch> {
                                   child: Row(
                                     children: [
                                       _TableCell(
-                                        widget.item.sku ?? 'P-${(widget.item.id ?? 0).toString().padLeft(4, '0')}',
+                                        widget.item.sku ?? 'P-${(widget.item.id).toString().padLeft(4, '0')}',
                                         width: isSelected ? 91 : 95,
                                         isBold: true,
                                         color: isSelected ? const Color(0xFF78350F) : null,

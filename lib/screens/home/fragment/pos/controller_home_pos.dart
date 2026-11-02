@@ -609,7 +609,7 @@ class ControllerHomePos extends GetxController {
     if (exactMatch != null) {
       final batches = _boxBatch
           .query(EntityItemBatch_.itemId
-              .equals(exactMatch.id ?? 0)
+              .equals(exactMatch.id)
               .and(EntityItemBatch_.quantity.greaterThan(0)))
           .order(EntityItemBatch_.id)
           .build()
@@ -668,7 +668,7 @@ class ControllerHomePos extends GetxController {
     for (final item in matchingItems) {
       final batches = _boxBatch
           .query(EntityItemBatch_.itemId
-              .equals(item.id ?? 0)
+              .equals(item.id)
               .and(EntityItemBatch_.quantity.greaterThan(0)))
           .order(EntityItemBatch_.id)
           .build()
@@ -697,10 +697,10 @@ class ControllerHomePos extends GetxController {
 
   /// Returns all active batches with quantity > 0 for a given item.
   List<EntityItemBatch> getAvailableBatches(EntityItem item) {
-    if (item.id == null || item.id == 0) return const [];
+    if (item.id == 0) return const [];
     final q = _boxBatch
         .query(EntityItemBatch_.itemId
-            .equals(item.id!)
+            .equals(item.id)
             .and(EntityItemBatch_.quantity.greaterThan(0)))
         .order(EntityItemBatch_.id)
         .build();
@@ -931,7 +931,7 @@ class ControllerHomePos extends GetxController {
 
   void addToCart(EntityItem item, {bool skipBatchCheck = false}) {
     // ⚡ Always fetch fresh item details from database to ensure updated tax, price, and stock
-    final freshItem = (item.id != null && item.id! > 0 ? _boxItem.get(item.id!) : null) ?? item;
+    final freshItem = (item.id > 0 ? _boxItem.get(item.id) : null) ?? item;
 
     if (!skipBatchCheck) {
       final batches = getAvailableBatches(freshItem);
@@ -1008,8 +1008,8 @@ class ControllerHomePos extends GetxController {
 
   void addBatchToCart(EntityItem item, EntityItemBatch batch) {
     // ⚡ Always fetch fresh item & batch from database so updated price, tax and stock are used
-    final freshItem = (item.id != null && item.id! > 0 ? _boxItem.get(item.id!) : null) ?? item;
-    final freshBatch = (batch.id != null && batch.id! > 0 ? _boxBatch.get(batch.id!) : null) ?? batch;
+    final freshItem = (item.id > 0 ? _boxItem.get(item.id) : null) ?? item;
+    final freshBatch = (batch.id > 0 ? _boxBatch.get(batch.id) : null) ?? batch;
 
     final availableStock = freshBatch.quantity ?? 0;
     if (availableStock < 1) {
@@ -1849,7 +1849,7 @@ class ControllerHomePos extends GetxController {
       if (stockItem != null) {
         final soldQty = cartItem.qty ?? 0;
         stockTxnsToSave.add(EntityStockTransaction(
-          itemId: stockItem.id ?? 0,
+          itemId: stockItem.id,
           type: StockTxnType.sell.index,
           quantity: -soldQty,
           referenceType: 'sell',
@@ -1880,19 +1880,19 @@ class ControllerHomePos extends GetxController {
       for (var bi in billItemsToSave) {
         if (bi.batchId != null && bi.batchId! > 0) {
           final b = _boxBatch.get(bi.batchId!);
-          if (b != null && (b.quantity ?? 0) <= 0 && b.id != null) {
-            _boxBatch.remove(b.id!);
+          if (b != null && (b.quantity ?? 0) <= 0) {
+            _boxBatch.remove(b.id);
           }
         } else if (bi.batchNo != null && bi.batchNo!.isNotEmpty && bi.item.target != null) {
           final q = _boxBatch
               .query(EntityItemBatch_.itemId
-                  .equals(bi.item.target!.id ?? 0)
+                  .equals(bi.item.target!.id)
                   .and(EntityItemBatch_.batchNo.equals(bi.batchNo!)))
               .build();
           final b = q.findFirst();
           q.close();
-          if (b != null && (b.quantity ?? 0) <= 0 && b.id != null) {
-            _boxBatch.remove(b.id!);
+          if (b != null && (b.quantity ?? 0) <= 0) {
+            _boxBatch.remove(b.id);
           }
         }
       }
@@ -1969,7 +1969,7 @@ class ControllerHomePos extends GetxController {
         final currentQty = batch.quantity ?? 0;
         final newQty = (currentQty - qty).clamp(0, 99999999);
         if (newQty <= 0) {
-          if (batch.id != null) _boxBatch.remove(batch.id!);
+          _boxBatch.remove(batch.id);
         } else {
           batch.quantity = newQty;
           _boxBatch.put(batch);
@@ -1989,7 +1989,7 @@ class ControllerHomePos extends GetxController {
         final currentQty = batch.quantity ?? 0;
         final newQty = (currentQty - qty).clamp(0, 99999999);
         if (newQty <= 0) {
-          if (batch.id != null) _boxBatch.remove(batch.id!);
+          _boxBatch.remove(batch.id);
         } else {
           batch.quantity = newQty;
           _boxBatch.put(batch);
@@ -2013,13 +2013,13 @@ class ControllerHomePos extends GetxController {
       if (remaining <= 0) break;
       final batchQty = batch.quantity ?? 0;
       if (batchQty <= 0) {
-        if (batch.id != null) _boxBatch.remove(batch.id!);
+        _boxBatch.remove(batch.id);
         continue;
       }
 
       if (batchQty <= remaining) {
         remaining -= batchQty;
-        if (batch.id != null) _boxBatch.remove(batch.id!);
+        _boxBatch.remove(batch.id);
       } else {
         batch.quantity = batchQty - remaining;
         _boxBatch.put(batch);
@@ -2063,7 +2063,7 @@ class ControllerHomePos extends GetxController {
       // If item has expiry batches, re-create a batch entry
       if (stockItem.hasExpiry == true) {
         batchesToPut.add(EntityItemBatch(
-          itemId: stockItem.id ?? 0,
+          itemId: stockItem.id,
           quantity: soldQty,
           receivedAtUtcMs: now,
         ));
@@ -2071,7 +2071,7 @@ class ControllerHomePos extends GetxController {
 
       // Audit trail — reversal transaction
       stockTxnsToPut.add(EntityStockTransaction(
-        itemId: stockItem.id ?? 0,
+        itemId: stockItem.id,
         type: StockTxnType.returnStock.index,
         quantity: soldQty,
         referenceType: 'bill_cancel',

@@ -36,6 +36,8 @@ class PrimaryActionButton extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final bg = backgroundColor ?? cs.primary;
     final fg = foregroundColor ?? cs.onPrimary;
+    final hasGradient = gradientColors != null && gradientColors!.length >= 2;
+
     return Container(
       margin: const EdgeInsets.only(right: 12),
       child: Material(
@@ -43,14 +45,16 @@ class PrimaryActionButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
+          overlayColor: WidgetStateProperty.all(cs.primary.withValues(alpha: 0.08)),
           child: Container(
             padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: bg,
+              color: hasGradient ? null : bg,
+              gradient: hasGradient ? LinearGradient(colors: gradientColors!) : null,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: bg.withValues(alpha: 0.3),
+                  color: (hasGradient ? gradientColors!.first : bg).withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -59,12 +63,12 @@ class PrimaryActionButton extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 18, color: fg),
+                Icon(icon, size: 18, color: hasGradient ? Colors.white : fg),
                 const SizedBox(width: 8),
                 Text(
                   label,
                   style: TextStyle(
-                    color: fg,
+                    color: hasGradient ? Colors.white : fg,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),

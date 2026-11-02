@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntityStockTransaction {
   @Id()
-  int? id;
+  int id = 0;
 
   int? itemId;
 
@@ -27,7 +27,7 @@ class EntityStockTransaction {
   int? createdAtUtcMs;
 
   EntityStockTransaction({
-    this.id,
+    this.id = 0,
     this.itemId,
     this.type,
     this.quantity,

@@ -144,7 +144,7 @@ class ServiceCatalogMatcher {
 
       // Check available batch
       final batchQuery = _boxBatch.query(
-        EntityItemBatch_.itemId.equals(matched.id ?? 0)
+        EntityItemBatch_.itemId.equals(matched.id)
           .and(EntityItemBatch_.quantity.greaterThan(0)),
       ).build();
       final batches = batchQuery.find();

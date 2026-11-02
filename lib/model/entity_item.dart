@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntityItem {
   @Id()
-  int? id;
+  int id = 0;
 
   @Unique()
   String? sku;
@@ -75,7 +75,7 @@ class EntityItem {
   int? updatedDate;
 
   EntityItem({
-    this.id,
+    this.id = 0,
     this.sku,
     this.barcode,
     this.name,

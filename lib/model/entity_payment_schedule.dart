@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntityPaymentSchedule {
   @Id()
-  int id;
+  int id = 0;
 
   int? purchaseId;
   int? supplierId;

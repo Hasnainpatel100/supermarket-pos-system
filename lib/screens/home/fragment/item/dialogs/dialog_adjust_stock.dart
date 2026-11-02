@@ -95,10 +95,8 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
     rxAvailableBatches.assignAll(batches);
     rxBatchDeductions.clear();
     for (final b in batches) {
-      if (b.id != null) {
-        rxBatchDeductions[b.id!] = 0;
-      }
-    }
+      rxBatchDeductions[b.id] = 0;
+        }
   }
 
   @override
@@ -475,7 +473,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
       footer: Obx(() {
         final isInc = isIncrement.value;
         String buttonLabel = 'Save Adjustment';
-        Color btnColor = Colors.teal.shade700;
+        Color btnColor = cs.primary;
 
         if (isInc) {
           if (rxAddedBatches.isNotEmpty) {
@@ -500,7 +498,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
             final qty = int.tryParse(manualDecrementQtyCtrl.text) ?? 0;
             buttonLabel = qty > 0 ? 'Deduct $qty Units' : 'Save Decrement';
           }
-          btnColor = Colors.red.shade700;
+          btnColor = cs.error;
         }
 
         return DialogFooter(
@@ -535,7 +533,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
           children: [
             FormSection(
               icon: Icons.inventory_2_rounded,
-              color: Colors.purple.shade700,
+              color: cs.primary,
               title: 'Add Multiple Batches',
             ),
             Obx(() {
@@ -543,16 +541,16 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withValues(alpha: 0.12),
+                  color: cs.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.purple.withValues(alpha: 0.3)),
+                  border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   'Batches Added: ${rxAddedBatches.length}  |  Total Units: +$total',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.purple.shade800,
+                    color: cs.primary,
                   ),
                 ),
               );
@@ -650,8 +648,6 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
                     icon: const Icon(Icons.add_rounded, size: 18),
                     label: const Text('Add Batch'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.teal.shade700,
-                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
@@ -706,7 +702,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   headingRowColor: WidgetStateProperty.all(
-                    isDark ? const Color(0xFF263238) : const Color(0xFFE0F2F1),
+                    isDark ? cs.surfaceContainerHighest.withValues(alpha: 0.5) : cs.primary.withValues(alpha: 0.08),
                   ),
                   headingTextStyle: TextStyle(
                     fontWeight: FontWeight.bold,
@@ -747,7 +743,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
                         DataCell(Text(expStr)),
                         DataCell(
                           IconButton(
-                            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                            icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
                             onPressed: () => rxAddedBatches.removeAt(index),
                             tooltip: 'Remove',
                           ),
@@ -778,7 +774,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
         children: [
           FormSection(
             icon: Icons.playlist_add_rounded,
-            color: Colors.green.shade700,
+            color: cs.primary,
             title: 'Add Stock by Count',
           ),
           const SizedBox(height: 6),
@@ -1119,7 +1115,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
                               IconButton(
                                 icon: const Icon(Icons.remove, size: 16),
                                 onPressed: currentDeduct > 0
-                                    ? () => rxBatchDeductions[b.id!] = currentDeduct - 1
+                                    ? () => rxBatchDeductions[b.id] = currentDeduct - 1
                                     : null,
                               ),
                               Container(
@@ -1137,7 +1133,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
                               IconButton(
                                 icon: const Icon(Icons.add, size: 16),
                                 onPressed: currentDeduct < maxQty
-                                    ? () => rxBatchDeductions[b.id!] = currentDeduct + 1
+                                    ? () => rxBatchDeductions[b.id] = currentDeduct + 1
                                     : null,
                               ),
                               const SizedBox(width: 4),
@@ -1147,7 +1143,7 @@ class _DialogAdjustStockState extends State<DialogAdjustStock> {
                                   padding: const EdgeInsets.symmetric(horizontal: 8),
                                 ),
                                 onPressed: () {
-                                  rxBatchDeductions[b.id!] = currentDeduct == maxQty ? 0 : maxQty;
+                                  rxBatchDeductions[b.id] = currentDeduct == maxQty ? 0 : maxQty;
                                 },
                                 child: Text(currentDeduct == maxQty ? 'Clear' : 'Max'),
                               ),

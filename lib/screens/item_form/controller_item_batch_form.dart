@@ -34,7 +34,7 @@ class ControllerItemBatchForm extends GetxController {
     // Auto-increment Batch Number
     final existingBatchesCount = _boxBatch
         .query(
-          EntityItemBatch_.itemId.equals(item.id ?? 0),
+          EntityItemBatch_.itemId.equals(item.id),
         ) // Ensure itemId is queried safely
         .build()
         .count();

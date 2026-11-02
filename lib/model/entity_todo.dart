@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntityTodo {
   @Id()
-  int id;
+  int id = 0;
   String title;
   bool done;
 

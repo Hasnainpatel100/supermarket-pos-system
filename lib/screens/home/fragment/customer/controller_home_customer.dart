@@ -261,7 +261,7 @@ class ControllerHomeCustomer extends GetxController {
 
   void deleteCustomer(EntityCustomer customer) {
     final id = customer.id;
-    if (id != null && id != 0) {
+    if (id != 0) {
       _boxCustomer.remove(id);
       loadCustomers();
     }

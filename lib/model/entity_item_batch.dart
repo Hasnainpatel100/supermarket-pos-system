@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntityItemBatch {
   @Id()
-  int? id;
+  int id = 0;
 
   int? itemId;
 
@@ -28,7 +28,7 @@ class EntityItemBatch {
   String? barcode;
 
   EntityItemBatch({
-    this.id,
+    this.id = 0,
     this.itemId,
     this.batchNo,
     this.expiryDateUtcMs,

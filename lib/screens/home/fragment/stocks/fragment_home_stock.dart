@@ -25,7 +25,6 @@ class FragmentHomeStock extends StatelessWidget {
           icon: Icons.inventory_rounded,
           title: 'stock_ledger'.tr,
           subtitle: 'track_inventory_movements'.tr,
-          gradientColors: [Colors.orange.shade400, Colors.deepOrange.shade600],
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
@@ -35,7 +34,7 @@ class FragmentHomeStock extends StatelessWidget {
             onChanged: controller.updateSearch,
             onClear: controller.clearSearch,
             hasQuery: controller.searchQuery.isNotEmpty,
-            iconColor: Colors.orange.shade600,
+            iconColor: colorScheme.primary,
           ),
         ),
       ),
@@ -52,7 +51,7 @@ class FragmentHomeStock extends StatelessWidget {
                 children: [
                   _FilterChip(
                     label: 'all'.tr,
-                    color: Colors.grey.shade600,
+                    color: colorScheme.outline.withValues(alpha: 0.8),
                     isSelected: selected == null,
                     onTap: () => controller.setTypeFilter(null),
                   ),
@@ -86,8 +85,8 @@ class FragmentHomeStock extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              Colors.orange.shade100,
-                              Colors.deepOrange.shade100,
+                              colorScheme.primary.withValues(alpha: 0.12),
+                              colorScheme.primary.withValues(alpha: 0.06),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -95,7 +94,7 @@ class FragmentHomeStock extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.orange.withValues(alpha:0.1),
+                              color: colorScheme.primary.withValues(alpha: 0.12),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -113,7 +112,7 @@ class FragmentHomeStock extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
+                          color: colorScheme.outline.withValues(alpha: 0.8),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -287,7 +286,7 @@ class FragmentHomeStock extends StatelessWidget {
               const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(color: Colors.orange.withValues(alpha:0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: colorScheme.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
                 child: Text('${'page'.tr} ${controller.currentPage.value + 1}',
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange.shade700),
                 ),

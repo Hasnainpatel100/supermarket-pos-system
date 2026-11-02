@@ -163,8 +163,8 @@ class FragmentHomePurchase extends StatelessWidget {
       BuildContext context,
       ) {
     final isSelected = selected == status;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = status != null
         ? Color(status.colorValue)
         : Colors.deepPurple;
@@ -219,6 +219,7 @@ class FragmentHomePurchase extends StatelessWidget {
       ControllerHomePurchase controller,
       ColorScheme colorScheme,
       ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final status = PurchaseStatus.values[p.status ?? 0];
     final statusColor = Color(status.colorValue);
     final canReceive = status == PurchaseStatus.ordered ||
@@ -234,7 +235,6 @@ class FragmentHomePurchase extends StatelessWidget {
     final canReceivePO = homeCtrl?.hasPermission(AppPermissions.purchaseReceive) ?? true;
     final canPayPO = homeCtrl?.hasPermission(AppPermissions.paymentProcess) ?? true;
     final canDeletePO = homeCtrl?.hasPermission(AppPermissions.purchaseDelete) ?? true;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final currencySymbol = Get.isRegistered<ServiceCurrency>()
         ? Get.find<ServiceCurrency>().rxCurrency.value
         : '₹';

@@ -5,7 +5,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntityTax {
   @Id()
-  int? id;
+  int id = 0;
 
 
   @Unique()
@@ -14,5 +14,5 @@ class EntityTax {
   String? name; // e.g. "SGST", "CGST", "VAT"
   double? rate; // e.g. 9.0, 18.0
 
-  EntityTax({this.id, this.name, this.rate});
+  EntityTax({this.id = 0, this.name, this.rate});
 }

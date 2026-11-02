@@ -100,7 +100,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
 
     final inputs = validRows
         .map((r) => PurchaseItemInput(
-      itemId: r.selectedItem!.id!,
+      itemId: r.selectedItem!.id,
       itemName: r.selectedItem!.name ?? '',
       itemUnit: r.selectedItem!.unit,
       orderedQty: double.parse(r.qtyCtrl.text),
@@ -111,7 +111,7 @@ class _ActivityPurchaseFormState extends State<ActivityPurchaseForm> {
     setState(() => _isSaving = true);
 
     final error = _controller.createPurchase(
-      supplierId: _selectedSupplier!.id!,
+      supplierId: _selectedSupplier!.id,
       supplierName: _selectedSupplier!.name ?? '',
       purchaseDate: _purchaseDate,
       expectedDate: _expectedDate,

@@ -70,7 +70,7 @@ class ControllerHomeItem extends GetxController {
   int get selectedCount => rxSelectedIds.length;
   bool get isAllVisibleSelected =>
       rxListItem.isNotEmpty &&
-      rxListItem.every((item) => item.id != null && item.id! > 0 && rxSelectedIds.contains(item.id));
+      rxListItem.every((item) => item.id > 0 && rxSelectedIds.contains(item.id));
 
   void toggleSelection(int id) {
     if (id <= 0) return;
@@ -84,14 +84,14 @@ class ControllerHomeItem extends GetxController {
 
   void selectAllVisible() {
     for (final item in rxListItem) {
-      if (item.id != null && item.id! > 0) rxSelectedIds.add(item.id!);
+      if (item.id > 0) rxSelectedIds.add(item.id);
     }
     rxSelectedIds.refresh();
   }
 
   void deselectAllVisible() {
     for (final item in rxListItem) {
-      if (item.id != null) rxSelectedIds.remove(item.id!);
+      rxSelectedIds.remove(item.id);
     }
     rxSelectedIds.refresh();
   }
@@ -101,11 +101,49 @@ class ControllerHomeItem extends GetxController {
     rxSelectedIds.refresh();
   }
 
+  // ── Expandable Rows State ──
+  final RxSet<int> rxExpandedItemIds = <int>{}.obs;
+
+  bool isExpanded(int id) => rxExpandedItemIds.contains(id);
+
+  void toggleExpand(int id) {
+    if (rxExpandedItemIds.contains(id)) {
+      rxExpandedItemIds.remove(id);
+    } else {
+      rxExpandedItemIds.add(id);
+    }
+  }
+
+  void expandAll() {
+    for (final it in rxListItem) {
+      if (it.id > 0) rxExpandedItemIds.add(it.id);
+    }
+  }
+
+  void collapseAll() {
+    rxExpandedItemIds.clear();
+  }
+
+  bool get areAllExpanded =>
+      rxListItem.isNotEmpty &&
+      rxListItem.every((it) => rxExpandedItemIds.contains(it.id));
+
+  List<EntityItemBatch> getAllBatches(int itemId) {
+    if (itemId <= 0) return [];
+    final q = _boxBatch
+        .query(EntityItemBatch_.itemId.equals(itemId))
+        .order(EntityItemBatch_.expiryDateUtcMs)
+        .build();
+    final list = q.find();
+    q.close();
+    return list;
+  }
+
   /// Debounce search input to avoid querying ObjectBox on every keystroke.
   final _searchDebouncer = Debouncer(milliseconds: PerfConfig.searchDebounceMs);
 
   // ── Pagination ────────────────────────────────────────────────────────────
-  static const int _pageSize = 20;
+  static const int _pageSize = 25;
   final RxInt currentPage = 0.obs;
   final RxInt totalCount  = 0.obs;
 
@@ -246,7 +284,7 @@ class ControllerHomeItem extends GetxController {
 
     for (final item in allForFilter) {
       if (item.hasExpiry == true) {
-        final expMs = getNearestExpiryMsForItem(item.id ?? 0);
+        final expMs = getNearestExpiryMsForItem(item.id);
         if (expMs != null) {
           if (expMs <= nowMs) {
             expCount++;
@@ -271,7 +309,7 @@ class ControllerHomeItem extends GetxController {
           // Items without expiry tracking only appear in 'all'
           return false;
         }
-        final expMs = getNearestExpiryMsForItem(item.id ?? 0);
+        final expMs = getNearestExpiryMsForItem(item.id);
         if (expMs == null) return false;
         if (rxExpiryFilter.value == ExpiryFilter.expired) return expMs <= nowMs;
         if (rxExpiryFilter.value == ExpiryFilter.expiring) return expMs > nowMs && expMs <= in30Ms;
@@ -283,7 +321,7 @@ class ControllerHomeItem extends GetxController {
     // 4. Paginate client-side
     totalCount.value = filtered.length;
     final start = currentPage.value * _pageSize;
-    final end = (start + _pageSize).clamp(0, filtered.length);
+    final end = (start + _pageSize).clamp(0, filtered.length).toInt();
     rxListItem.assignAll(start < filtered.length ? filtered.sublist(start, end) : []);
   }
 
@@ -355,7 +393,7 @@ class ControllerHomeItem extends GetxController {
     final ok = adjustStock(item, delta);
     if (ok) {
       _logTxn(
-        itemId: item.id ?? 0,
+        itemId: item.id,
         itemName: item.name ?? '',
         type: StockTxnType.adjust,
         qty: delta,
@@ -369,9 +407,8 @@ class ControllerHomeItem extends GetxController {
   }
 
   List<EntityItemBatch> getItemBatches(EntityItem item) {
-    if (item.id == null) return [];
     final q = _boxBatch
-        .query(EntityItemBatch_.itemId.equals(item.id!))
+        .query(EntityItemBatch_.itemId.equals(item.id))
         .order(EntityItemBatch_.expiryDateUtcMs)
         .build();
     final batches = q.find();
@@ -401,7 +438,7 @@ class ControllerHomeItem extends GetxController {
       totalAdded += qty;
 
       _logTxn(
-        itemId: item.id ?? 0,
+        itemId: item.id,
         itemName: item.name ?? '',
         type: StockTxnType.add,
         qty: qty,
@@ -452,7 +489,7 @@ class ControllerHomeItem extends GetxController {
       totalDeducted += deductQty;
 
       _logTxn(
-        itemId: item.id ?? 0,
+        itemId: item.id,
         itemName: item.name ?? '',
         type: StockTxnType.deduct,
         qty: -deductQty,
@@ -487,7 +524,7 @@ class ControllerHomeItem extends GetxController {
     item.totalQty      = (item.totalQty ?? 0) + qty;
     item.updatedAtUtcMs = now;
     _boxItem.put(item);
-    _logTxn(itemId: item.id ?? 0, itemName: item.name ?? '', type: StockTxnType.add, qty: qty, remarks: 'Batch: $batchNo');
+    _logTxn(itemId: item.id, itemName: item.name ?? '', type: StockTxnType.add, qty: qty, remarks: 'Batch: $batchNo');
     loadItems();
     if (Get.isRegistered<ControllerHomePos>()) {
       Get.find<ControllerHomePos>().loadItems();
@@ -501,7 +538,7 @@ class ControllerHomeItem extends GetxController {
     if (qty > currentQty) return false;
 
     final q = _boxBatch
-        .query(EntityItemBatch_.itemId.equals(item.id ?? 0))
+        .query(EntityItemBatch_.itemId.equals(item.id))
         .order(EntityItemBatch_.receivedAtUtcMs)
         .build();
     final batches = q.find();
@@ -513,7 +550,7 @@ class ControllerHomeItem extends GetxController {
       final batchQty = batch.quantity ?? 0;
       if (batchQty <= remaining) {
         remaining -= batchQty;
-        _boxBatch.remove(batch.id!);
+        _boxBatch.remove(batch.id);
       } else {
         batch.quantity = batchQty - remaining;
         _boxBatch.put(batch);
@@ -525,7 +562,7 @@ class ControllerHomeItem extends GetxController {
     item.totalQty       = currentQty - qty;
     item.updatedAtUtcMs = now;
     _boxItem.put(item);
-    _logTxn(itemId: item.id ?? 0, itemName: item.name ?? '', type: StockTxnType.deduct, qty: -qty, remarks: 'FIFO deduction');
+    _logTxn(itemId: item.id, itemName: item.name ?? '', type: StockTxnType.deduct, qty: -qty, remarks: 'FIFO deduction');
     loadItems();
     return true;
   }
@@ -620,12 +657,10 @@ class ControllerHomeItem extends GetxController {
   }
 
   void deleteItem(EntityItem item) {
-    if (item.id != null) {
-      rxSelectedIds.remove(item.id!);
-      _itemService.deleteItem(item.id!);
-      loadItems();
+    rxSelectedIds.remove(item.id);
+    _itemService.deleteItem(item.id);
+    loadItems();
     }
-  }
 
   Future<void> bulkToggleActive(bool targetActive) async {
     if (rxSelectedIds.isEmpty) return;
@@ -790,7 +825,7 @@ class ControllerHomeItem extends GetxController {
 
   /// ⚡ HIGH-PERFORMANCE: Decodes and parses Excel rows in a separate Dart Isolate
   /// so the UI thread stays at 60 FPS without dropping a single frame.
-  static ({List<EntityItem> items, int errorCount}) _parseExcelBytesInIsolate(Uint8List bytes) {
+  ({List<EntityItem> items, int errorCount}) _parseExcelBytesInIsolate(Uint8List bytes) {
     final Excel workbook = Excel.decodeBytes(bytes);
     final List<EntityItem> items = [];
     int errorCount = 0;
@@ -1043,7 +1078,7 @@ class ControllerHomeItem extends GetxController {
             final q = it.totalQty ?? 0;
             if (q > 0) {
               txns.add(EntityStockTransaction(
-                itemId: it.id ?? 0,
+                itemId: it.id,
                 type: StockTxnType.add.index,
                 quantity: q,
                 createdAtUtcMs: DateTime.now().toUtc().millisecondsSinceEpoch,
@@ -1121,5 +1156,105 @@ class ControllerHomeItem extends GetxController {
         isDismissible: true,
       );
     }
+  }
+}
+
+// Helper class to expose singleton methods to widgets
+class ItemControllerHelper {
+  static String calculateNextBatchNo({
+    required List<EntityItemBatch> existingBatches,
+    List<EntityItemBatch>? pendingBatches,
+  }) {
+    final all = <EntityItemBatch>[
+      ...existingBatches,
+      if (pendingBatches != null) ...pendingBatches,
+    ];
+
+    if (all.isEmpty) return '1';
+
+    int maxNum = 0;
+    String? commonPrefix;
+    String? commonPrefix;
+
+    for (final b in all) {
+      final str = (b.batchNo ?? '').trim();
+      if (str.isEmpty) continue;
+
+      // Pure integer (e.g. "1", "2")
+      final pureInt = int.tryParse(str);
+      if (pureInt != null) {
+        if (pureInt > maxNum) maxNum = pureInt;
+        continue;
+      }
+
+      // Pattern like "B-123", "Box-5", "P20240101"
+      final match = RegExp(r'^[^\d]*(\d+)', caseSensitive: false).firstMatch(str);
+      if (match != null && match.group(1) != null) {
+        final num = int.tryParse(match.group(1)!);
+        if (num != null && num > maxNum) maxNum = num;
+      }
+    }
+
+    // Return incremented number
+    return ((maxNum + 1).toString());
+  }
+
+  static void loadItems(ControllerHomeItem controller) {
+    controller.loadItems();
+  }
+
+  static void updateSearch(ControllerHomeItem controller, String query) {
+    controller.updateSearch(query);
+  }
+
+  static void clearSearch(ControllerHomeItem controller) {
+    controller.clearSearch();
+  }
+
+  static void setExpiryFilter(ControllerHomeItem controller, String filter) {
+    controller.rxExpiryFilter.value = filter;
+    controller._fetchPagedItems();
+  }
+
+  static bool getHasSelection(ControllerHomeItem controller) {
+    return controller.hasSelection;
+  }
+
+  static void confirmSingleDelete(ControllerHomeItem controller, EntityItem item) {
+    if (controller.rxSelectedIds.contains(item.id)) {
+      controller.rxSelectedIds.remove(item.id);
+      controller.rxSelectedIds.refresh();
+    }
+  }
+
+  static void confirmBulkDelete(ControllerHomeItem controller) {
+    for (final id in List<int>.from(controller.rxSelectedIds)) {
+      final item = controller.rxListItem.firstWhereOrNull((i) => i.id == id);
+      if (item != null) {
+        // Also remove associated batches
+        final boxBatch = Get.find<ServiceObjectBox>().box<EntityItemBatch>();
+        final q = boxBatch.query(EntityItemBatch_.itemId.equals(item.id)).build();
+        final batchesToDelete = q.find();
+        q.close();
+        for (final b in batchesToDelete) {
+          boxBatch.remove(b.id);
+        }
+            }
+    }
+    controller.rxSelectedIds.clear();
+    controller.rxSelectedIds.refresh();
+    controller.loadItems();
+  }
+
+  static void bulkToggleActive(ControllerHomeItem controller, bool isActive) {
+    for (final item in List<EntityItem>.from(controller.rxListItem)) {
+      final boxItem = Get.find<ServiceObjectBox>().box<EntityItem>();
+      final existing = boxItem.get(item.id);
+      if (existing != null) {
+        existing.isActive = isActive;
+        boxItem.put(existing);
+      }
+        }
+    controller.loadItems();
   }
 }

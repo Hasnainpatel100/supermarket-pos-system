@@ -31,15 +31,13 @@ class FragmentHomeSupplier extends StatelessWidget {
           icon: Icons.local_shipping_rounded,
           title: 'Suppliers'.tr,
           subtitle: 'Manage your vendor base'.tr,
-          gradientColors: [Colors.indigo.shade400, Colors.indigo.shade700],
         ),
         actions: [
           if (canCreate)
             GradientActionButton(
               icon: Icons.add_business_rounded,
               label: 'New Supplier'.tr,
-              gradientColors: [Colors.indigo.shade400, Colors.indigo.shade700],
-              onTap: () async {
+                            onTap: () async {
                 await Get.dialog(
                   const ActivitySupplierForm(),
                   barrierDismissible: false,
@@ -88,17 +86,17 @@ class FragmentHomeSupplier extends StatelessWidget {
                       dataRowMaxHeight: 52,
                       columns: [
                         _col(context, 'Code'.tr, Icons.tag_rounded,
-                            Colors.indigo),
+                            colorScheme.primary),
                         _col(context, 'Name'.tr,
-                            Icons.person_outline_rounded, Colors.blue),
+                            Icons.person_outline_rounded, Colors.blue.shade600),
                         _col(context, 'Phone'.tr, Icons.phone_rounded,
-                            Colors.green),
+                            Colors.green.shade600),
                         _col(context, 'GST'.tr,
-                            Icons.receipt_long_rounded, Colors.orange),
+                            Icons.receipt_long_rounded, Colors.orange.shade600),
                         _col(context, 'Outstanding'.tr,
-                            Icons.account_balance_wallet_rounded, Colors.red),
+                            Icons.account_balance_wallet_rounded, Colors.red.shade600),
                         _col(context, 'Status'.tr,
-                            Icons.toggle_on_rounded, Colors.purple),
+                            Icons.toggle_on_rounded, Colors.purple.shade600),
                         _col(context, 'Actions'.tr,
                             Icons.settings_rounded, Colors.grey),
                       ],
@@ -162,7 +160,7 @@ class FragmentHomeSupplier extends StatelessWidget {
 
     return DataRow(
       color: WidgetStateProperty.resolveWith<Color?>((_) {
-        if (!isActive) return Colors.grey.withValues(alpha: 0.05);
+        if (!isActive) return colorScheme.surfaceContainerHighest.withValues(alpha: 0.05);
         return null;
       }),
       cells: [
@@ -172,16 +170,16 @@ class FragmentHomeSupplier extends StatelessWidget {
             padding:
             const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: isDark ? colorScheme.surfaceContainerHighest : Colors.indigo.withValues(alpha: 0.08),
+              color: isDark ? colorScheme.surfaceContainerHighest : colorScheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: isDark ? colorScheme.outlineVariant : Colors.indigo.withValues(alpha: 0.2)),
+              border: Border.all(color: isDark ? colorScheme.outlineVariant : colorScheme.primary.withValues(alpha: 0.2)),
             ),
             child: Text(
               s.supplierCode ?? '-',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
-                  color: isDark ? Colors.indigo.shade200 : Colors.indigo),
+                  color: isDark ? Colors.indigo.shade200 : colorScheme.primary),
             ),
           ),
         ),
@@ -191,7 +189,7 @@ class FragmentHomeSupplier extends StatelessWidget {
           s.name ?? '-',
           style: TextStyle(
             fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            color: isActive ? (isDark ? Colors.white : null) : Colors.grey,
+            color: isActive ? (isDark ? Colors.white : null) : colorScheme.onSurface.withValues(alpha: 0.4),
           ),
         )),
 
@@ -220,7 +218,7 @@ class FragmentHomeSupplier extends StatelessWidget {
         // Actions
         DataCell(
           PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500),
+            icon: Icon(Icons.more_vert_rounded, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
             tooltip: 'Actions'.tr,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12)),
@@ -244,7 +242,7 @@ class FragmentHomeSupplier extends StatelessWidget {
                   Icon(Icons.visibility_outlined,
                       size: 20, color: Colors.blue.shade600),
                   const SizedBox(width: 12),
-                  Text('View Details'.tr),
+                  Text('View Details'.tr, style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w500)),
                 ]),
               ),
               if (canUpdate)

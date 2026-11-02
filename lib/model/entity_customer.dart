@@ -4,7 +4,7 @@ import 'package:objectid/objectid.dart';
 @Entity()
 class EntityCustomer {
   @Id()
-  int? id;
+  int id = 0;
 
   @Index()
   String? name;
@@ -33,7 +33,7 @@ class EntityCustomer {
   int? updatedAtUtcMs;
 
   EntityCustomer({
-    this.id,
+    this.id = 0,
     this.name,
     this.phone,
     this.email,

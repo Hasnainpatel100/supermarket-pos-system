@@ -40,8 +40,8 @@ class FragSalesReturns extends StatelessWidget {
           title: 'Sales Return'.tr,
           subtitle: 'Credit notes & return merchandise'.tr,
           gradientColors: isDark
-              ? [Colors.red.shade300, Colors.red.shade600]
-              : [Colors.red.shade500, Colors.red.shade800],
+              ? [colorScheme.error, colorScheme.errorContainer]
+              : [colorScheme.error, colorScheme.errorContainer],
         ),
         actions: [
           // Most Returned Items Analytics Button
@@ -49,8 +49,8 @@ class FragSalesReturns extends StatelessWidget {
             icon: Icons.leaderboard_rounded,
             label: 'Most Returned Items'.tr,
             gradientColors: isDark
-                ? [Colors.purple.shade600, Colors.deepPurple.shade800]
-                : [Colors.purple.shade500, Colors.deepPurple.shade700],
+                ? [colorScheme.primary, colorScheme.primaryContainer]
+                : [colorScheme.primary, colorScheme.primaryContainer],
             onTap: () => _showMostReturnedItemsDialog(context, controller, currencyFmt, isDark),
           ),
           const SizedBox(width: 8),

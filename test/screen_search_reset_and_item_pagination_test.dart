@@ -56,7 +56,7 @@ void main() {
 
       // 5. Deselect all visible on Page 2: should only remove 25, leaving 2, 5, 10
       for (final item in page2Items) {
-        if (item.id != null) selectedIds.remove(item.id!);
+        if (item.id > 0) selectedIds.remove(item.id);
       }
       expect(selectedIds.length, equals(3));
       expect(selectedIds.contains(2), isTrue);
@@ -68,11 +68,11 @@ void main() {
     test('DataRow unique ValueKey generation prevents element recycling confusion', () {
       final item1 = EntityItem(id: 101, name: 'Milk');
       final item2 = EntityItem(id: 202, name: 'Bread');
-      final itemNoId = EntityItem(id: null, name: 'Apple');
+      final itemNoId = EntityItem(id: 0, name: 'Apple');
 
-      final key1 = ValueKey('item_row_${item1.id ?? item1.objectId}');
-      final key2 = ValueKey('item_row_${item2.id ?? item2.objectId}');
-      final keyNoId = ValueKey('item_row_${itemNoId.id ?? itemNoId.objectId}');
+      final key1 = ValueKey('item_row_${item1.id > 0 ? item1.id : item1.objectId}');
+      final key2 = ValueKey('item_row_${item2.id > 0 ? item2.id : item2.objectId}');
+      final keyNoId = ValueKey('item_row_${itemNoId.id > 0 ? itemNoId.id : itemNoId.objectId}');
 
       expect(key1, isNot(equals(key2)));
       expect(key1.value, equals('item_row_101'));
